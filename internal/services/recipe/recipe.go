@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/stroppy-io/schemapb/schemapb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 	"google.golang.org/protobuf/types/known/durationpb"
@@ -14,6 +15,7 @@ import (
 
 	derrors "github.com/stroppy-io/stroppy-cloud/internal/domain/errors"
 	"github.com/stroppy-io/stroppy-cloud/internal/dsl/ast"
+	"github.com/stroppy-io/stroppy-cloud/internal/dsl/schema"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	dslpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dsl"
@@ -184,17 +186,28 @@ run record (models.Run — see the package doc's RunRepo/RecipeWorkflows
 comments; SP-E Task 3 cut this over from models.TestRunRecord) and starts
 RunRecipeWorkflow for it via s.d.Workflows.LaunchRecipeRun.
 
-The minted Run deliberately carries no Baked/CompiledPlan at mint time:
-Baked is nil until SP-D's generated-form launch path exists, and CompiledPlan
-is filled later, durably, by RunRecipeWorkflow itself right after it compiles
-the bundle (see internal/workflows/runtime.go's persistRunCompiledPlan) — not
-here, since StartRun never compiles the bundle itself. Name/Description
-carry the recipe's identity, WorkflowId is stamped with the recipe record's
-id (see Run.workflow_id's own doc: "reserves the name for SP-B's catalog
-Workflow") so ListRuns can filter by recipe and RunDetail/rerun can trace the
-run back to the bundle that produced it, and WorkflowVersion mirrors it
-durably as a stamped string (previously only interpolated into
-Description's free text).
+If the request carries a Filled payload (a submitted launch form — see
+LaunchFormSchema), StartRun re-composes that same form schema server-side
+and synchronously re-Bakes the submitted values (schema.BakeForm) before
+minting anything: this is the trust boundary — the browser-side WASM Bake
+only seals the payload for a smoother UX, it is never trusted on its own.
+Because the composed form schema is STRICT (see dsl.ComposeLaunchFormSchema/
+ComposeFormSchema), an undeclared key in Filled is rejected right here. A
+blocking field error short-circuits before any run record is created:
+StartRunResponse.field_errors comes back non-empty and Run unset, with no
+side effects (no minted run, no launch). A clean bake seals a
+*schemapb.Baked, threaded into s.d.Workflows.LaunchRecipeRun for
+RunRecipeWorkflow to apply once it compiles the bundle (see
+internal/dsl/schema.ApplyBakedInputs) — that consumption itself is a
+follow-up task; StartRun's job ends at producing and passing the Baked.
+Baked stays nil (today's behavior) when the request carries no Filled.
+
+Name/Description carry the recipe's identity, WorkflowId is stamped with the
+recipe record's id (see Run.workflow_id's own doc: "reserves the name for
+SP-B's catalog Workflow") so ListRuns can filter by recipe and RunDetail/
+rerun can trace the run back to the bundle that produced it, and
+WorkflowVersion mirrors it durably as a stamped string (previously only
+interpolated into Description's free text).
 
 Not idempotent: each call mints a new run, exactly like
 test_run.StartTestRun.
@@ -214,6 +227,37 @@ func (s *Service) StartRun(ctx context.Context, req *api.StartRunRequest) (*api.
 	recipeRec, err := s.d.Repo.Get(ctx, req.GetTenantId(), req.GetRecipeId())
 	if err != nil {
 		return nil, utils.MapErr(err)
+	}
+
+	var baked *schemapb.Baked
+	if filled := req.GetFilled(); filled != nil {
+		form, diags, ferr := s.d.FormSchema(ctx, recipeRec.GetBundle().GetFiles())
+		if ferr != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "compose launch form schema: %v", ferr)
+		}
+		if diags.HasErrors() {
+			return nil, status.Errorf(codes.InvalidArgument, "compose launch form schema: %s", diags.String())
+		}
+		var fieldErrors []*schemapb.FieldError
+		var berr error
+		baked, fieldErrors, berr = schema.BakeForm(form, filled.GetValues().AsMap())
+		if berr != nil {
+			return nil, status.Errorf(codes.InvalidArgument, "bake launch form: %v", berr)
+		}
+		if len(fieldErrors) > 0 && baked == nil {
+			// A blocking field error means Bake returned no Baked — no run is
+			// minted (see StartRunResponse.field_errors doc: "non-empty exactly
+			// when filled failed BakeForm — the run is NOT created in that
+			// case"). This is returned as a normal (err == nil) response, NOT
+			// a bare RPC error: a bare status.Error would only give the
+			// launch form a single opaque message, but LaunchFormRenderer
+			// needs the field errors themselves — each with its own field
+			// path — to surface a per-field message (its onInvalid prop).
+			// fieldErrors alone can also be non-blocking warnings BakeForm
+			// still sealed past — only treat this as fatal (no run minted)
+			// when baked is nil.
+			return &api.StartRunResponse{FieldErrors: fieldErrors}, nil
+		}
 	}
 
 	runID := uuid.NewString()
@@ -264,7 +308,7 @@ func (s *Service) StartRun(ctx context.Context, req *api.StartRunRequest) (*api.
 	// launch fails, close the already-visible record as FAILED so
 	// list/overview do not expose an unrecoverable PENDING run forever —
 	// mirrors test_run.StartTestRun's finishFailedRun.
-	if err := s.d.Workflows.LaunchRecipeRun(ctx, run, recipeRec.GetBundle().GetFiles()); err != nil {
+	if err := s.d.Workflows.LaunchRecipeRun(ctx, run, recipeRec.GetBundle().GetFiles(), baked); err != nil {
 		markRunFailed(run, s.now())
 		if uerr := s.d.Runs.Update(ctx, run); uerr != nil {
 			return nil, utils.MapErr(uerr)

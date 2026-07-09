@@ -4075,6 +4075,104 @@ func (FavoriteRecordKind) AllValues() []FavoriteRecordKind {
 	}
 }
 
+// Ref: #/components/schemas/FieldError
+type FieldError struct {
+	Code     OptString             `json:"code"`
+	Field    OptString             `json:"field"`
+	Message  OptString             `json:"message"`
+	Params   OptFieldErrorParams   `json:"params"`
+	RuleId   OptString             `json:"ruleId"`
+	Severity OptFieldErrorSeverity `json:"severity"`
+}
+
+// GetCode returns the value of Code.
+func (s *FieldError) GetCode() OptString {
+	return s.Code
+}
+
+// GetField returns the value of Field.
+func (s *FieldError) GetField() OptString {
+	return s.Field
+}
+
+// GetMessage returns the value of Message.
+func (s *FieldError) GetMessage() OptString {
+	return s.Message
+}
+
+// GetParams returns the value of Params.
+func (s *FieldError) GetParams() OptFieldErrorParams {
+	return s.Params
+}
+
+// GetRuleId returns the value of RuleId.
+func (s *FieldError) GetRuleId() OptString {
+	return s.RuleId
+}
+
+// GetSeverity returns the value of Severity.
+func (s *FieldError) GetSeverity() OptFieldErrorSeverity {
+	return s.Severity
+}
+
+// SetCode sets the value of Code.
+func (s *FieldError) SetCode(val OptString) {
+	s.Code = val
+}
+
+// SetField sets the value of Field.
+func (s *FieldError) SetField(val OptString) {
+	s.Field = val
+}
+
+// SetMessage sets the value of Message.
+func (s *FieldError) SetMessage(val OptString) {
+	s.Message = val
+}
+
+// SetParams sets the value of Params.
+func (s *FieldError) SetParams(val OptFieldErrorParams) {
+	s.Params = val
+}
+
+// SetRuleId sets the value of RuleId.
+func (s *FieldError) SetRuleId(val OptString) {
+	s.RuleId = val
+}
+
+// SetSeverity sets the value of Severity.
+func (s *FieldError) SetSeverity(val OptFieldErrorSeverity) {
+	s.Severity = val
+}
+
+type FieldErrorParams map[string]string
+
+func (s *FieldErrorParams) init() FieldErrorParams {
+	m := *s
+	if m == nil {
+		m = map[string]string{}
+		*s = m
+	}
+	return m
+}
+
+type FieldErrorSeverity int32
+
+const (
+	FieldErrorSeverity0 FieldErrorSeverity = 0
+	FieldErrorSeverity1 FieldErrorSeverity = 1
+	FieldErrorSeverity2 FieldErrorSeverity = 2
+)
+
+// AllValues returns all FieldErrorSeverity values.
+func (FieldErrorSeverity) AllValues() []FieldErrorSeverity {
+	return []FieldErrorSeverity{
+		FieldErrorSeverity0,
+		FieldErrorSeverity1,
+		FieldErrorSeverity2,
+	}
+}
+
 // Ref: #/components/schemas/File
 type File struct {
 	Append OptBool   `json:"append"`
@@ -5401,6 +5499,32 @@ func (s *FiledUInt64) SetMultipleOf(val OptStringUint64) {
 // SetNotIn sets the value of NotIn.
 func (s *FiledUInt64) SetNotIn(val []uint64) {
 	s.NotIn = val
+}
+
+// Ref: #/components/schemas/Filled
+type Filled struct {
+	Schema OptSchemaRef `json:"schema"`
+	Values jx.Raw       `json:"values"`
+}
+
+// GetSchema returns the value of Schema.
+func (s *Filled) GetSchema() OptSchemaRef {
+	return s.Schema
+}
+
+// GetValues returns the value of Values.
+func (s *Filled) GetValues() jx.Raw {
+	return s.Values
+}
+
+// SetSchema sets the value of Schema.
+func (s *Filled) SetSchema(val OptSchemaRef) {
+	s.Schema = val
+}
+
+// SetValues sets the value of Values.
+func (s *Filled) SetValues(val jx.Raw) {
+	s.Values = val
 }
 
 // Ref: #/components/schemas/GetAccountRequest
@@ -12050,6 +12174,98 @@ func (o OptFavoriteRecordKind) Or(d FavoriteRecordKind) FavoriteRecordKind {
 	return d
 }
 
+// NewOptFieldErrorParams returns new OptFieldErrorParams with value set to v.
+func NewOptFieldErrorParams(v FieldErrorParams) OptFieldErrorParams {
+	return OptFieldErrorParams{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptFieldErrorParams is optional FieldErrorParams.
+type OptFieldErrorParams struct {
+	Value FieldErrorParams
+	Set   bool
+}
+
+// IsSet returns true if OptFieldErrorParams was set.
+func (o OptFieldErrorParams) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptFieldErrorParams) Reset() {
+	var v FieldErrorParams
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptFieldErrorParams) SetTo(v FieldErrorParams) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptFieldErrorParams) Get() (v FieldErrorParams, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptFieldErrorParams) Or(d FieldErrorParams) FieldErrorParams {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptFieldErrorSeverity returns new OptFieldErrorSeverity with value set to v.
+func NewOptFieldErrorSeverity(v FieldErrorSeverity) OptFieldErrorSeverity {
+	return OptFieldErrorSeverity{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptFieldErrorSeverity is optional FieldErrorSeverity.
+type OptFieldErrorSeverity struct {
+	Value FieldErrorSeverity
+	Set   bool
+}
+
+// IsSet returns true if OptFieldErrorSeverity was set.
+func (o OptFieldErrorSeverity) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptFieldErrorSeverity) Reset() {
+	var v FieldErrorSeverity
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptFieldErrorSeverity) SetTo(v FieldErrorSeverity) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptFieldErrorSeverity) Get() (v FieldErrorSeverity, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptFieldErrorSeverity) Or(d FieldErrorSeverity) FieldErrorSeverity {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptFile returns new OptFile with value set to v.
 func NewOptFile(v File) OptFile {
 	return OptFile{
@@ -12596,6 +12812,52 @@ func (o OptFiledUInt64) Get() (v FiledUInt64, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptFiledUInt64) Or(d FiledUInt64) FiledUInt64 {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptFilled returns new OptFilled with value set to v.
+func NewOptFilled(v Filled) OptFilled {
+	return OptFilled{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptFilled is optional Filled.
+type OptFilled struct {
+	Value Filled
+	Set   bool
+}
+
+// IsSet returns true if OptFilled was set.
+func (o OptFilled) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptFilled) Reset() {
+	var v Filled
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptFilled) SetTo(v Filled) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptFilled) Get() (v Filled, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptFilled) Or(d Filled) Filled {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -15730,6 +15992,52 @@ func (o OptRuleSeverity) Or(d RuleSeverity) RuleSeverity {
 	return d
 }
 
+// NewOptRun returns new OptRun with value set to v.
+func NewOptRun(v Run) OptRun {
+	return OptRun{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptRun is optional Run.
+type OptRun struct {
+	Value Run
+	Set   bool
+}
+
+// IsSet returns true if OptRun was set.
+func (o OptRun) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptRun) Reset() {
+	var v Run
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptRun) SetTo(v Run) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptRun) Get() (v Run, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptRun) Or(d Run) Run {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptRunColumnDbKind returns new OptRunColumnDbKind with value set to v.
 func NewOptRunColumnDbKind(v RunColumnDbKind) OptRunColumnDbKind {
 	return OptRunColumnDbKind{
@@ -16644,6 +16952,52 @@ func (o OptSchemaIdentity) Get() (v SchemaIdentity, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptSchemaIdentity) Or(d SchemaIdentity) SchemaIdentity {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptSchemaRef returns new OptSchemaRef with value set to v.
+func NewOptSchemaRef(v SchemaRef) OptSchemaRef {
+	return OptSchemaRef{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSchemaRef is optional SchemaRef.
+type OptSchemaRef struct {
+	Value SchemaRef
+	Set   bool
+}
+
+// IsSet returns true if OptSchemaRef was set.
+func (o OptSchemaRef) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSchemaRef) Reset() {
+	var v SchemaRef
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSchemaRef) SetTo(v SchemaRef) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSchemaRef) Get() (v SchemaRef, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSchemaRef) Or(d SchemaRef) SchemaRef {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -23483,6 +23837,32 @@ func (s *SchemaIdentity) SetVersion(val OptString) {
 	s.Version = val
 }
 
+// Ref: #/components/schemas/SchemaRef
+type SchemaRef struct {
+	ID     OptSchemaIdentity `json:"id"`
+	Schema OptSchema         `json:"schema"`
+}
+
+// GetID returns the value of ID.
+func (s *SchemaRef) GetID() OptSchemaIdentity {
+	return s.ID
+}
+
+// GetSchema returns the value of Schema.
+func (s *SchemaRef) GetSchema() OptSchema {
+	return s.Schema
+}
+
+// SetID sets the value of ID.
+func (s *SchemaRef) SetID(val OptSchemaIdentity) {
+	s.ID = val
+}
+
+// SetSchema sets the value of Schema.
+func (s *SchemaRef) SetSchema(val OptSchema) {
+	s.Schema = val
+}
+
 // Ref: #/components/schemas/Script
 type Script struct {
 	Shell OptString `json:"shell"`
@@ -24854,8 +25234,14 @@ func (StageStatus) AllValues() []StageStatus {
 
 // Ref: #/components/schemas/StartRunRequest
 type StartRunRequest struct {
+	Filled   OptFilled `json:"filled"`
 	RecipeId OptString `json:"recipeId"`
 	TenantId OptString `json:"tenantId"`
+}
+
+// GetFilled returns the value of Filled.
+func (s *StartRunRequest) GetFilled() OptFilled {
+	return s.Filled
 }
 
 // GetRecipeId returns the value of RecipeId.
@@ -24866,6 +25252,11 @@ func (s *StartRunRequest) GetRecipeId() OptString {
 // GetTenantId returns the value of TenantId.
 func (s *StartRunRequest) GetTenantId() OptString {
 	return s.TenantId
+}
+
+// SetFilled sets the value of Filled.
+func (s *StartRunRequest) SetFilled(val OptFilled) {
+	s.Filled = val
 }
 
 // SetRecipeId sets the value of RecipeId.
@@ -24880,16 +25271,27 @@ func (s *StartRunRequest) SetTenantId(val OptString) {
 
 // Ref: #/components/schemas/StartRunResponse
 type StartRunResponse struct {
-	Run Run `json:"run"`
+	FieldErrors []FieldError `json:"fieldErrors"`
+	Run         OptRun       `json:"run"`
+}
+
+// GetFieldErrors returns the value of FieldErrors.
+func (s *StartRunResponse) GetFieldErrors() []FieldError {
+	return s.FieldErrors
 }
 
 // GetRun returns the value of Run.
-func (s *StartRunResponse) GetRun() Run {
+func (s *StartRunResponse) GetRun() OptRun {
 	return s.Run
 }
 
+// SetFieldErrors sets the value of FieldErrors.
+func (s *StartRunResponse) SetFieldErrors(val []FieldError) {
+	s.FieldErrors = val
+}
+
 // SetRun sets the value of Run.
-func (s *StartRunResponse) SetRun(val Run) {
+func (s *StartRunResponse) SetRun(val OptRun) {
 	s.Run = val
 }
 

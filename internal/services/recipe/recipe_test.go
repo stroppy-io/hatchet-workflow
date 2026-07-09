@@ -7,9 +7,11 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/stretchr/testify/require"
 	"github.com/stroppy-io/schemapb/schemapb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	derrors "github.com/stroppy-io/stroppy-cloud/internal/domain/errors"
 	"github.com/stroppy-io/stroppy-cloud/internal/dsl/diag"
@@ -587,6 +589,118 @@ func TestStartRunStampsRecipeIDLabel(t *testing.T) {
 	}
 }
 
+// TestStartRun_FilledBakeFailure_NoRunMinted: a submitted Filled that
+// violates a form constraint (threads' Gte(1) rule) comes back as
+// StartRunResponse.field_errors — err is nil (see StartRun's own doc: this
+// is an in-band validation result, not a bare RPC error, so
+// LaunchFormRenderer's onInvalid can render it per-field) — and no run is
+// minted.
+func TestStartRun_FilledBakeFailure_NoRunMinted(t *testing.T) {
+	repo := newFakeRecipeRepo()
+	svc := NewService(Deps{
+		Repo: repo, Authn: fakeAuthn{}, Checker: stubChecker(nil),
+		Runs: newFakeRunRepo(), Workflows: newFakeRecipeWorkflows(nil),
+		FormSchema: func(_ context.Context, files map[string][]byte) (*schemapb.Schema, diag.List, error) {
+			return dslservice.ComposeLaunchFormSchema(files)
+		},
+	})
+
+	created, err := svc.CreateRecipe(context.Background(), &api.CreateRecipeRequest{
+		TenantId: "t1",
+		Recipe: &models.RecipeRecord{
+			Entity: &common.Entity{Name: "pg-docker"},
+			Bundle: &models.RecipeBundle{Files: dockerBundleFilesWithInputs()},
+		},
+	})
+	require.NoError(t, err)
+	recipeID := created.GetRecipe().GetEntity().GetId()
+
+	badValues, err := structpb.NewStruct(map[string]any{"db_version": 12345})
+	require.NoError(t, err)
+
+	resp, err := svc.StartRun(context.Background(), &api.StartRunRequest{
+		TenantId: "t1", RecipeId: recipeID,
+		Filled: &schemapb.Filled{Values: badValues},
+	})
+	require.NoError(t, err)
+	require.Nil(t, resp.GetRun())
+	require.NotEmpty(t, resp.GetFieldErrors())
+}
+
+// TestStartRun_FilledBakeSuccess_LaunchesWithBaked: valid Filled values seal
+// into a Baked snapshot that is threaded into LaunchRecipeRun, and the run
+// launches normally.
+func TestStartRun_FilledBakeSuccess_LaunchesWithBaked(t *testing.T) {
+	repo := newFakeRecipeRepo()
+	workflows := newFakeRecipeWorkflows(nil)
+	svc := NewService(Deps{
+		Repo: repo, Authn: fakeAuthn{}, Checker: stubChecker(nil),
+		Runs: newFakeRunRepo(), Workflows: workflows,
+		FormSchema: func(_ context.Context, files map[string][]byte) (*schemapb.Schema, diag.List, error) {
+			return dslservice.ComposeLaunchFormSchema(files)
+		},
+	})
+
+	created, err := svc.CreateRecipe(context.Background(), &api.CreateRecipeRequest{
+		TenantId: "t1",
+		Recipe: &models.RecipeRecord{
+			Entity: &common.Entity{Name: "pg-docker"},
+			Bundle: &models.RecipeBundle{Files: dockerBundleFilesWithInputs()},
+		},
+	})
+	require.NoError(t, err)
+	recipeID := created.GetRecipe().GetEntity().GetId()
+
+	values, err := structpb.NewStruct(map[string]any{"db_version": "17"})
+	require.NoError(t, err)
+
+	resp, err := svc.StartRun(context.Background(), &api.StartRunRequest{
+		TenantId: "t1", RecipeId: recipeID,
+		Filled: &schemapb.Filled{Values: values},
+	})
+	require.NoError(t, err)
+	require.NotNil(t, resp.GetRun())
+	require.Empty(t, resp.GetFieldErrors())
+	require.NotNil(t, workflows.lastBaked, "Baked snapshot threaded into LaunchRecipeRun")
+}
+
+// TestStartRun_UndeclaredProviderKeyRejected: a Filled key the composed
+// (STRICT) form schema never declared is rejected — same in-band
+// field_errors contract as a constraint violation, not a bare RPC error.
+func TestStartRun_UndeclaredProviderKeyRejected(t *testing.T) {
+	repo := newFakeRecipeRepo()
+	runs := newFakeRunRepo()
+	svc := NewService(Deps{
+		Repo: repo, Authn: fakeAuthn{}, Checker: stubChecker(nil),
+		Runs: runs, Workflows: newFakeRecipeWorkflows(nil),
+		FormSchema: func(_ context.Context, files map[string][]byte) (*schemapb.Schema, diag.List, error) {
+			return dslservice.ComposeLaunchFormSchema(files)
+		},
+	})
+
+	created, err := svc.CreateRecipe(context.Background(), &api.CreateRecipeRequest{
+		TenantId: "t1",
+		Recipe: &models.RecipeRecord{
+			Entity: &common.Entity{Name: "pg-docker"},
+			Bundle: &models.RecipeBundle{Files: dockerBundleFilesWithInputs()},
+		},
+	})
+	require.NoError(t, err)
+	recipeID := created.GetRecipe().GetEntity().GetId()
+
+	values, err := structpb.NewStruct(map[string]any{"totally_undeclared_key": "x"})
+	require.NoError(t, err)
+
+	resp, err := svc.StartRun(context.Background(), &api.StartRunRequest{
+		TenantId: "t1", RecipeId: recipeID,
+		Filled: &schemapb.Filled{Values: values},
+	})
+	require.NoError(t, err)
+	require.Nil(t, resp.GetRun())
+	require.NotEmpty(t, resp.GetFieldErrors())
+	require.Empty(t, runs.byID, "no run record minted on a field-error bake")
+}
+
 /*
 	===== ListRuns =====
 */
@@ -1146,24 +1260,29 @@ func (r *fakeRunRepo) Delete(_ context.Context, tenantID, id string) error {
 type launchedRecipeRun struct {
 	run    *models.Run
 	bundle map[string][]byte
+	baked  *schemapb.Baked
 }
 
 // fakeRecipeWorkflows is a RecipeWorkflows double that records every launch
 // and cancel call, returning launchErr (nil for success) from
 // LaunchRecipeRun and cancelErr (nil for success) from CancelRecipeRun.
+// lastBaked is the baked snapshot passed to the most recent LaunchRecipeRun
+// call (nil if none, or if the call carried no baked snapshot).
 type fakeRecipeWorkflows struct {
 	launchErr error
 	cancelErr error
 	launched  []launchedRecipeRun
 	cancelled []string
+	lastBaked *schemapb.Baked
 }
 
 func newFakeRecipeWorkflows(launchErr error) *fakeRecipeWorkflows {
 	return &fakeRecipeWorkflows{launchErr: launchErr}
 }
 
-func (w *fakeRecipeWorkflows) LaunchRecipeRun(_ context.Context, run *models.Run, bundle map[string][]byte) error {
-	w.launched = append(w.launched, launchedRecipeRun{run: run, bundle: bundle})
+func (w *fakeRecipeWorkflows) LaunchRecipeRun(_ context.Context, run *models.Run, bundle map[string][]byte, baked *schemapb.Baked) error {
+	w.launched = append(w.launched, launchedRecipeRun{run: run, bundle: bundle, baked: baked})
+	w.lastBaked = baked
 	return w.launchErr
 }
 

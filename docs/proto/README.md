@@ -521,6 +521,9 @@
 - [schemapb](schemapb/README.md)
   - Messages
     - [schemapb.Baked](schemapb/README.md#schemapb-baked)
+    - [schemapb.FieldError](schemapb/README.md#schemapb-fielderror)
+    - [schemapb.FieldError.ParamsEntry](schemapb/README.md#schemapb-fielderror-paramsentry)
+    - [schemapb.Filled](schemapb/README.md#schemapb-filled)
     - [schemapb.Schema](schemapb/README.md#schemapb-schema)
     - [schemapb.Schema.DefsEntry](schemapb/README.md#schemapb-schema-defsentry)
     - [schemapb.Schema.Filed](schemapb/README.md#schemapb-schema-filed)
@@ -547,3 +550,4 @@
     - [schemapb.Schema.Filed.UInt32](schemapb/README.md#schemapb-schema-filed-uint32)
     - [schemapb.Schema.Filed.UInt64](schemapb/README.md#schemapb-schema-filed-uint64)
     - [schemapb.SchemaIdentity](schemapb/README.md#schemapb-schemaidentity)
+    - [schemapb.SchemaRef](schemapb/README.md#schemapb-schemaref)

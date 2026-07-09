@@ -24,7 +24,7 @@ func TestLaunchRecipeRunStartsWorkflowWithExpectedIDAndInput(t *testing.T) {
 	}
 	bundle := map[string][]byte{"cluster.yaml": []byte("version: 1\n")}
 
-	if err := rw.LaunchRecipeRun(context.Background(), run, bundle); err != nil {
+	if err := rw.LaunchRecipeRun(context.Background(), run, bundle, nil); err != nil {
 		t.Fatalf("launch recipe run: %v", err)
 	}
 	if got, want := len(starter.calls), 1; got != want {
@@ -66,7 +66,7 @@ func TestLaunchRecipeRunWithoutBootstrapSourceLeavesBootstrapNil(t *testing.T) {
 	rw := &RecipeWorkflows{client: starter}
 	run := &models.Run{Entity: &common.Entity{Id: "run-1", TenantId: "tenant-1"}}
 
-	if err := rw.LaunchRecipeRun(context.Background(), run, nil); err != nil {
+	if err := rw.LaunchRecipeRun(context.Background(), run, nil, nil); err != nil {
 		t.Fatalf("launch recipe run: %v", err)
 	}
 	in := starter.calls[0].args[0].(*workflows.RunRecipeInput) //nolint:forcetypeassert // test-only
@@ -81,7 +81,7 @@ func TestLaunchRecipeRunPropagatesExecuteWorkflowError(t *testing.T) {
 	rw := &RecipeWorkflows{client: starter}
 	run := &models.Run{Entity: &common.Entity{Id: "run-1", TenantId: "tenant-1"}}
 
-	err := rw.LaunchRecipeRun(context.Background(), run, nil)
+	err := rw.LaunchRecipeRun(context.Background(), run, nil, nil)
 	if !errors.Is(err, wantErr) {
 		t.Fatalf("err = %v, want %v", err, wantErr)
 	}
@@ -92,7 +92,7 @@ func TestLaunchRecipeRunMissingRunIDErrors(t *testing.T) {
 	rw := &RecipeWorkflows{client: starter}
 	run := &models.Run{Entity: &common.Entity{TenantId: "tenant-1"}}
 
-	err := rw.LaunchRecipeRun(context.Background(), run, nil)
+	err := rw.LaunchRecipeRun(context.Background(), run, nil, nil)
 	if !errors.Is(err, errRecipeRunMissingID) {
 		t.Fatalf("err = %v, want errRecipeRunMissingID", err)
 	}

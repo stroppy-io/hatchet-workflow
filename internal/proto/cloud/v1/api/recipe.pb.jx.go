@@ -746,6 +746,10 @@ func (m *StartRunRequest) Encode(e *jx.Encoder) {
 		e.FieldStart("recipeId")
 		e.Str(m.RecipeId)
 	}
+	if m.Filled != nil {
+		e.FieldStart("filled")
+		jxpb.EncMessage(e, m.Filled)
+	}
 	e.ObjEnd()
 }
 
@@ -781,6 +785,19 @@ func (m *StartRunRequest) Decode(d *jx.Decoder) error {
 			}
 			m.RecipeId = v
 			return nil
+		case "filled":
+			if seen["Filled"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Filled"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Filled = &schemapb.Filled{}
+			if err := jxpb.DecMessage(d, m.Filled); err != nil {
+				return err
+			}
+			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}
@@ -809,6 +826,14 @@ func (m *StartRunResponse) Encode(e *jx.Encoder) {
 		e.FieldStart("run")
 		jxpb.EncMessage(e, m.Run)
 	}
+	if len(m.FieldErrors) > 0 {
+		e.FieldStart("fieldErrors")
+		e.ArrStart()
+		for _, v := range m.FieldErrors {
+			jxpb.EncMessage(e, v)
+		}
+		e.ArrEnd()
+	}
 	e.ObjEnd()
 }
 
@@ -829,6 +854,22 @@ func (m *StartRunResponse) Decode(d *jx.Decoder) error {
 				return err
 			}
 			return nil
+		case "fieldErrors", "field_errors":
+			if seen["FieldErrors"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["FieldErrors"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &schemapb.FieldError{}
+				if err := jxpb.DecMessage(d, el); err != nil {
+					return err
+				}
+				m.FieldErrors = append(m.FieldErrors, el)
+				return nil
+			})
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}

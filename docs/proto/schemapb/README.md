@@ -6,6 +6,9 @@
 ## Table of Contents
 - Messages
   - [schemapb.Baked](#schemapb-baked)
+  - [schemapb.FieldError](#schemapb-fielderror)
+  - [schemapb.FieldError.ParamsEntry](#schemapb-fielderror-paramsentry)
+  - [schemapb.Filled](#schemapb-filled)
   - [schemapb.Schema](#schemapb-schema)
   - [schemapb.Schema.DefsEntry](#schemapb-schema-defsentry)
   - [schemapb.Schema.Filed](#schemapb-schema-filed)
@@ -32,6 +35,7 @@
   - [schemapb.Schema.Filed.UInt32](#schemapb-schema-filed-uint32)
   - [schemapb.Schema.Filed.UInt64](#schemapb-schema-filed-uint64)
   - [schemapb.SchemaIdentity](#schemapb-schemaidentity)
+  - [schemapb.SchemaRef](#schemapb-schemaref)
 
 <a name="schemapb-messages"></a>
 ## Messages
@@ -66,6 +70,135 @@ go_name: Schema</pre></td>
 <td><a href="../google/protobuf/README.md#google-protobuf-struct">google.protobuf.Struct</a></td>
 <td><pre>
 The final, resolved values — frozen.<br>
+
+json_name: values
+go_name: Values</pre></td>
+</tr>
+</table>
+
+
+
+<a name="schemapb-fielderror"></a>
+### schemapb.FieldError
+
+<pre>
+FieldError is a single validation failure returned by the server-side
+validator (and reusable to render server errors on the client).
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>code</td>
+<td>string</td>
+<td><pre>
+Stable machine code identifying the kind of failure.<br>
+
+json_name: code
+go_name: Code</pre></td>
+</tr><tr>
+<td>field</td>
+<td>string</td>
+<td><pre>
+Field name or dotted path that failed.<br>
+
+json_name: field
+go_name: Field</pre></td>
+</tr><tr>
+<td>message</td>
+<td>string</td>
+<td><pre>
+Human-readable failure message.<br>
+
+json_name: message
+go_name: Message</pre></td>
+</tr><tr>
+<td>params</td>
+<td><a href="#schemapb-fielderror-paramsentry">schemapb.FieldError.ParamsEntry</a></td>
+<td><pre>
+Template parameters for client-side i18n of the error message.<br>
+
+json_name: params
+go_name: Params</pre></td>
+</tr><tr>
+<td>rule_id</td>
+<td>string</td>
+<td><pre>
+Id of the rule that failed, if any.<br>
+
+json_name: ruleId
+go_name: RuleId</pre></td>
+</tr><tr>
+<td>severity</td>
+<td><a href="#schemapb-schema-filed-severity">schemapb.Schema.Filed.Severity</a></td>
+<td><pre>
+Severity of the failure.<br>
+
+json_name: severity
+go_name: Severity</pre></td>
+</tr>
+</table>
+
+
+
+<a name="schemapb-fielderror-paramsentry"></a>
+### schemapb.FieldError.ParamsEntry
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>key</td>
+<td>string</td>
+<td><pre>
+json_name: key
+go_name: Key</pre></td>
+</tr><tr>
+<td>value</td>
+<td>string</td>
+<td><pre>
+json_name: value
+go_name: Value</pre></td>
+</tr>
+</table>
+
+
+
+<a name="schemapb-filled"></a>
+### schemapb.Filled
+
+<pre>
+Filled is a runtime form: a reference to the schema plus the values entered
+for it. The schema says what is allowed/derived; the values are what to
+check/resolve. It is mutable input (the thing being edited/validated).
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>schema</td>
+<td><a href="#schemapb-schemaref">schemapb.SchemaRef</a></td>
+<td><pre>
+Schema this form is filled against (baked-by-id or inline).<br>
+
+json_name: schema
+go_name: Schema</pre></td>
+</tr><tr>
+<td>values</td>
+<td><a href="../google/protobuf/README.md#google-protobuf-struct">google.protobuf.Struct</a></td>
+<td><pre>
+Form values the expressions read and the validator checks.<br>
 
 json_name: values
 go_name: Values</pre></td>
@@ -1831,6 +1964,41 @@ Schema version, e.g. "v1" or a semver string. Optional.<br>
 
 json_name: version
 go_name: Version</pre></td>
+</tr>
+</table>
+
+
+
+<a name="schemapb-schemaref"></a>
+### schemapb.SchemaRef
+
+<pre>
+SchemaRef selects a schema: either inline, or by identity (resolved from a
+registry).
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>id</td>
+<td><a href="#schemapb-schemaidentity">schemapb.SchemaIdentity</a></td>
+<td><pre>
+Resolve a registered schema by identity.<br>
+
+json_name: id
+go_name: Id</pre></td>
+</tr><tr>
+<td>schema</td>
+<td><a href="#schemapb-schema">schemapb.Schema</a></td>
+<td><pre>
+Use this schema directly, without registering it.<br>
+
+json_name: schema
+go_name: Schema</pre></td>
 </tr>
 </table>
 

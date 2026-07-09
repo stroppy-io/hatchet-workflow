@@ -4,6 +4,7 @@ package api
 
 import (
 	convert "github.com/gopherex/protoc-gen-go-ogen/convert"
+	schemapb "github.com/stroppy-io/schemapb/schemapb"
 	rest "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api/rest"
 	dsl "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dsl"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
@@ -565,6 +566,13 @@ func (src *StartRunRequest) ToOgen() (*rest.StartRunRequest, error) {
 	}
 	dst.TenantId.SetTo(string(src.GetTenantId()))
 	dst.RecipeId.SetTo(string(src.GetRecipeId()))
+	if src.Filled != nil {
+		o1, err := FilledToOgen(src.GetFilled())
+		if err != nil {
+			return nil, err
+		}
+		dst.Filled.SetTo(*o1)
+	}
 	return &dst, nil
 }
 
@@ -580,6 +588,13 @@ func StartRunRequestFromOgen(src *rest.StartRunRequest) (*StartRunRequest, error
 	if v2, ok := src.RecipeId.Get(); ok {
 		dst.RecipeId = string(v2)
 	}
+	if v3, ok := src.Filled.Get(); ok {
+		m4, err := FilledFromOgen(&v3)
+		if err != nil {
+			return nil, err
+		}
+		dst.Filled = m4
+	}
 	return dst, nil
 }
 
@@ -589,11 +604,24 @@ func (src *StartRunResponse) ToOgen() (*rest.StartRunResponse, error) {
 	if src == nil {
 		return &dst, nil
 	}
-	o1, err := RunToOgen(src.GetRun())
+	if src.Run != nil {
+		o1, err := RunToOgen(src.GetRun())
+		if err != nil {
+			return nil, err
+		}
+		dst.Run.SetTo(*o1)
+	}
+	c2, err := convert.SliceErr(src.GetFieldErrors(), func(e *schemapb.FieldError) (zero rest.FieldError, _ error) {
+		o3, err := FieldErrorToOgen(e)
+		if err != nil {
+			return zero, err
+		}
+		return *o3, nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	dst.Run = *o1
+	dst.FieldErrors = c2
 	return &dst, nil
 }
 
@@ -603,10 +631,23 @@ func StartRunResponseFromOgen(src *rest.StartRunResponse) (*StartRunResponse, er
 		return nil, nil
 	}
 	dst := &StartRunResponse{}
-	m1, err := RunFromOgen(&src.Run)
+	if v1, ok := src.Run.Get(); ok {
+		m2, err := RunFromOgen(&v1)
+		if err != nil {
+			return nil, err
+		}
+		dst.Run = m2
+	}
+	c3, err := convert.SliceErr(src.FieldErrors, func(e rest.FieldError) (zero *schemapb.FieldError, _ error) {
+		m4, err := FieldErrorFromOgen(&e)
+		if err != nil {
+			return zero, err
+		}
+		return m4, nil
+	})
 	if err != nil {
 		return nil, err
 	}
-	dst.Run = m1
+	dst.FieldErrors = c3
 	return dst, nil
 }

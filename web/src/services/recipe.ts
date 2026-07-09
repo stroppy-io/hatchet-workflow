@@ -12,8 +12,9 @@
 // is textual DSL/YAML source. TextEncoder/TextDecoder do the conversion at the
 // edge so the rest of the app never touches Uint8Array.
 
-import { create, toJson } from "@bufbuild/protobuf";
-import type { Schema } from "@stroppy-io/schemapb";
+import { create, fromJson, toJson } from "@bufbuild/protobuf";
+import type { BakedJson, FieldErrorJson, Schema } from "@stroppy-io/schemapb";
+import { FieldErrorSchema, FilledSchema } from "@stroppy-io/schemapb";
 import {
   RecipeRecordSchema,
   type RecipeRecord,
@@ -313,9 +314,46 @@ export async function previewBundle(
 
 // --- RecipeService: run lifecycle -------------------------------------------
 
-export async function startRun(tenantSlug: string, recipeId: string): Promise<string> {
+/**
+ * StartRunFieldError carries StartRunResponse.field_errors — thrown instead
+ * of a bare Error so LaunchForm.tsx can render each failure against its own
+ * field (mirroring LaunchFormRenderer's onInvalid contract for the local
+ * WASM Bake) rather than a single opaque message. This is StartRun's
+ * *server-side* re-Bake failing (the trust boundary: the browser-side Bake
+ * only seals the payload for UX, it is re-validated server-side against the
+ * same composed form schema before a run is minted) — distinct from a local
+ * onInvalid, which never reaches the network at all.
+ */
+export class StartRunFieldError extends Error {
+  readonly fieldErrors: FieldErrorJson[];
+
+  constructor(fieldErrors: FieldErrorJson[]) {
+    super(fieldErrors.map((e) => `${e.field}: ${e.message}`).join("; ") || "launch form failed validation");
+    this.name = "StartRunFieldError";
+    this.fieldErrors = fieldErrors;
+  }
+}
+
+/**
+ * RecipeService.StartRun — launches the stored recipe bundle. filled is the
+ * launch form's baked/sealed submission (LaunchFormRenderer's onSubmit
+ * payload, BakedJson-shaped); StartRun re-Bakes it server-side against the
+ * same composed form schema (schemapb single source of truth — no
+ * hand-rolled validation here) before minting a run. A server-side bake
+ * failure comes back as a normal (non-throwing-at-the-RPC-level) response
+ * with field_errors populated and no run — surfaced here as a
+ * StartRunFieldError so the caller can render it per-field.
+ */
+export async function startRun(tenantSlug: string, recipeId: string, filled?: BakedJson): Promise<string> {
   const tenantId = await resolveTenantId(tenantSlug);
-  const { run } = await recipeClient.startRun({ tenantId, recipeId });
+  const { run, fieldErrors } = await recipeClient.startRun({
+    tenantId,
+    recipeId,
+    filled: filled ? fromJson(FilledSchema, { values: filled.values ?? {} }) : undefined,
+  });
+  if (fieldErrors.length > 0) {
+    throw new StartRunFieldError(fieldErrors.map((e) => toJson(FieldErrorSchema, e) as FieldErrorJson));
+  }
   if (!run?.entity?.id) throw new Error("startRun returned no run");
   return run.entity.id;
 }

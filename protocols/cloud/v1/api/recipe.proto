@@ -192,6 +192,13 @@ message StartRunRequest {
         recipe_id is the recipe record whose stored bundle is launched.
      */
     string recipe_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        filled is the launch form's submitted values (schemapb.Filled), sealed
+        browser-side by the WASM engine's Bake and re-baked server-side
+        (BakeForm) before launch. Optional: absent means "launch with the
+        bundle's static provider.params/no workflow inputs" (today's behavior).
+     */
+    schemapb.Filled filled = 3;
 }
 /*
     StartRunResponse returns the persisted, launched run record. The run
@@ -202,9 +209,15 @@ message StartRunRequest {
  */
 message StartRunResponse {
     /*
-        run is the persisted, launched run record.
+        run is the persisted, launched run record. Unset when field_errors is
+        non-empty (a field-error bake never mints a run).
      */
-    models.Run run = 1 [(validate.rules).message.required = true];
+    models.Run run = 1;
+    /*
+        field_errors is non-empty exactly when filled failed BakeForm — the
+        run is NOT created in that case; run is unset.
+     */
+    repeated schemapb.FieldError field_errors = 2;
 }
 
 /*

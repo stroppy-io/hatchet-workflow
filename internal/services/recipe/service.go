@@ -86,7 +86,14 @@ type RunRepo interface {
 // infrastructure/execution.TestWorkflows resolves bootstrap internally
 // rather than taking it as a parameter.
 type RecipeWorkflows interface {
-	LaunchRecipeRun(ctx context.Context, run *models.Run, bundle map[string][]byte) error
+	// baked is the sealed launch-form snapshot StartRun's synchronous
+	// BakeForm step produced (nil for a launch with no Filled — today's
+	// no-inputs behavior). It is threaded through so RunRecipeWorkflow can
+	// eventually apply it before lowering (see internal/dsl/schema.
+	// ApplyBakedInputs) — wiring baked into RunRecipeInput/
+	// CompileRecipeActivity itself is a follow-up task; this interface only
+	// carries it through the launch call.
+	LaunchRecipeRun(ctx context.Context, run *models.Run, bundle map[string][]byte, baked *schemapb.Baked) error
 	// CancelRecipeRun requests cancellation of the RunRecipeWorkflow bound to
 	// runID (the same deterministic workflow id LaunchRecipeRun started).
 	// Cancellation is asynchronous: the workflow's own cancel path persists

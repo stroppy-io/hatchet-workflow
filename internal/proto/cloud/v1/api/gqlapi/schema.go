@@ -18,6 +18,7 @@ import (
 	pb9 "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology"
 	pb10 "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
 	pb13 "google.golang.org/protobuf/types/known/durationpb"
+	pb14 "google.golang.org/protobuf/types/known/structpb"
 	pb12 "google.golang.org/protobuf/types/known/timestamppb"
 )
 
@@ -1170,6 +1171,677 @@ func decode_LaunchFormSchemaRequest(m map[string]interface{}) *pb.LaunchFormSche
 	return out
 }
 
+func decode_SchemaInput(m map[string]interface{}) *pb8.Schema {
+	out := &pb8.Schema{}
+	if m == nil {
+		return out
+	}
+	if mm, ok := m["id"].(map[string]interface{}); ok {
+		out.Id = decode_SchemaIdentityInput(mm)
+	}
+	if _, ok := m["description"]; ok {
+		v := graphqlrt.AsString(m["description"])
+		out.Description = &v
+	}
+	if arr, ok := m["fields"].([]interface{}); ok {
+		for _, it := range arr {
+			if mm, ok := it.(map[string]interface{}); ok {
+				out.Fields = append(out.Fields, decode_Schema_FiledInput(mm))
+			}
+		}
+	}
+	if arr, ok := m["rules"].([]interface{}); ok {
+		for _, it := range arr {
+			if mm, ok := it.(map[string]interface{}); ok {
+				out.Rules = append(out.Rules, decode_Schema_Filed_RuleInput(mm))
+			}
+		}
+	}
+	out.Strict = graphqlrt.AsBool(m["strict"])
+	if _, ok := m["minProperties"]; ok {
+		v := graphqlrt.AsUint64(m["minProperties"])
+		out.MinProperties = &v
+	}
+	if _, ok := m["maxProperties"]; ok {
+		v := graphqlrt.AsUint64(m["maxProperties"])
+		out.MaxProperties = &v
+	}
+	out.Coerce = graphqlrt.AsBool(m["coerce"])
+	return out
+}
+
+func decode_Schema_FiledInput(m map[string]interface{}) *pb8.Schema_Filed {
+	out := &pb8.Schema_Filed{}
+	if m == nil {
+		return out
+	}
+	out.Name = graphqlrt.AsString(m["name"])
+	if _, ok := m["description"]; ok {
+		v := graphqlrt.AsString(m["description"])
+		out.Description = &v
+	}
+	out.Nullable = graphqlrt.AsBool(m["nullable"])
+	out.Required = graphqlrt.AsBool(m["required"])
+	if arr, ok := m["rules"].([]interface{}); ok {
+		for _, it := range arr {
+			if mm, ok := it.(map[string]interface{}); ok {
+				out.Rules = append(out.Rules, decode_Schema_Filed_RuleInput(mm))
+			}
+		}
+	}
+	out.Immutable = graphqlrt.AsBool(m["immutable"])
+	if _, ok := m["group"]; ok {
+		v := graphqlrt.AsString(m["group"])
+		out.Group = &v
+	}
+	if _, ok := m["unit"]; ok {
+		v := graphqlrt.AsString(m["unit"])
+		out.Unit = &v
+	}
+	if _, ok := m["title"]; ok {
+		v := graphqlrt.AsString(m["title"])
+		out.Title = &v
+	}
+	out.Deprecated = graphqlrt.AsBool(m["deprecated"])
+	if arr, ok := m["examples"].([]interface{}); ok {
+		_ = arr
+	}
+	out.Secret = graphqlrt.AsBool(m["secret"])
+	if _, ok := m["normalize"]; ok {
+		v := graphqlrt.AsString(m["normalize"])
+		out.Normalize = &v
+	}
+	if _, ok := m["when"]; ok {
+		v := graphqlrt.AsString(m["when"])
+		out.When = &v
+	}
+	if ov, ok := m["kind"].(map[string]interface{}); ok {
+		switch {
+		case ov["float"] != nil:
+			if mm, ok := ov["float"].(map[string]interface{}); ok {
+				out.Kind = &pb8.Schema_Filed_Float_{Float: decode_Schema_Filed_FloatInput(mm)}
+			}
+		case ov["double"] != nil:
+			if mm, ok := ov["double"].(map[string]interface{}); ok {
+				out.Kind = &pb8.Schema_Filed_Double_{Double: decode_Schema_Filed_DoubleInput(mm)}
+			}
+		case ov["int32"] != nil:
+			if mm, ok := ov["int32"].(map[string]interface{}); ok {
+				out.Kind = &pb8.Schema_Filed_Int32_{Int32: decode_Schema_Filed_Int32Input(mm)}
+			}
+		case ov["int64"] != nil:
+			if mm, ok := ov["int64"].(map[string]interface{}); ok {
+				out.Kind = &pb8.Schema_Filed_Int64_{Int64: decode_Schema_Filed_Int64Input(mm)}
+			}
+		case ov["uint32"] != nil:
+			if mm, ok := ov["uint32"].(map[string]interface{}); ok {
+				out.Kind = &pb8.Schema_Filed_Uint32{Uint32: decode_Schema_Filed_UInt32Input(mm)}
+			}
+		case ov["uint64"] != nil:
+			if mm, ok := ov["uint64"].(map[string]interface{}); ok {
+				out.Kind = &pb8.Schema_Filed_Uint64{Uint64: decode_Schema_Filed_UInt64Input(mm)}
+			}
+		case ov["bool"] != nil:
+			if mm, ok := ov["bool"].(map[string]interface{}); ok {
+				out.Kind = &pb8.Schema_Filed_Bool_{Bool: decode_Schema_Filed_BoolInput(mm)}
+			}
+		case ov["string"] != nil:
+			if mm, ok := ov["string"].(map[string]interface{}); ok {
+				out.Kind = &pb8.Schema_Filed_String_{String_: decode_Schema_Filed_StringInput(mm)}
+			}
+		case ov["enum"] != nil:
+			if mm, ok := ov["enum"].(map[string]interface{}); ok {
+				out.Kind = &pb8.Schema_Filed_Enum_{Enum: decode_Schema_Filed_EnumInput(mm)}
+			}
+		case ov["duration"] != nil:
+			if mm, ok := ov["duration"].(map[string]interface{}); ok {
+				out.Kind = &pb8.Schema_Filed_Duration_{Duration: decode_Schema_Filed_DurationInput(mm)}
+			}
+		case ov["timestamp"] != nil:
+			if mm, ok := ov["timestamp"].(map[string]interface{}); ok {
+				out.Kind = &pb8.Schema_Filed_Timestamp_{Timestamp: decode_Schema_Filed_TimestampInput(mm)}
+			}
+		case ov["list"] != nil:
+			if mm, ok := ov["list"].(map[string]interface{}); ok {
+				out.Kind = &pb8.Schema_Filed_List_{List: decode_Schema_Filed_ListInput(mm)}
+			}
+		case ov["object"] != nil:
+			if mm, ok := ov["object"].(map[string]interface{}); ok {
+				out.Kind = &pb8.Schema_Filed_Object_{Object: decode_Schema_Filed_ObjectInput(mm)}
+			}
+		case ov["computed"] != nil:
+			if mm, ok := ov["computed"].(map[string]interface{}); ok {
+				out.Kind = &pb8.Schema_Filed_Computed_{Computed: decode_Schema_Filed_ComputedInput(mm)}
+			}
+		case ov["oneOf"] != nil:
+			if mm, ok := ov["oneOf"].(map[string]interface{}); ok {
+				out.Kind = &pb8.Schema_Filed_OneOf_{OneOf: decode_Schema_Filed_OneOfInput(mm)}
+			}
+		case ov["ref"] != nil:
+			if mm, ok := ov["ref"].(map[string]interface{}); ok {
+				out.Kind = &pb8.Schema_Filed_Ref_{Ref: decode_Schema_Filed_RefInput(mm)}
+			}
+		}
+	}
+	return out
+}
+
+func decode_Schema_Filed_FloatInput(m map[string]interface{}) *pb8.Schema_Filed_Float {
+	out := &pb8.Schema_Filed_Float{}
+	if m == nil {
+		return out
+	}
+	if _, ok := m["default"]; ok {
+		v := graphqlrt.AsFloat32(m["default"])
+		out.Default = &v
+	}
+	if _, ok := m["const"]; ok {
+		v := graphqlrt.AsFloat32(m["const"])
+		out.Const = &v
+	}
+	if _, ok := m["gt"]; ok {
+		v := graphqlrt.AsFloat32(m["gt"])
+		out.Gt = &v
+	}
+	if _, ok := m["gte"]; ok {
+		v := graphqlrt.AsFloat32(m["gte"])
+		out.Gte = &v
+	}
+	if _, ok := m["lt"]; ok {
+		v := graphqlrt.AsFloat32(m["lt"])
+		out.Lt = &v
+	}
+	if _, ok := m["lte"]; ok {
+		v := graphqlrt.AsFloat32(m["lte"])
+		out.Lte = &v
+	}
+	if arr, ok := m["in"].([]interface{}); ok {
+		for _, it := range arr {
+			out.In = append(out.In, graphqlrt.AsFloat32(it))
+		}
+	}
+	if arr, ok := m["notIn"].([]interface{}); ok {
+		for _, it := range arr {
+			out.NotIn = append(out.NotIn, graphqlrt.AsFloat32(it))
+		}
+	}
+	if _, ok := m["multipleOf"]; ok {
+		v := graphqlrt.AsFloat32(m["multipleOf"])
+		out.MultipleOf = &v
+	}
+	return out
+}
+
+func decode_Schema_Filed_DoubleInput(m map[string]interface{}) *pb8.Schema_Filed_Double {
+	out := &pb8.Schema_Filed_Double{}
+	if m == nil {
+		return out
+	}
+	if _, ok := m["default"]; ok {
+		v := graphqlrt.AsFloat64(m["default"])
+		out.Default = &v
+	}
+	if _, ok := m["const"]; ok {
+		v := graphqlrt.AsFloat64(m["const"])
+		out.Const = &v
+	}
+	if _, ok := m["gt"]; ok {
+		v := graphqlrt.AsFloat64(m["gt"])
+		out.Gt = &v
+	}
+	if _, ok := m["gte"]; ok {
+		v := graphqlrt.AsFloat64(m["gte"])
+		out.Gte = &v
+	}
+	if _, ok := m["lt"]; ok {
+		v := graphqlrt.AsFloat64(m["lt"])
+		out.Lt = &v
+	}
+	if _, ok := m["lte"]; ok {
+		v := graphqlrt.AsFloat64(m["lte"])
+		out.Lte = &v
+	}
+	if arr, ok := m["in"].([]interface{}); ok {
+		for _, it := range arr {
+			out.In = append(out.In, graphqlrt.AsFloat64(it))
+		}
+	}
+	if arr, ok := m["notIn"].([]interface{}); ok {
+		for _, it := range arr {
+			out.NotIn = append(out.NotIn, graphqlrt.AsFloat64(it))
+		}
+	}
+	if _, ok := m["multipleOf"]; ok {
+		v := graphqlrt.AsFloat64(m["multipleOf"])
+		out.MultipleOf = &v
+	}
+	return out
+}
+
+func decode_Schema_Filed_Int32Input(m map[string]interface{}) *pb8.Schema_Filed_Int32 {
+	out := &pb8.Schema_Filed_Int32{}
+	if m == nil {
+		return out
+	}
+	if _, ok := m["default"]; ok {
+		v := graphqlrt.AsInt32(m["default"])
+		out.Default = &v
+	}
+	if _, ok := m["const"]; ok {
+		v := graphqlrt.AsInt32(m["const"])
+		out.Const = &v
+	}
+	if _, ok := m["gt"]; ok {
+		v := graphqlrt.AsInt32(m["gt"])
+		out.Gt = &v
+	}
+	if _, ok := m["gte"]; ok {
+		v := graphqlrt.AsInt32(m["gte"])
+		out.Gte = &v
+	}
+	if _, ok := m["lt"]; ok {
+		v := graphqlrt.AsInt32(m["lt"])
+		out.Lt = &v
+	}
+	if _, ok := m["lte"]; ok {
+		v := graphqlrt.AsInt32(m["lte"])
+		out.Lte = &v
+	}
+	if arr, ok := m["in"].([]interface{}); ok {
+		for _, it := range arr {
+			out.In = append(out.In, graphqlrt.AsInt32(it))
+		}
+	}
+	if arr, ok := m["notIn"].([]interface{}); ok {
+		for _, it := range arr {
+			out.NotIn = append(out.NotIn, graphqlrt.AsInt32(it))
+		}
+	}
+	if _, ok := m["multipleOf"]; ok {
+		v := graphqlrt.AsInt32(m["multipleOf"])
+		out.MultipleOf = &v
+	}
+	return out
+}
+
+func decode_Schema_Filed_Int64Input(m map[string]interface{}) *pb8.Schema_Filed_Int64 {
+	out := &pb8.Schema_Filed_Int64{}
+	if m == nil {
+		return out
+	}
+	if _, ok := m["default"]; ok {
+		v := graphqlrt.AsInt64(m["default"])
+		out.Default = &v
+	}
+	if _, ok := m["const"]; ok {
+		v := graphqlrt.AsInt64(m["const"])
+		out.Const = &v
+	}
+	if _, ok := m["gt"]; ok {
+		v := graphqlrt.AsInt64(m["gt"])
+		out.Gt = &v
+	}
+	if _, ok := m["gte"]; ok {
+		v := graphqlrt.AsInt64(m["gte"])
+		out.Gte = &v
+	}
+	if _, ok := m["lt"]; ok {
+		v := graphqlrt.AsInt64(m["lt"])
+		out.Lt = &v
+	}
+	if _, ok := m["lte"]; ok {
+		v := graphqlrt.AsInt64(m["lte"])
+		out.Lte = &v
+	}
+	if arr, ok := m["in"].([]interface{}); ok {
+		for _, it := range arr {
+			out.In = append(out.In, graphqlrt.AsInt64(it))
+		}
+	}
+	if arr, ok := m["notIn"].([]interface{}); ok {
+		for _, it := range arr {
+			out.NotIn = append(out.NotIn, graphqlrt.AsInt64(it))
+		}
+	}
+	if _, ok := m["multipleOf"]; ok {
+		v := graphqlrt.AsInt64(m["multipleOf"])
+		out.MultipleOf = &v
+	}
+	return out
+}
+
+func decode_Schema_Filed_UInt32Input(m map[string]interface{}) *pb8.Schema_Filed_UInt32 {
+	out := &pb8.Schema_Filed_UInt32{}
+	if m == nil {
+		return out
+	}
+	if _, ok := m["default"]; ok {
+		v := graphqlrt.AsUint32(m["default"])
+		out.Default = &v
+	}
+	if _, ok := m["const"]; ok {
+		v := graphqlrt.AsUint32(m["const"])
+		out.Const = &v
+	}
+	if _, ok := m["gt"]; ok {
+		v := graphqlrt.AsUint32(m["gt"])
+		out.Gt = &v
+	}
+	if _, ok := m["gte"]; ok {
+		v := graphqlrt.AsUint32(m["gte"])
+		out.Gte = &v
+	}
+	if _, ok := m["lt"]; ok {
+		v := graphqlrt.AsUint32(m["lt"])
+		out.Lt = &v
+	}
+	if _, ok := m["lte"]; ok {
+		v := graphqlrt.AsUint32(m["lte"])
+		out.Lte = &v
+	}
+	if arr, ok := m["in"].([]interface{}); ok {
+		for _, it := range arr {
+			out.In = append(out.In, graphqlrt.AsUint32(it))
+		}
+	}
+	if arr, ok := m["notIn"].([]interface{}); ok {
+		for _, it := range arr {
+			out.NotIn = append(out.NotIn, graphqlrt.AsUint32(it))
+		}
+	}
+	if _, ok := m["multipleOf"]; ok {
+		v := graphqlrt.AsUint32(m["multipleOf"])
+		out.MultipleOf = &v
+	}
+	return out
+}
+
+func decode_Schema_Filed_UInt64Input(m map[string]interface{}) *pb8.Schema_Filed_UInt64 {
+	out := &pb8.Schema_Filed_UInt64{}
+	if m == nil {
+		return out
+	}
+	if _, ok := m["default"]; ok {
+		v := graphqlrt.AsUint64(m["default"])
+		out.Default = &v
+	}
+	if _, ok := m["const"]; ok {
+		v := graphqlrt.AsUint64(m["const"])
+		out.Const = &v
+	}
+	if _, ok := m["gt"]; ok {
+		v := graphqlrt.AsUint64(m["gt"])
+		out.Gt = &v
+	}
+	if _, ok := m["gte"]; ok {
+		v := graphqlrt.AsUint64(m["gte"])
+		out.Gte = &v
+	}
+	if _, ok := m["lt"]; ok {
+		v := graphqlrt.AsUint64(m["lt"])
+		out.Lt = &v
+	}
+	if _, ok := m["lte"]; ok {
+		v := graphqlrt.AsUint64(m["lte"])
+		out.Lte = &v
+	}
+	if arr, ok := m["in"].([]interface{}); ok {
+		for _, it := range arr {
+			out.In = append(out.In, graphqlrt.AsUint64(it))
+		}
+	}
+	if arr, ok := m["notIn"].([]interface{}); ok {
+		for _, it := range arr {
+			out.NotIn = append(out.NotIn, graphqlrt.AsUint64(it))
+		}
+	}
+	if _, ok := m["multipleOf"]; ok {
+		v := graphqlrt.AsUint64(m["multipleOf"])
+		out.MultipleOf = &v
+	}
+	return out
+}
+
+func decode_Schema_Filed_BoolInput(m map[string]interface{}) *pb8.Schema_Filed_Bool {
+	out := &pb8.Schema_Filed_Bool{}
+	if m == nil {
+		return out
+	}
+	if _, ok := m["default"]; ok {
+		v := graphqlrt.AsBool(m["default"])
+		out.Default = &v
+	}
+	if _, ok := m["const"]; ok {
+		v := graphqlrt.AsBool(m["const"])
+		out.Const = &v
+	}
+	return out
+}
+
+func decode_Schema_Filed_StringInput(m map[string]interface{}) *pb8.Schema_Filed_String {
+	out := &pb8.Schema_Filed_String{}
+	if m == nil {
+		return out
+	}
+	if _, ok := m["default"]; ok {
+		v := graphqlrt.AsString(m["default"])
+		out.Default = &v
+	}
+	if _, ok := m["const"]; ok {
+		v := graphqlrt.AsString(m["const"])
+		out.Const = &v
+	}
+	if _, ok := m["len"]; ok {
+		v := graphqlrt.AsUint64(m["len"])
+		out.Len = &v
+	}
+	if _, ok := m["minLen"]; ok {
+		v := graphqlrt.AsUint64(m["minLen"])
+		out.MinLen = &v
+	}
+	if _, ok := m["maxLen"]; ok {
+		v := graphqlrt.AsUint64(m["maxLen"])
+		out.MaxLen = &v
+	}
+	if _, ok := m["pattern"]; ok {
+		v := graphqlrt.AsString(m["pattern"])
+		out.Pattern = &v
+	}
+	if arr, ok := m["in"].([]interface{}); ok {
+		for _, it := range arr {
+			out.In = append(out.In, graphqlrt.AsString(it))
+		}
+	}
+	if arr, ok := m["notIn"].([]interface{}); ok {
+		for _, it := range arr {
+			out.NotIn = append(out.NotIn, graphqlrt.AsString(it))
+		}
+	}
+	if ev, ok := m["format"].(pb8.Schema_Filed_String_StringFormat); ok {
+		out.Format = &ev
+	}
+	return out
+}
+
+func decode_Schema_Filed_EnumInput(m map[string]interface{}) *pb8.Schema_Filed_Enum {
+	out := &pb8.Schema_Filed_Enum{}
+	if m == nil {
+		return out
+	}
+	if _, ok := m["default"]; ok {
+		v := graphqlrt.AsInt32(m["default"])
+		out.Default = &v
+	}
+	out.DefinedOnly = graphqlrt.AsBool(m["definedOnly"])
+	if arr, ok := m["in"].([]interface{}); ok {
+		for _, it := range arr {
+			out.In = append(out.In, graphqlrt.AsInt32(it))
+		}
+	}
+	if arr, ok := m["notIn"].([]interface{}); ok {
+		for _, it := range arr {
+			out.NotIn = append(out.NotIn, graphqlrt.AsInt32(it))
+		}
+	}
+	if _, ok := m["optionsExpr"]; ok {
+		v := graphqlrt.AsString(m["optionsExpr"])
+		out.OptionsExpr = &v
+	}
+	return out
+}
+
+func decode_Schema_Filed_DurationInput(m map[string]interface{}) *pb8.Schema_Filed_Duration {
+	out := &pb8.Schema_Filed_Duration{}
+	if m == nil {
+		return out
+	}
+	if tv, ok := m["default"].(*pb13.Duration); ok {
+		out.Default = tv
+	}
+	if tv, ok := m["gt"].(*pb13.Duration); ok {
+		out.Gt = tv
+	}
+	if tv, ok := m["gte"].(*pb13.Duration); ok {
+		out.Gte = tv
+	}
+	if tv, ok := m["lt"].(*pb13.Duration); ok {
+		out.Lt = tv
+	}
+	if tv, ok := m["lte"].(*pb13.Duration); ok {
+		out.Lte = tv
+	}
+	return out
+}
+
+func decode_Schema_Filed_TimestampInput(m map[string]interface{}) *pb8.Schema_Filed_Timestamp {
+	out := &pb8.Schema_Filed_Timestamp{}
+	if m == nil {
+		return out
+	}
+	if tv, ok := m["default"].(*pb12.Timestamp); ok {
+		out.Default = tv
+	}
+	if tv, ok := m["gt"].(*pb12.Timestamp); ok {
+		out.Gt = tv
+	}
+	if tv, ok := m["gte"].(*pb12.Timestamp); ok {
+		out.Gte = tv
+	}
+	if tv, ok := m["lt"].(*pb12.Timestamp); ok {
+		out.Lt = tv
+	}
+	if tv, ok := m["lte"].(*pb12.Timestamp); ok {
+		out.Lte = tv
+	}
+	return out
+}
+
+func decode_Schema_Filed_ListInput(m map[string]interface{}) *pb8.Schema_Filed_List {
+	out := &pb8.Schema_Filed_List{}
+	if m == nil {
+		return out
+	}
+	if arr, ok := m["items"].([]interface{}); ok {
+		for _, it := range arr {
+			if mm, ok := it.(map[string]interface{}); ok {
+				out.Items = append(out.Items, decode_Schema_FiledInput(mm))
+			}
+		}
+	}
+	if _, ok := m["minItems"]; ok {
+		v := graphqlrt.AsUint64(m["minItems"])
+		out.MinItems = &v
+	}
+	if _, ok := m["maxItems"]; ok {
+		v := graphqlrt.AsUint64(m["maxItems"])
+		out.MaxItems = &v
+	}
+	out.Unique = graphqlrt.AsBool(m["unique"])
+	if _, ok := m["countExpr"]; ok {
+		v := graphqlrt.AsString(m["countExpr"])
+		out.CountExpr = &v
+	}
+	return out
+}
+
+func decode_Schema_Filed_ObjectInput(m map[string]interface{}) *pb8.Schema_Filed_Object {
+	out := &pb8.Schema_Filed_Object{}
+	if m == nil {
+		return out
+	}
+	if mm, ok := m["schema"].(map[string]interface{}); ok {
+		out.Schema = decode_SchemaInput(mm)
+	}
+	return out
+}
+
+func decode_Schema_Filed_ComputedInput(m map[string]interface{}) *pb8.Schema_Filed_Computed {
+	out := &pb8.Schema_Filed_Computed{}
+	if m == nil {
+		return out
+	}
+	out.Expr = graphqlrt.AsString(m["expr"])
+	if ev, ok := m["result"].(pb8.Schema_Filed_ResultType); ok {
+		out.Result = &ev
+	}
+	return out
+}
+
+func decode_Schema_Filed_RuleInput(m map[string]interface{}) *pb8.Schema_Filed_Rule {
+	out := &pb8.Schema_Filed_Rule{}
+	if m == nil {
+		return out
+	}
+	out.Expr = graphqlrt.AsString(m["expr"])
+	out.Message = graphqlrt.AsString(m["message"])
+	if _, ok := m["id"]; ok {
+		v := graphqlrt.AsString(m["id"])
+		out.Id = &v
+	}
+	if ev, ok := m["severity"].(pb8.Schema_Filed_Severity); ok {
+		out.Severity = &ev
+	}
+	return out
+}
+
+func decode_Schema_Filed_OneOfInput(m map[string]interface{}) *pb8.Schema_Filed_OneOf {
+	out := &pb8.Schema_Filed_OneOf{}
+	if m == nil {
+		return out
+	}
+	out.Discriminator = graphqlrt.AsString(m["discriminator"])
+	return out
+}
+
+func decode_Schema_Filed_RefInput(m map[string]interface{}) *pb8.Schema_Filed_Ref {
+	out := &pb8.Schema_Filed_Ref{}
+	if m == nil {
+		return out
+	}
+	if ov, ok := m["target"].(map[string]interface{}); ok {
+		switch {
+		case ov["name"] != nil:
+			out.Target = &pb8.Schema_Filed_Ref_Name{Name: graphqlrt.AsString(ov["name"])}
+		case ov["id"] != nil:
+			if mm, ok := ov["id"].(map[string]interface{}); ok {
+				out.Target = &pb8.Schema_Filed_Ref_Id{Id: decode_SchemaIdentityInput(mm)}
+			}
+		}
+	}
+	return out
+}
+
+func decode_SchemaIdentityInput(m map[string]interface{}) *pb8.SchemaIdentity {
+	out := &pb8.SchemaIdentity{}
+	if m == nil {
+		return out
+	}
+	out.Namespace = graphqlrt.AsString(m["namespace"])
+	out.Name = graphqlrt.AsString(m["name"])
+	out.Version = graphqlrt.AsString(m["version"])
+	return out
+}
+
 func decode_StartRunRequest(m map[string]interface{}) *pb.StartRunRequest {
 	out := &pb.StartRunRequest{}
 	if m == nil {
@@ -1177,6 +1849,43 @@ func decode_StartRunRequest(m map[string]interface{}) *pb.StartRunRequest {
 	}
 	out.TenantId = graphqlrt.AsString(m["tenantId"])
 	out.RecipeId = graphqlrt.AsString(m["recipeId"])
+	if mm, ok := m["filled"].(map[string]interface{}); ok {
+		out.Filled = decode_FilledInput(mm)
+	}
+	return out
+}
+
+func decode_FilledInput(m map[string]interface{}) *pb8.Filled {
+	out := &pb8.Filled{}
+	if m == nil {
+		return out
+	}
+	if mm, ok := m["schema"].(map[string]interface{}); ok {
+		out.Schema = decode_SchemaRefInput(mm)
+	}
+	if tv, ok := m["values"].(*pb14.Struct); ok {
+		out.Values = tv
+	}
+	return out
+}
+
+func decode_SchemaRefInput(m map[string]interface{}) *pb8.SchemaRef {
+	out := &pb8.SchemaRef{}
+	if m == nil {
+		return out
+	}
+	if ov, ok := m["source"].(map[string]interface{}); ok {
+		switch {
+		case ov["id"] != nil:
+			if mm, ok := ov["id"].(map[string]interface{}); ok {
+				out.Source = &pb8.SchemaRef_Id{Id: decode_SchemaIdentityInput(mm)}
+			}
+		case ov["schema"] != nil:
+			if mm, ok := ov["schema"].(map[string]interface{}); ok {
+				out.Source = &pb8.SchemaRef_Schema{Schema: decode_SchemaInput(mm)}
+			}
+		}
+	}
 	return out
 }
 
@@ -1893,6 +2602,7 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 	var o_PipelineOperation *graphql.Object
 	var o_PipelineOutput *graphql.Object
 	var o_ObservabilityRefs *graphql.Object
+	var o_FieldError *graphql.Object
 	var o_ListRunsResponse *graphql.Object
 	var o_CancelRunResponse *graphql.Object
 	var o_DeleteRunResponse *graphql.Object
@@ -2065,7 +2775,32 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 	var i_DeleteRecipeRequest *graphql.InputObject
 	var i_CheckRecipeRequest *graphql.InputObject
 	var i_LaunchFormSchemaRequest *graphql.InputObject
+	var i_SchemaInput *graphql.InputObject
+	var i_Schema_FiledInput *graphql.InputObject
+	var i_Schema_FiledKindInput *graphql.InputObject
+	var i_Schema_Filed_FloatInput *graphql.InputObject
+	var i_Schema_Filed_DoubleInput *graphql.InputObject
+	var i_Schema_Filed_Int32Input *graphql.InputObject
+	var i_Schema_Filed_Int64Input *graphql.InputObject
+	var i_Schema_Filed_UInt32Input *graphql.InputObject
+	var i_Schema_Filed_UInt64Input *graphql.InputObject
+	var i_Schema_Filed_BoolInput *graphql.InputObject
+	var i_Schema_Filed_StringInput *graphql.InputObject
+	var i_Schema_Filed_EnumInput *graphql.InputObject
+	var i_Schema_Filed_DurationInput *graphql.InputObject
+	var i_Schema_Filed_TimestampInput *graphql.InputObject
+	var i_Schema_Filed_ListInput *graphql.InputObject
+	var i_Schema_Filed_ObjectInput *graphql.InputObject
+	var i_Schema_Filed_ComputedInput *graphql.InputObject
+	var i_Schema_Filed_RuleInput *graphql.InputObject
+	var i_Schema_Filed_OneOfInput *graphql.InputObject
+	var i_Schema_Filed_RefInput *graphql.InputObject
+	var i_Schema_Filed_RefTargetInput *graphql.InputObject
+	var i_SchemaIdentityInput *graphql.InputObject
 	var i_StartRunRequest *graphql.InputObject
+	var i_FilledInput *graphql.InputObject
+	var i_SchemaRefInput *graphql.InputObject
+	var i_SchemaRefSource *graphql.InputObject
 	var i_ListRunsRequest *graphql.InputObject
 	var i_CancelRunRequest *graphql.InputObject
 	var i_DeleteRunRequest *graphql.InputObject
@@ -6122,6 +6857,13 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 				}
 				return obj.GetRun(), nil
 			}},
+			"fieldErrors": &graphql.Field{Type: graphql.NewList(o_FieldError), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb.StartRunResponse)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetFieldErrors(), nil
+			}},
 		}
 	})})
 	o_Run = graphql.NewObject(graphql.ObjectConfig{Name: "Run", Fields: graphql.FieldsThunk(func() graphql.Fields {
@@ -7571,6 +8313,52 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 					return nil, nil
 				}
 				return obj.GetGrafanaDashboardUid(), nil
+			}},
+		}
+	})})
+	o_FieldError = graphql.NewObject(graphql.ObjectConfig{Name: "FieldError", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"field": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.FieldError)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetField(), nil
+			}},
+			"message": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.FieldError)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetMessage(), nil
+			}},
+			"ruleId": &graphql.Field{Type: graphql.String, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.FieldError)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetRuleId(), nil
+			}},
+			"severity": &graphql.Field{Type: graphql.NewNonNull(e_Schema_Filed_Severity), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.FieldError)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetSeverity(), nil
+			}},
+			"code": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.FieldError)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetCode(), nil
+			}},
+			"params": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.FieldError)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetParams(), nil
 			}},
 		}
 	})})
@@ -11000,10 +11788,254 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 			"recipeId": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
 		}
 	})})
+	i_SchemaInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "SchemaInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"id":            &graphql.InputObjectFieldConfig{Type: i_SchemaIdentityInput},
+			"description":   &graphql.InputObjectFieldConfig{Type: graphql.String},
+			"fields":        &graphql.InputObjectFieldConfig{Type: graphql.NewList(i_Schema_FiledInput)},
+			"rules":         &graphql.InputObjectFieldConfig{Type: graphql.NewList(i_Schema_Filed_RuleInput)},
+			"strict":        &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Boolean)},
+			"minProperties": &graphql.InputObjectFieldConfig{Type: graphqlrt.Uint64},
+			"maxProperties": &graphql.InputObjectFieldConfig{Type: graphqlrt.Uint64},
+			"coerce":        &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Boolean)},
+		}
+	})})
+	i_Schema_FiledInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "Schema_FiledInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"name":        &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"description": &graphql.InputObjectFieldConfig{Type: graphql.String},
+			"nullable":    &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Boolean)},
+			"required":    &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Boolean)},
+			"rules":       &graphql.InputObjectFieldConfig{Type: graphql.NewList(i_Schema_Filed_RuleInput)},
+			"immutable":   &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Boolean)},
+			"group":       &graphql.InputObjectFieldConfig{Type: graphql.String},
+			"unit":        &graphql.InputObjectFieldConfig{Type: graphql.String},
+			"title":       &graphql.InputObjectFieldConfig{Type: graphql.String},
+			"deprecated":  &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Boolean)},
+			"examples":    &graphql.InputObjectFieldConfig{Type: graphql.NewList(graphqlrt.JSON)},
+			"secret":      &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Boolean)},
+			"normalize":   &graphql.InputObjectFieldConfig{Type: graphql.String},
+			"when":        &graphql.InputObjectFieldConfig{Type: graphql.String},
+			"kind":        &graphql.InputObjectFieldConfig{Type: i_Schema_FiledKindInput},
+		}
+	})})
+	i_Schema_FiledKindInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "Schema_FiledKindInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"float":     &graphql.InputObjectFieldConfig{Type: i_Schema_Filed_FloatInput},
+			"double":    &graphql.InputObjectFieldConfig{Type: i_Schema_Filed_DoubleInput},
+			"int32":     &graphql.InputObjectFieldConfig{Type: i_Schema_Filed_Int32Input},
+			"int64":     &graphql.InputObjectFieldConfig{Type: i_Schema_Filed_Int64Input},
+			"uint32":    &graphql.InputObjectFieldConfig{Type: i_Schema_Filed_UInt32Input},
+			"uint64":    &graphql.InputObjectFieldConfig{Type: i_Schema_Filed_UInt64Input},
+			"bool":      &graphql.InputObjectFieldConfig{Type: i_Schema_Filed_BoolInput},
+			"string":    &graphql.InputObjectFieldConfig{Type: i_Schema_Filed_StringInput},
+			"enum":      &graphql.InputObjectFieldConfig{Type: i_Schema_Filed_EnumInput},
+			"duration":  &graphql.InputObjectFieldConfig{Type: i_Schema_Filed_DurationInput},
+			"timestamp": &graphql.InputObjectFieldConfig{Type: i_Schema_Filed_TimestampInput},
+			"list":      &graphql.InputObjectFieldConfig{Type: i_Schema_Filed_ListInput},
+			"object":    &graphql.InputObjectFieldConfig{Type: i_Schema_Filed_ObjectInput},
+			"computed":  &graphql.InputObjectFieldConfig{Type: i_Schema_Filed_ComputedInput},
+			"oneOf":     &graphql.InputObjectFieldConfig{Type: i_Schema_Filed_OneOfInput},
+			"ref":       &graphql.InputObjectFieldConfig{Type: i_Schema_Filed_RefInput},
+		}
+	})})
+	i_Schema_Filed_FloatInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "Schema_Filed_FloatInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"default":    &graphql.InputObjectFieldConfig{Type: graphql.Float},
+			"const":      &graphql.InputObjectFieldConfig{Type: graphql.Float},
+			"gt":         &graphql.InputObjectFieldConfig{Type: graphql.Float},
+			"gte":        &graphql.InputObjectFieldConfig{Type: graphql.Float},
+			"lt":         &graphql.InputObjectFieldConfig{Type: graphql.Float},
+			"lte":        &graphql.InputObjectFieldConfig{Type: graphql.Float},
+			"in":         &graphql.InputObjectFieldConfig{Type: graphql.NewList(graphql.NewNonNull(graphql.Float))},
+			"notIn":      &graphql.InputObjectFieldConfig{Type: graphql.NewList(graphql.NewNonNull(graphql.Float))},
+			"multipleOf": &graphql.InputObjectFieldConfig{Type: graphql.Float},
+		}
+	})})
+	i_Schema_Filed_DoubleInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "Schema_Filed_DoubleInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"default":    &graphql.InputObjectFieldConfig{Type: graphql.Float},
+			"const":      &graphql.InputObjectFieldConfig{Type: graphql.Float},
+			"gt":         &graphql.InputObjectFieldConfig{Type: graphql.Float},
+			"gte":        &graphql.InputObjectFieldConfig{Type: graphql.Float},
+			"lt":         &graphql.InputObjectFieldConfig{Type: graphql.Float},
+			"lte":        &graphql.InputObjectFieldConfig{Type: graphql.Float},
+			"in":         &graphql.InputObjectFieldConfig{Type: graphql.NewList(graphql.NewNonNull(graphql.Float))},
+			"notIn":      &graphql.InputObjectFieldConfig{Type: graphql.NewList(graphql.NewNonNull(graphql.Float))},
+			"multipleOf": &graphql.InputObjectFieldConfig{Type: graphql.Float},
+		}
+	})})
+	i_Schema_Filed_Int32Input = graphql.NewInputObject(graphql.InputObjectConfig{Name: "Schema_Filed_Int32Input", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"default":    &graphql.InputObjectFieldConfig{Type: graphql.Int},
+			"const":      &graphql.InputObjectFieldConfig{Type: graphql.Int},
+			"gt":         &graphql.InputObjectFieldConfig{Type: graphql.Int},
+			"gte":        &graphql.InputObjectFieldConfig{Type: graphql.Int},
+			"lt":         &graphql.InputObjectFieldConfig{Type: graphql.Int},
+			"lte":        &graphql.InputObjectFieldConfig{Type: graphql.Int},
+			"in":         &graphql.InputObjectFieldConfig{Type: graphql.NewList(graphql.NewNonNull(graphql.Int))},
+			"notIn":      &graphql.InputObjectFieldConfig{Type: graphql.NewList(graphql.NewNonNull(graphql.Int))},
+			"multipleOf": &graphql.InputObjectFieldConfig{Type: graphql.Int},
+		}
+	})})
+	i_Schema_Filed_Int64Input = graphql.NewInputObject(graphql.InputObjectConfig{Name: "Schema_Filed_Int64Input", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"default":    &graphql.InputObjectFieldConfig{Type: graphqlrt.Int64},
+			"const":      &graphql.InputObjectFieldConfig{Type: graphqlrt.Int64},
+			"gt":         &graphql.InputObjectFieldConfig{Type: graphqlrt.Int64},
+			"gte":        &graphql.InputObjectFieldConfig{Type: graphqlrt.Int64},
+			"lt":         &graphql.InputObjectFieldConfig{Type: graphqlrt.Int64},
+			"lte":        &graphql.InputObjectFieldConfig{Type: graphqlrt.Int64},
+			"in":         &graphql.InputObjectFieldConfig{Type: graphql.NewList(graphql.NewNonNull(graphqlrt.Int64))},
+			"notIn":      &graphql.InputObjectFieldConfig{Type: graphql.NewList(graphql.NewNonNull(graphqlrt.Int64))},
+			"multipleOf": &graphql.InputObjectFieldConfig{Type: graphqlrt.Int64},
+		}
+	})})
+	i_Schema_Filed_UInt32Input = graphql.NewInputObject(graphql.InputObjectConfig{Name: "Schema_Filed_UInt32Input", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"default":    &graphql.InputObjectFieldConfig{Type: graphql.Int},
+			"const":      &graphql.InputObjectFieldConfig{Type: graphql.Int},
+			"gt":         &graphql.InputObjectFieldConfig{Type: graphql.Int},
+			"gte":        &graphql.InputObjectFieldConfig{Type: graphql.Int},
+			"lt":         &graphql.InputObjectFieldConfig{Type: graphql.Int},
+			"lte":        &graphql.InputObjectFieldConfig{Type: graphql.Int},
+			"in":         &graphql.InputObjectFieldConfig{Type: graphql.NewList(graphql.NewNonNull(graphql.Int))},
+			"notIn":      &graphql.InputObjectFieldConfig{Type: graphql.NewList(graphql.NewNonNull(graphql.Int))},
+			"multipleOf": &graphql.InputObjectFieldConfig{Type: graphql.Int},
+		}
+	})})
+	i_Schema_Filed_UInt64Input = graphql.NewInputObject(graphql.InputObjectConfig{Name: "Schema_Filed_UInt64Input", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"default":    &graphql.InputObjectFieldConfig{Type: graphqlrt.Uint64},
+			"const":      &graphql.InputObjectFieldConfig{Type: graphqlrt.Uint64},
+			"gt":         &graphql.InputObjectFieldConfig{Type: graphqlrt.Uint64},
+			"gte":        &graphql.InputObjectFieldConfig{Type: graphqlrt.Uint64},
+			"lt":         &graphql.InputObjectFieldConfig{Type: graphqlrt.Uint64},
+			"lte":        &graphql.InputObjectFieldConfig{Type: graphqlrt.Uint64},
+			"in":         &graphql.InputObjectFieldConfig{Type: graphql.NewList(graphql.NewNonNull(graphqlrt.Uint64))},
+			"notIn":      &graphql.InputObjectFieldConfig{Type: graphql.NewList(graphql.NewNonNull(graphqlrt.Uint64))},
+			"multipleOf": &graphql.InputObjectFieldConfig{Type: graphqlrt.Uint64},
+		}
+	})})
+	i_Schema_Filed_BoolInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "Schema_Filed_BoolInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"default": &graphql.InputObjectFieldConfig{Type: graphql.Boolean},
+			"const":   &graphql.InputObjectFieldConfig{Type: graphql.Boolean},
+		}
+	})})
+	i_Schema_Filed_StringInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "Schema_Filed_StringInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"default": &graphql.InputObjectFieldConfig{Type: graphql.String},
+			"const":   &graphql.InputObjectFieldConfig{Type: graphql.String},
+			"len":     &graphql.InputObjectFieldConfig{Type: graphqlrt.Uint64},
+			"minLen":  &graphql.InputObjectFieldConfig{Type: graphqlrt.Uint64},
+			"maxLen":  &graphql.InputObjectFieldConfig{Type: graphqlrt.Uint64},
+			"pattern": &graphql.InputObjectFieldConfig{Type: graphql.String},
+			"in":      &graphql.InputObjectFieldConfig{Type: graphql.NewList(graphql.NewNonNull(graphql.String))},
+			"notIn":   &graphql.InputObjectFieldConfig{Type: graphql.NewList(graphql.NewNonNull(graphql.String))},
+			"format":  &graphql.InputObjectFieldConfig{Type: e_Schema_Filed_String_StringFormat},
+		}
+	})})
+	i_Schema_Filed_EnumInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "Schema_Filed_EnumInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"default":     &graphql.InputObjectFieldConfig{Type: graphql.Int},
+			"definedOnly": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Boolean)},
+			"in":          &graphql.InputObjectFieldConfig{Type: graphql.NewList(graphql.NewNonNull(graphql.Int))},
+			"notIn":       &graphql.InputObjectFieldConfig{Type: graphql.NewList(graphql.NewNonNull(graphql.Int))},
+			"optionsExpr": &graphql.InputObjectFieldConfig{Type: graphql.String},
+		}
+	})})
+	i_Schema_Filed_DurationInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "Schema_Filed_DurationInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"default": &graphql.InputObjectFieldConfig{Type: graphqlrt.Duration},
+			"gt":      &graphql.InputObjectFieldConfig{Type: graphqlrt.Duration},
+			"gte":     &graphql.InputObjectFieldConfig{Type: graphqlrt.Duration},
+			"lt":      &graphql.InputObjectFieldConfig{Type: graphqlrt.Duration},
+			"lte":     &graphql.InputObjectFieldConfig{Type: graphqlrt.Duration},
+		}
+	})})
+	i_Schema_Filed_TimestampInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "Schema_Filed_TimestampInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"default": &graphql.InputObjectFieldConfig{Type: graphqlrt.Timestamp},
+			"gt":      &graphql.InputObjectFieldConfig{Type: graphqlrt.Timestamp},
+			"gte":     &graphql.InputObjectFieldConfig{Type: graphqlrt.Timestamp},
+			"lt":      &graphql.InputObjectFieldConfig{Type: graphqlrt.Timestamp},
+			"lte":     &graphql.InputObjectFieldConfig{Type: graphqlrt.Timestamp},
+		}
+	})})
+	i_Schema_Filed_ListInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "Schema_Filed_ListInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"items":     &graphql.InputObjectFieldConfig{Type: graphql.NewList(i_Schema_FiledInput)},
+			"minItems":  &graphql.InputObjectFieldConfig{Type: graphqlrt.Uint64},
+			"maxItems":  &graphql.InputObjectFieldConfig{Type: graphqlrt.Uint64},
+			"unique":    &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.Boolean)},
+			"countExpr": &graphql.InputObjectFieldConfig{Type: graphql.String},
+		}
+	})})
+	i_Schema_Filed_ObjectInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "Schema_Filed_ObjectInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"schema": &graphql.InputObjectFieldConfig{Type: i_SchemaInput},
+		}
+	})})
+	i_Schema_Filed_ComputedInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "Schema_Filed_ComputedInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"expr":   &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"result": &graphql.InputObjectFieldConfig{Type: e_Schema_Filed_ResultType},
+		}
+	})})
+	i_Schema_Filed_RuleInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "Schema_Filed_RuleInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"expr":     &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"message":  &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"id":       &graphql.InputObjectFieldConfig{Type: graphql.String},
+			"severity": &graphql.InputObjectFieldConfig{Type: e_Schema_Filed_Severity},
+		}
+	})})
+	i_Schema_Filed_OneOfInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "Schema_Filed_OneOfInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"discriminator": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+		}
+	})})
+	i_Schema_Filed_RefInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "Schema_Filed_RefInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"target": &graphql.InputObjectFieldConfig{Type: i_Schema_Filed_RefTargetInput},
+		}
+	})})
+	i_Schema_Filed_RefTargetInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "Schema_Filed_RefTargetInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"name": &graphql.InputObjectFieldConfig{Type: graphql.String},
+			"id":   &graphql.InputObjectFieldConfig{Type: i_SchemaIdentityInput},
+		}
+	})})
+	i_SchemaIdentityInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "SchemaIdentityInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"namespace": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"name":      &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"version":   &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+		}
+	})})
 	i_StartRunRequest = graphql.NewInputObject(graphql.InputObjectConfig{Name: "StartRunRequest", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
 		return graphql.InputObjectConfigFieldMap{
 			"tenantId": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
 			"recipeId": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"filled":   &graphql.InputObjectFieldConfig{Type: i_FilledInput},
+		}
+	})})
+	i_FilledInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "FilledInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"schema": &graphql.InputObjectFieldConfig{Type: i_SchemaRefInput},
+			"values": &graphql.InputObjectFieldConfig{Type: graphqlrt.JSON},
+		}
+	})})
+	i_SchemaRefInput = graphql.NewInputObject(graphql.InputObjectConfig{Name: "SchemaRefInput", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"source": &graphql.InputObjectFieldConfig{Type: i_SchemaRefSource},
+		}
+	})})
+	i_SchemaRefSource = graphql.NewInputObject(graphql.InputObjectConfig{Name: "SchemaRefSource", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"id":     &graphql.InputObjectFieldConfig{Type: i_SchemaIdentityInput},
+			"schema": &graphql.InputObjectFieldConfig{Type: i_SchemaInput},
 		}
 	})})
 	i_ListRunsRequest = graphql.NewInputObject(graphql.InputObjectConfig{Name: "ListRunsRequest", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
@@ -12915,6 +13947,7 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 		"startRun": &graphql.Field{Type: o_StartRunResponse, Args: graphql.FieldConfigArgument{
 			"tenantId": &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.String)},
 			"recipeId": &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.String)},
+			"filled":   &graphql.ArgumentConfig{Type: i_FilledInput},
 		}, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
 			req := decode_StartRunRequest(p.Args)
 			ctx := p.Context
@@ -13148,6 +14181,6 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 	cfg.Query = queryRoot
 	cfg.Mutation = mutationRoot
 	cfg.Subscription = subscriptionRoot
-	cfg.Types = []graphql.Type{e_Status, e_Database_Kind, e_Provider, e_Verdict, e_FavoriteKind, e_RegistrationRequestStatus, e_Scope, e_Resource, e_Action, e_ApiTokenType, e_PackageRecord_Format, e_PackageRecord_Status, e_EntitySortField, e_QuotaRefreshPolicy, e_Quota_ReservationStatus, e_Severity, e_Schema_Filed_ResultType, e_Schema_Filed_Severity, e_Schema_Filed_String_StringFormat, e_Workload_Protocol, e_Trigger, e_Cmd_Streams_Mode, e_Worker_Kind, e_OperationKind, e_OutputKind, e_ShareRecord_Target_Kind, e_Yandex_Settings_PlatformId, e_Yandex_Settings_Zone, e_ListTestRunsRequest_Sort_Kind, e_LogScrollDirection, e_Source, e_Stream, e_Topology_State, e_Component_Kind, e_Connection_Kind, e_Connection_Protocol, e_Connection_Mode, e_Docker_Protocol, e_Docker_RestartPolicy, e_RuntimeNode_Kind, e_ObservationSource, e_WorkerPresence, e_Event_Kind, e_EventSeverity, o_PlatformSettings, o_RunColumn, o_CompareView, o_Comparison, o_Comparison_RunSummary, o_TimeRange, o_MetricRow, o_MetricCell, o_CompareRunsResponse, o_AddFavoriteResponse, o_FavoriteRecord, o_Entity, o_Timings, o_RemoveFavoriteResponse, o_ListFavoritesResponse, o_TokenPair, o_RegisterResponse, o_LoginResponse, o_RefreshResponse, o_LogoutResponse, o_CreateAccountResponse, o_Account, o_GetAccountResponse, o_LookupAccountByEmailResponse, o_GetMyAccountResponse, o_ListAccountsResponse, o_UpdateAccountResponse, o_DeleteAccountResponse, o_ChangePasswordResponse, o_ResetPasswordResponse, o_RequestPasswordResetResponse, o_ConfirmPasswordResetResponse, o_VerifyEmailResponse, o_ResendVerificationResponse, o_CreateTenantResponse, o_Tenant, o_Tags, o_GetTenantResponse, o_ListMyTenantsResponse, o_UpdateTenantResponse, o_DeleteTenantResponse, o_TransferTenantOwnershipResponse, o_LeaveTenantResponse, o_Permission, o_CreateRoleResponse, o_Role, o_GetRoleResponse, o_ListRolesResponse, o_UpdateRoleResponse, o_DeleteRoleResponse, o_CreateMembershipResponse, o_Membership, o_GetMembershipResponse, o_ListMembershipsResponse, o_UpdateMembershipResponse, o_DeleteMembershipResponse, o_GetMyPermissionsResponse, o_CatalogEntry, o_ListPermissionsResponse, o_CreateIdentityProviderResponse, o_IdentityProvider, o_GetIdentityProviderResponse, o_UpdateIdentityProviderResponse, o_DeleteIdentityProviderResponse, o_SsoButton, o_ListIdentityProvidersResponse, o_StartSSOResponse, o_CompleteSSOResponse, o_LinkExternalIdentityResponse, o_ExternalIdentity, o_UnlinkExternalIdentityResponse, o_ListExternalIdentitiesResponse, o_CreateApiTokenResponse, o_ApiToken, o_ListApiTokensResponse, o_RevokeApiTokenResponse, o_RegistrationRequest, o_SubmitRegistrationRequestResponse, o_ListRegistrationRequestsResponse, o_MarkRegistrationRequestHandledResponse, o_CreatePackageUploadResponse, o_PackageRecord, o_CompleteUploadResponse, o_GetPackageResponse, o_ListPackagesResponse, o_DeletePackageResponse, o_RatingEntry, o_GetSystemRatingResponse, o_GetTenantRatingResponse, o_PublicRatingEntry, o_GetPublicRatingResponse, o_GetSharedRunResponse, o_ShareRecord_Snapshot, o_SharedTestRun, o_RunMetrics, o_MetricSummary, o_SharedSuiteRun, o_QuotaView, o_Quota_Info, o_QuotaReservationView, o_ListQuotasResponse, o_RefreshQuotasResponse, o_GetRunQuotaUsageResponse, o_RecipeRecord, o_RecipeRecord_Summary, o_RecipeBundle, o_CreateRecipeResponse, o_GetRecipeResponse, o_ListRecipesResponse, o_DeleteRecipeResponse, o_CheckRecipeResponse, o_Diagnostic, o_LaunchFormSchemaResponse, o_Schema, o_Schema_Filed, o_Schema_Filed_Float, o_Schema_Filed_Double, o_Schema_Filed_Int32, o_Schema_Filed_Int64, o_Schema_Filed_UInt32, o_Schema_Filed_UInt64, o_Schema_Filed_Bool, o_Schema_Filed_String, o_Schema_Filed_Enum, o_Schema_Filed_Duration, o_Schema_Filed_Timestamp, o_Schema_Filed_List, o_Schema_Filed_Object, o_Schema_Filed_Computed, o_Schema_Filed_Rule, o_Schema_Filed_OneOf, o_Schema_Filed_Ref, o_SchemaIdentity, o_StartRunResponse, o_Run, o_Run_Summary, o_Baked, o_CompiledPlan, o_ProviderRef, o_MachineGroup, o_DiskSpec, o_ServiceSpec, o_ConfigFile, o_HealthCheck, o_CompiledJob, o_StepList, o_DslStep, o_AgentStep, o_Dir, o_Dir_Info, o_File, o_File_Info, o_File_AsRef, o_Cmd, o_Cmd_Spec, o_Cmd_Argv, o_Cmd_Script, o_Cmd_Streams, o_Cmd_Result, o_WaitStep, o_RunTopology, o_RunTopology_ServiceNode, o_RunTopology_MachineNode, o_RunState, o_Stage, o_Worker, o_PipelineOperation, o_PipelineOutput, o_ObservabilityRefs, o_ListRunsResponse, o_CancelRunResponse, o_DeleteRunResponse, o_ShareRecord_Target, o_CreateShareResponse, o_ShareRecord, o_GetShareResponse, o_ListSharesResponse, o_RevokeShareResponse, o_SetShareExpiryResponse, o_DeleteShareResponse, o_ListStroppyVersionsResponse, o_GetSystemSettingsResponse, o_UpdateSystemSettingsResponse, o_GetPublicConfigResponse, o_StatusCounts, o_UpcomingSuite, o_TenantDashboard, o_GetTenantDashboardResponse, o_GetTenantSettingsResponse, o_TenantSettingsRecord, o_Yandex_Settings, o_UpdateTenantSettingsResponse, o_ProviderSettings, o_Docker_Settings, o_LogFilter, o_TestRunOverviewSnapshot, o_Topology, o_TopologySpec, o_Node, o_Component, o_Connection, o_InfrastructurePlan, o_MachinePlan, o_Docker_Container, o_Docker_VolumeMount, o_Docker_PortBinding, o_Docker_File, o_Docker_Healthcheck, o_Docker_Resources, o_Yandex_Vm, o_Yandex_Disk, o_Quota_Request, o_InfrastructureState, o_MachineState, o_Endpoint, o_Docker_ContainerOutput, o_Yandex_VmOutput, o_Quota_Allocation, o_DeploymentPlan, o_ComponentDeployment, o_RuntimeNode, o_RuntimeConnection, o_Overview, o_PipelineView, o_PipelineNode, o_LogRef, o_LogCursor, o_WorkerInfo, o_Event, o_GetTestRunOverviewResponse, o_QueryLogsResponse, o_LogLine, o_ResolveLogRefResponse, o_GetRunMetricsResponse, o_LogFacetValue, o_LogFacetField, o_GetLogFacetsResponse, o_Empty, o_Schema_Filed_RefTargetName, o_CompiledJobActionService, o_FileContentText, o_FileContentBytes, u_ShareRecord_SnapshotView, u_Schema_FiledKind, u_Schema_Filed_RefTarget, u_CompiledJobAction, u_DslStepStep, u_AgentStepAction, u_FileContent, u_Cmd_SpecCommand, u_ProviderSettingsSettings, u_MachinePlanProviderParams, u_MachineStateProviderOutput, i_PlatformSettingsInput, i_TimeRangeInput, i_CompareRunsRequest, i_AddFavoriteRequest, i_EntityInput, i_TimingsInput, i_RemoveFavoriteRequest, i_ListFavoritesRequest, i_PageInput, i_RegisterRequest, i_LoginRequest, i_RefreshRequest, i_LogoutRequest, i_CreateAccountRequest, i_ExternalIdentityLinkInput, i_GetAccountRequest, i_LookupAccountByEmailRequest, i_GetMyAccountRequest, i_ListAccountsRequest, i_UpdateAccountRequest, i_DeleteAccountRequest, i_ChangePasswordRequest, i_ResetPasswordRequest, i_RequestPasswordResetRequest, i_ConfirmPasswordResetRequest, i_VerifyEmailRequest, i_ResendVerificationRequest, i_CreateTenantRequest, i_GetTenantRequest, i_GetTenantRequestRef, i_ListMyTenantsRequest, i_UpdateTenantRequest, i_DeleteTenantRequest, i_TransferTenantOwnershipRequest, i_LeaveTenantRequest, i_CreateRoleRequest, i_PermissionInput, i_GetRoleRequest, i_ListRolesRequest, i_UpdateRoleRequest, i_DeleteRoleRequest, i_CreateMembershipRequest, i_GetMembershipRequest, i_ListMembershipsRequest, i_UpdateMembershipRequest, i_DeleteMembershipRequest, i_GetMyPermissionsRequest, i_ListPermissionsRequest, i_CreateIdentityProviderRequest, i_GetIdentityProviderRequest, i_UpdateIdentityProviderRequest, i_DeleteIdentityProviderRequest, i_ListIdentityProvidersRequest, i_StartSSORequest, i_CompleteSSORequest, i_LinkExternalIdentityRequest, i_UnlinkExternalIdentityRequest, i_ListExternalIdentitiesRequest, i_CreateApiTokenRequest, i_ListApiTokensRequest, i_RevokeApiTokenRequest, i_SubmitRegistrationRequestRequest, i_ListRegistrationRequestsRequest, i_MarkRegistrationRequestHandledRequest, i_CreatePackageUploadRequest, i_CompleteUploadRequest, i_GetPackageRequest, i_ListPackagesRequest, i_EntityFilterInput, i_EntitySortInput, i_DeletePackageRequest, i_RatingFilterInput, i_GetSystemRatingRequest, i_GetTenantRatingRequest, i_GetPublicRatingRequest, i_GetSharedRunRequest, i_ListQuotasRequest, i_RefreshQuotasRequest, i_GetRunQuotaUsageRequest, i_CreateRecipeRequest, i_RecipeRecordInput, i_RecipeRecord_SummaryInput, i_RecipeBundleInput, i_GetRecipeRequest, i_ListRecipesRequest, i_DeleteRecipeRequest, i_CheckRecipeRequest, i_LaunchFormSchemaRequest, i_StartRunRequest, i_ListRunsRequest, i_CancelRunRequest, i_DeleteRunRequest, i_CreateShareRequest, i_ShareRecord_TargetInput, i_GetShareRequest, i_ListSharesRequest, i_RevokeShareRequest, i_SetShareExpiryRequest, i_DeleteShareRequest, i_ListStroppyVersionsRequest, i_GetSystemSettingsRequest, i_UpdateSystemSettingsRequest, i_GetPublicConfigRequest, i_GetTenantDashboardRequest, i_GetTenantSettingsRequest, i_TenantSettingsRecordInput, i_Yandex_SettingsInput, i_UpdateTenantSettingsRequest, i_SetTenantProviderSettingsRequest, i_ProviderSettingsInput, i_ProviderSettingsSettingsInput, i_Docker_SettingsInput, i_LogFilterInput, i_LogRefInput, i_LogCursorInput, i_GetTestRunOverviewRequest, i_StreamTestRunOverviewRequest, i_QueryLogsRequest, i_StreamLogsRequest, i_ResolveLogRefRequest, i_GetRunMetricsRequest, i_GetLogFacetsRequest}
+	cfg.Types = []graphql.Type{e_Status, e_Database_Kind, e_Provider, e_Verdict, e_FavoriteKind, e_RegistrationRequestStatus, e_Scope, e_Resource, e_Action, e_ApiTokenType, e_PackageRecord_Format, e_PackageRecord_Status, e_EntitySortField, e_QuotaRefreshPolicy, e_Quota_ReservationStatus, e_Severity, e_Schema_Filed_ResultType, e_Schema_Filed_Severity, e_Schema_Filed_String_StringFormat, e_Workload_Protocol, e_Trigger, e_Cmd_Streams_Mode, e_Worker_Kind, e_OperationKind, e_OutputKind, e_ShareRecord_Target_Kind, e_Yandex_Settings_PlatformId, e_Yandex_Settings_Zone, e_ListTestRunsRequest_Sort_Kind, e_LogScrollDirection, e_Source, e_Stream, e_Topology_State, e_Component_Kind, e_Connection_Kind, e_Connection_Protocol, e_Connection_Mode, e_Docker_Protocol, e_Docker_RestartPolicy, e_RuntimeNode_Kind, e_ObservationSource, e_WorkerPresence, e_Event_Kind, e_EventSeverity, o_PlatformSettings, o_RunColumn, o_CompareView, o_Comparison, o_Comparison_RunSummary, o_TimeRange, o_MetricRow, o_MetricCell, o_CompareRunsResponse, o_AddFavoriteResponse, o_FavoriteRecord, o_Entity, o_Timings, o_RemoveFavoriteResponse, o_ListFavoritesResponse, o_TokenPair, o_RegisterResponse, o_LoginResponse, o_RefreshResponse, o_LogoutResponse, o_CreateAccountResponse, o_Account, o_GetAccountResponse, o_LookupAccountByEmailResponse, o_GetMyAccountResponse, o_ListAccountsResponse, o_UpdateAccountResponse, o_DeleteAccountResponse, o_ChangePasswordResponse, o_ResetPasswordResponse, o_RequestPasswordResetResponse, o_ConfirmPasswordResetResponse, o_VerifyEmailResponse, o_ResendVerificationResponse, o_CreateTenantResponse, o_Tenant, o_Tags, o_GetTenantResponse, o_ListMyTenantsResponse, o_UpdateTenantResponse, o_DeleteTenantResponse, o_TransferTenantOwnershipResponse, o_LeaveTenantResponse, o_Permission, o_CreateRoleResponse, o_Role, o_GetRoleResponse, o_ListRolesResponse, o_UpdateRoleResponse, o_DeleteRoleResponse, o_CreateMembershipResponse, o_Membership, o_GetMembershipResponse, o_ListMembershipsResponse, o_UpdateMembershipResponse, o_DeleteMembershipResponse, o_GetMyPermissionsResponse, o_CatalogEntry, o_ListPermissionsResponse, o_CreateIdentityProviderResponse, o_IdentityProvider, o_GetIdentityProviderResponse, o_UpdateIdentityProviderResponse, o_DeleteIdentityProviderResponse, o_SsoButton, o_ListIdentityProvidersResponse, o_StartSSOResponse, o_CompleteSSOResponse, o_LinkExternalIdentityResponse, o_ExternalIdentity, o_UnlinkExternalIdentityResponse, o_ListExternalIdentitiesResponse, o_CreateApiTokenResponse, o_ApiToken, o_ListApiTokensResponse, o_RevokeApiTokenResponse, o_RegistrationRequest, o_SubmitRegistrationRequestResponse, o_ListRegistrationRequestsResponse, o_MarkRegistrationRequestHandledResponse, o_CreatePackageUploadResponse, o_PackageRecord, o_CompleteUploadResponse, o_GetPackageResponse, o_ListPackagesResponse, o_DeletePackageResponse, o_RatingEntry, o_GetSystemRatingResponse, o_GetTenantRatingResponse, o_PublicRatingEntry, o_GetPublicRatingResponse, o_GetSharedRunResponse, o_ShareRecord_Snapshot, o_SharedTestRun, o_RunMetrics, o_MetricSummary, o_SharedSuiteRun, o_QuotaView, o_Quota_Info, o_QuotaReservationView, o_ListQuotasResponse, o_RefreshQuotasResponse, o_GetRunQuotaUsageResponse, o_RecipeRecord, o_RecipeRecord_Summary, o_RecipeBundle, o_CreateRecipeResponse, o_GetRecipeResponse, o_ListRecipesResponse, o_DeleteRecipeResponse, o_CheckRecipeResponse, o_Diagnostic, o_LaunchFormSchemaResponse, o_Schema, o_Schema_Filed, o_Schema_Filed_Float, o_Schema_Filed_Double, o_Schema_Filed_Int32, o_Schema_Filed_Int64, o_Schema_Filed_UInt32, o_Schema_Filed_UInt64, o_Schema_Filed_Bool, o_Schema_Filed_String, o_Schema_Filed_Enum, o_Schema_Filed_Duration, o_Schema_Filed_Timestamp, o_Schema_Filed_List, o_Schema_Filed_Object, o_Schema_Filed_Computed, o_Schema_Filed_Rule, o_Schema_Filed_OneOf, o_Schema_Filed_Ref, o_SchemaIdentity, o_StartRunResponse, o_Run, o_Run_Summary, o_Baked, o_CompiledPlan, o_ProviderRef, o_MachineGroup, o_DiskSpec, o_ServiceSpec, o_ConfigFile, o_HealthCheck, o_CompiledJob, o_StepList, o_DslStep, o_AgentStep, o_Dir, o_Dir_Info, o_File, o_File_Info, o_File_AsRef, o_Cmd, o_Cmd_Spec, o_Cmd_Argv, o_Cmd_Script, o_Cmd_Streams, o_Cmd_Result, o_WaitStep, o_RunTopology, o_RunTopology_ServiceNode, o_RunTopology_MachineNode, o_RunState, o_Stage, o_Worker, o_PipelineOperation, o_PipelineOutput, o_ObservabilityRefs, o_FieldError, o_ListRunsResponse, o_CancelRunResponse, o_DeleteRunResponse, o_ShareRecord_Target, o_CreateShareResponse, o_ShareRecord, o_GetShareResponse, o_ListSharesResponse, o_RevokeShareResponse, o_SetShareExpiryResponse, o_DeleteShareResponse, o_ListStroppyVersionsResponse, o_GetSystemSettingsResponse, o_UpdateSystemSettingsResponse, o_GetPublicConfigResponse, o_StatusCounts, o_UpcomingSuite, o_TenantDashboard, o_GetTenantDashboardResponse, o_GetTenantSettingsResponse, o_TenantSettingsRecord, o_Yandex_Settings, o_UpdateTenantSettingsResponse, o_ProviderSettings, o_Docker_Settings, o_LogFilter, o_TestRunOverviewSnapshot, o_Topology, o_TopologySpec, o_Node, o_Component, o_Connection, o_InfrastructurePlan, o_MachinePlan, o_Docker_Container, o_Docker_VolumeMount, o_Docker_PortBinding, o_Docker_File, o_Docker_Healthcheck, o_Docker_Resources, o_Yandex_Vm, o_Yandex_Disk, o_Quota_Request, o_InfrastructureState, o_MachineState, o_Endpoint, o_Docker_ContainerOutput, o_Yandex_VmOutput, o_Quota_Allocation, o_DeploymentPlan, o_ComponentDeployment, o_RuntimeNode, o_RuntimeConnection, o_Overview, o_PipelineView, o_PipelineNode, o_LogRef, o_LogCursor, o_WorkerInfo, o_Event, o_GetTestRunOverviewResponse, o_QueryLogsResponse, o_LogLine, o_ResolveLogRefResponse, o_GetRunMetricsResponse, o_LogFacetValue, o_LogFacetField, o_GetLogFacetsResponse, o_Empty, o_Schema_Filed_RefTargetName, o_CompiledJobActionService, o_FileContentText, o_FileContentBytes, u_ShareRecord_SnapshotView, u_Schema_FiledKind, u_Schema_Filed_RefTarget, u_CompiledJobAction, u_DslStepStep, u_AgentStepAction, u_FileContent, u_Cmd_SpecCommand, u_ProviderSettingsSettings, u_MachinePlanProviderParams, u_MachineStateProviderOutput, i_PlatformSettingsInput, i_TimeRangeInput, i_CompareRunsRequest, i_AddFavoriteRequest, i_EntityInput, i_TimingsInput, i_RemoveFavoriteRequest, i_ListFavoritesRequest, i_PageInput, i_RegisterRequest, i_LoginRequest, i_RefreshRequest, i_LogoutRequest, i_CreateAccountRequest, i_ExternalIdentityLinkInput, i_GetAccountRequest, i_LookupAccountByEmailRequest, i_GetMyAccountRequest, i_ListAccountsRequest, i_UpdateAccountRequest, i_DeleteAccountRequest, i_ChangePasswordRequest, i_ResetPasswordRequest, i_RequestPasswordResetRequest, i_ConfirmPasswordResetRequest, i_VerifyEmailRequest, i_ResendVerificationRequest, i_CreateTenantRequest, i_GetTenantRequest, i_GetTenantRequestRef, i_ListMyTenantsRequest, i_UpdateTenantRequest, i_DeleteTenantRequest, i_TransferTenantOwnershipRequest, i_LeaveTenantRequest, i_CreateRoleRequest, i_PermissionInput, i_GetRoleRequest, i_ListRolesRequest, i_UpdateRoleRequest, i_DeleteRoleRequest, i_CreateMembershipRequest, i_GetMembershipRequest, i_ListMembershipsRequest, i_UpdateMembershipRequest, i_DeleteMembershipRequest, i_GetMyPermissionsRequest, i_ListPermissionsRequest, i_CreateIdentityProviderRequest, i_GetIdentityProviderRequest, i_UpdateIdentityProviderRequest, i_DeleteIdentityProviderRequest, i_ListIdentityProvidersRequest, i_StartSSORequest, i_CompleteSSORequest, i_LinkExternalIdentityRequest, i_UnlinkExternalIdentityRequest, i_ListExternalIdentitiesRequest, i_CreateApiTokenRequest, i_ListApiTokensRequest, i_RevokeApiTokenRequest, i_SubmitRegistrationRequestRequest, i_ListRegistrationRequestsRequest, i_MarkRegistrationRequestHandledRequest, i_CreatePackageUploadRequest, i_CompleteUploadRequest, i_GetPackageRequest, i_ListPackagesRequest, i_EntityFilterInput, i_EntitySortInput, i_DeletePackageRequest, i_RatingFilterInput, i_GetSystemRatingRequest, i_GetTenantRatingRequest, i_GetPublicRatingRequest, i_GetSharedRunRequest, i_ListQuotasRequest, i_RefreshQuotasRequest, i_GetRunQuotaUsageRequest, i_CreateRecipeRequest, i_RecipeRecordInput, i_RecipeRecord_SummaryInput, i_RecipeBundleInput, i_GetRecipeRequest, i_ListRecipesRequest, i_DeleteRecipeRequest, i_CheckRecipeRequest, i_LaunchFormSchemaRequest, i_SchemaInput, i_Schema_FiledInput, i_Schema_FiledKindInput, i_Schema_Filed_FloatInput, i_Schema_Filed_DoubleInput, i_Schema_Filed_Int32Input, i_Schema_Filed_Int64Input, i_Schema_Filed_UInt32Input, i_Schema_Filed_UInt64Input, i_Schema_Filed_BoolInput, i_Schema_Filed_StringInput, i_Schema_Filed_EnumInput, i_Schema_Filed_DurationInput, i_Schema_Filed_TimestampInput, i_Schema_Filed_ListInput, i_Schema_Filed_ObjectInput, i_Schema_Filed_ComputedInput, i_Schema_Filed_RuleInput, i_Schema_Filed_OneOfInput, i_Schema_Filed_RefInput, i_Schema_Filed_RefTargetInput, i_SchemaIdentityInput, i_StartRunRequest, i_FilledInput, i_SchemaRefInput, i_SchemaRefSource, i_ListRunsRequest, i_CancelRunRequest, i_DeleteRunRequest, i_CreateShareRequest, i_ShareRecord_TargetInput, i_GetShareRequest, i_ListSharesRequest, i_RevokeShareRequest, i_SetShareExpiryRequest, i_DeleteShareRequest, i_ListStroppyVersionsRequest, i_GetSystemSettingsRequest, i_UpdateSystemSettingsRequest, i_GetPublicConfigRequest, i_GetTenantDashboardRequest, i_GetTenantSettingsRequest, i_TenantSettingsRecordInput, i_Yandex_SettingsInput, i_UpdateTenantSettingsRequest, i_SetTenantProviderSettingsRequest, i_ProviderSettingsInput, i_ProviderSettingsSettingsInput, i_Docker_SettingsInput, i_LogFilterInput, i_LogRefInput, i_LogCursorInput, i_GetTestRunOverviewRequest, i_StreamTestRunOverviewRequest, i_QueryLogsRequest, i_StreamLogsRequest, i_ResolveLogRefRequest, i_GetRunMetricsRequest, i_GetLogFacetsRequest}
 	return graphql.NewSchema(cfg)
 }

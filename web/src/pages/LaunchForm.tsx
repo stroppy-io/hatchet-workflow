@@ -1,20 +1,28 @@
 // LaunchForm — /recipes/:id/launch. Fetches the composed schemapb form
 // schema (RecipeService.LaunchFormSchema) and renders it via
 // LaunchFormRenderer; on submit it launches the stored recipe bundle
-// (RecipeService.StartRun) and navigates to the new run, exactly like
-// RecipeEditor's old onRun did for the no-inputs path.
+// (RecipeService.StartRun) with the form's baked payload and navigates to
+// the new run, exactly like RecipeEditor's old onRun did for the no-inputs
+// path.
 //
-// StartRunRequest does not yet carry the form's baked payload on the wire
-// (see recipe.proto — tenant_id/recipe_id only); wiring the Filled/Baked
-// snapshot through StartRun is out of this task's scope (no Go/proto
-// changes here). BakeForm still runs client-side via schemapb — it seals
-// and validates the submission — the baked JSON itself is not yet sent.
+// Two distinct error surfaces:
+//   - onInvalid (LaunchFormRenderer's own prop): the LOCAL WASM Bake
+//     rejected the submission before it ever reached the network — never
+//     even calls onSubmit.
+//   - a StartRunFieldError thrown by startRun: the SERVER re-Baked the
+//     (already locally-sealed) payload and rejected it — schemapb is the
+//     single source of truth on both sides, but only the server-side Bake
+//     is actually trusted (StartRun's own doc comment).
+// Both render through the same fieldErrors state, keyed by field path
+// (errorsByField), so the form shows one consistent per-field error UI
+// regardless of which side caught the problem.
 import { useEffect, useState, useCallback } from "react";
 import { AlertCircle, ArrowLeft, Loader2 } from "lucide-react";
+import { errorsByField } from "@stroppy-io/schemapb-react";
+import type { BakedJson, FieldErrorJson, Schema } from "@stroppy-io/schemapb";
 import { useNavigate, useParams, useTenantSlug } from "@/lib/router";
 import { LaunchFormRenderer } from "@/components/launch-form/LaunchFormRenderer";
-import { fetchLaunchFormSchema, startRun } from "@/services/recipe";
-import type { Schema } from "@stroppy-io/schemapb";
+import { fetchLaunchFormSchema, startRun, StartRunFieldError } from "@/services/recipe";
 
 export function LaunchForm() {
   const { id } = useParams<{ id: string }>();
@@ -26,6 +34,7 @@ export function LaunchForm() {
   const [loadError, setLoadError] = useState<string | null>(null);
   const [launching, setLaunching] = useState(false);
   const [launchError, setLaunchError] = useState<string | null>(null);
+  const [fieldErrors, setFieldErrors] = useState<Record<string, FieldErrorJson>>({});
 
   useEffect(() => {
     if (!slug || !id) return;
@@ -37,17 +46,29 @@ export function LaunchForm() {
       .finally(() => setLoading(false));
   }, [slug, id]);
 
-  const onSubmit = useCallback(() => {
-    if (!slug || !id) return;
-    setLaunching(true);
-    setLaunchError(null);
-    startRun(slug, id)
-      .then((runId) => navigate(`/runs/${runId}`))
-      .catch((e) => {
-        setLaunchError(e instanceof Error ? e.message : String(e));
-        setLaunching(false);
-      });
-  }, [slug, id, navigate]);
+  const onSubmit = useCallback(
+    (baked: BakedJson) => {
+      if (!slug || !id) return;
+      setLaunching(true);
+      setLaunchError(null);
+      setFieldErrors({});
+      startRun(slug, id, baked)
+        .then((runId) => navigate(`/runs/${runId}`))
+        .catch((e) => {
+          if (e instanceof StartRunFieldError) {
+            setFieldErrors(errorsByField(e.fieldErrors));
+          } else {
+            setLaunchError(e instanceof Error ? e.message : String(e));
+          }
+          setLaunching(false);
+        });
+    },
+    [slug, id, navigate],
+  );
+
+  const onInvalid = useCallback((errors: Record<string, FieldErrorJson>) => {
+    setFieldErrors(errors);
+  }, []);
 
   if (loading) {
     return (
@@ -85,7 +106,24 @@ export function LaunchForm() {
             <AlertCircle className="h-4 w-4" /> {launchError}
           </div>
         )}
-        <LaunchFormRenderer schema={schema} onSubmit={onSubmit} submitLabel={launching ? "Launching…" : "Launch"} />
+        {Object.keys(fieldErrors).length > 0 && (
+          <div
+            role="alert"
+            className="mb-4 flex flex-col gap-1 border border-red-900/50 bg-red-950/30 px-3 py-2 text-xs text-red-400"
+          >
+            {Object.entries(fieldErrors).map(([field, e]) => (
+              <div key={field}>
+                <span className="font-semibold">{field}</span>: {e.message}
+              </div>
+            ))}
+          </div>
+        )}
+        <LaunchFormRenderer
+          schema={schema}
+          onSubmit={onSubmit}
+          onInvalid={onInvalid}
+          submitLabel={launching ? "Launching…" : "Launch"}
+        />
       </div>
     </div>
   );

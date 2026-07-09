@@ -661,7 +661,12 @@ type StartRunRequest struct {
 	// tenant_id scopes the request to the owning tenant.
 	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	// recipe_id is the recipe record whose stored bundle is launched.
-	RecipeId      string `protobuf:"bytes,2,opt,name=recipe_id,json=recipeId,proto3" json:"recipe_id,omitempty"`
+	RecipeId string `protobuf:"bytes,2,opt,name=recipe_id,json=recipeId,proto3" json:"recipe_id,omitempty"`
+	// filled is the launch form's submitted values (schemapb.Filled), sealed
+	// browser-side by the WASM engine's Bake and re-baked server-side
+	// (BakeForm) before launch. Optional: absent means "launch with the
+	// bundle's static provider.params/no workflow inputs" (today's behavior).
+	Filled        *schemapb.Filled `protobuf:"bytes,3,opt,name=filled,proto3" json:"filled,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -710,6 +715,13 @@ func (x *StartRunRequest) GetRecipeId() string {
 	return ""
 }
 
+func (x *StartRunRequest) GetFilled() *schemapb.Filled {
+	if x != nil {
+		return x.Filled
+	}
+	return nil
+}
+
 // StartRunResponse returns the persisted, launched run record. The run
 // reuses models.Run so overview/metrics/logs work unchanged for
 // a recipe run; its spec/topology fields are left empty (a recipe run has
@@ -717,8 +729,12 @@ func (x *StartRunRequest) GetRecipeId() string {
 // launched RunRecipeWorkflow instead).
 type StartRunResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
-	// run is the persisted, launched run record.
-	Run           *models.Run `protobuf:"bytes,1,opt,name=run,proto3" json:"run,omitempty"`
+	// run is the persisted, launched run record. Unset when field_errors is
+	// non-empty (a field-error bake never mints a run).
+	Run *models.Run `protobuf:"bytes,1,opt,name=run,proto3" json:"run,omitempty"`
+	// field_errors is non-empty exactly when filled failed BakeForm — the
+	// run is NOT created in that case; run is unset.
+	FieldErrors   []*schemapb.FieldError `protobuf:"bytes,2,rep,name=field_errors,json=fieldErrors,proto3" json:"field_errors,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -756,6 +772,13 @@ func (*StartRunResponse) Descriptor() ([]byte, []int) {
 func (x *StartRunResponse) GetRun() *models.Run {
 	if x != nil {
 		return x.Run
+	}
+	return nil
+}
+
+func (x *StartRunResponse) GetFieldErrors() []*schemapb.FieldError {
+	if x != nil {
+		return x.FieldErrors
 	}
 	return nil
 }
@@ -1110,12 +1133,14 @@ const file_cloud_v1_api_recipe_proto_rawDesc = "" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12&\n" +
 	"\trecipe_id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\brecipeId\"D\n" +
 	"\x18LaunchFormSchemaResponse\x12(\n" +
-	"\x06schema\x18\x01 \x01(\v2\x10.schemapb.SchemaR\x06schema\"a\n" +
+	"\x06schema\x18\x01 \x01(\v2\x10.schemapb.SchemaR\x06schema\"\x8b\x01\n" +
 	"\x0fStartRunRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12&\n" +
-	"\trecipe_id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\brecipeId\"D\n" +
-	"\x10StartRunResponse\x120\n" +
-	"\x03run\x18\x01 \x01(\v2\x14.cloud.v1.models.RunB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x03run\"\x8a\x01\n" +
+	"\trecipe_id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\brecipeId\x12(\n" +
+	"\x06filled\x18\x03 \x01(\v2\x10.schemapb.FilledR\x06filled\"s\n" +
+	"\x10StartRunResponse\x12&\n" +
+	"\x03run\x18\x01 \x01(\v2\x14.cloud.v1.models.RunR\x03run\x127\n" +
+	"\ffield_errors\x18\x02 \x03(\v2\x14.schemapb.FieldErrorR\vfieldErrors\"\x8a\x01\n" +
 	"\x0fListRunsRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12$\n" +
 	"\trecipe_id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x18@R\brecipeId\x12)\n" +
@@ -1194,7 +1219,9 @@ var file_cloud_v1_api_recipe_proto_goTypes = []any{
 	(*common.Page)(nil),              // 22: cloud.v1.common.Page
 	(*dsl.Diagnostic)(nil),           // 23: cloud.v1.dsl.Diagnostic
 	(*schemapb.Schema)(nil),          // 24: schemapb.Schema
-	(*models.Run)(nil),               // 25: cloud.v1.models.Run
+	(*schemapb.Filled)(nil),          // 25: schemapb.Filled
+	(*models.Run)(nil),               // 26: cloud.v1.models.Run
+	(*schemapb.FieldError)(nil),      // 27: schemapb.FieldError
 }
 var file_cloud_v1_api_recipe_proto_depIdxs = []int32{
 	20, // 0: cloud.v1.api.CreateRecipeRequest.recipe:type_name -> cloud.v1.models.RecipeRecord
@@ -1205,34 +1232,36 @@ var file_cloud_v1_api_recipe_proto_depIdxs = []int32{
 	20, // 5: cloud.v1.api.ListRecipesResponse.recipes:type_name -> cloud.v1.models.RecipeRecord
 	23, // 6: cloud.v1.api.CheckRecipeResponse.diagnostics:type_name -> cloud.v1.dsl.Diagnostic
 	24, // 7: cloud.v1.api.LaunchFormSchemaResponse.schema:type_name -> schemapb.Schema
-	25, // 8: cloud.v1.api.StartRunResponse.run:type_name -> cloud.v1.models.Run
-	22, // 9: cloud.v1.api.ListRunsRequest.page:type_name -> cloud.v1.common.Page
-	25, // 10: cloud.v1.api.ListRunsResponse.runs:type_name -> cloud.v1.models.Run
-	0,  // 11: cloud.v1.api.RecipeService.CreateRecipe:input_type -> cloud.v1.api.CreateRecipeRequest
-	2,  // 12: cloud.v1.api.RecipeService.GetRecipe:input_type -> cloud.v1.api.GetRecipeRequest
-	4,  // 13: cloud.v1.api.RecipeService.ListRecipes:input_type -> cloud.v1.api.ListRecipesRequest
-	6,  // 14: cloud.v1.api.RecipeService.DeleteRecipe:input_type -> cloud.v1.api.DeleteRecipeRequest
-	8,  // 15: cloud.v1.api.RecipeService.CheckRecipe:input_type -> cloud.v1.api.CheckRecipeRequest
-	10, // 16: cloud.v1.api.RecipeService.LaunchFormSchema:input_type -> cloud.v1.api.LaunchFormSchemaRequest
-	12, // 17: cloud.v1.api.RecipeService.StartRun:input_type -> cloud.v1.api.StartRunRequest
-	14, // 18: cloud.v1.api.RecipeService.ListRuns:input_type -> cloud.v1.api.ListRunsRequest
-	16, // 19: cloud.v1.api.RecipeService.CancelRun:input_type -> cloud.v1.api.CancelRunRequest
-	18, // 20: cloud.v1.api.RecipeService.DeleteRun:input_type -> cloud.v1.api.DeleteRunRequest
-	1,  // 21: cloud.v1.api.RecipeService.CreateRecipe:output_type -> cloud.v1.api.CreateRecipeResponse
-	3,  // 22: cloud.v1.api.RecipeService.GetRecipe:output_type -> cloud.v1.api.GetRecipeResponse
-	5,  // 23: cloud.v1.api.RecipeService.ListRecipes:output_type -> cloud.v1.api.ListRecipesResponse
-	7,  // 24: cloud.v1.api.RecipeService.DeleteRecipe:output_type -> cloud.v1.api.DeleteRecipeResponse
-	9,  // 25: cloud.v1.api.RecipeService.CheckRecipe:output_type -> cloud.v1.api.CheckRecipeResponse
-	11, // 26: cloud.v1.api.RecipeService.LaunchFormSchema:output_type -> cloud.v1.api.LaunchFormSchemaResponse
-	13, // 27: cloud.v1.api.RecipeService.StartRun:output_type -> cloud.v1.api.StartRunResponse
-	15, // 28: cloud.v1.api.RecipeService.ListRuns:output_type -> cloud.v1.api.ListRunsResponse
-	17, // 29: cloud.v1.api.RecipeService.CancelRun:output_type -> cloud.v1.api.CancelRunResponse
-	19, // 30: cloud.v1.api.RecipeService.DeleteRun:output_type -> cloud.v1.api.DeleteRunResponse
-	21, // [21:31] is the sub-list for method output_type
-	11, // [11:21] is the sub-list for method input_type
-	11, // [11:11] is the sub-list for extension type_name
-	11, // [11:11] is the sub-list for extension extendee
-	0,  // [0:11] is the sub-list for field type_name
+	25, // 8: cloud.v1.api.StartRunRequest.filled:type_name -> schemapb.Filled
+	26, // 9: cloud.v1.api.StartRunResponse.run:type_name -> cloud.v1.models.Run
+	27, // 10: cloud.v1.api.StartRunResponse.field_errors:type_name -> schemapb.FieldError
+	22, // 11: cloud.v1.api.ListRunsRequest.page:type_name -> cloud.v1.common.Page
+	26, // 12: cloud.v1.api.ListRunsResponse.runs:type_name -> cloud.v1.models.Run
+	0,  // 13: cloud.v1.api.RecipeService.CreateRecipe:input_type -> cloud.v1.api.CreateRecipeRequest
+	2,  // 14: cloud.v1.api.RecipeService.GetRecipe:input_type -> cloud.v1.api.GetRecipeRequest
+	4,  // 15: cloud.v1.api.RecipeService.ListRecipes:input_type -> cloud.v1.api.ListRecipesRequest
+	6,  // 16: cloud.v1.api.RecipeService.DeleteRecipe:input_type -> cloud.v1.api.DeleteRecipeRequest
+	8,  // 17: cloud.v1.api.RecipeService.CheckRecipe:input_type -> cloud.v1.api.CheckRecipeRequest
+	10, // 18: cloud.v1.api.RecipeService.LaunchFormSchema:input_type -> cloud.v1.api.LaunchFormSchemaRequest
+	12, // 19: cloud.v1.api.RecipeService.StartRun:input_type -> cloud.v1.api.StartRunRequest
+	14, // 20: cloud.v1.api.RecipeService.ListRuns:input_type -> cloud.v1.api.ListRunsRequest
+	16, // 21: cloud.v1.api.RecipeService.CancelRun:input_type -> cloud.v1.api.CancelRunRequest
+	18, // 22: cloud.v1.api.RecipeService.DeleteRun:input_type -> cloud.v1.api.DeleteRunRequest
+	1,  // 23: cloud.v1.api.RecipeService.CreateRecipe:output_type -> cloud.v1.api.CreateRecipeResponse
+	3,  // 24: cloud.v1.api.RecipeService.GetRecipe:output_type -> cloud.v1.api.GetRecipeResponse
+	5,  // 25: cloud.v1.api.RecipeService.ListRecipes:output_type -> cloud.v1.api.ListRecipesResponse
+	7,  // 26: cloud.v1.api.RecipeService.DeleteRecipe:output_type -> cloud.v1.api.DeleteRecipeResponse
+	9,  // 27: cloud.v1.api.RecipeService.CheckRecipe:output_type -> cloud.v1.api.CheckRecipeResponse
+	11, // 28: cloud.v1.api.RecipeService.LaunchFormSchema:output_type -> cloud.v1.api.LaunchFormSchemaResponse
+	13, // 29: cloud.v1.api.RecipeService.StartRun:output_type -> cloud.v1.api.StartRunResponse
+	15, // 30: cloud.v1.api.RecipeService.ListRuns:output_type -> cloud.v1.api.ListRunsResponse
+	17, // 31: cloud.v1.api.RecipeService.CancelRun:output_type -> cloud.v1.api.CancelRunResponse
+	19, // 32: cloud.v1.api.RecipeService.DeleteRun:output_type -> cloud.v1.api.DeleteRunResponse
+	23, // [23:33] is the sub-list for method output_type
+	13, // [13:23] is the sub-list for method input_type
+	13, // [13:13] is the sub-list for extension type_name
+	13, // [13:13] is the sub-list for extension extendee
+	0,  // [0:13] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_api_recipe_proto_init() }

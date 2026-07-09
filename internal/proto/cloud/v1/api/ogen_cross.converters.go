@@ -2502,6 +2502,79 @@ func FavoriteRecordFromOgen(src *rest.FavoriteRecord) (*models.FavoriteRecord, e
 	return dst, nil
 }
 
+// FieldErrorToOgen converts schemapb.FieldError (an imported type) to its ogen representation.
+func FieldErrorToOgen(src *schemapb.FieldError) (*rest.FieldError, error) {
+	var dst rest.FieldError
+	if src == nil {
+		return &dst, nil
+	}
+	dst.Field.SetTo(string(src.GetField()))
+	dst.Message.SetTo(string(src.GetMessage()))
+	if src.RuleId != nil {
+		dst.RuleId.SetTo(string(src.GetRuleId()))
+	}
+	var en1 rest.FieldErrorSeverity
+	switch src.GetSeverity() {
+	case schemapb.Schema_Filed_SEVERITY_UNSPECIFIED:
+		en1 = rest.FieldErrorSeverity0
+	case schemapb.Schema_Filed_ERROR:
+		en1 = rest.FieldErrorSeverity1
+	case schemapb.Schema_Filed_WARNING:
+		en1 = rest.FieldErrorSeverity2
+	default:
+		return nil, fmt.Errorf("schemapb.FieldError.severity: enum value %v has no ogen FieldErrorSeverity variant", src.GetSeverity())
+	}
+	dst.Severity.SetTo(en1)
+	dst.Code.SetTo(string(src.GetCode()))
+	c2 := convert.Map(src.GetParams(), func(v string) string {
+		return string(v)
+	})
+	dst.Params.SetTo(c2)
+	return &dst, nil
+}
+
+// FieldErrorFromOgen converts the ogen representation back to FieldError.
+func FieldErrorFromOgen(src *rest.FieldError) (*schemapb.FieldError, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &schemapb.FieldError{}
+	if v1, ok := src.Field.Get(); ok {
+		dst.Field = string(v1)
+	}
+	if v2, ok := src.Message.Get(); ok {
+		dst.Message = string(v2)
+	}
+	if v3, ok := src.RuleId.Get(); ok {
+		p4 := string(v3)
+		dst.RuleId = &p4
+	}
+	if v5, ok := src.Severity.Get(); ok {
+		var en6 schemapb.Schema_Filed_Severity
+		switch v5 {
+		case rest.FieldErrorSeverity0:
+			en6 = schemapb.Schema_Filed_SEVERITY_UNSPECIFIED
+		case rest.FieldErrorSeverity1:
+			en6 = schemapb.Schema_Filed_ERROR
+		case rest.FieldErrorSeverity2:
+			en6 = schemapb.Schema_Filed_WARNING
+		default:
+			return nil, fmt.Errorf("schemapb.FieldError.severity: enum value %v has no Schema_Filed_Severity variant", v5)
+		}
+		dst.Severity = en6
+	}
+	if v7, ok := src.Code.Get(); ok {
+		dst.Code = string(v7)
+	}
+	if mv8, ok := src.Params.Get(); ok {
+		c9 := convert.Map(mv8, func(v string) string {
+			return string(v)
+		})
+		dst.Params = c9
+	}
+	return dst, nil
+}
+
 // FileToOgen converts common.File (an imported type) to its ogen representation.
 func FileToOgen(src *common.File) (*rest.File, error) {
 	var dst rest.File
@@ -3682,6 +3755,48 @@ func FiledUInt64FromOgen(src *rest.FiledUInt64) (*schemapb.Schema_Filed_UInt64, 
 		p16 := uint64(v15)
 		dst.MultipleOf = &p16
 	}
+	return dst, nil
+}
+
+// FilledToOgen converts schemapb.Filled (an imported type) to its ogen representation.
+func FilledToOgen(src *schemapb.Filled) (*rest.Filled, error) {
+	var dst rest.Filled
+	if src == nil {
+		return &dst, nil
+	}
+	if src.Schema != nil {
+		o1, err := SchemaRefToOgen(src.GetSchema())
+		if err != nil {
+			return nil, err
+		}
+		dst.Schema.SetTo(*o1)
+	}
+	j2, err := convert.StructToJSON(src.GetValues())
+	if err != nil {
+		return nil, err
+	}
+	dst.Values = j2
+	return &dst, nil
+}
+
+// FilledFromOgen converts the ogen representation back to Filled.
+func FilledFromOgen(src *rest.Filled) (*schemapb.Filled, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &schemapb.Filled{}
+	if v1, ok := src.Schema.Get(); ok {
+		m2, err := SchemaRefFromOgen(&v1)
+		if err != nil {
+			return nil, err
+		}
+		dst.Schema = m2
+	}
+	j3, err := convert.JSONToStruct(src.Values)
+	if err != nil {
+		return nil, err
+	}
+	dst.Values = j3
 	return dst, nil
 }
 
@@ -8093,6 +8208,52 @@ func SchemaIdentityFromOgen(src *rest.SchemaIdentity) (*schemapb.SchemaIdentity,
 	}
 	if v3, ok := src.Version.Get(); ok {
 		dst.Version = string(v3)
+	}
+	return dst, nil
+}
+
+// SchemaRefToOgen converts schemapb.SchemaRef (an imported type) to its ogen representation.
+func SchemaRefToOgen(src *schemapb.SchemaRef) (*rest.SchemaRef, error) {
+	var dst rest.SchemaRef
+	if src == nil {
+		return &dst, nil
+	}
+	switch src.GetSource().(type) {
+	case *schemapb.SchemaRef_Id:
+		o1, err := SchemaIdentityToOgen(src.GetId())
+		if err != nil {
+			return nil, err
+		}
+		dst.ID.SetTo(*o1)
+	case *schemapb.SchemaRef_Schema:
+		o2, err := SchemaToOgen(src.GetSchema())
+		if err != nil {
+			return nil, err
+		}
+		dst.Schema.SetTo(*o2)
+	}
+	return &dst, nil
+}
+
+// SchemaRefFromOgen converts the ogen representation back to SchemaRef.
+func SchemaRefFromOgen(src *rest.SchemaRef) (*schemapb.SchemaRef, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &schemapb.SchemaRef{}
+	if v1, ok := src.ID.Get(); ok {
+		m2, err := SchemaIdentityFromOgen(&v1)
+		if err != nil {
+			return nil, err
+		}
+		dst.Source = &schemapb.SchemaRef_Id{Id: m2}
+	}
+	if v3, ok := src.Schema.Get(); ok {
+		m4, err := SchemaFromOgen(&v3)
+		if err != nil {
+			return nil, err
+		}
+		dst.Source = &schemapb.SchemaRef_Schema{Schema: m4}
 	}
 	return dst, nil
 }

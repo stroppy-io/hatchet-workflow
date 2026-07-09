@@ -4,6 +4,7 @@ import (
 	"context"
 	"log/slog"
 
+	"github.com/stroppy-io/schemapb/schemapb"
 	"go.temporal.io/sdk/client"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/domain/settings"
@@ -63,7 +64,15 @@ func NewRecipeWorkflows(c client.Client, bootstrap settings.AgentBootstrapSource
 // runrecipe.go's package doc). Per-node agent auth for recipe runs is a
 // documented follow-up for the provisioning activities (Task 4+), not this
 // launch path.
-func (w *RecipeWorkflows) LaunchRecipeRun(ctx context.Context, run *models.Run, bundle map[string][]byte) error {
+func (w *RecipeWorkflows) LaunchRecipeRun(ctx context.Context, run *models.Run, bundle map[string][]byte, baked *schemapb.Baked) error {
+	// baked is accepted here for recipe.RecipeWorkflows conformance but not
+	// yet threaded into RunRecipeInput: RunRecipeWorkflow/
+	// CompileRecipeActivity don't consume a Baked snapshot yet (see
+	// internal/dsl/schema.ApplyBakedInputs) — that wiring is a follow-up
+	// task. StartRun already produces and validates it (server-side
+	// BakeForm); this adapter will start passing it through once the
+	// consuming side exists.
+	_ = baked
 	in, err := w.runRecipeInput(ctx, run, bundle)
 	if err != nil {
 		return err

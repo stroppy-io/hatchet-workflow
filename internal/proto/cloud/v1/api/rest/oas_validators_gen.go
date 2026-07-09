@@ -6270,6 +6270,49 @@ func (s FavoriteRecordKind) Validate() error {
 	}
 }
 
+func (s *FieldError) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if value, ok := s.Severity.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "severity",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s FieldErrorSeverity) Validate() error {
+	switch s {
+	case 0:
+		return nil
+	case 1:
+		return nil
+	case 2:
+		return nil
+	default:
+		return errors.Errorf("invalid value: %v", s)
+	}
+}
+
 func (s *File) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -7289,6 +7332,36 @@ func (s *FiledUInt32) Validate() error {
 	}(); err != nil {
 		failures = append(failures, validate.FieldError{
 			Name:  "notIn",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
+func (s *Filled) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if value, ok := s.Schema.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "schema",
 			Error: err,
 		})
 	}
@@ -21422,6 +21495,36 @@ func (s SchemaDefs) Validate() error {
 	return nil
 }
 
+func (s *SchemaRef) Validate() error {
+	if s == nil {
+		return validate.ErrNilPointer
+	}
+
+	var failures []validate.FieldError
+	if err := func() error {
+		if value, ok := s.Schema.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "schema",
+			Error: err,
+		})
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+	return nil
+}
+
 func (s *Script) Validate() error {
 	if s == nil {
 		return validate.ErrNilPointer
@@ -23173,6 +23276,24 @@ func (s *StartRunRequest) Validate() error {
 
 	var failures []validate.FieldError
 	if err := func() error {
+		if value, ok := s.Filled.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "filled",
+			Error: err,
+		})
+	}
+	if err := func() error {
 		if value, ok := s.RecipeId.Get(); ok {
 			if err := func() error {
 				if err := (validate.String{
@@ -23245,8 +23366,40 @@ func (s *StartRunResponse) Validate() error {
 
 	var failures []validate.FieldError
 	if err := func() error {
-		if err := s.Run.Validate(); err != nil {
-			return err
+		var failures []validate.FieldError
+		for i, elem := range s.FieldErrors {
+			if err := func() error {
+				if err := elem.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				failures = append(failures, validate.FieldError{
+					Name:  fmt.Sprintf("[%d]", i),
+					Error: err,
+				})
+			}
+		}
+		if len(failures) > 0 {
+			return &validate.Error{Fields: failures}
+		}
+		return nil
+	}(); err != nil {
+		failures = append(failures, validate.FieldError{
+			Name:  "fieldErrors",
+			Error: err,
+		})
+	}
+	if err := func() error {
+		if value, ok := s.Run.Get(); ok {
+			if err := func() error {
+				if err := value.Validate(); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return err
+			}
 		}
 		return nil
 	}(); err != nil {

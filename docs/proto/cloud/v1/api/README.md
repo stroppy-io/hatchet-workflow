@@ -6612,6 +6612,17 @@ go_name: Slug</pre></td>
 <th>Description</th>
 </tr>
 <tr>
+<td>filled</td>
+<td><a href="../../../schemapb/README.md#schemapb-filled">schemapb.Filled</a></td>
+<td><pre>
+//filled is the launch form's submitted values (schemapb.Filled), sealed
+//browser-side by the WASM engine's Bake and re-baked server-side
+//(BakeForm) before launch. Optional: absent means "launch with the
+//bundle's static provider.params/no workflow inputs" (today's behavior).<br>
+
+json_name: filled
+go_name: Filled</pre></td>
+</tr><tr>
 <td>recipe_id</td>
 <td>string</td>
 <td><pre>
@@ -6650,10 +6661,20 @@ go_name: TenantId</pre></td>
 <th>Description</th>
 </tr>
 <tr>
+<td>field_errors</td>
+<td><a href="../../../schemapb/README.md#schemapb-fielderror">schemapb.FieldError</a></td>
+<td><pre>
+//field_errors is non-empty exactly when filled failed BakeForm — the
+//run is NOT created in that case; run is unset.<br>
+
+json_name: fieldErrors
+go_name: FieldErrors</pre></td>
+</tr><tr>
 <td>run</td>
 <td><a href="../models/README.md#cloud-v1-models-run">cloud.v1.models.Run</a></td>
 <td><pre>
-//run is the persisted, launched run record.<br>
+//run is the persisted, launched run record. Unset when field_errors is
+//non-empty (a field-error bake never mints a run).<br>
 
 json_name: run
 go_name: Run</pre></td>

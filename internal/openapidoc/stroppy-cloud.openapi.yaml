@@ -1496,6 +1496,29 @@ components:
             required:
                 - entity
             type: object
+        FieldError:
+            additionalProperties: false
+            properties:
+                code:
+                    type: string
+                field:
+                    type: string
+                message:
+                    type: string
+                params:
+                    additionalProperties:
+                        type: string
+                    type: object
+                ruleId:
+                    type: string
+                severity:
+                    enum:
+                        - 0
+                        - 1
+                        - 2
+                    format: int32
+                    type: integer
+            type: object
         File:
             additionalProperties: false
             oneOf:
@@ -1942,6 +1965,13 @@ components:
                         format: uint64
                         type: string
                     type: array
+            type: object
+        Filled:
+            additionalProperties: false
+            properties:
+                schema:
+                    $ref: '#/components/schemas/SchemaRef'
+                values: {}
             type: object
         GetAccountRequest:
             additionalProperties: false
@@ -5265,6 +5295,19 @@ components:
                 version:
                     type: string
             type: object
+        SchemaRef:
+            additionalProperties: false
+            oneOf:
+                - required:
+                    - id
+                - required:
+                    - schema
+            properties:
+                id:
+                    $ref: '#/components/schemas/SchemaIdentity'
+                schema:
+                    $ref: '#/components/schemas/Schema'
+            type: object
         Script:
             additionalProperties: false
             properties:
@@ -5750,6 +5793,8 @@ components:
         StartRunRequest:
             additionalProperties: false
             properties:
+                filled:
+                    $ref: '#/components/schemas/Filled'
                 recipeId:
                     maxLength: 64
                     minLength: 1
@@ -5762,10 +5807,12 @@ components:
         StartRunResponse:
             additionalProperties: false
             properties:
+                fieldErrors:
+                    items:
+                        $ref: '#/components/schemas/FieldError'
+                    type: array
                 run:
                     $ref: '#/components/schemas/Run'
-            required:
-                - run
             type: object
         StartSSORequest:
             additionalProperties: false
