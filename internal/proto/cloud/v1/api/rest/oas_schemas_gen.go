@@ -4285,6 +4285,7 @@ type Filed struct {
 	Int32       OptFiledInt32     `json:"int32"`
 	Int64       OptFiledInt64     `json:"int64"`
 	List        OptList           `json:"list"`
+	Map         OptMap            `json:"map"`
 	Name        OptString         `json:"name"`
 	Normalize   OptString         `json:"normalize"`
 	Nullable    OptBool           `json:"nullable"`
@@ -4371,6 +4372,11 @@ func (s *Filed) GetInt64() OptFiledInt64 {
 // GetList returns the value of List.
 func (s *Filed) GetList() OptList {
 	return s.List
+}
+
+// GetMap returns the value of Map.
+func (s *Filed) GetMap() OptMap {
+	return s.Map
 }
 
 // GetName returns the value of Name.
@@ -4521,6 +4527,11 @@ func (s *Filed) SetInt64(val OptFiledInt64) {
 // SetList sets the value of List.
 func (s *Filed) SetList(val OptList) {
 	s.List = val
+}
+
+// SetMap sets the value of Map.
+func (s *Filed) SetMap(val OptMap) {
+	s.Map = val
 }
 
 // SetName sets the value of Name.
@@ -9077,6 +9088,43 @@ func (MachineStateStatus) AllValues() []MachineStateStatus {
 		MachineStateStatus10,
 		MachineStateStatus11,
 	}
+}
+
+// Ref: #/components/schemas/Map
+type Map struct {
+	MaxEntries  OptStringUint64 `json:"maxEntries"`
+	MinEntries  OptStringUint64 `json:"minEntries"`
+	ValueSchema OptSchema       `json:"valueSchema"`
+}
+
+// GetMaxEntries returns the value of MaxEntries.
+func (s *Map) GetMaxEntries() OptStringUint64 {
+	return s.MaxEntries
+}
+
+// GetMinEntries returns the value of MinEntries.
+func (s *Map) GetMinEntries() OptStringUint64 {
+	return s.MinEntries
+}
+
+// GetValueSchema returns the value of ValueSchema.
+func (s *Map) GetValueSchema() OptSchema {
+	return s.ValueSchema
+}
+
+// SetMaxEntries sets the value of MaxEntries.
+func (s *Map) SetMaxEntries(val OptStringUint64) {
+	s.MaxEntries = val
+}
+
+// SetMinEntries sets the value of MinEntries.
+func (s *Map) SetMinEntries(val OptStringUint64) {
+	s.MinEntries = val
+}
+
+// SetValueSchema sets the value of ValueSchema.
+func (s *Map) SetValueSchema(val OptSchema) {
+	s.ValueSchema = val
 }
 
 // Ref: #/components/schemas/MarkRegistrationRequestHandledRequest
@@ -14100,6 +14148,52 @@ func (o OptMachineStateStatus) Get() (v MachineStateStatus, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptMachineStateStatus) Or(d MachineStateStatus) MachineStateStatus {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptMap returns new OptMap with value set to v.
+func NewOptMap(v Map) OptMap {
+	return OptMap{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptMap is optional Map.
+type OptMap struct {
+	Value Map
+	Set   bool
+}
+
+// IsSet returns true if OptMap was set.
+func (o OptMap) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptMap) Reset() {
+	var v Map
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptMap) SetTo(v Map) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptMap) Get() (v Map, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptMap) Or(d Map) Map {
 	if v, ok := o.Get(); ok {
 		return v
 	}

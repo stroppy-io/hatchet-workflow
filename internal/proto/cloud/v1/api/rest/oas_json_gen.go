@@ -11852,6 +11852,12 @@ func (s *Filed) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.Map.Set {
+			e.FieldStart("map")
+			s.Map.Encode(e)
+		}
+	}
+	{
 		if s.Name.Set {
 			e.FieldStart("name")
 			s.Name.Encode(e)
@@ -11953,7 +11959,7 @@ func (s *Filed) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfFiled = [30]string{
+var jsonFieldsNameOfFiled = [31]string{
 	0:  "bool",
 	1:  "computed",
 	2:  "deprecated",
@@ -11968,22 +11974,23 @@ var jsonFieldsNameOfFiled = [30]string{
 	11: "int32",
 	12: "int64",
 	13: "list",
-	14: "name",
-	15: "normalize",
-	16: "nullable",
-	17: "object",
-	18: "oneOf",
-	19: "ref",
-	20: "required",
-	21: "rules",
-	22: "secret",
-	23: "string",
-	24: "timestamp",
-	25: "title",
-	26: "uint32",
-	27: "uint64",
-	28: "unit",
-	29: "when",
+	14: "map",
+	15: "name",
+	16: "normalize",
+	17: "nullable",
+	18: "object",
+	19: "oneOf",
+	20: "ref",
+	21: "required",
+	22: "rules",
+	23: "secret",
+	24: "string",
+	25: "timestamp",
+	26: "title",
+	27: "uint32",
+	28: "uint64",
+	29: "unit",
+	30: "when",
 }
 
 // Decode decodes Filed from json.
@@ -12142,6 +12149,16 @@ func (s *Filed) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"list\"")
+			}
+		case "map":
+			if err := func() error {
+				s.Map.Reset()
+				if err := s.Map.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"map\"")
 			}
 		case "name":
 			if err := func() error {
@@ -25359,6 +25376,103 @@ func (s *MachineStateStatus) UnmarshalJSON(data []byte) error {
 }
 
 // Encode implements json.Marshaler.
+func (s *Map) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *Map) encodeFields(e *jx.Encoder) {
+	{
+		if s.MaxEntries.Set {
+			e.FieldStart("maxEntries")
+			s.MaxEntries.Encode(e)
+		}
+	}
+	{
+		if s.MinEntries.Set {
+			e.FieldStart("minEntries")
+			s.MinEntries.Encode(e)
+		}
+	}
+	{
+		if s.ValueSchema.Set {
+			e.FieldStart("valueSchema")
+			s.ValueSchema.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfMap = [3]string{
+	0: "maxEntries",
+	1: "minEntries",
+	2: "valueSchema",
+}
+
+// Decode decodes Map from json.
+func (s *Map) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode Map to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "maxEntries":
+			if err := func() error {
+				s.MaxEntries.Reset()
+				if err := s.MaxEntries.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"maxEntries\"")
+			}
+		case "minEntries":
+			if err := func() error {
+				s.MinEntries.Reset()
+				if err := s.MinEntries.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"minEntries\"")
+			}
+		case "valueSchema":
+			if err := func() error {
+				s.ValueSchema.Reset()
+				if err := s.ValueSchema.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"valueSchema\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode Map")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *Map) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *Map) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
 func (s *MarkRegistrationRequestHandledRequest) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
@@ -29985,6 +30099,39 @@ func (s OptMachineStateStatus) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *OptMachineStateStatus) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes Map as json.
+func (o OptMap) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes Map from json.
+func (o *OptMap) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptMap to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptMap) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptMap) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

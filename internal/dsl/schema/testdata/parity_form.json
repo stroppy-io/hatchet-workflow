@@ -55,6 +55,21 @@
                     "strict": true
                   }
                 }
+              },
+              {
+                "name": "subnets",
+                "map": {
+                  "valueSchema": {
+                    "fields": [
+                      {
+                        "name": "cidr",
+                        "required": true,
+                        "string": {}
+                      }
+                    ],
+                    "strict": true
+                  }
+                }
               }
             ],
             "rules": [
@@ -77,7 +92,15 @@
       "network_settings": {
         "cidr": "10.0.0.0/24"
       },
-      "replicas": 5
+      "replicas": 5,
+      "subnets": {
+        "my-subnet-a": {
+          "cidr": "10.0.1.0/24"
+        },
+        "my-subnet-b": {
+          "cidr": "10.0.2.0/24"
+        }
+      }
     },
     "threads": 8
   },
@@ -119,7 +142,7 @@
   "invalid_expected_field": "threads",
   "undeclared_expected_field": "extra_field",
   "undeclared_provider_expected_field": "provider.extra_nested",
-  "valid_baked_hash": "98f45b52d49740befe646751c3f0ef7cb36e8f1183af4ecfb475951d1f30ddb0",
+  "valid_baked_hash": "c63f40544e3e31734e10a31887834bbe0bf9cd9570eea67d831248095fc6e574",
   "rule_invalid_values": {
     "db_version": "17",
     "maintenance_mode": false,
@@ -144,5 +167,23 @@
     },
     "threads": 8
   },
-  "nested_object_expected_field": "provider.network_settings.evil_key"
+  "nested_object_expected_field": "provider.network_settings.evil_key",
+  "map_value_invalid_values": {
+    "db_version": "17",
+    "maintenance_mode": false,
+    "provider": {
+      "network_settings": {
+        "cidr": "10.0.0.0/24"
+      },
+      "replicas": 5,
+      "subnets": {
+        "my-subnet-a": {
+          "cidr": "10.0.1.0/24",
+          "evil_key": "rm -rf /"
+        }
+      }
+    },
+    "threads": 8
+  },
+  "map_value_expected_field": "provider.subnets.my-subnet-a.evil_key"
 }

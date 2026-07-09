@@ -144,19 +144,48 @@ func fieldForTFType(name, tfType, description string, def any, sensitive bool) s
 		}
 		return b
 	case "map":
-		// v1 fallback: schemapb has no map(T)-with-typed-values kind, so a TF
-		// map(T) becomes a permissive object with no fixed properties.
+		// schemapb v1.6.0 added a Map kind (free keys, typed+validated
+		// values) -- see schemapb/new.go's Map builder. Map keys stay free
+		// by design (subnet names, VM names, etc.); it's the VALUE side that
+		// gets validated.
 		//
-		// Deliberately NOT .Strict(): map(T) (and map(object({...})) in
-		// particular, e.g. yandex's subnets/vms variables) has free,
-		// user-chosen keys by design (subnet names, VM names) -- Strict()
-		// would reject every legitimate config. This is also why this
-		// fallback cannot validate the VALUE side either: schemapb's Object
-		// kind only knows how to declare a fixed set of named fields, so
-		// there is nowhere to attach `inner`'s value type/shape at all. That
-		// is a genuine schemapb gap (no Map kind), not something fixable
-		// here -- see SP-I1's report (.superpowers/sdd/spd-i1-fix-report.md)
-		// before attempting to "fix" this by hand.
+		// map(object({...})) (e.g. yandex's subnets/vms variables) is the
+		// shape this closes: `inner` is an object() type constraint, so its
+		// attribute set is fixed and known -- Map's value schema gets those
+		// fields plus .Strict(), so an unknown key inside a map VALUE
+		// (subnets.my-subnet-a.evil_key) is rejected while the map key
+		// itself (my-subnet-a) is never rejected.
+		//
+		// map(string)/map(number)/etc. (a scalar value type) has no home in
+		// the Map kind: checkMap (schemapb/validate.go) always type-asserts
+		// each map value to map[string]any before validating it against the
+		// value schema's Fields, so a Map's value schema is inherently
+		// object-shaped -- there is no way to declare "the value is itself a
+		// scalar". That's a genuine schemapb limitation, not something to
+		// force here: those variables keep degrading to the pre-existing
+		// permissive-Object fallback below (free keys AND free values, same
+		// as before this change) rather than emitting a Map whose value
+		// schema can never actually match.
+		mapKeyword, mapInner, mapOK := parseCall(inner)
+		if mapOK && mapKeyword == "object" {
+			body := strings.TrimSpace(mapInner)
+			body = strings.TrimPrefix(body, "{")
+			body = strings.TrimSuffix(body, "}")
+			b := schemapb.Map(name, objectFieldsFromBody(body)...).Strict()
+			if description != "" {
+				b.Desc(description)
+			}
+			if sensitive {
+				b.Secret()
+			}
+			return b
+		}
+
+		// Scalar (or otherwise non-object) map value type: no schemapb kind
+		// can express "free keys, typed scalar values" today, so this stays
+		// a permissive object with no fixed properties (free keys AND free
+		// values), exactly as before. Deliberately NOT .Strict() for the
+		// same reason as always -- there is nothing to be strict about.
 		b := schemapb.Object(name)
 		if description != "" {
 			b.Desc(description)

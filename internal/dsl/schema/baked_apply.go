@@ -104,18 +104,26 @@ func ApplyBakedInputs(resolved *include.Resolved, baked *spb.Baked, paramsSchema
 // terraform module, so no derivable schema at all: the empty top-level
 // `declared` set is what rejects everything).
 //
-// Object-kind fields are the ONLY ones recursed into, and only when they
-// declare a non-empty fixed field set: a terraform map(T) (e.g.
-// map(object({...})) -- yandex's subnets/vms) degrades in
-// DeriveProviderParamsSchemapb to a permissive Object with zero declared
-// fields (tfvars_schemapb.go's `case "map":`), and that shape is
-// indistinguishable, at the schemapb.Schema level, from a "real" object()
-// with no attributes -- so an empty field set is treated as "unvalidatable
-// free-form value" (accept whatever is under it) rather than "reject
-// everything under it", matching what schemapb.Bake itself would do for a
-// non-strict, fieldless nested Schema. This is the same schemapb gap (no
-// map-with-typed-values kind) DeriveProviderParamsSchemapb's own map(T)
-// fallback has to live with -- see this package's SP-I1 report.
+// Object-kind fields recurse into their own declared field set (when
+// non-empty); Map-kind fields (schemapb v1.6.0+) recurse into EVERY value
+// under the map key against the map's shared value_schema -- the map key
+// itself is never flagged as unknown (map keys are free by design: subnet
+// names, VM names, etc. -- see tfvars_schemapb.go's `case "map":`), but an
+// unknown field inside a map VALUE is, at a path naming the map key (e.g.
+// "subnets.my-subnet-a.evil_key"), mirroring schemapb's own checkMap
+// (schemapb/validate.go).
+//
+// A terraform map(T) with a scalar value type (map(string), map(number),
+// ...) still degrades in DeriveProviderParamsSchemapb to a permissive
+// Object with zero declared fields (tfvars_schemapb.go's `case "map":`
+// fallback for non-object value types), and that shape is indistinguishable,
+// at the schemapb.Schema level, from a "real" object() with no attributes --
+// so an empty field set is still treated as "unvalidatable free-form value"
+// (accept whatever is under it) rather than "reject everything under it",
+// matching what schemapb.Bake itself would do for a non-strict, fieldless
+// nested Schema. That's the residual schemapb limitation (no scalar-valued
+// Map) DeriveProviderParamsSchemapb's fallback has to live with -- see this
+// package's SP-I1 report and the Map-kind follow-up.
 func unknownKeys(fields []*spb.Schema_Filed, values map[string]any) []string {
 	declared := make(map[string]*spb.Schema_Filed, len(fields))
 	for _, f := range fields {
@@ -129,6 +137,28 @@ func unknownKeys(fields []*spb.Schema_Filed, values map[string]any) []string {
 			unknown = append(unknown, k)
 			continue
 		}
+
+		if mp := f.GetMap(); mp != nil {
+			vs := mp.GetValueSchema()
+			if vs == nil || len(vs.GetFields()) == 0 {
+				continue // no derivable value schema: unvalidatable free-form value, same as an empty Object
+			}
+			nested, ok := v.(map[string]any)
+			if !ok {
+				continue // type mismatch is schemapb.Bake's job to report, not this defense-in-depth check's
+			}
+			for mapKey, mapVal := range nested {
+				vm, ok := mapVal.(map[string]any)
+				if !ok {
+					continue // type mismatch is schemapb.Bake's job to report, not this defense-in-depth check's
+				}
+				for _, u := range unknownKeys(vs.GetFields(), vm) {
+					unknown = append(unknown, k+"."+mapKey+"."+u)
+				}
+			}
+			continue
+		}
+
 		obj := f.GetObject()
 		if obj == nil || obj.GetSchema() == nil || len(obj.GetSchema().GetFields()) == 0 {
 			continue // scalar/list/map-fallback/etc.: nothing further to recurse into

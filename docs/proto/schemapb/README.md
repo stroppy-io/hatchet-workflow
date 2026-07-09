@@ -22,6 +22,7 @@
   - [schemapb.Schema.Filed.Int32](#schemapb-schema-filed-int32)
   - [schemapb.Schema.Filed.Int64](#schemapb-schema-filed-int64)
   - [schemapb.Schema.Filed.List](#schemapb-schema-filed-list)
+  - [schemapb.Schema.Filed.Map](#schemapb-schema-filed-map)
   - [schemapb.Schema.Filed.Object](#schemapb-schema-filed-object)
   - [schemapb.Schema.Filed.OneOf](#schemapb-schema-filed-oneof)
   - [schemapb.Schema.Filed.OneOf.VariantsEntry](#schemapb-schema-filed-oneof-variantsentry)
@@ -507,6 +508,14 @@ List field.<br>
 
 json_name: list
 go_name: List</pre></td>
+</tr><tr>
+<td>map</td>
+<td><a href="#schemapb-schema-filed-map">schemapb.Schema.Filed.Map</a></td>
+<td><pre>
+Free-key, typed-value map field.<br>
+
+json_name: map
+go_name: Map</pre></td>
 </tr><tr>
 <td>name</td>
 <td>string</td>
@@ -1317,6 +1326,57 @@ If true, items must be unique.<br>
 
 json_name: unique
 go_name: Unique</pre></td>
+</tr>
+</table>
+
+
+
+<a name="schemapb-schema-filed-map"></a>
+### schemapb.Schema.Filed.Map
+
+<pre>
+Map field kind: free-form string keys (never rejected — e.g. user-chosen
+subnet/VM names) with values validated against a single shared Schema.
+Unlike Object (fixed, named fields), a Map's key set is arbitrary and
+runtime-supplied; every value is validated against the same
+`value_schema`, so if that schema is `Strict` an unknown key INSIDE a
+value is rejected while the map's own keys stay unconstrained. The
+rejected field path names the map key, e.g. "subnets.my-subnet-a.evil_key".
+Hashing/ordering: map entries hash by sorted key (see (*Schema).HashPB /
+the generated HashPB), matching google.protobuf.Struct's field hashing.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>max_entries</td>
+<td>uint64</td>
+<td><pre>
+Maximum number of entries.<br>
+
+json_name: maxEntries
+go_name: MaxEntries</pre></td>
+</tr><tr>
+<td>min_entries</td>
+<td>uint64</td>
+<td><pre>
+Minimum number of entries.<br>
+
+json_name: minEntries
+go_name: MinEntries</pre></td>
+</tr><tr>
+<td>value_schema</td>
+<td><a href="#schemapb-schema">schemapb.Schema</a></td>
+<td><pre>
+Schema every map value must satisfy. Absent => values are accepted
+unvalidated (any object).<br>
+
+json_name: valueSchema
+go_name: ValueSchema</pre></td>
 </tr>
 </table>
 

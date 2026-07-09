@@ -141,6 +141,98 @@ func TestApplyBakedInputs_AcceptsMapOfObjectArbitraryKeys(t *testing.T) {
 	require.Contains(t, subnets, "my-subnet-a")
 }
 
+// TestApplyBakedInputs_RejectsUndeclaredMapValueKey is the schemapb v1.6.0
+// Map-kind half of the config-injection fix: a map(object({...}))-shaped
+// param now derives to a schemapb Map with a Strict value schema
+// (tfvars_schemapb.go's `case "map":`), so unknownKeys (baked_apply.go) must
+// recurse into every map VALUE against that value schema -- an unknown key
+// inside a map value must be rejected, at a path naming the map key.
+func TestApplyBakedInputs_RejectsUndeclaredMapValueKey(t *testing.T) {
+	cluster := &ast.ClusterDoc{Provider: ast.ProviderUse{Use: "yandex"}}
+	resolved := &include.Resolved{Cluster: cluster}
+
+	values, err := structpb.NewStruct(map[string]any{
+		"provider": map[string]any{
+			"subnets": map[string]any{
+				"my-subnet-a": map[string]any{"cidr": "10.0.1.0/24", "evil_key": "rm -rf /"},
+			},
+		},
+	})
+	require.NoError(t, err)
+	baked := &spb.Baked{Values: values}
+
+	paramsSchema := spb.NewSchema("ns", "params", "1").
+		Fields(spb.Map("subnets", spb.Str("cidr")).Strict()).MustBuild()
+
+	err = schema.ApplyBakedInputs(resolved, baked, paramsSchema)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "subnets.my-subnet-a.evil_key")
+	require.Empty(t, cluster.Provider.Params, "no partial application on reject")
+}
+
+// TestApplyBakedInputs_AcceptsMapKindArbitraryKeys is the green control for
+// the Map-kind recursion: an arbitrary, user-chosen map key (subnet name)
+// must still be accepted -- only what's declared missing INSIDE a map value
+// is rejected, never the map key itself.
+func TestApplyBakedInputs_AcceptsMapKindArbitraryKeys(t *testing.T) {
+	cluster := &ast.ClusterDoc{Provider: ast.ProviderUse{Use: "yandex"}}
+	resolved := &include.Resolved{Cluster: cluster}
+
+	values, err := structpb.NewStruct(map[string]any{
+		"provider": map[string]any{
+			"subnets": map[string]any{
+				"my-subnet-a": map[string]any{"cidr": "10.0.1.0/24"},
+				"my-subnet-b": map[string]any{"cidr": "10.0.2.0/24"},
+			},
+		},
+	})
+	require.NoError(t, err)
+	baked := &spb.Baked{Values: values}
+
+	paramsSchema := spb.NewSchema("ns", "params", "1").
+		Fields(spb.Map("subnets", spb.Str("cidr")).Strict()).MustBuild()
+
+	require.NoError(t, schema.ApplyBakedInputs(resolved, baked, paramsSchema))
+	subnets, ok := cluster.Provider.Params["subnets"].(map[string]any)
+	require.True(t, ok)
+	require.Contains(t, subnets, "my-subnet-a")
+	require.Contains(t, subnets, "my-subnet-b")
+}
+
+// TestApplyBakedInputs_RejectsUndeclaredKeyDeepInsideMapValueObject is the
+// deep-nesting case: an object field nested inside a map's value schema
+// still has its own fixed, non-empty field set, so the recursion must
+// continue one level further and reject an unknown key at the deepest
+// level -- not just at the map value's own top level.
+func TestApplyBakedInputs_RejectsUndeclaredKeyDeepInsideMapValueObject(t *testing.T) {
+	cluster := &ast.ClusterDoc{Provider: ast.ProviderUse{Use: "yandex"}}
+	resolved := &include.Resolved{Cluster: cluster}
+
+	values, err := structpb.NewStruct(map[string]any{
+		"provider": map[string]any{
+			"vms": map[string]any{
+				"my-vm-a": map[string]any{
+					"disk": map[string]any{"size_gb": float64(50), "evil_key": "rm -rf /"},
+				},
+			},
+		},
+	})
+	require.NoError(t, err)
+	baked := &spb.Baked{Values: values}
+
+	paramsSchema := spb.NewSchema("ns", "params", "1").
+		Fields(
+			spb.Map("vms",
+				spb.Object("disk", spb.Double("size_gb")).Strict(),
+			).Strict(),
+		).MustBuild()
+
+	err = schema.ApplyBakedInputs(resolved, baked, paramsSchema)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "vms.my-vm-a.disk.evil_key")
+	require.Empty(t, cluster.Provider.Params, "no partial application on reject")
+}
+
 func TestSplitBakedValues_NilSafe(t *testing.T) {
 	wfInputs, providerParams := schema.SplitBakedValues(nil)
 	require.Nil(t, wfInputs)

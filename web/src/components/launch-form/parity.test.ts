@@ -111,4 +111,25 @@ describe("WASM/Go BakeForm parity (SP-D Task 9)", () => {
     expect(result.errors.length).toBeGreaterThan(0);
     expect(fieldPaths(result.errors)).toContain(fixture.nested_object_expected_field);
   });
+
+  // schemapb v1.6.0 Map kind: valid_values now carries a "subnets" map with
+  // two arbitrary, user-chosen keys (my-subnet-a, my-subnet-b) -- covered
+  // implicitly by the valid_values/hash test above, since Map keys are free
+  // by design and must never be rejected on either engine.
+
+  // schemapb v1.6.0 Map kind, config-injection fix: an unknown key nested
+  // inside a Map VALUE (subnets.my-subnet-a.evil_key) must be rejected on
+  // both engines at the same field path, while the map key itself
+  // (my-subnet-a) is never flagged. This is the exact shape
+  // tfvars_schemapb.go's `case "map":` now closes for terraform
+  // map(object({...})) variables (e.g. yandex's subnets/vms).
+  it("agrees with Go: an unknown key inside a strict Map value schema is rejected on both sides (Map kind)", async () => {
+    const engine = await loadSchemapbEngine();
+    const schema = fromJson(SchemaSchema, fixture.schema as unknown as JsonValue);
+
+    const result = engine.bake(schema, fixture.map_value_invalid_values);
+    expect(result.baked).toBeUndefined();
+    expect(result.errors.length).toBeGreaterThan(0);
+    expect(fieldPaths(result.errors)).toContain(fixture.map_value_expected_field);
+  });
 });

@@ -40,6 +40,15 @@ type parityFixture struct {
 	RuleInvalidExpectedField  string         `json:"rule_invalid_expected_field"`
 	NestedObjectInvalidValues map[string]any `json:"nested_object_invalid_values"`
 	NestedObjectExpectedField string         `json:"nested_object_expected_field"`
+
+	// schemapb v1.6.0 Map-kind additions: the config-injection gap this task
+	// closes (tfvars_schemapb.go's `case "map":` now emits a Strict-valued
+	// Map instead of a permissive fieldless Object for map(object({...}))
+	// terraform variables). Both engines must agree an unknown key inside a
+	// map VALUE is rejected at a path naming the map key, and that an
+	// arbitrary map key name is itself always accepted.
+	MapValueInvalidValues map[string]any `json:"map_value_invalid_values"`
+	MapValueExpectedField string         `json:"map_value_expected_field"`
 }
 
 // buildParityForm is the ONE schema-construction call shared by the fixture
@@ -65,6 +74,12 @@ func buildParityForm(t *testing.T) *schemapb.Schema {
 			// tfvars_schemapb.go's `case "object":`); an unknown key under it
 			// must be rejected by both Go and WASM.
 			schemapb.Object("network_settings", schemapb.Str("cidr").Required()).Strict(),
+			// schemapb v1.6.0: a Map-kind param mirroring yandex's
+			// map(object({...})) subnets/vms variables -- free, arbitrary
+			// map keys, but a Strict value schema (tfvars_schemapb.go's
+			// `case "map":`). Both engines must accept an arbitrary map key
+			// name and reject an unknown key INSIDE a map value.
+			schemapb.Map("subnets", schemapb.Str("cidr").Required()).Strict(),
 		).
 		// SP-I1/I3: a schema-level Rule, standing in for a tf validation{}
 		// block translated via translateValidationCondition (var.NAME ->
@@ -111,7 +126,16 @@ func TestWriteParityFixture(t *testing.T) {
 		"db_version":       "17",
 		"threads":          float64(8),
 		"maintenance_mode": false,
-		"provider":         map[string]any{"replicas": float64(5), "network_settings": map[string]any{"cidr": "10.0.0.0/24"}},
+		"provider": map[string]any{
+			"replicas":         float64(5),
+			"network_settings": map[string]any{"cidr": "10.0.0.0/24"},
+			// schemapb v1.6.0 Map kind: two arbitrary, user-chosen map keys --
+			// both engines must accept the map keys themselves unconditionally.
+			"subnets": map[string]any{
+				"my-subnet-a": map[string]any{"cidr": "10.0.1.0/24"},
+				"my-subnet-b": map[string]any{"cidr": "10.0.2.0/24"},
+			},
+		},
 	}
 	invalidValues := map[string]any{
 		"db_version":       "17",
@@ -158,6 +182,23 @@ func TestWriteParityFixture(t *testing.T) {
 			"network_settings": map[string]any{"cidr": "10.0.0.0/24", "evil_key": "rm -rf /"},
 		},
 	}
+	// schemapb v1.6.0: an unknown key inside a Map VALUE (subnets.my-subnet-a
+	// .evil_key) -- the exact config-injection shape this task's fix closes
+	// (tfvars_schemapb.go's `case "map":` now emits a Strict-valued Map for
+	// map(object({...})) terraform variables). The map KEY (my-subnet-a)
+	// itself must never be flagged; only the unknown field inside its value.
+	mapValueInvalidValues := map[string]any{
+		"db_version":       "17",
+		"threads":          float64(8),
+		"maintenance_mode": false,
+		"provider": map[string]any{
+			"replicas":         float64(5),
+			"network_settings": map[string]any{"cidr": "10.0.0.0/24"},
+			"subnets": map[string]any{
+				"my-subnet-a": map[string]any{"cidr": "10.0.1.0/24", "evil_key": "rm -rf /"},
+			},
+		},
+	}
 
 	baked, ferrs := form.Bake(validValues)
 	require.Empty(t, ferrs, "valid_values must be the clean control case")
@@ -178,6 +219,8 @@ func TestWriteParityFixture(t *testing.T) {
 		RuleInvalidExpectedField:        "provider",
 		NestedObjectInvalidValues:       nestedObjectInvalidValues,
 		NestedObjectExpectedField:       "provider.network_settings.evil_key",
+		MapValueInvalidValues:           mapValueInvalidValues,
+		MapValueExpectedField:           "provider.subnets.my-subnet-a.evil_key",
 	}
 	out, err := json.MarshalIndent(fixture, "", "  ")
 	require.NoError(t, err)
@@ -267,6 +310,14 @@ func TestGoBakeForm_MatchesFixtureExpectations(t *testing.T) {
 		require.NotEmpty(t, ferrs, "Go: unknown key inside a fixed-attribute nested object() must be rejected")
 		require.Nil(t, baked)
 		require.True(t, hasFieldPath(ferrs, fixture.NestedObjectExpectedField), "expected a FieldError at %q, got %+v", fixture.NestedObjectExpectedField, ferrs)
+	})
+
+	t.Run("map_value_invalid_values rejects an unknown key inside the strict Map value schema (schemapb v1.6.0)", func(t *testing.T) {
+		baked, ferrs, err := BakeForm(form, fixture.MapValueInvalidValues)
+		require.NoError(t, err)
+		require.NotEmpty(t, ferrs, "Go: unknown key inside a Map value must be rejected")
+		require.Nil(t, baked)
+		require.True(t, hasFieldPath(ferrs, fixture.MapValueExpectedField), "expected a FieldError at %q, got %+v", fixture.MapValueExpectedField, ferrs)
 	})
 }
 

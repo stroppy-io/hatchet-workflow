@@ -2806,6 +2806,12 @@ func FiledToOgen(src *schemapb.Schema_Filed) (*rest.Filed, error) {
 			return nil, err
 		}
 		dst.Ref.SetTo(*o20)
+	case *schemapb.Schema_Filed_Map_:
+		o21, err := MapToOgen(src.GetMap())
+		if err != nil {
+			return nil, err
+		}
+		dst.Map.SetTo(*o21)
 	}
 	return &dst, nil
 }
@@ -2991,6 +2997,13 @@ func FiledFromOgen(src *rest.Filed) (*schemapb.Schema_Filed, error) {
 			return nil, err
 		}
 		dst.Kind = &schemapb.Schema_Filed_Ref_{Ref: m54}
+	}
+	if v55, ok := src.Map.Get(); ok {
+		m56, err := MapFromOgen(&v55)
+		if err != nil {
+			return nil, err
+		}
+		dst.Kind = &schemapb.Schema_Filed_Map_{Map: m56}
 	}
 	return dst, nil
 }
@@ -5021,6 +5034,52 @@ func MachineStateFromOgen(src *rest.MachineState) (*deployment.MachineState, err
 			return nil, err
 		}
 		dst.ProviderOutput = &deployment.MachineState_Yandex{Yandex: m16}
+	}
+	return dst, nil
+}
+
+// MapToOgen converts schemapb.Schema_Filed_Map (an imported type) to its ogen representation.
+func MapToOgen(src *schemapb.Schema_Filed_Map) (*rest.Map, error) {
+	var dst rest.Map
+	if src == nil {
+		return &dst, nil
+	}
+	if src.ValueSchema != nil {
+		o1, err := SchemaToOgen(src.GetValueSchema())
+		if err != nil {
+			return nil, err
+		}
+		dst.ValueSchema.SetTo(*o1)
+	}
+	if src.MinEntries != nil {
+		dst.MinEntries.SetTo(uint64(src.GetMinEntries()))
+	}
+	if src.MaxEntries != nil {
+		dst.MaxEntries.SetTo(uint64(src.GetMaxEntries()))
+	}
+	return &dst, nil
+}
+
+// MapFromOgen converts the ogen representation back to Schema_Filed_Map.
+func MapFromOgen(src *rest.Map) (*schemapb.Schema_Filed_Map, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &schemapb.Schema_Filed_Map{}
+	if v1, ok := src.ValueSchema.Get(); ok {
+		m2, err := SchemaFromOgen(&v1)
+		if err != nil {
+			return nil, err
+		}
+		dst.ValueSchema = m2
+	}
+	if v3, ok := src.MinEntries.Get(); ok {
+		p4 := uint64(v3)
+		dst.MinEntries = &p4
+	}
+	if v5, ok := src.MaxEntries.Get(); ok {
+		p6 := uint64(v5)
+		dst.MaxEntries = &p6
 	}
 	return dst, nil
 }

@@ -1594,6 +1594,8 @@ components:
                     - oneOf
                 - required:
                     - ref
+                - required:
+                    - map
             properties:
                 bool:
                     $ref: '#/components/schemas/FiledBool'
@@ -1624,6 +1626,8 @@ components:
                     $ref: '#/components/schemas/FiledInt64'
                 list:
                     $ref: '#/components/schemas/List'
+                map:
+                    $ref: '#/components/schemas/Map'
                 name:
                     type: string
                 normalize:
@@ -3594,6 +3598,18 @@ components:
                     $ref: '#/components/schemas/Tags'
                 yandex:
                     $ref: '#/components/schemas/VmOutput'
+            type: object
+        Map:
+            additionalProperties: false
+            properties:
+                maxEntries:
+                    format: uint64
+                    type: string
+                minEntries:
+                    format: uint64
+                    type: string
+                valueSchema:
+                    $ref: '#/components/schemas/Schema'
             type: object
         MarkRegistrationRequestHandledRequest:
             additionalProperties: false

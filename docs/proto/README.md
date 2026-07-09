@@ -537,6 +537,7 @@
     - [schemapb.Schema.Filed.Int32](schemapb/README.md#schemapb-schema-filed-int32)
     - [schemapb.Schema.Filed.Int64](schemapb/README.md#schemapb-schema-filed-int64)
     - [schemapb.Schema.Filed.List](schemapb/README.md#schemapb-schema-filed-list)
+    - [schemapb.Schema.Filed.Map](schemapb/README.md#schemapb-schema-filed-map)
     - [schemapb.Schema.Filed.Object](schemapb/README.md#schemapb-schema-filed-object)
     - [schemapb.Schema.Filed.OneOf](schemapb/README.md#schemapb-schema-filed-oneof)
     - [schemapb.Schema.Filed.OneOf.VariantsEntry](schemapb/README.md#schemapb-schema-filed-oneof-variantsentry)

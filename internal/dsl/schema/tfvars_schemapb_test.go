@@ -217,19 +217,16 @@ variable "subnets" {
 	require.NotNil(t, baked)
 }
 
-// TestDeriveProviderParamsSchemapb_MapOfObjectValueRejectsUnknownKey is the
-// KNOWN-GAP case named in the SP-I1 brief: an unknown key inside a
-// map(object({...}))'s VALUE object (subnets.my-subnet-a.evil_key) should be
-// rejected, but schemapb has no map-with-typed-values kind (only List,
-// Object, OneOf, Ref, scalars, Computed -- see schemapb/schema.pb.go's
-// Schema_Filed oneof and schema.proto), so DeriveProviderParamsSchemapb's
-// map(T) fallback (tfvars_schemapb.go's `case "map":`) has nowhere to attach
-// a value schema at all: it degrades to an empty, non-strict Object() with
-// zero declared fields, and there is no schemapb-native way to validate
-// "free keys, strict values" without inventing a fake per-key rule engine
-// (explicitly out of scope -- see SP-I1 report). This test is written to
-// show the gap, not to pass: it currently (and will continue to, until
-// schemapb ships a Map kind) accept the evil key rather than reject it.
+// TestDeriveProviderParamsSchemapb_MapOfObjectValueRejectsUnknownKey used to
+// be the KNOWN-GAP case named in the SP-I1 brief: schemapb had no
+// map-with-typed-values kind, so an unknown key inside a
+// map(object({...}))'s VALUE object (subnets.my-subnet-a.evil_key) flowed
+// through unrejected. schemapb v1.6.0 closed that gap with a Map kind (free
+// keys, typed+validated values -- see schemapb/new.go's Map builder), and
+// tfvars_schemapb.go's `case "map":` now emits a Map with a Strict value
+// schema whenever the terraform map's value type is object({...}). This
+// test is inverted from its known-gap form: it now asserts the CORRECT
+// (rejecting) behavior.
 func TestDeriveProviderParamsSchemapb_MapOfObjectValueRejectsUnknownKey(t *testing.T) {
 	dir := t.TempDir()
 	writeFile(t, dir, "variables.tf", `
@@ -247,11 +244,50 @@ variable "subnets" {
 			"my-subnet-a": map[string]any{"cidr": "10.0.1.0/24", "evil_key": "rm -rf /"},
 		},
 	})
-	// KNOWN GAP (see SP-I1 report): schemapb cannot express "free keys,
-	// strict values", so this currently bakes clean instead of rejecting.
-	// If this assertion ever starts failing, schemapb gained a Map kind --
-	// wire it up in tfvars_schemapb.go's `case "map":` and flip this test to
-	// require.NotEmpty(t, ferrs).
-	require.Empty(t, ferrs, "KNOWN GAP: schemapb has no map-with-typed-values kind; document, do not fake")
-	require.NotNil(t, baked)
+	require.NotEmpty(t, ferrs, "unknown key inside a map(object({...})) value must be rejected (schemapb v1.6.0 Map kind, Strict value schema)")
+	require.Nil(t, baked)
+	require.True(t, hasFieldPath(ferrs, "subnets.my-subnet-a.evil_key"), "expected a FieldError at %q, got %+v", "subnets.my-subnet-a.evil_key", ferrs)
+}
+
+// TestMapKind_RuleOnValueScopesThisToTheMapValue verifies commit d98c09a7's
+// `this`-not-`root` scoping fix (translateValidationCondition) extends
+// correctly to the Map kind: a .Rule(...) attached to a Map's value schema
+// (MapB.Rule, schemapb/new.go) must evaluate with `this` bound to the
+// INDIVIDUAL map value object it's currently validating, not the map itself
+// or the outer root -- mirroring ObjectB.Rule's scoping (checkObject) via
+// checkMap's own evalRule call (schemapb/validate.go). This is a
+// schemapb-builder-level test (not routed through
+// DeriveProviderParamsSchemapb, which doesn't yet derive tf validation{}
+// blocks for map(object({...})) value attributes) exercising the same
+// MapB.Rule building block tfvars_schemapb.go's `case "map":` could use if a
+// future tf module needs a per-map-value validation rule.
+func TestMapKind_RuleOnValueScopesThisToTheMapValue(t *testing.T) {
+	schema := schemapb.NewSchema("stroppy.test", "map_rule", "1").
+		Fields(
+			schemapb.Map("subnets",
+				schemapb.Str("cidr").Required(),
+				schemapb.Int64("size").Required(),
+			).Strict().Rule(schemapb.Rule("this.size <= 24", "size must be at most 24")),
+		).MustBuild()
+
+	t.Run("a map value violating the rule is rejected at that value's own path", func(t *testing.T) {
+		baked, ferrs := schema.Bake(map[string]any{
+			"subnets": map[string]any{
+				"my-subnet-a": map[string]any{"cidr": "10.0.1.0/24", "size": float64(28)},
+			},
+		})
+		require.NotEmpty(t, ferrs, "this.size <= 24 rule must fail for size=28")
+		require.Nil(t, baked)
+		require.True(t, hasFieldPath(ferrs, "subnets.my-subnet-a"), "expected the rule error at the map value's own path, got %+v", ferrs)
+	})
+
+	t.Run("a compliant map value bakes clean", func(t *testing.T) {
+		baked, ferrs := schema.Bake(map[string]any{
+			"subnets": map[string]any{
+				"my-subnet-a": map[string]any{"cidr": "10.0.1.0/24", "size": float64(20)},
+			},
+		})
+		require.Empty(t, ferrs)
+		require.NotNil(t, baked)
+	})
 }

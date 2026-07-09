@@ -908,15 +908,15 @@
   resolved "https://registry.npmjs.org/@standard-schema/utils/-/utils-0.3.0.tgz"
   integrity sha512-e7Mew686owMaPJVNNLs55PUvgz371nKgwsc4vxE49zsODpJEnxgxRo2y/OKrqueavXgZNMDVj3DdHFlaSAeU8g==
 
-"@stroppy-io/schemapb-react@1.5.0":
-  version "1.5.0"
-  resolved "https://npm.pkg.github.com/download/@stroppy-io/schemapb-react/1.5.0/3f9a56c4409a5babc511730c17419a60bb620b3f"
-  integrity sha512-AtUMofh3qI8vFTXaz1ESSMqhkv9qXnLXJ6dURytWDkykJ674sHh9bA64E+aYcjawyrNREDuspyoUE+PxQQ/8Pg==
+"@stroppy-io/schemapb-react@1.6.0":
+  version "1.6.0"
+  resolved "https://npm.pkg.github.com/download/@stroppy-io/schemapb-react/1.6.0/484de2ae740b600b4a3130f0e81dc3ab42d77dd0"
+  integrity sha512-cSgA0z1wSTFluD/KTKj1dfGVGEpozXsvLRjv+QRrdq4FYjF31ooi4pl26GRE7nWJfCkOGrNTt05gMrQJ2ZtdWg==
 
-"@stroppy-io/schemapb@*", "@stroppy-io/schemapb@1.5.0":
-  version "1.5.0"
-  resolved "https://npm.pkg.github.com/download/@stroppy-io/schemapb/1.5.0/47e3f8bc93ccbdef890b1f09c04f59f435a354be"
-  integrity sha512-/64Xn5UgFYdF6FTiw4hw4+KCjpElGaBoSziVBvk36cBifq5vXEbE8lJQUnBY11rSTF5YgLRFrooSWPuc+mRMrw==
+"@stroppy-io/schemapb@*", "@stroppy-io/schemapb@1.6.0":
+  version "1.6.0"
+  resolved "https://npm.pkg.github.com/download/@stroppy-io/schemapb/1.6.0/ef30478431890f84a3d0a32193133a531ed37f10"
+  integrity sha512-ci5MGtPNvNsoorCU9/D+nqQx8F1nZzW4nCVWAooN6/xtwbfI9rPHrCNEcvNWRPtBEd117pR8qYtztuTWVr2v5g==
   dependencies:
     "@bufbuild/protobuf" "^2.11.0"
 
