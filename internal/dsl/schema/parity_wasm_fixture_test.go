@@ -108,10 +108,10 @@ func TestWriteParityFixture(t *testing.T) {
 	require.NoError(t, err)
 
 	validValues := map[string]any{
-		"db_version":        "17",
-		"threads":           float64(8),
-		"maintenance_mode":  false,
-		"provider":          map[string]any{"replicas": float64(5), "network_settings": map[string]any{"cidr": "10.0.0.0/24"}},
+		"db_version":       "17",
+		"threads":          float64(8),
+		"maintenance_mode": false,
+		"provider":         map[string]any{"replicas": float64(5), "network_settings": map[string]any{"cidr": "10.0.0.0/24"}},
 	}
 	invalidValues := map[string]any{
 		"db_version":       "17",
