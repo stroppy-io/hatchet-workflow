@@ -7,6 +7,8 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/require"
+
 	deploymentbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
@@ -19,6 +21,63 @@ import (
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
 
+// TestOverviewFromRun_BuildsFromSummaryAndRuntimeState is SP-E Task 4's Step
+// 1 fixture-driven test: overviewFromRun must read Status/Summary/
+// RuntimeState straight off models.Run.
+func TestOverviewFromRun_BuildsFromSummaryAndRuntimeState(t *testing.T) {
+	run := &models.Run{
+		Entity: &common.Entity{Id: "run-1"},
+		Status: common.Status_STATUS_RUNNING,
+		Summary: &models.Run_Summary{
+			DbKind: domainpb.Database_KIND_POSTGRES, ProgressPct: 40,
+		},
+		RuntimeState: &workflowpb.RunState{},
+	}
+	got := overviewFromRun("run-1", run, nil, timestamppb.Now())
+	require.Equal(t, common.Status_STATUS_RUNNING, got.GetStatus())
+	require.EqualValues(t, 40, got.GetProgressPct())
+}
+
+// TestTopologyFromRun_UsesTopologyFieldOnly asserts the promoted single
+// branch: a run's topology snapshot (run.topology, RunTopology) is the only
+// source runTopologyState/runtimeTopologyFromRun read — Run has no
+// Spec/InfrastructureState/DeploymentPlan to branch on (Step 0's dead-branch
+// removal). The brief's illustrative fixture referenced a
+// topology.Topology_STATE_PROVISIONED enum value that does not exist on
+// topology.Topology_State (see topology.pb.go) and a Topology.GetNodes()
+// accessor Topology does not have (it exposes GetRuntimeNodes() instead);
+// this test asserts the actual, compiling equivalents: the exact enum value
+// runTopologyState's recipe/topology-snapshot branch returns
+// (STATE_INFRASTRUCTURE_DEPLOYED, unchanged from the pre-migration
+// topologyState's recipe branch) and the machine/agent runtime nodes
+// runtimeTopologyFromRun projects from that one topology node.
+func TestTopologyFromRun_UsesTopologyFieldOnly(t *testing.T) {
+	run := &models.Run{
+		Topology: &models.RunTopology{Provider: "docker", Nodes: []*models.RunTopology_MachineNode{
+			{NodeId: "db-0", Group: "db"},
+		}},
+	}
+	got := topologyFromRunWithRunState(run, nil)
+	require.Equal(t, topologypb.Topology_STATE_INFRASTRUCTURE_DEPLOYED, got.GetState())
+	require.NotNil(t, runtimeNodeByID(got, "control-plane"))
+	require.NotNil(t, runtimeNodeByID(got, "machine/db-0"))
+	require.NotNil(t, runtimeNodeByID(got, "agent/db-0"))
+}
+
+// TestWorkerMachineIDs_SourcesFromRunTopologyNotDeploymentPlan is SP-E Task
+// 4's discovered-gap fix: workerMachineIDsFromRun must read
+// run.topology.nodes, not the always-nil InfrastructureState/DeploymentPlan
+// the pre-migration workerMachineIDs read off TestRunRecord (structurally
+// empty for every live recipe run — see runtime_topology.go's
+// runtimeTopologyFromRun doc).
+func TestWorkerMachineIDs_SourcesFromRunTopologyNotDeploymentPlan(t *testing.T) {
+	run := &models.Run{Topology: &models.RunTopology{Nodes: []*models.RunTopology_MachineNode{
+		{NodeId: "db-0"}, {NodeId: "runner-0"},
+	}}}
+	ids := workerMachineIDsFromRun(run)
+	require.ElementsMatch(t, []string{"db-0", "runner-0"}, ids, "must read Run.topology.nodes, not the always-nil InfrastructureState/DeploymentPlan")
+}
+
 func TestOverviewGetFallsBackToPersistedTerminalRecord(t *testing.T) {
 	started := timestamppb.New(time.Unix(10, 0))
 	finished := timestamppb.New(time.Unix(70, 0))
@@ -26,20 +85,10 @@ func TestOverviewGetFallsBackToPersistedTerminalRecord(t *testing.T) {
 	reader := &OverviewReader{
 		tc: tc,
 		store: fakeSnapshotStore{
-			run: &models.TestRunRecord{
+			run: &models.Run{
 				Entity: &common.Entity{Id: "run-1"},
 				Status: common.Status_STATUS_COMPLETED,
-				InfrastructureState: &deploymentpb.InfrastructureState{
-					Machines: []*deploymentpb.MachineState{
-						{NodeId: "node-1", Status: common.Status_STATUS_DEPLOYED},
-					},
-				},
-				DeploymentPlan: &deploymentpb.DeploymentPlan{
-					Components: []*deploymentpb.ComponentDeployment{
-						{ComponentId: "postgres-master", NodeId: "node-1", Status: common.Status_STATUS_DEPLOYED},
-					},
-				},
-				Summary: &models.TestRunRecord_Summary{
+				Summary: &models.Run_Summary{
 					StartedAt:   started,
 					FinishedAt:  finished,
 					Duration:    durationpb.New(time.Minute),
@@ -101,10 +150,10 @@ func TestOverviewGetBoundsSlowTemporalQuery(t *testing.T) {
 		tc:                   tc,
 		runStateQueryTimeout: 10 * time.Millisecond,
 		store: fakeSnapshotStore{
-			run: &models.TestRunRecord{
+			run: &models.Run{
 				Entity: &common.Entity{Id: "run-1"},
 				Status: common.Status_STATUS_RUNNING,
-				Summary: &models.TestRunRecord_Summary{
+				Summary: &models.Run_Summary{
 					ProgressPct: 25,
 				},
 			},
@@ -141,7 +190,7 @@ func TestOverviewGetSkipsTemporalWhenPersistedRuntimeStateIsTerminal(t *testing.
 	reader := &OverviewReader{
 		tc: tc,
 		store: fakeSnapshotStore{
-			run: &models.TestRunRecord{
+			run: &models.Run{
 				Entity: &common.Entity{Id: "run-1"},
 				Status: common.Status_STATUS_RUNNING,
 				RuntimeState: &workflowpb.RunState{
@@ -170,17 +219,24 @@ func TestOverviewGetSkipsTemporalWhenPersistedRuntimeStateIsTerminal(t *testing.
 	}
 }
 
-func TestOverviewGetQueriesRunRecipeWorkflowIDForRecipeRuns(t *testing.T) {
+// TestOverviewGetQueriesRunRecipeWorkflowIDUnconditionally covers Step 7:
+// every models.Run executes under RunRecipeWorkflow (workflow_id is always
+// set), so Get no longer branches between runRecipeWorkflowID and
+// testWorkflowID — the classic TestWorkflow id and its branch are gone
+// (Step 0). This replaces the pre-migration pair of tests that asserted the
+// two different workflow ids for "recipe" vs "non-recipe" runs — there is no
+// non-recipe run kind left to assert the other branch against.
+func TestOverviewGetQueriesRunRecipeWorkflowIDUnconditionally(t *testing.T) {
 	tc := &capturingRunStateQuerier{
 		state: &workflowpb.RunState{Status: common.Status_STATUS_RUNNING},
 	}
 	reader := &OverviewReader{
 		tc: tc,
 		store: fakeSnapshotStore{
-			run: &models.TestRunRecord{
-				Entity:   &common.Entity{Id: "run-1"},
-				Status:   common.Status_STATUS_RUNNING,
-				RecipeId: "recipe-1",
+			run: &models.Run{
+				Entity:     &common.Entity{Id: "run-1"},
+				Status:     common.Status_STATUS_RUNNING,
+				WorkflowId: "recipe-1",
 			},
 		},
 	}
@@ -192,32 +248,7 @@ func TestOverviewGetQueriesRunRecipeWorkflowIDForRecipeRuns(t *testing.T) {
 		t.Fatalf("temporal queries = %d, want %d", got, want)
 	}
 	if got, want := tc.gotWorkflowID, runRecipeWorkflowID("run-1"); got != want {
-		t.Fatalf("queried workflow id = %q, want %q (recipe run)", got, want)
-	}
-}
-
-func TestOverviewGetQueriesTestWorkflowIDForNonRecipeRuns(t *testing.T) {
-	tc := &capturingRunStateQuerier{
-		state: &workflowpb.RunState{Status: common.Status_STATUS_RUNNING},
-	}
-	reader := &OverviewReader{
-		tc: tc,
-		store: fakeSnapshotStore{
-			run: &models.TestRunRecord{
-				Entity: &common.Entity{Id: "run-1"},
-				Status: common.Status_STATUS_RUNNING,
-			},
-		},
-	}
-
-	if _, err := reader.Get(context.Background(), "run-1"); err != nil {
-		t.Fatalf("get overview: %v", err)
-	}
-	if got, want := tc.calls, 1; got != want {
-		t.Fatalf("temporal queries = %d, want %d", got, want)
-	}
-	if got, want := tc.gotWorkflowID, testWorkflowID("run-1"); got != want {
-		t.Fatalf("queried workflow id = %q, want %q (legacy test run)", got, want)
+		t.Fatalf("queried workflow id = %q, want %q", got, want)
 	}
 }
 
@@ -309,100 +340,8 @@ func TestOverviewProjectsRunStateStageTree(t *testing.T) {
 	}
 }
 
-func TestDeploymentPlanChildrenMatchWorkflowExecutionOrder(t *testing.T) {
-	plan := &deploymentpb.DeploymentPlan{
-		Components: []*deploymentpb.ComponentDeployment{
-			{ComponentId: "node-2-fast", NodeId: "node-2", GlobalPriority: 1, NodePriority: 1},
-			{ComponentId: "node-1-slow", NodeId: "node-1", GlobalPriority: 1, NodePriority: 99},
-			{ComponentId: "global-0", NodeId: "node-9", GlobalPriority: 0, NodePriority: 99},
-		},
-	}
-
-	nodes := deploymentPlanChildren("run-1", plan, common.Status_STATUS_RUNNING)
-	got := []string{nodes[0].GetComponentId(), nodes[1].GetComponentId(), nodes[2].GetComponentId()}
-	want := []string{"global-0", "node-1-slow", "node-2-fast"}
-	for i := range want {
-		if got[i] != want[i] {
-			t.Fatalf("component order = %v, want %v", got, want)
-		}
-		if nodes[i].GetOrder() != uint32(i+1) {
-			t.Fatalf("node[%d] order = %d, want %d", i, nodes[i].GetOrder(), i+1)
-		}
-	}
-}
-
-func TestLegacyRecordFallbackInheritsCompletedDeploymentChildren(t *testing.T) {
-	rec := &models.TestRunRecord{
-		Entity: &common.Entity{Id: "run-1"},
-		Status: common.Status_STATUS_COMPLETED,
-		Spec: &domainpb.TestRun{
-			InfrastructurePlan: &deploymentpb.InfrastructurePlan{
-				Provider: deploymentpb.Provider_PROVIDER_DOCKER,
-				Machines: []*deploymentpb.MachinePlan{
-					{
-						NodeId: "node-1",
-						ProviderParams: &deploymentpb.MachinePlan_Docker{Docker: &deploymentpb.Docker_Container{
-							Image: "postgres:16",
-						}},
-						QuotaRequests: []*deploymentpb.Quota_Request{
-							{
-								Info: &deploymentpb.Quota_Info{
-									Provider: deploymentpb.Provider_PROVIDER_DOCKER,
-									Name:     "host.cpuCores",
-									Units:    "cores",
-								},
-								Request: 2,
-							},
-						},
-					},
-				},
-			},
-		},
-		InfrastructureState: &deploymentpb.InfrastructureState{
-			Machines: []*deploymentpb.MachineState{{NodeId: "node-1", Status: common.Status_STATUS_DEPLOYED}},
-		},
-		DeploymentPlan: &deploymentpb.DeploymentPlan{
-			Components: []*deploymentpb.ComponentDeployment{
-				{
-					ComponentId: "postgres-master",
-					NodeId:      "node-1",
-					Steps: []*deploymentpb.AgentStep{
-						{
-							Id:    "010_write_config",
-							Order: 10,
-							Action: &deploymentpb.AgentStep_WriteFile{WriteFile: &common.File{
-								Info: &common.File_Info{Path: "/etc/postgresql/postgresql.conf"},
-							}},
-						},
-					},
-				},
-			},
-		},
-	}
-
-	overview := overviewFromRecord("run-1", rec, nil, timestamppb.Now())
-	execute := overview.GetPipeline().GetRoots()[2]
-	component := execute.GetChildren()[0]
-	step := component.GetChildren()[0]
-	if got := component.GetStatus(); got != common.Status_STATUS_COMPLETED {
-		t.Fatalf("component status = %s, want completed", got)
-	}
-	if got := step.GetStatus(); got != common.Status_STATUS_COMPLETED {
-		t.Fatalf("step status = %s, want completed", got)
-	}
-	infrastructure := overview.GetPipeline().GetRoots()[0]
-	for _, id := range []string{"infrastructure/plan", "infrastructure/state", "quota/request/node-1/host.cpuCores"} {
-		if !pipelineNodeHasOutputID(infrastructure, id) {
-			t.Fatalf("infrastructure root missing output %q: %+v", id, infrastructure.GetOutputs())
-		}
-	}
-	if got := overview.GetPipeline().GetRoots()[4].GetName(); got != stageTeardownNodeName {
-		t.Fatalf("root[4] = %q, want teardown", got)
-	}
-}
-
-func TestRecordFallbackUsesPersistedRuntimeState(t *testing.T) {
-	rec := &models.TestRunRecord{
+func TestRunFallbackUsesPersistedRuntimeState(t *testing.T) {
+	run := &models.Run{
 		Entity: &common.Entity{Id: "run-1"},
 		Status: common.Status_STATUS_COMPLETED,
 		RuntimeState: &workflowpb.RunState{
@@ -417,10 +356,10 @@ func TestRecordFallbackUsesPersistedRuntimeState(t *testing.T) {
 				},
 			},
 		},
-		Summary: &models.TestRunRecord_Summary{ProgressPct: 100},
+		Summary: &models.Run_Summary{ProgressPct: 100},
 	}
 
-	overview := overviewFromRecord("run-1", rec, nil, timestamppb.Now())
+	overview := overviewFromRun("run-1", run, nil, timestamppb.Now())
 	roots := overview.GetPipeline().GetRoots()
 	if got, want := len(roots), 1; got != want {
 		t.Fatalf("roots = %d, want %d from persisted runtime_state", got, want)
@@ -433,16 +372,15 @@ func TestRecordFallbackUsesPersistedRuntimeState(t *testing.T) {
 	}
 }
 
-// TestRecordFallbackProjectsRecipeRunDynamicStagesGenerically is Task 5's
-// overview acceptance case: a recipe run's TestRunRecord (no Spec/
-// InfrastructureState/DeploymentPlan — see recipe.Service.StartRun's doc
-// comment) carries a RunState with RunRecipeWorkflow's own dynamic stage
-// names (compile/infra/execute — see internal/workflows/runrecipe.go), not
-// domainTestWorkflow's 5 hardcoded pipeline names. The record-fallback
-// projection must render exactly those stages, not force them into
+// TestRunFallbackProjectsRecipeRunDynamicStagesGenerically is Task 5's
+// overview acceptance case: a run's RuntimeState carries RunRecipeWorkflow's
+// own dynamic stage names (compile/infra/execute — see
+// internal/workflows/runrecipe.go), not domainTestWorkflow's 5 hardcoded
+// pipeline names. The record-fallback projection must render exactly those
+// stages, not force them into
 // stageInfrastructureNodeName/stageRenderDeploymentPlanNodeName/etc.
-func TestRecordFallbackProjectsRecipeRunDynamicStagesGenerically(t *testing.T) {
-	rec := &models.TestRunRecord{
+func TestRunFallbackProjectsRecipeRunDynamicStagesGenerically(t *testing.T) {
+	run := &models.Run{
 		Entity: &common.Entity{Id: "run-1"},
 		Status: common.Status_STATUS_RUNNING,
 		RuntimeState: &workflowpb.RunState{
@@ -473,7 +411,7 @@ func TestRecordFallbackProjectsRecipeRunDynamicStagesGenerically(t *testing.T) {
 		},
 	}
 
-	overview := overviewFromRecord("run-1", rec, nil, timestamppb.Now())
+	overview := overviewFromRun("run-1", run, nil, timestamppb.Now())
 	roots := overview.GetPipeline().GetRoots()
 	if got, want := len(roots), 3; got != want {
 		t.Fatalf("roots = %d, want %d (compile/infra/execute, not the 5 fixed test-run stages)", got, want)
@@ -496,170 +434,26 @@ func TestRecordFallbackProjectsRecipeRunDynamicStagesGenerically(t *testing.T) {
 	}
 }
 
-func TestTopologyFromRecordIncludesRuntimeControlPlaneMonitoringAndActionEdges(t *testing.T) {
-	started := timestamppb.New(time.Unix(100, 0))
-	installCollectors := &deploymentpb.AgentStep{
-		Id:     "300_install_collectors",
-		Order:  300,
-		Status: common.Status_STATUS_RUNNING,
-		Action: &deploymentpb.AgentStep_CallCmd{CallCmd: &common.Cmd{Spec: &common.Cmd_Spec{
-			Command: &common.Cmd_Spec_Script{Script: &common.Cmd_Script{
-				Text: "curl https://control.example/api/binaries/node_exporter/1 && install postgres_exporter vmagent vector",
-			}},
-		}}},
-	}
-	writeVectorConfig := &deploymentpb.AgentStep{
-		Id:     "310_write_vector_config",
-		Order:  310,
-		Status: common.Status_STATUS_RUNNING,
-		Action: &deploymentpb.AgentStep_WriteFile{WriteFile: &common.File{
-			Info:    &common.File_Info{Path: "/etc/vector/vector.yaml"},
-			Content: &common.File_Text{Text: "sources: {}\n"},
-		}},
-	}
-	rec := &models.TestRunRecord{
-		Entity: &common.Entity{Id: "run-1"},
-		Spec: &domainpb.TestRun{
-			Id: "run-1",
-			TopologySpec: &topologypb.TopologySpec{
-				Labels: map[string]string{
-					deploymentbuilder.LabelServerAddr: "https://control.example",
-					deploymentbuilder.LabelRunID:      "run-1",
-				},
-				Nodes: []*topologypb.Node{
-					{Id: "node-1", ComponentIds: []string{"postgres-master"}},
-				},
-				Components: []*topologypb.Component{
-					{
-						Id:     "postgres-master",
-						Kind:   topologypb.Component_KIND_DATABASE,
-						Engine: "postgres",
-						Role:   "master",
-					},
-				},
-			},
-		},
-		Status: common.Status_STATUS_RUNNING,
-		InfrastructureState: &deploymentpb.InfrastructureState{
-			Machines: []*deploymentpb.MachineState{
-				{
-					NodeId: "node-1",
-					Status: common.Status_STATUS_DEPLOYED,
-					Endpoints: []*deploymentpb.Endpoint{
-						{Name: "private", Address: "10.0.0.10"},
-					},
-				},
-			},
-		},
-		DeploymentPlan: &deploymentpb.DeploymentPlan{
-			Components: []*deploymentpb.ComponentDeployment{
-				{
-					ComponentId: "postgres-master",
-					NodeId:      "node-1",
-					Status:      common.Status_STATUS_DEPLOYMENT,
-					Steps:       []*deploymentpb.AgentStep{installCollectors},
-				},
-			},
-		},
-		RuntimeState: &workflowpb.RunState{
-			Status: common.Status_STATUS_RUNNING,
-			Stages: []*workflowpb.Stage{
-				{
-					NodeExecutionId:       deploymentbuilder.StepExecutionID("postgres-master", "300_install_collectors"),
-					Name:                  "install collectors",
-					Status:                common.Status_STATUS_RUNNING,
-					StartedAt:             started,
-					Attempt:               1,
-					Order:                 1,
-					ParentNodeExecutionId: deploymentbuilder.ComponentExecutionID("postgres-master"),
-					Phase:                 executeDeploymentPlanNodeName,
-					ComponentId:           "postgres-master",
-					MachineId:             "node-1",
-					Operation:             deploymentbuilder.AgentStepOperation(installCollectors),
-				},
-				{
-					NodeExecutionId:       deploymentbuilder.StepExecutionID("postgres-master", "310_write_vector_config"),
-					Name:                  "write vector config",
-					Status:                common.Status_STATUS_RUNNING,
-					StartedAt:             started,
-					Attempt:               1,
-					Order:                 2,
-					ParentNodeExecutionId: deploymentbuilder.ComponentExecutionID("postgres-master"),
-					Phase:                 executeDeploymentPlanNodeName,
-					ComponentId:           "postgres-master",
-					MachineId:             "node-1",
-					Operation:             deploymentbuilder.AgentStepOperation(writeVectorConfig),
-				},
-			},
-		},
-	}
-
-	topo := topologyFromRecord(rec)
-	for _, id := range []string{
-		"control-plane",
-		"machine/node-1",
-		"agent/node-1",
-		"component/postgres-master",
-		"monitor/node-1/node_exporter",
-		"monitor/node-1/postgres_exporter",
-		"monitor/node-1/vmagent",
-		"monitor/node-1/vector",
-	} {
-		if node := runtimeNodeByID(topo, id); node == nil {
-			t.Fatalf("runtime node %q missing", id)
-		}
-	}
-	if got, want := runtimeNodeByID(topo, "control-plane").GetAddress(), "https://control.example"; got != want {
-		t.Fatalf("control-plane address = %q, want %q", got, want)
-	}
-	assertRuntimeEdge(t, topo, "agent/node-1", "control-plane", "/api/binaries")
-	assertRuntimeEdge(t, topo, "monitor/node-1/vmagent", "control-plane", "/insert/0/prometheus/api/v1/write")
-	assertRuntimeEdge(t, topo, "monitor/node-1/vector", "control-plane", "/insert/jsonline")
-	assertRuntimeEdge(t, topo, "monitor/node-1/vmagent", "monitor/node-1/node_exporter", "node")
-	assertRuntimeEdge(t, topo, "monitor/node-1/postgres_exporter", "component/postgres-master", "postgres_local")
-	action := assertRuntimeEdge(t, topo, "agent/node-1", "monitor/node-1/vector", "agent_action")
-	if got, want := action.GetLabels()[runtimeLabelRelation], "agent_action"; got != want {
-		t.Fatalf("vector action relation = %q, want %q", got, want)
-	}
-	if got := action.GetStartedAt(); got != started {
-		t.Fatalf("vector action started_at = %v, want stage timestamp", got)
-	}
-	if got := countRuntimeEdges(topo, "agent/node-1", "monitor/node-1/vector", "agent_action"); got != 1 {
-		t.Fatalf("vector action edges = %d, want collapsed single edge", got)
-	}
-	logs := assertRuntimeEdge(t, topo, "monitor/node-1/vector", "component/postgres-master", "logs/journald_and_files")
-	if got := logs.GetKind(); got != topologypb.Connection_KIND_OBSERVATION {
-		t.Fatalf("vector local logs kind = %s, want observation", got)
-	}
-	if got := logs.GetProtocol(); got == topologypb.Connection_PROTOCOL_CONTROL {
-		t.Fatalf("vector local logs protocol = %s, want non-control observation edge", got)
-	}
-	if got, want := logs.GetLabels()[runtimeLabelRelation], "local_log_collection"; got != want {
-		t.Fatalf("vector local logs relation = %q, want %q", got, want)
-	}
-}
-
-// TestTopologyFromRecordProjectsRecipeTopologySnapshot asserts that a recipe
-// run's persisted RecipeTopologySnapshot (rec.Spec is nil — a recipe run has
-// no baked domain.TestRun spec, so topologyFromRecord's classic TopologySpec/
-// InfrastructureState/DeploymentPlan path finds nothing) still yields a
-// topology with the provisioned machine/agent/service nodes, not just the
-// lone control-plane node the audit's Q3 finding describes (see the plan's
-// "Task 3: Topology projection for recipe runs").
-func TestTopologyFromRecordProjectsRecipeTopologySnapshot(t *testing.T) {
-	rec := &models.TestRunRecord{
-		Entity:   &common.Entity{Id: "run-1"},
-		Status:   common.Status_STATUS_RUNNING,
-		RecipeId: "recipe-1",
-		RecipeTopology: &models.RecipeTopologySnapshot{
+// TestTopologyFromRunProjectsRunTopologySnapshot asserts that a run's
+// persisted topology snapshot (models.RunTopology, filled once right after
+// ProvisionActivity) yields a topology with the provisioned machine/agent/
+// service nodes — the only projection path left after Step 0 deleted the
+// classic Spec/InfrastructureState/DeploymentPlan branch (models.Run never
+// had those fields to begin with).
+func TestTopologyFromRunProjectsRunTopologySnapshot(t *testing.T) {
+	run := &models.Run{
+		Entity:     &common.Entity{Id: "run-1"},
+		Status:     common.Status_STATUS_RUNNING,
+		WorkflowId: "recipe-1",
+		Topology: &models.RunTopology{
 			Provider: "yandex",
-			Nodes: []*models.RecipeTopologySnapshot_MachineNode{
+			Nodes: []*models.RunTopology_MachineNode{
 				{
 					NodeId: "db-0",
 					Group:  "db",
 					Ip:     "10.0.0.1",
 					Status: common.Status_STATUS_DEPLOYED,
-					Services: []*models.RecipeTopologySnapshot_ServiceNode{
+					Services: []*models.RunTopology_ServiceNode{
 						{Name: "patroni-postgres", Image: "spilo:16"},
 					},
 				},
@@ -668,7 +462,7 @@ func TestTopologyFromRecordProjectsRecipeTopologySnapshot(t *testing.T) {
 					Group:  "db",
 					Ip:     "10.0.0.2",
 					Status: common.Status_STATUS_DEPLOYED,
-					Services: []*models.RecipeTopologySnapshot_ServiceNode{
+					Services: []*models.RunTopology_ServiceNode{
 						{Name: "patroni-postgres", Image: "spilo:16"},
 					},
 				},
@@ -677,7 +471,7 @@ func TestTopologyFromRecordProjectsRecipeTopologySnapshot(t *testing.T) {
 					Group:  "runner",
 					Ip:     "10.0.0.3",
 					Status: common.Status_STATUS_DEPLOYED,
-					Services: []*models.RecipeTopologySnapshot_ServiceNode{
+					Services: []*models.RunTopology_ServiceNode{
 						{Name: "stroppy", Image: "stroppy:1.2.3"},
 					},
 				},
@@ -685,7 +479,7 @@ func TestTopologyFromRecordProjectsRecipeTopologySnapshot(t *testing.T) {
 		},
 	}
 
-	topo := topologyFromRecord(rec)
+	topo := topologyFromRun(run)
 
 	if got, want := topo.GetState(), topologypb.Topology_STATE_INFRASTRUCTURE_DEPLOYED; got != want {
 		t.Fatalf("topology state = %s, want %s", got, want)
@@ -693,7 +487,7 @@ func TestTopologyFromRecordProjectsRecipeTopologySnapshot(t *testing.T) {
 
 	nodes := topo.GetRuntimeNodes()
 	if got := len(nodes); got <= 1 {
-		t.Fatalf("runtime node count = %d, want more than just the control-plane node (audit Q3 regression)", got)
+		t.Fatalf("runtime node count = %d, want more than just the control-plane node", got)
 	}
 
 	for _, id := range []string{
@@ -727,71 +521,97 @@ func TestTopologyFromRecordProjectsRecipeTopologySnapshot(t *testing.T) {
 	assertRuntimeEdge(t, topo, "agent/db-0", "control-plane", "agent_control")
 }
 
-func TestTopologyFromRecordLabelsUnspecifiedLogicalConnections(t *testing.T) {
-	rec := &models.TestRunRecord{
+// TestRuntimeTopologyProjectsMonitoringFactsFromStageOperations covers the
+// monitoring-collector detection addStageAction/operationRuntimeFacts still
+// does off RunState stage operations (unrelated to the deleted classic
+// Spec-driven addMonitoringRuntime path — see runtime_topology.go's
+// runtimeTopologyFromRun doc). This replaces the pre-migration test of the
+// same shape that built its fixture from a classic domain.TestRun Spec +
+// InfrastructureState + DeploymentPlan, none of which models.Run carries.
+func TestRuntimeTopologyProjectsMonitoringFactsFromStageOperations(t *testing.T) {
+	started := timestamppb.New(time.Unix(100, 0))
+	installCollectors := &deploymentpb.AgentStep{
+		Id:     "300_install_collectors",
+		Order:  300,
+		Status: common.Status_STATUS_RUNNING,
+		Action: &deploymentpb.AgentStep_CallCmd{CallCmd: &common.Cmd{Spec: &common.Cmd_Spec{
+			Command: &common.Cmd_Spec_Script{Script: &common.Cmd_Script{
+				Text: "install node_exporter postgres_exporter vmagent vector",
+			}},
+		}}},
+	}
+	writeVectorConfig := &deploymentpb.AgentStep{
+		Id:     "310_write_vector_config",
+		Order:  310,
+		Status: common.Status_STATUS_RUNNING,
+		Action: &deploymentpb.AgentStep_WriteFile{WriteFile: &common.File{
+			Info:    &common.File_Info{Path: "/etc/vector/vector.yaml"},
+			Content: &common.File_Text{Text: "sources: {}\n"},
+		}},
+	}
+	run := &models.Run{
 		Entity: &common.Entity{Id: "run-1"},
-		Spec: &domainpb.TestRun{
-			Id: "run-1",
-			TopologySpec: &topologypb.TopologySpec{
-				Nodes: []*topologypb.Node{
-					{Id: "node-1", ComponentIds: []string{"client", "postgres-master"}},
-				},
-				Components: []*topologypb.Component{
-					{Id: "client", Kind: topologypb.Component_KIND_WORKLOAD, Engine: "stroppy", Role: "runner"},
-					{Id: "postgres-master", Kind: topologypb.Component_KIND_DATABASE, Engine: "postgres", Role: "master"},
-				},
-				Connections: []*topologypb.Connection{
-					{FromComponentId: "client", ToComponentId: "postgres-master"},
-				},
+		Status: common.Status_STATUS_RUNNING,
+		Topology: &models.RunTopology{
+			Provider: "docker",
+			Nodes: []*models.RunTopology_MachineNode{
+				{NodeId: "node-1", Group: "db", Status: common.Status_STATUS_DEPLOYED},
 			},
 		},
-		Status: common.Status_STATUS_PENDING,
 	}
-
-	topo := topologyFromRecord(rec)
-	edge := assertRuntimeEdge(t, topo, "component/client", "component/postgres-master", "flow/tcp")
-	if got := edge.GetKind(); got != topologypb.Connection_KIND_FLOW {
-		t.Fatalf("logical edge kind = %s, want flow", got)
-	}
-	if got := edge.GetProtocol(); got != topologypb.Connection_PROTOCOL_TCP {
-		t.Fatalf("logical edge protocol = %s, want tcp", got)
-	}
-	if got := edge.GetMode(); got != topologypb.Connection_MODE_REQUEST {
-		t.Fatalf("logical edge mode = %s, want request", got)
-	}
-}
-
-func TestTopologyFromRecordReadsServerAddrFromDeploymentPlanLabels(t *testing.T) {
-	rec := &models.TestRunRecord{
-		Entity: &common.Entity{Id: "run-1"},
-		Spec: &domainpb.TestRun{
-			Id: "run-1",
-			TopologySpec: &topologypb.TopologySpec{
-				Nodes: []*topologypb.Node{
-					{Id: "node-1", ComponentIds: []string{"postgres-master"}},
-				},
-				Components: []*topologypb.Component{
-					{Id: "postgres-master", Kind: topologypb.Component_KIND_DATABASE, Engine: "postgres", Role: "master"},
-				},
+	rs := &workflowpb.RunState{
+		Status: common.Status_STATUS_RUNNING,
+		Stages: []*workflowpb.Stage{
+			{
+				NodeExecutionId: deploymentbuilder.StepExecutionID("postgres-master", "300_install_collectors"),
+				Name:            "install collectors",
+				Status:          common.Status_STATUS_RUNNING,
+				StartedAt:       started,
+				Attempt:         1,
+				Order:           1,
+				Phase:           executeDeploymentPlanNodeName,
+				ComponentId:     "postgres-master",
+				MachineId:       "node-1",
+				Operation:       deploymentbuilder.AgentStepOperation(installCollectors),
 			},
-		},
-		InfrastructureState: &deploymentpb.InfrastructureState{
-			Machines: []*deploymentpb.MachineState{{NodeId: "node-1", Status: common.Status_STATUS_DEPLOYED}},
-		},
-		DeploymentPlan: &deploymentpb.DeploymentPlan{
-			Labels: map[string]string{deploymentbuilder.LabelServerAddr: "https://control.example"},
-			Components: []*deploymentpb.ComponentDeployment{
-				{ComponentId: "postgres-master", NodeId: "node-1", Status: common.Status_STATUS_DEPLOYED},
+			{
+				NodeExecutionId: deploymentbuilder.StepExecutionID("postgres-master", "310_write_vector_config"),
+				Name:            "write vector config",
+				Status:          common.Status_STATUS_RUNNING,
+				StartedAt:       started,
+				Attempt:         1,
+				Order:           2,
+				Phase:           executeDeploymentPlanNodeName,
+				ComponentId:     "postgres-master",
+				MachineId:       "node-1",
+				Operation:       deploymentbuilder.AgentStepOperation(writeVectorConfig),
 			},
 		},
 	}
 
-	topo := topologyFromRecord(rec)
-	if got, want := runtimeNodeByID(topo, "control-plane").GetAddress(), "https://control.example"; got != want {
-		t.Fatalf("control-plane address = %q, want %q", got, want)
+	topo := topologyFromRunWithRunState(run, rs)
+	for _, id := range []string{
+		"control-plane",
+		"machine/node-1",
+		"agent/node-1",
+		"monitor/node-1/node_exporter",
+		"monitor/node-1/postgres_exporter",
+		"monitor/node-1/vmagent",
+		"monitor/node-1/vector",
+	} {
+		if node := runtimeNodeByID(topo, id); node == nil {
+			t.Fatalf("runtime node %q missing", id)
+		}
 	}
-	if node := runtimeNodeByID(topo, "monitor/node-1/vmagent"); node == nil {
-		t.Fatal("vmagent runtime node missing when deployment plan carries server addr")
+	action := assertRuntimeEdge(t, topo, "agent/node-1", "monitor/node-1/vector", "agent_action")
+	if got, want := action.GetLabels()[runtimeLabelRelation], "agent_action"; got != want {
+		t.Fatalf("vector action relation = %q, want %q", got, want)
+	}
+	if got := action.GetStartedAt(); got != started {
+		t.Fatalf("vector action started_at = %v, want stage timestamp", got)
+	}
+	if got := countRuntimeEdges(topo, "agent/node-1", "monitor/node-1/vector", "agent_action"); got != 1 {
+		t.Fatalf("vector action edges = %d, want collapsed single edge", got)
 	}
 }
 
@@ -827,38 +647,18 @@ func TestAgentStepOperationProjectsCommandDetailsAndMentions(t *testing.T) {
 	}
 }
 
-func TestOverviewProjectsWorkersFromPersistedTopology(t *testing.T) {
-	rec := &models.TestRunRecord{
+// TestWorkersFromRunProjectsRunTopologyNodes covers Step 6's redesign:
+// workersFromRun builds monitor.WorkerInfo straight off run.topology.nodes
+// (node_id/group/ip/status/services), replacing the old
+// deploymentpb.MachineState/DeploymentPlan lookup that was structurally
+// empty for every live recipe run (Task 4's discovered gap).
+func TestWorkersFromRunProjectsRunTopologyNodes(t *testing.T) {
+	run := &models.Run{
 		Entity: &common.Entity{Id: "run-1"},
-		InfrastructureState: &deploymentpb.InfrastructureState{
-			Machines: []*deploymentpb.MachineState{
-				{
-					NodeId: "node-1",
-					Status: common.Status_STATUS_DEPLOYED,
-					Endpoints: []*deploymentpb.Endpoint{
-						{Name: "public", Address: "203.0.113.10"},
-						{Name: "private", Address: "10.0.0.10"},
-					},
-				},
-			},
-		},
-		DeploymentPlan: &deploymentpb.DeploymentPlan{
-			Components: []*deploymentpb.ComponentDeployment{
-				{
-					ComponentId: "postgres-master",
-					NodeId:      "node-1",
-					Status:      common.Status_STATUS_DEPLOYMENT,
-					Steps: []*deploymentpb.AgentStep{
-						{
-							Id:     "020_start",
-							Status: common.Status_STATUS_DEPLOYMENT,
-							Action: &deploymentpb.AgentStep_CallCmd{CallCmd: &common.Cmd{}},
-							Labels: map[string]string{
-								deploymentbuilder.LabelNodeExecutionID: deploymentbuilder.StepExecutionID("postgres-master", "020_start"),
-							},
-						},
-					},
-				},
+		Status: common.Status_STATUS_RUNNING,
+		Topology: &models.RunTopology{
+			Nodes: []*models.RunTopology_MachineNode{
+				{NodeId: "node-1", Group: "db", Ip: "10.0.0.10", Status: common.Status_STATUS_DEPLOYED},
 			},
 		},
 	}
@@ -879,18 +679,7 @@ func TestOverviewProjectsWorkersFromPersistedTopology(t *testing.T) {
 		},
 	}
 
-	overview := mergeOverviewWithRecord(projectOverview("run-1", &workflowpb.RunState{
-		Status: common.Status_STATUS_RUNNING,
-		Stages: []*workflowpb.Stage{
-			{
-				NodeExecutionId: deploymentbuilder.StageExecutionID(executeDeploymentPlanNodeName),
-				Name:            executeDeploymentPlanNodeName,
-				Status:          common.Status_STATUS_RUNNING,
-			},
-		},
-	}, timestamppb.Now()), rec, presence)
-
-	workers := overview.GetWorkers()
+	workers := workersFromRun(run, presence)
 	if got, want := len(workers), 1; got != want {
 		t.Fatalf("workers = %d, want %d", got, want)
 	}
@@ -902,7 +691,7 @@ func TestOverviewProjectsWorkersFromPersistedTopology(t *testing.T) {
 		t.Fatalf("worker machine_id = %q, want %q", got, want)
 	}
 	if got, want := worker.GetHost(), "agent-node-1"; got != want {
-		t.Fatalf("worker host = %q, want %q", got, want)
+		t.Fatalf("worker host = %q, want %q (registry sample overrides topology ip)", got, want)
 	}
 	if !worker.GetOnline() {
 		t.Fatal("worker online = false, want true from registry presence")
@@ -916,31 +705,20 @@ func TestOverviewProjectsWorkersFromPersistedTopology(t *testing.T) {
 	if got := worker.GetLastSeenAt(); got != lastSeen {
 		t.Fatalf("worker last_seen_at = %v, want registry timestamp", got)
 	}
-	if got, want := worker.GetStatus(), common.Status_STATUS_RUNNING; got != want {
-		t.Fatalf("worker status = %s, want %s", got, want)
-	}
-	if got, want := worker.GetCurrentNodeExecutionId(), deploymentbuilder.StepExecutionID("postgres-master", "020_start"); got != want {
-		t.Fatalf("worker current_node_execution_id = %q, want %q", got, want)
-	}
 }
 
-func TestWorkersFromRecordKeepTerminalPresenceOverRegistrySample(t *testing.T) {
+func TestWorkersFromRunKeepTerminalPresenceOverRegistrySample(t *testing.T) {
 	lastSeen := timestamppb.New(time.Unix(100, 0))
-	rec := &models.TestRunRecord{
+	run := &models.Run{
 		Entity: &common.Entity{Id: "run-1"},
 		Status: common.Status_STATUS_COMPLETED,
-		InfrastructureState: &deploymentpb.InfrastructureState{
-			Machines: []*deploymentpb.MachineState{
+		Topology: &models.RunTopology{
+			Nodes: []*models.RunTopology_MachineNode{
 				{NodeId: "node-1", Status: common.Status_STATUS_DEPLOYED},
 			},
 		},
-		DeploymentPlan: &deploymentpb.DeploymentPlan{
-			Components: []*deploymentpb.ComponentDeployment{
-				{ComponentId: "postgres-master", NodeId: "node-1", Status: common.Status_STATUS_DEPLOYED},
-			},
-		},
 	}
-	workers := workersFromRecord(rec, map[string]*monitor.WorkerInfo{
+	workers := workersFromRun(run, map[string]*monitor.WorkerInfo{
 		"node-1": {
 			MachineId:                "node-1",
 			Host:                     "agent-node-1",
@@ -983,10 +761,10 @@ func TestOverviewStreamClosesAfterPersistedTerminalSnapshot(t *testing.T) {
 	reader := &OverviewReader{
 		tc: fakeRunStateQuerier{err: errors.New("workflow closed")},
 		store: fakeSnapshotStore{
-			run: &models.TestRunRecord{
+			run: &models.Run{
 				Entity: &common.Entity{Id: "run-1"},
 				Status: common.Status_STATUS_COMPLETED,
-				Summary: &models.TestRunRecord_Summary{
+				Summary: &models.Run_Summary{
 					ProgressPct: 100,
 				},
 			},
@@ -1047,8 +825,7 @@ func (f *countingRunStateQuerier) GetRunState(context.Context, string, string) (
 }
 
 // capturingRunStateQuerier records the workflowID it was queried with, so
-// tests can assert which workflow (test-run/<id> vs run-recipe/<id>) the
-// reader addressed.
+// tests can assert which workflow (run-recipe/<id>) the reader addressed.
 type capturingRunStateQuerier struct {
 	state         *workflowpb.RunState
 	err           error
@@ -1078,10 +855,10 @@ func (f *blockingRunStateQuerier) GetRunState(ctx context.Context, _, _ string) 
 }
 
 type fakeSnapshotStore struct {
-	run *models.TestRunRecord
+	run *models.Run
 }
 
-func (f fakeSnapshotStore) RunRecord(context.Context, string) (*models.TestRunRecord, error) {
+func (f fakeSnapshotStore) RunRecord(context.Context, string) (*models.Run, error) {
 	return f.run, nil
 }
 
@@ -1097,15 +874,6 @@ func containsString(values []string, want string) bool {
 func containsPrefix(values []string, prefix string) bool {
 	for _, value := range values {
 		if strings.HasPrefix(value, prefix) {
-			return true
-		}
-	}
-	return false
-}
-
-func pipelineNodeHasOutputID(node *monitor.PipelineNode, id string) bool {
-	for _, output := range node.GetOutputs() {
-		if output.GetId() == id {
 			return true
 		}
 	}

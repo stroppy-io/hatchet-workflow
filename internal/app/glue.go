@@ -91,32 +91,17 @@ func (s shareRunReader) GetTestRun(ctx context.Context, id string) (*modelspb.Te
 // snapshotRunReader backs execution.SnapshotRunReader: RunRecord by id.
 //
 // SP-E Task 3 cut RunRecipeWorkflow's write path over to models.Run/
-// run_records, but execution.OverviewReader (the sole consumer of this type)
-// is not migrated to read models.Run natively until Task 4 — see
-// execution.RunToTestRunRecord's doc. Until then, this reads test_run_records
-// first (pre-cutover / historical runs, still there since nothing deletes
-// them), falling back to run_records + the shim adapter for a run that only
-// exists there (any run started after this task landed). Delete the fallback
-// once Task 4 lands and OverviewReader reads *models.Run directly.
+// run_records; Task 4 migrated execution.OverviewReader (the sole consumer
+// of this type) to read models.Run natively, so this reads run_records
+// directly — the test_run_records fallback + execution.RunToTestRunRecord
+// shim that bridged the Task 3 -> Task 4 gap are gone (see progress.md's
+// "TEMP SHIMS to remove" note).
 type snapshotRunReader struct{ r byIDReader }
 
 var _ execution.SnapshotRunReader = snapshotRunReader{}
 
-func (s snapshotRunReader) RunRecord(ctx context.Context, runID string) (*modelspb.TestRunRecord, error) {
-	rec, err := s.r.testRun(ctx, runID)
-	if err == nil {
-		return rec, nil
-	}
-	if !errors.Is(err, derrors.ErrNotFound) {
-		return nil, err
-	}
-	run, rerr := s.r.run(ctx, runID)
-	if rerr != nil {
-		// Neither table has this id: surface the original test_run_records
-		// not-found (preserves prior error semantics/messages).
-		return nil, err
-	}
-	return execution.RunToTestRunRecord(run), nil
+func (s snapshotRunReader) RunRecord(ctx context.Context, runID string) (*modelspb.Run, error) {
+	return s.r.run(ctx, runID)
 }
 
 // runtimePersistenceStore backs workflow runtime persistence activities

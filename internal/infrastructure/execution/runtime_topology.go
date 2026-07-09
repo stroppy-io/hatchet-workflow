@@ -4,10 +4,8 @@ import (
 	"fmt"
 	"hash/fnv"
 	"sort"
-	"strconv"
 	"strings"
 
-	deploymentbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/deployment"
 	commonpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
@@ -30,69 +28,79 @@ type runtimeTopologyBuilder struct {
 	edges map[string]*topology.RuntimeConnection
 }
 
-func runtimeTopologyFromRecord(rec *models.TestRunRecord, rs *workflowpb.RunState) ([]*topology.RuntimeNode, []*topology.RuntimeConnection) {
-	if rec == nil {
+// runtimeTopologyFromRun projects a run's runtime topology. Per SP-E Task
+// 4's Step 0 (dead classic-branch removal): the pre-migration version of
+// this function branched on rec.GetSpec().GetTopologySpec() (a classic
+// domain.TestRun's spec-driven topology, complete with a separate
+// InfrastructureState/DeploymentPlan-derived node/edge set) before falling
+// back to the recipe-topology-snapshot path below. models.Run never carries
+// a Spec/InfrastructureState/DeploymentPlan at all (see Run's own doc
+// comment) — that classic branch, and the ~10 helpers it alone called
+// (addComponents/addLogicalConnections/addComponentDependencies/
+// addMonitoringRuntime/addDatabaseMonitoring and their status/lookup
+// helpers), were already unreachable dead code for the live RunRecipeWorkflow
+// path (spec §1: domainTestWorkflow is unregistered) and are deleted rather
+// than ported forward. The topology-snapshot path (run.topology, filled once
+// right after ProvisionActivity) is promoted to the only path; a run with no
+// topology snapshot yet renders just the control-plane skeleton plus
+// whatever RunState stages have reported a machine_id so far.
+func runtimeTopologyFromRun(run *models.Run, rs *workflowpb.RunState) ([]*topology.RuntimeNode, []*topology.RuntimeConnection) {
+	if run == nil {
 		return nil, nil
 	}
 
-	// A recipe run has no domain.TestRun spec at all (rec.GetSpec() is nil),
-	// so it never has a TopologySpec to project from — instead it persists
-	// a models.RecipeTopologySnapshot (see that field's doc on
-	// TestRunRecord) right after ProvisionActivity succeeds. Project from
-	// that snapshot instead of the classic spec/infrastructure-state/
-	// deployment-plan trio below.
-	if rec.GetSpec().GetTopologySpec() == nil {
-		if snap := rec.GetRecipeTopology(); snap != nil {
-			return runtimeTopologyFromRecipeSnapshot(rec, snap, rs)
-		}
+	if snap := run.GetTopology(); snap != nil {
+		return runtimeTopologyFromRunSnapshot(run, snap, rs)
 	}
 
 	b := &runtimeTopologyBuilder{
 		nodes: make(map[string]*topology.RuntimeNode),
 		edges: make(map[string]*topology.RuntimeConnection),
 	}
-
-	spec := rec.GetSpec().GetTopologySpec()
-	serverAddr := topologyRuntimeServerAddr(rec)
-	machines := machineStatesByID(rec.GetInfrastructureState())
-	components := topologyComponentsByID(spec)
-	componentPlans := componentDeploymentsByID(rec.GetDeploymentPlan())
-	componentMachines := componentMachineIDs(spec, rec.GetDeploymentPlan())
-	machineIDs := runtimeMachineIDs(spec, rec.GetInfrastructureState(), rec.GetDeploymentPlan(), rs)
-	componentIDsByMachine := runtimeComponentIDsByMachine(componentMachines)
-	currentByMachine := currentExecutionByNode(rec.GetDeploymentPlan())
-
-	b.addControlPlane(rec, serverAddr)
-	for _, machineID := range machineIDs {
-		b.addMachineAndAgent(rec, machineID, machines[machineID], currentByMachine[machineID], serverAddr)
+	b.addControlPlane(run, "")
+	for _, machineID := range runtimeMachineIDsFromStages(rs) {
+		b.addMachineAndAgent(run, machineID, nil, "", "")
 	}
-	b.addComponents(rec, components, componentPlans, componentMachines)
-	b.addLogicalConnections(rec, spec, components, componentPlans)
-	b.addComponentDependencies(rec.GetDeploymentPlan())
-	b.addMonitoringRuntime(rec, serverAddr, machines, components, componentIDsByMachine)
-	b.addStages(rs, components, machines)
-
+	// rs.GetStages() never carries a machine_id for RunRecipeWorkflow's own
+	// root stages (compile/infra/execute/teardown are workflow-level, not
+	// per-machine — see runrecipe.go's newRunRecipeWorkflow) until a
+	// per-machine stage actually lands; this call is what picks those up
+	// once they do.
+	b.addStages(rs, nil, nil)
 	return b.sortedNodes(), b.sortedEdges()
 }
 
-// runtimeTopologyFromRecipeSnapshot projects a recipe run's persisted
-// models.RecipeTopologySnapshot into the same topology.RuntimeNode/
-// RuntimeConnection shape runtimeTopologyFromRecord builds for a classic run:
-// a control-plane node, one machine+agent node pair per provisioned machine
-// (mirroring addMachineAndAgent's control-plane heartbeat/binary-cache
-// edges), and one component node per service placed on that machine's group,
-// connected to the machine by a placement edge (mirroring addComponents'
-// placement edge for a classic run's topology.Component). Recipe runs carry
-// no server_addr label source today (see topologyRuntimeServerAddr's label
-// sources, none of which a recipe run ever fills), so the binary-cache edge
-// and control-plane server_addr label are simply omitted rather than guessed.
-func runtimeTopologyFromRecipeSnapshot(rec *models.TestRunRecord, snap *models.RecipeTopologySnapshot, rs *workflowpb.RunState) ([]*topology.RuntimeNode, []*topology.RuntimeConnection) {
+// runtimeMachineIDsFromStages collects the distinct machine ids RunState's
+// own stages have reported so far — the only source of machine ids before a
+// run's topology snapshot exists (models.Run has no InfrastructureState/
+// DeploymentPlan/TopologySpec to read them from otherwise).
+func runtimeMachineIDsFromStages(rs *workflowpb.RunState) []string {
+	ids := make(map[string]struct{})
+	for _, stage := range rs.GetStages() {
+		if stage.GetMachineId() != "" {
+			ids[stage.GetMachineId()] = struct{}{}
+		}
+	}
+	return sortedSetKeys(ids)
+}
+
+// runtimeTopologyFromRunSnapshot projects a run's persisted models.RunTopology
+// into topology.RuntimeNode/RuntimeConnection shape: a control-plane node,
+// one machine+agent node pair per provisioned machine (mirroring
+// addMachineAndAgent's control-plane heartbeat/binary-cache edges), and one
+// component node per service placed on that machine's group, connected to
+// the machine by a placement edge. Recipe runs carry no server_addr today
+// (models.Run has no label carrier equivalent to the classic spec/plan/state
+// label sources the pre-Task-4 topologyRuntimeServerAddr scanned — deleted
+// alongside the classic branch above), so the binary-cache edge and
+// control-plane server_addr label are simply omitted rather than guessed.
+func runtimeTopologyFromRunSnapshot(run *models.Run, snap *models.RunTopology, rs *workflowpb.RunState) ([]*topology.RuntimeNode, []*topology.RuntimeConnection) {
 	b := &runtimeTopologyBuilder{
 		nodes: make(map[string]*topology.RuntimeNode),
 		edges: make(map[string]*topology.RuntimeConnection),
 	}
 
-	b.addControlPlane(rec, "")
+	b.addControlPlane(run, "")
 	for _, node := range snap.GetNodes() {
 		b.addRecipeMachine(node)
 	}
@@ -106,21 +114,7 @@ func runtimeTopologyFromRecipeSnapshot(rec *models.TestRunRecord, snap *models.R
 	return b.sortedNodes(), b.sortedEdges()
 }
 
-func topologyRuntimeServerAddr(rec *models.TestRunRecord) string {
-	for _, labels := range []map[string]string{
-		rec.GetSpec().GetTopologySpec().GetLabels(),
-		rec.GetDeploymentPlan().GetLabels(),
-		rec.GetSpec().GetInfrastructurePlan().GetLabels(),
-		rec.GetInfrastructureState().GetLabels(),
-	} {
-		if addr := strings.TrimRight(labels[deploymentbuilder.LabelServerAddr], "/"); addr != "" {
-			return addr
-		}
-	}
-	return ""
-}
-
-func (b *runtimeTopologyBuilder) addControlPlane(rec *models.TestRunRecord, serverAddr string) {
+func (b *runtimeTopologyBuilder) addControlPlane(run *models.Run, serverAddr string) {
 	labels := map[string]string{
 		runtimeLabelSource:       "control_plane",
 		runtimeLabelRuntimeClass: "stroppy_server",
@@ -134,14 +128,14 @@ func (b *runtimeTopologyBuilder) addControlPlane(rec *models.TestRunRecord, serv
 		Label:        "stroppy server",
 		Engine:       "stroppy",
 		Role:         "control-plane",
-		Status:       controlPlaneRuntimeStatus(rec),
+		Status:       controlPlaneRuntimeStatus(run),
 		StatusReason: "control_plane_external_to_run",
 		Address:      serverAddr,
 		Labels:       labels,
 	})
 }
 
-func (b *runtimeTopologyBuilder) addMachineAndAgent(rec *models.TestRunRecord, machineID string, machine *deploymentpb.MachineState, currentExecutionID string, serverAddr string) {
+func (b *runtimeTopologyBuilder) addMachineAndAgent(run *models.Run, machineID string, machine *deploymentpb.MachineState, currentExecutionID string, serverAddr string) {
 	if machineID == "" {
 		return
 	}
@@ -168,7 +162,7 @@ func (b *runtimeTopologyBuilder) addMachineAndAgent(rec *models.TestRunRecord, m
 		Tags:         machine.GetTags(),
 	})
 
-	agentStatus := agentRuntimeStatus(rec, machine, currentExecutionID)
+	agentStatus := agentRuntimeStatus(run, machine, currentExecutionID)
 	agentID := runtimeAgentNodeID(machineID)
 	b.addNode(&topology.RuntimeNode{
 		Id:              agentID,
@@ -179,7 +173,7 @@ func (b *runtimeTopologyBuilder) addMachineAndAgent(rec *models.TestRunRecord, m
 		MachineId:       machineID,
 		NodeExecutionId: currentExecutionID,
 		Status:          agentStatus,
-		StatusReason:    agentRuntimeStatusReason(rec, machine, currentExecutionID),
+		StatusReason:    agentRuntimeStatusReason(run, machine, currentExecutionID),
 		Address:         machineHost(machine),
 		Labels: map[string]string{
 			runtimeLabelSource:       "agent_registry_or_plan",
@@ -220,15 +214,13 @@ func (b *runtimeTopologyBuilder) addMachineAndAgent(rec *models.TestRunRecord, m
 }
 
 // addRecipeMachine adds the machine+agent node pair and service (component)
-// nodes for one models.RecipeTopologySnapshot_MachineNode entry — the
-// recipe-run counterpart to addMachineAndAgent+addComponents combined, since
-// a recipe run's snapshot already carries each machine's group/service
-// placement directly (no separate topology.Component/deployment.
-// ComponentDeployment lookup is needed). Status comes straight from the
-// snapshot (the deployment.MachineState.status ProvisionActivity captured —
-// see that field's doc), not derived from rec/rs: a recipe run's snapshot is
-// a point-in-time fact, not a live-updated one.
-func (b *runtimeTopologyBuilder) addRecipeMachine(node *models.RecipeTopologySnapshot_MachineNode) {
+// nodes for one models.RunTopology_MachineNode entry — a run's snapshot
+// already carries each machine's group/service placement directly (no
+// separate topology.Component/deployment.ComponentDeployment lookup is
+// needed). Status comes straight from the snapshot, not derived from
+// run/rs: a run's topology snapshot is a point-in-time fact, not a
+// live-updated one.
+func (b *runtimeTopologyBuilder) addRecipeMachine(node *models.RunTopology_MachineNode) {
 	if node == nil || node.GetNodeId() == "" {
 		return
 	}
@@ -289,11 +281,9 @@ func (b *runtimeTopologyBuilder) addRecipeMachine(node *models.RecipeTopologySna
 	}
 }
 
-// addRecipeService adds one service placed on a recipe-run machine as a
-// component-kind runtime node, plus its placement edge from the machine —
-// mirrors addComponents' machine->component placement edge for a classic
-// run's topology.Component.
-func (b *runtimeTopologyBuilder) addRecipeService(machineID string, status commonpb.Status, svc *models.RecipeTopologySnapshot_ServiceNode) {
+// addRecipeService adds one service placed on a run's machine as a
+// component-kind runtime node, plus its placement edge from the machine.
+func (b *runtimeTopologyBuilder) addRecipeService(machineID string, status commonpb.Status, svc *models.RunTopology_ServiceNode) {
 	if svc == nil || svc.GetName() == "" {
 		return
 	}
@@ -328,215 +318,6 @@ func (b *runtimeTopologyBuilder) addRecipeService(machineID string, status commo
 			runtimeLabelRelation: "placement",
 		},
 	})
-}
-
-func (b *runtimeTopologyBuilder) addComponents(
-	rec *models.TestRunRecord,
-	components map[string]*topology.Component,
-	componentPlans map[string]*deploymentpb.ComponentDeployment,
-	componentMachines map[string]string,
-) {
-	ids := sortedMapKeys(components)
-	for _, componentID := range ids {
-		component := components[componentID]
-		deployment := componentPlans[componentID]
-		machineID := componentMachines[componentID]
-		status := componentRuntimeStatus(rec, component, deployment)
-		nodeExecutionID := ""
-		if componentID != "" {
-			nodeExecutionID = deploymentbuilder.ComponentExecutionID(componentID)
-		}
-		labels := mergeRuntimeLabels(component.GetLabels(), map[string]string{
-			runtimeLabelSource:       "topology_spec",
-			runtimeLabelRuntimeClass: "component",
-			"spec_kind":              component.GetKind().String(),
-		})
-		b.addNode(&topology.RuntimeNode{
-			Id:              runtimeComponentNodeID(componentID),
-			Kind:            runtimeComponentKind(component),
-			Label:           componentLabel(component),
-			Engine:          component.GetEngine(),
-			Role:            component.GetRole(),
-			ComponentId:     componentID,
-			MachineId:       machineID,
-			NodeExecutionId: nodeExecutionID,
-			Status:          status,
-			StatusReason:    componentRuntimeStatusReason(status),
-			Address:         "",
-			Labels:          labels,
-			Tags:            component.GetTags(),
-		})
-
-		if machineID != "" {
-			b.addEdge(&topology.RuntimeConnection{
-				Id:           runtimeEdgeID("placement", machineID, componentID),
-				FromNodeId:   runtimeMachineNodeID(machineID),
-				ToNodeId:     runtimeComponentNodeID(componentID),
-				Kind:         topology.Connection_KIND_SUPPORT,
-				Protocol:     topology.Connection_PROTOCOL_CONTROL,
-				Mode:         topology.Connection_MODE_REQUEST,
-				EndpointName: "placement",
-				Status:       status,
-				StatusReason: "component_placed_on_machine",
-				Labels: map[string]string{
-					runtimeLabelRelation: "placement",
-				},
-			})
-			b.addEdge(&topology.RuntimeConnection{
-				Id:              runtimeEdgeID("agent", machineID, "execute", componentID),
-				FromNodeId:      runtimeAgentNodeID(machineID),
-				ToNodeId:        runtimeComponentNodeID(componentID),
-				Kind:            topology.Connection_KIND_SUPPORT,
-				Protocol:        topology.Connection_PROTOCOL_CONTROL,
-				Mode:            topology.Connection_MODE_REQUEST,
-				EndpointName:    "agent_execution",
-				Phase:           executeDeploymentPlanNodeName,
-				NodeExecutionId: nodeExecutionID,
-				Status:          status,
-				StatusReason:    "component_deployed_by_node_agent",
-				Labels: map[string]string{
-					runtimeLabelRelation: "agent_execution",
-				},
-			})
-		}
-	}
-}
-
-func (b *runtimeTopologyBuilder) addLogicalConnections(
-	rec *models.TestRunRecord,
-	spec *topology.TopologySpec,
-	components map[string]*topology.Component,
-	componentPlans map[string]*deploymentpb.ComponentDeployment,
-) {
-	for idx, conn := range spec.GetConnections() {
-		fromID := conn.GetFromComponentId()
-		toID := conn.GetToComponentId()
-		if fromID == "" || toID == "" {
-			continue
-		}
-		if components[fromID] == nil {
-			b.addSyntheticExternalComponent(fromID)
-		}
-		if components[toID] == nil {
-			b.addSyntheticExternalComponent(toID)
-		}
-		status := logicalConnectionStatus(rec, componentPlans[fromID], componentPlans[toID])
-		kind := conn.GetKind()
-		if kind == topology.Connection_KIND_UNSPECIFIED {
-			kind = topology.Connection_KIND_FLOW
-		}
-		protocol := conn.GetProtocol()
-		if protocol == topology.Connection_PROTOCOL_UNSPECIFIED {
-			protocol = topology.Connection_PROTOCOL_TCP
-		}
-		mode := conn.GetMode()
-		if mode == topology.Connection_MODE_UNSPECIFIED {
-			mode = topology.Connection_MODE_REQUEST
-		}
-		endpointName := conn.GetEndpointName()
-		if endpointName == "" {
-			endpointName = logicalConnectionEndpointName(kind, protocol)
-		}
-		edge := &topology.RuntimeConnection{
-			Id:           runtimeEdgeID("logical", strconv.Itoa(idx), fromID, toID, endpointName),
-			FromNodeId:   runtimeComponentNodeID(fromID),
-			ToNodeId:     runtimeComponentNodeID(toID),
-			Kind:         kind,
-			Protocol:     protocol,
-			Mode:         mode,
-			EndpointName: endpointName,
-			Status:       status,
-			StatusReason: "topology_spec_connection",
-			Labels: map[string]string{
-				runtimeLabelSource:   "topology_spec",
-				runtimeLabelRelation: "logical_connection",
-				"colocated":          strconv.FormatBool(conn.GetColocated()),
-			},
-			Tags: conn.GetTags(),
-		}
-		if conn.Port != nil {
-			edge.Port = runtimePort(conn.GetPort())
-		}
-		b.addEdge(edge)
-	}
-}
-
-func logicalConnectionEndpointName(kind topology.Connection_Kind, protocol topology.Connection_Protocol) string {
-	kindName := strings.TrimPrefix(strings.ToLower(kind.String()), "kind_")
-	protocolName := strings.TrimPrefix(strings.ToLower(protocol.String()), "protocol_")
-	switch {
-	case kindName != "" && protocolName != "":
-		return kindName + "/" + protocolName
-	case kindName != "":
-		return kindName
-	case protocolName != "":
-		return protocolName
-	default:
-		return "logical_connection"
-	}
-}
-
-func (b *runtimeTopologyBuilder) addComponentDependencies(plan *deploymentpb.DeploymentPlan) {
-	for _, component := range plan.GetComponents() {
-		if component == nil || component.GetComponentId() == "" {
-			continue
-		}
-		for _, dependencyID := range component.GetDependsOnComponentIds() {
-			if dependencyID == "" {
-				continue
-			}
-			b.addEdge(&topology.RuntimeConnection{
-				Id:              runtimeEdgeID("dependency", dependencyID, component.GetComponentId()),
-				FromNodeId:      runtimeComponentNodeID(component.GetComponentId()),
-				ToNodeId:        runtimeComponentNodeID(dependencyID),
-				Kind:            topology.Connection_KIND_SUPPORT,
-				Protocol:        topology.Connection_PROTOCOL_CONTROL,
-				Mode:            topology.Connection_MODE_REQUEST,
-				EndpointName:    "depends_on",
-				Phase:           executeDeploymentPlanNodeName,
-				NodeExecutionId: deploymentbuilder.ComponentExecutionID(component.GetComponentId()),
-				Status:          pendingIfUnspecified(component.GetStatus()),
-				StatusReason:    "deployment_plan_dependency",
-				Labels: map[string]string{
-					runtimeLabelSource:   "deployment_plan",
-					runtimeLabelRelation: "depends_on",
-				},
-			})
-		}
-	}
-}
-
-func (b *runtimeTopologyBuilder) addMonitoringRuntime(
-	rec *models.TestRunRecord,
-	serverAddr string,
-	machines map[string]*deploymentpb.MachineState,
-	components map[string]*topology.Component,
-	componentIDsByMachine map[string][]string,
-) {
-	if serverAddr == "" {
-		return
-	}
-
-	machineIDs := sortedMapKeys(componentIDsByMachine)
-	for _, machineID := range machineIDs {
-		if machineID == "" {
-			continue
-		}
-		status := monitorRuntimeStatus(rec, machines[machineID])
-		b.addNodeExporter(machineID, status, nil)
-		b.addVmagent(machineID, status, nil)
-		b.addVector(machineID, status, nil)
-		b.addVmagentBaseEdges(machineID, status, nil)
-		b.addVectorBaseEdges(machineID, status, nil, componentIDsByMachine[machineID])
-
-		for _, componentID := range componentIDsByMachine[machineID] {
-			component := components[componentID]
-			if component == nil {
-				continue
-			}
-			b.addDatabaseMonitoring(machineID, component, status, nil)
-		}
-	}
 }
 
 func (b *runtimeTopologyBuilder) addStages(rs *workflowpb.RunState, components map[string]*topology.Component, machines map[string]*deploymentpb.MachineState) {
@@ -788,112 +569,6 @@ func (b *runtimeTopologyBuilder) addVectorControlPlaneEdge(machineID string, sta
 	})
 }
 
-func (b *runtimeTopologyBuilder) addDatabaseMonitoring(machineID string, component *topology.Component, status commonpb.Status, stage *workflowpb.Stage) {
-	if component == nil {
-		return
-	}
-	switch databaseMetricKind(component.GetEngine(), component.GetRole()) {
-	case "postgres":
-		b.addPostgresExporter(machineID, status, stage)
-		b.addEdge(&topology.RuntimeConnection{
-			Id:              runtimeEdgeID("monitor", machineID, "postgres_exporter", component.GetId(), "local-db"),
-			FromNodeId:      runtimeMonitorNodeID(machineID, "postgres_exporter"),
-			ToNodeId:        runtimeComponentNodeID(component.GetId()),
-			Kind:            topology.Connection_KIND_OBSERVATION,
-			Protocol:        topology.Connection_PROTOCOL_TCP,
-			Mode:            topology.Connection_MODE_REQUEST,
-			EndpointName:    "postgres_local",
-			Port:            runtimePort(5432),
-			Phase:           executeDeploymentPlanNodeName,
-			NodeExecutionId: stageNodeExecutionID(stage),
-			Status:          pendingIfUnspecified(status),
-			StatusReason:    runtimeStageStatusReason(stage, "postgres_exporter_reads_local_postgres"),
-			StartedAt:       stageStartedAt(stage),
-			FinishedAt:      stageFinishedAt(stage),
-			Labels:          map[string]string{runtimeLabelRelation: "db_exporter_local_read"},
-		})
-		b.addEdge(&topology.RuntimeConnection{
-			Id:              runtimeEdgeID("monitor", machineID, "vmagent", "postgres_exporter"),
-			FromNodeId:      runtimeMonitorNodeID(machineID, "vmagent"),
-			ToNodeId:        runtimeMonitorNodeID(machineID, "postgres_exporter"),
-			Kind:            topology.Connection_KIND_OBSERVATION,
-			Protocol:        topology.Connection_PROTOCOL_PROMETHEUS_PULL,
-			Mode:            topology.Connection_MODE_REQUEST,
-			EndpointName:    "postgres",
-			Port:            runtimePort(9187),
-			Phase:           executeDeploymentPlanNodeName,
-			NodeExecutionId: stageNodeExecutionID(stage),
-			Status:          pendingIfUnspecified(status),
-			StatusReason:    runtimeStageStatusReason(stage, "vmagent_scrapes_postgres_exporter"),
-			StartedAt:       stageStartedAt(stage),
-			FinishedAt:      stageFinishedAt(stage),
-			Labels:          map[string]string{runtimeLabelRelation: "metrics_scrape"},
-		})
-	case "mysql":
-		b.addMysqlExporter(machineID, status, stage)
-		b.addEdge(&topology.RuntimeConnection{
-			Id:              runtimeEdgeID("monitor", machineID, "mysqld_exporter", component.GetId(), "local-db"),
-			FromNodeId:      runtimeMonitorNodeID(machineID, "mysqld_exporter"),
-			ToNodeId:        runtimeComponentNodeID(component.GetId()),
-			Kind:            topology.Connection_KIND_OBSERVATION,
-			Protocol:        topology.Connection_PROTOCOL_TCP,
-			Mode:            topology.Connection_MODE_REQUEST,
-			EndpointName:    "mysql_local",
-			Port:            runtimePort(3306),
-			Phase:           executeDeploymentPlanNodeName,
-			NodeExecutionId: stageNodeExecutionID(stage),
-			Status:          pendingIfUnspecified(status),
-			StatusReason:    runtimeStageStatusReason(stage, "mysqld_exporter_reads_local_mysql"),
-			StartedAt:       stageStartedAt(stage),
-			FinishedAt:      stageFinishedAt(stage),
-			Labels:          map[string]string{runtimeLabelRelation: "db_exporter_local_read"},
-		})
-		b.addEdge(&topology.RuntimeConnection{
-			Id:              runtimeEdgeID("monitor", machineID, "vmagent", "mysqld_exporter"),
-			FromNodeId:      runtimeMonitorNodeID(machineID, "vmagent"),
-			ToNodeId:        runtimeMonitorNodeID(machineID, "mysqld_exporter"),
-			Kind:            topology.Connection_KIND_OBSERVATION,
-			Protocol:        topology.Connection_PROTOCOL_PROMETHEUS_PULL,
-			Mode:            topology.Connection_MODE_REQUEST,
-			EndpointName:    "mysql",
-			Port:            runtimePort(9104),
-			Phase:           executeDeploymentPlanNodeName,
-			NodeExecutionId: stageNodeExecutionID(stage),
-			Status:          pendingIfUnspecified(status),
-			StatusReason:    runtimeStageStatusReason(stage, "vmagent_scrapes_mysqld_exporter"),
-			StartedAt:       stageStartedAt(stage),
-			FinishedAt:      stageFinishedAt(stage),
-			Labels:          map[string]string{runtimeLabelRelation: "metrics_scrape"},
-		})
-	case "picodata":
-		b.addDirectMetricsEdge(machineID, component.GetId(), "picodata", 8081, status, stage)
-	case "ydb_storage":
-		b.addDirectMetricsEdge(machineID, component.GetId(), "ydb_storage", 8765, status, stage)
-	case "ydb_database":
-		b.addDirectMetricsEdge(machineID, component.GetId(), "ydb_database", 8766, status, stage)
-	}
-}
-
-func (b *runtimeTopologyBuilder) addDirectMetricsEdge(machineID, componentID, endpoint string, port uint32, status commonpb.Status, stage *workflowpb.Stage) {
-	b.addEdge(&topology.RuntimeConnection{
-		Id:              runtimeEdgeID("monitor", machineID, "vmagent", componentID, endpoint),
-		FromNodeId:      runtimeMonitorNodeID(machineID, "vmagent"),
-		ToNodeId:        runtimeComponentNodeID(componentID),
-		Kind:            topology.Connection_KIND_OBSERVATION,
-		Protocol:        topology.Connection_PROTOCOL_PROMETHEUS_PULL,
-		Mode:            topology.Connection_MODE_REQUEST,
-		EndpointName:    endpoint,
-		Port:            runtimePort(port),
-		Phase:           executeDeploymentPlanNodeName,
-		NodeExecutionId: stageNodeExecutionID(stage),
-		Status:          pendingIfUnspecified(status),
-		StatusReason:    runtimeStageStatusReason(stage, "vmagent_scrapes_component_metrics_directly"),
-		StartedAt:       stageStartedAt(stage),
-		FinishedAt:      stageFinishedAt(stage),
-		Labels:          map[string]string{runtimeLabelRelation: "metrics_scrape"},
-	})
-}
-
 func (b *runtimeTopologyBuilder) addAgentTouchesMonitor(machineID, role string, status commonpb.Status, stage *workflowpb.Stage, op *monitorpb.PipelineOperation) {
 	labels := operationLabels(op)
 	labels[runtimeLabelSource] = "temporal_run_state"
@@ -913,21 +588,6 @@ func (b *runtimeTopologyBuilder) addAgentTouchesMonitor(machineID, role string, 
 		StartedAt:       stage.GetStartedAt(),
 		FinishedAt:      stage.GetFinishedAt(),
 		Labels:          labels,
-	})
-}
-
-func (b *runtimeTopologyBuilder) addSyntheticExternalComponent(componentID string) {
-	b.addNode(&topology.RuntimeNode{
-		Id:           runtimeComponentNodeID(componentID),
-		Kind:         topology.RuntimeNode_KIND_EXTERNAL,
-		Label:        componentID,
-		ComponentId:  componentID,
-		Status:       commonpb.Status_STATUS_PENDING,
-		StatusReason: "referenced_by_connection_not_present_in_spec",
-		Labels: map[string]string{
-			runtimeLabelSource:       "topology_connection_reference",
-			runtimeLabelRuntimeClass: "external",
-		},
 	})
 }
 
@@ -1123,107 +783,15 @@ func runtimeStatusRank(status commonpb.Status) int {
 	}
 }
 
-func machineStatesByID(state *deploymentpb.InfrastructureState) map[string]*deploymentpb.MachineState {
-	out := make(map[string]*deploymentpb.MachineState)
-	for _, machine := range state.GetMachines() {
-		if machine == nil || machine.GetNodeId() == "" {
-			continue
-		}
-		out[machine.GetNodeId()] = machine
-	}
-	return out
-}
-
-func topologyComponentsByID(spec *topology.TopologySpec) map[string]*topology.Component {
-	out := make(map[string]*topology.Component)
-	for _, component := range spec.GetComponents() {
-		if component != nil && component.GetId() != "" {
-			out[component.GetId()] = component
-		}
-	}
-	for _, component := range spec.GetExternalComponents() {
-		if component != nil && component.GetId() != "" {
-			out[component.GetId()] = component
-		}
-	}
-	return out
-}
-
-func componentDeploymentsByID(plan *deploymentpb.DeploymentPlan) map[string]*deploymentpb.ComponentDeployment {
-	out := make(map[string]*deploymentpb.ComponentDeployment)
-	for _, component := range plan.GetComponents() {
-		if component != nil && component.GetComponentId() != "" {
-			out[component.GetComponentId()] = component
-		}
-	}
-	return out
-}
-
-func componentMachineIDs(spec *topology.TopologySpec, plan *deploymentpb.DeploymentPlan) map[string]string {
-	out := make(map[string]string)
-	for _, node := range spec.GetNodes() {
-		for _, componentID := range node.GetComponentIds() {
-			if componentID != "" && node.GetId() != "" {
-				out[componentID] = node.GetId()
-			}
-		}
-	}
-	for _, component := range plan.GetComponents() {
-		if component.GetComponentId() != "" && component.GetNodeId() != "" {
-			out[component.GetComponentId()] = component.GetNodeId()
-		}
-	}
-	return out
-}
-
-func runtimeMachineIDs(spec *topology.TopologySpec, state *deploymentpb.InfrastructureState, plan *deploymentpb.DeploymentPlan, rs *workflowpb.RunState) []string {
-	ids := make(map[string]struct{})
-	for _, node := range spec.GetNodes() {
-		if node.GetId() != "" {
-			ids[node.GetId()] = struct{}{}
-		}
-	}
-	for _, machine := range state.GetMachines() {
-		if machine.GetNodeId() != "" {
-			ids[machine.GetNodeId()] = struct{}{}
-		}
-	}
-	for _, component := range plan.GetComponents() {
-		if component.GetNodeId() != "" {
-			ids[component.GetNodeId()] = struct{}{}
-		}
-	}
-	for _, stage := range rs.GetStages() {
-		if stage.GetMachineId() != "" {
-			ids[stage.GetMachineId()] = struct{}{}
-		}
-	}
-	return sortedSetKeys(ids)
-}
-
-func runtimeComponentIDsByMachine(componentMachines map[string]string) map[string][]string {
-	out := make(map[string][]string)
-	for componentID, machineID := range componentMachines {
-		if componentID == "" || machineID == "" {
-			continue
-		}
-		out[machineID] = append(out[machineID], componentID)
-	}
-	for machineID := range out {
-		sort.Strings(out[machineID])
-	}
-	return out
-}
-
-func controlPlaneRuntimeStatus(rec *models.TestRunRecord) commonpb.Status {
-	if rec == nil {
+func controlPlaneRuntimeStatus(run *models.Run) commonpb.Status {
+	if run == nil {
 		return commonpb.Status_STATUS_RUNNING
 	}
-	switch rec.GetStatus() {
+	switch run.GetStatus() {
 	case commonpb.Status_STATUS_COMPLETED:
 		return commonpb.Status_STATUS_COMPLETED
 	case commonpb.Status_STATUS_FAILED, commonpb.Status_STATUS_CANCELLED, commonpb.Status_STATUS_CANCELLING:
-		return rec.GetStatus()
+		return run.GetStatus()
 	default:
 		return commonpb.Status_STATUS_RUNNING
 	}
@@ -1240,89 +808,32 @@ func machineRuntimeStatusReason(machine *deploymentpb.MachineState) string {
 	return "machine_" + strings.ToLower(status.String())
 }
 
-func agentRuntimeStatus(rec *models.TestRunRecord, machine *deploymentpb.MachineState, currentExecutionID string) commonpb.Status {
+func agentRuntimeStatus(run *models.Run, machine *deploymentpb.MachineState, currentExecutionID string) commonpb.Status {
 	if currentExecutionID != "" {
 		return commonpb.Status_STATUS_RUNNING
 	}
-	if rec != nil {
-		switch rec.GetStatus() {
+	if run != nil {
+		switch run.GetStatus() {
 		case commonpb.Status_STATUS_COMPLETED:
 			return commonpb.Status_STATUS_COMPLETED
 		case commonpb.Status_STATUS_FAILED, commonpb.Status_STATUS_CANCELLED, commonpb.Status_STATUS_CANCELLING:
-			return rec.GetStatus()
+			return run.GetStatus()
 		}
 	}
 	return workerStatus(machine, "")
 }
 
-func agentRuntimeStatusReason(rec *models.TestRunRecord, machine *deploymentpb.MachineState, currentExecutionID string) string {
+func agentRuntimeStatusReason(run *models.Run, machine *deploymentpb.MachineState, currentExecutionID string) string {
 	if currentExecutionID != "" {
 		return "agent_executing_stage"
 	}
-	if rec != nil && isTerminalStatus(rec.GetStatus()) {
+	if run != nil && isTerminalStatus(run.GetStatus()) {
 		return "run_terminal_agent_not_marked_offline_without_registry_sample"
 	}
 	if machine == nil {
 		return "agent_waiting_for_machine"
 	}
 	return "agent_materialized_with_machine"
-}
-
-func componentRuntimeStatus(rec *models.TestRunRecord, component *topology.Component, deployment *deploymentpb.ComponentDeployment) commonpb.Status {
-	if component.GetKind() == topology.Component_KIND_EXTERNAL {
-		return commonpb.Status_STATUS_COMPLETED
-	}
-	if deployment == nil {
-		return commonpb.Status_STATUS_PENDING
-	}
-	return inheritedDeploymentStatus(deployment.GetStatus(), recordExecutePlanStatus(rec))
-}
-
-func componentRuntimeStatusReason(status commonpb.Status) string {
-	status = pendingIfUnspecified(status)
-	if status == commonpb.Status_STATUS_PENDING {
-		return "component_waiting_for_deployment"
-	}
-	return "component_" + strings.ToLower(status.String())
-}
-
-func logicalConnectionStatus(rec *models.TestRunRecord, from *deploymentpb.ComponentDeployment, to *deploymentpb.ComponentDeployment) commonpb.Status {
-	if from == nil || to == nil {
-		if rec != nil && rec.GetStatus() == commonpb.Status_STATUS_COMPLETED {
-			return commonpb.Status_STATUS_COMPLETED
-		}
-		return commonpb.Status_STATUS_PENDING
-	}
-	left := inheritedDeploymentStatus(from.GetStatus(), recordExecutePlanStatus(rec))
-	right := inheritedDeploymentStatus(to.GetStatus(), recordExecutePlanStatus(rec))
-	if left == commonpb.Status_STATUS_FAILED || right == commonpb.Status_STATUS_FAILED {
-		return commonpb.Status_STATUS_FAILED
-	}
-	if activeStatus(left) || activeStatus(right) {
-		return commonpb.Status_STATUS_RUNNING
-	}
-	if left == commonpb.Status_STATUS_COMPLETED && right == commonpb.Status_STATUS_COMPLETED {
-		return commonpb.Status_STATUS_COMPLETED
-	}
-	if left == commonpb.Status_STATUS_DEPLOYED && right == commonpb.Status_STATUS_DEPLOYED {
-		return commonpb.Status_STATUS_DEPLOYED
-	}
-	return commonpb.Status_STATUS_PENDING
-}
-
-func monitorRuntimeStatus(rec *models.TestRunRecord, machine *deploymentpb.MachineState) commonpb.Status {
-	executeStatus := recordExecutePlanStatus(rec)
-	switch executeStatus {
-	case commonpb.Status_STATUS_COMPLETED, commonpb.Status_STATUS_FAILED, commonpb.Status_STATUS_CANCELLED, commonpb.Status_STATUS_RUNNING:
-		return executeStatus
-	}
-	if machine == nil {
-		return commonpb.Status_STATUS_PENDING
-	}
-	if pendingIfUnspecified(machine.GetStatus()) == commonpb.Status_STATUS_DEPLOYED {
-		return commonpb.Status_STATUS_PENDING
-	}
-	return pendingIfUnspecified(machine.GetStatus())
 }
 
 func runtimeComponentKind(component *topology.Component) topology.RuntimeNode_Kind {
@@ -1349,31 +860,6 @@ func componentLabel(component *topology.Component) string {
 		return component.GetId()
 	}
 	return component.GetId() + " (" + role + ")"
-}
-
-func databaseMetricKind(engine, role string) string {
-	switch engine {
-	case "postgres":
-		if role == "master" || role == "replica" {
-			return "postgres"
-		}
-	case "mysql":
-		if role == "primary" || role == "replica" {
-			return "mysql"
-		}
-	case "picodata":
-		if role == "instance" {
-			return "picodata"
-		}
-	case "ydb":
-		switch role {
-		case "storage":
-			return "ydb_storage"
-		case "database":
-			return "ydb_database"
-		}
-	}
-	return ""
 }
 
 func operationRuntimeFacts(stage *workflowpb.Stage) []string {
@@ -1535,15 +1021,6 @@ func mergeRuntimeLabels(maps ...map[string]string) map[string]string {
 		}
 	}
 	return out
-}
-
-func sortedMapKeys[T any](values map[string]T) []string {
-	keys := make([]string, 0, len(values))
-	for key := range values {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-	return keys
 }
 
 func sortedSetKeys(values map[string]struct{}) []string {

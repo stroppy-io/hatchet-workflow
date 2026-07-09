@@ -251,10 +251,10 @@ func (s *Service) StartRun(ctx context.Context, req *api.StartRunRequest) (*api.
 	// protocols/cloud/v1/api/recipe.proto is not retyped to models.Run until
 	// SP-E Task 5 (see that task's "Modify: protocols/cloud/v1/api/
 	// recipe.proto (StartRunResponse.run, ListRunsResponse.runs field
-	// types)" step). runToAPIResponse bridges the gap for the duration of
-	// Tasks 3-4, mirroring execution.RunToTestRunRecord's identical
-	// adapter (duplicated rather than imported: execution already imports
-	// this package for RecipeWorkflows, so the reverse import would cycle).
+	// types)" step). runToAPIResponse bridges the gap until then, mirroring
+	// execution.apiRunFromRun's identical adapter (duplicated rather than
+	// imported: execution already imports this package for RecipeWorkflows,
+	// so the reverse import would cycle).
 	return &api.StartRunResponse{Run: runToAPIResponse(run)}, nil
 }
 
@@ -417,11 +417,14 @@ func markRunFailed(rec *models.Run, now *timestamppb.Timestamp) {
 // shape api.StartRunResponse.run / api.ListRunsResponse.runs still expect —
 // protocols/cloud/v1/api/recipe.proto is not retyped to models.Run until
 // SP-E Task 5. Deliberately lossy (mirrors
-// internal/infrastructure/execution/run_shim.go's RunToTestRunRecord, which
-// exists for the exact same reason on the OverviewReader side; duplicated
-// here rather than imported since execution already imports this package for
-// RecipeWorkflows — the reverse import would cycle). Delete both adapters
-// once Task 5 lands and the wire types carry models.Run directly.
+// internal/infrastructure/execution/overview.go's apiRunFromRun, which
+// exists for the exact same reason on the OverviewReader side — Task 4
+// deleted the Task 3->4 transition shim this comment used to reference,
+// run_shim.go's RunToTestRunRecord; apiRunFromRun is its Task-5-pending
+// replacement, not a transition shim; duplicated here rather than imported
+// since execution already imports this package for RecipeWorkflows — the
+// reverse import would cycle). Delete both adapters once Task 5 lands and
+// the wire types carry models.Run directly.
 func runToAPIResponse(run *models.Run) *models.TestRunRecord {
 	if run == nil {
 		return nil

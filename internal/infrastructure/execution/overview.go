@@ -53,8 +53,8 @@ type runStateQuerier interface {
 // the storage layer; injected so the overview reader stays an execution
 // adapter without owning storage.
 type SnapshotRunReader interface {
-	// RunRecord returns the persisted TestRunRecord for the run id.
-	RunRecord(ctx context.Context, runID string) (*models.TestRunRecord, error)
+	// RunRecord returns the persisted models.Run for the run id.
+	RunRecord(ctx context.Context, runID string) (*models.Run, error)
 }
 
 // AgentPresenceReader returns the registry-backed liveness samples for run
@@ -94,53 +94,56 @@ func NewOverviewReader(c client.Client, store SnapshotRunReader, presence ...Age
 // only context cancellation is surfaced as an error.
 func (r *OverviewReader) Get(ctx context.Context, runID string) (*api.TestRunOverviewSnapshot, error) {
 	snap := &api.TestRunOverviewSnapshot{}
-	var rec *models.TestRunRecord
+	var run *models.Run
 	observedAt := timestamppb.Now()
 	degradedReasons := make([]string, 0, 2)
 
 	if r.store != nil {
 		var err error
-		rec, err = r.store.RunRecord(ctx, runID)
+		run, err = r.store.RunRecord(ctx, runID)
 		if err != nil {
 			return nil, err
 		}
-		snap.Run = rec
-		snap.Topology = topologyFromRecord(rec)
+		snap.Topology = topologyFromRun(run)
 	}
 
-	presence, err := r.agentPresence(ctx, runID, rec)
+	presence, err := r.agentPresence(ctx, runID, run)
 	if err != nil {
 		degradedReasons = append(degradedReasons, "agent_registry_unavailable: "+err.Error())
 	}
 
-	if persistedRecordIsTerminal(rec) {
-		snap.Overview = overviewFromRecord(runID, rec, presence, observedAt)
-		snap.Overview.DegradedReasons = append(snap.Overview.GetDegradedReasons(), degradedReasons...)
+	// finish converts the accumulated models.Run into the api.
+	// TestRunOverviewSnapshot.Run shape and returns the snapshot. Deferred to
+	// the end of every return path (rather than assigned once up front) so
+	// overlayRunFromOverview's status/summary mutation below is reflected in
+	// the converted value too.
+	finish := func() (*api.TestRunOverviewSnapshot, error) {
+		snap.Run = apiRunFromRun(run)
 		return snap, nil
+	}
+
+	if persistedRunIsTerminal(run) {
+		snap.Overview = overviewFromRun(runID, run, presence, observedAt)
+		snap.Overview.DegradedReasons = append(snap.Overview.GetDegradedReasons(), degradedReasons...)
+		return finish()
 	}
 
 	if r.tc == nil {
 		degradedReasons = append(degradedReasons, "workflow_state_unavailable: temporal_client_not_configured")
-		snap.Overview = overviewFromRecord(runID, rec, presence, observedAt)
+		snap.Overview = overviewFromRun(runID, run, presence, observedAt)
 		snap.Overview.DegradedReasons = append(snap.Overview.GetDegradedReasons(), degradedReasons...)
-		return snap, nil
+		return finish()
 	}
 
-	// Recipe runs (rec.GetRecipeId() != "") execute under RunRecipeWorkflow,
-	// addressed by runRecipeWorkflowID(runID), not testWorkflowID(runID) —
-	// see ids.go. The record is already fetched above, so the recipe_id it
-	// carries tells us which workflow id to query before we ever call
-	// GetRunState, giving a running recipe run true live Temporal freshness
-	// instead of always falling back to the persisted RunState. Legacy
-	// (non-recipe) runs keep querying testWorkflowID unchanged. If the query
-	// still misses (e.g. workflow not yet started or already closed), the
-	// existing fallback below to overviewFromRecord (projecting
-	// rec.GetRuntimeState(), the last RunState the workflow itself
-	// persisted) is unchanged and still correct.
-	workflowID := testWorkflowID(runID)
-	if rec.GetRecipeId() != "" {
-		workflowID = runRecipeWorkflowID(runID)
-	}
+	// Every models.Run executes under RunRecipeWorkflow, addressed by
+	// runRecipeWorkflowID(runID) — see ids.go. Unlike the retired classic
+	// TestWorkflow (unregistered, spec §1), there is no other workflow kind
+	// to branch on: a Run always carries a workflow_id, so this is now
+	// unconditional. If the query misses (e.g. workflow not yet started or
+	// already closed), the existing fallback below to overviewFromRun
+	// (projecting run.GetRuntimeState(), the last RunState the workflow
+	// itself persisted) is unchanged and still correct.
+	workflowID := runRecipeWorkflowID(runID)
 	queryCtx, cancel := context.WithTimeout(ctx, r.effectiveRunStateQueryTimeout())
 	defer cancel()
 	rs, err := r.tc.GetRunState(queryCtx, workflowID, "")
@@ -152,17 +155,17 @@ func (r *OverviewReader) Get(ctx context.Context, runID string) (*api.TestRunOve
 		// persisted record is the durable fallback; only a never-started record
 		// degrades to PENDING.
 		degradedReasons = append(degradedReasons, "workflow_state_unavailable: "+err.Error())
-		snap.Overview = overviewFromRecord(runID, rec, presence, observedAt)
+		snap.Overview = overviewFromRun(runID, run, presence, observedAt)
 		snap.Overview.DegradedReasons = append(snap.Overview.GetDegradedReasons(), degradedReasons...)
-		return snap, nil
+		return finish()
 	}
-	snap.Overview = mergeOverviewWithRecord(projectOverview(runID, rs, observedAt), rec, presence)
-	if rec != nil {
-		snap.Topology = topologyFromRecordWithRunState(rec, rs)
+	snap.Overview = mergeOverviewWithRun(projectOverview(runID, rs, observedAt), run, presence)
+	if run != nil {
+		snap.Topology = topologyFromRunWithRunState(run, rs)
 	}
 	snap.Overview.DegradedReasons = append(snap.Overview.GetDegradedReasons(), degradedReasons...)
-	overlayRunFromOverview(snap.Run, snap.Overview)
-	return snap, nil
+	overlayRunFromOverview(run, snap.Overview)
+	return finish()
 }
 
 func (r *OverviewReader) effectiveRunStateQueryTimeout() time.Duration {
@@ -172,11 +175,66 @@ func (r *OverviewReader) effectiveRunStateQueryTimeout() time.Duration {
 	return overviewRunStateQueryTimeout
 }
 
-func persistedRecordIsTerminal(rec *models.TestRunRecord) bool {
-	if rec == nil {
+func persistedRunIsTerminal(run *models.Run) bool {
+	if run == nil {
 		return false
 	}
-	return isTerminalStatus(rec.GetStatus()) || isTerminalStatus(rec.GetRuntimeState().GetStatus())
+	return isTerminalStatus(run.GetStatus()) || isTerminalStatus(run.GetRuntimeState().GetStatus())
+}
+
+// apiRunFromRun adapts run onto the api.TestRunOverviewSnapshot.Run shape,
+// which is still *models.TestRunRecord-typed — protocols/cloud/v1/api/
+// test_run_overview.proto is not retyped to models.Run until SP-E Task 5 (see
+// that task's brief). This is NOT the Task 3 -> Task 4 transition shim
+// (run_shim.go/RunToTestRunRecord, deleted by this task): it is a small,
+// permanent-until-Task-5 adapter populating exactly the fields the field
+// carries losslessly (Entity/Status/Trigger/rating flags/Summary/
+// RuntimeState/workflow_id -> recipe_id); Spec/InfrastructureState/
+// DeploymentPlan/RecipeTopology stay nil since models.Run never had them.
+// Returns nil for a nil run.
+func apiRunFromRun(run *models.Run) *models.TestRunRecord {
+	if run == nil {
+		return nil
+	}
+	return &models.TestRunRecord{
+		Entity:         run.GetEntity(),
+		Status:         run.GetStatus(),
+		Trigger:        run.GetTrigger(),
+		InTenantRating: run.GetInTenantRating(),
+		InGlobalRating: run.GetInGlobalRating(),
+		Summary:        apiRunSummaryFromRunSummary(run.GetSummary()),
+		RuntimeState:   run.GetRuntimeState(),
+		RecipeId:       run.GetWorkflowId(),
+	}
+}
+
+// apiRunSummaryFromRunSummary field-copies a models.Run_Summary onto a
+// models.TestRunRecord_Summary — the two messages share an identical field
+// set (see models/test_run.proto's Run.Summary doc: "same 15 fields as
+// TestRunRecord.Summary"), so this is a straight, lossless copy. Returns nil
+// for nil.
+func apiRunSummaryFromRunSummary(s *models.Run_Summary) *models.TestRunRecord_Summary {
+	if s == nil {
+		return nil
+	}
+	return &models.TestRunRecord_Summary{
+		DbKind:           s.GetDbKind(),
+		DbPresetId:       s.GetDbPresetId(),
+		DbPresetName:     s.GetDbPresetName(),
+		WorkloadPresetId: s.GetWorkloadPresetId(),
+		WorkloadName:     s.GetWorkloadName(),
+		StroppyVersion:   s.GetStroppyVersion(),
+		WorkloadProtocol: s.GetWorkloadProtocol(),
+		TestPresetId:     s.GetTestPresetId(),
+		TestPresetName:   s.GetTestPresetName(),
+		TopologyLabel:    s.GetTopologyLabel(),
+		NodeCount:        s.GetNodeCount(),
+		Provider:         s.GetProvider(),
+		ProgressPct:      s.GetProgressPct(),
+		StartedAt:        s.GetStartedAt(),
+		FinishedAt:       s.GetFinishedAt(),
+		Duration:         s.GetDuration(),
+	}
 }
 
 // Stream pushes a fresh full snapshot every tick until ctx is cancelled or the
@@ -226,53 +284,37 @@ func (r *OverviewReader) Stream(ctx context.Context, runID string) (<-chan *api.
 	return out, nil
 }
 
-// topologyFromRecord assembles the staged topology envelope from a run record:
-// the baked spec's topology spec + infrastructure plan, plus the live
-// infrastructure state and deployment plan filled on the record as the run
-// progresses.
-func topologyFromRecord(rec *models.TestRunRecord) *topology.Topology {
-	return topologyFromRecordWithRunState(rec, rec.GetRuntimeState())
+// topologyFromRun assembles the staged topology envelope from a run's
+// current runtime_state.
+func topologyFromRun(run *models.Run) *topology.Topology {
+	return topologyFromRunWithRunState(run, run.GetRuntimeState())
 }
 
-func topologyFromRecordWithRunState(rec *models.TestRunRecord, rs *workflowpb.RunState) *topology.Topology {
-	if rec == nil {
+func topologyFromRunWithRunState(run *models.Run, rs *workflowpb.RunState) *topology.Topology {
+	if run == nil {
 		return nil
 	}
-	spec := rec.GetSpec()
-	t := &topology.Topology{
-		Spec:                spec.GetTopologySpec(),
-		InfrastructurePlan:  spec.GetInfrastructurePlan(),
-		InfrastructureState: rec.GetInfrastructureState(),
-		DeploymentPlan:      rec.GetDeploymentPlan(),
-		Tags:                spec.GetTags(),
-	}
-	t.State = topologyState(rec)
-	t.RuntimeNodes, t.RuntimeConnections = runtimeTopologyFromRecord(rec, rs)
+	// Spec/InfrastructurePlan/InfrastructureState/DeploymentPlan/Tags stay
+	// unset: models.Run never carries a baked domain.TestRun spec or a
+	// classic deployment.InfrastructureState/DeploymentPlan (see Run's own
+	// doc comment) — those fields existed only for the retired classic
+	// TestWorkflow (spec §1: domainTestWorkflow is unregistered).
+	t := &topology.Topology{}
+	t.State = runTopologyState(run)
+	t.RuntimeNodes, t.RuntimeConnections = runtimeTopologyFromRun(run, rs)
 	return t
 }
 
-// topologyState classifies how far the topology has materialized from the
-// record's filled artifacts.
-func topologyState(rec *models.TestRunRecord) topology.Topology_State {
-	switch {
-	case rec.GetDeploymentPlan() != nil:
-		return topology.Topology_STATE_DEPLOYED
-	case rec.GetInfrastructureState() != nil:
+// runTopologyState classifies how far the topology has materialized from the
+// run's filled artifacts. A recipe run never produces a deployment.
+// InfrastructureState/DeploymentPlan (models.Run has no such fields at all)
+// — its topology snapshot is filled once, right after ProvisionActivity,
+// which is the closest equivalent to STATE_INFRASTRUCTURE_DEPLOYED.
+func runTopologyState(run *models.Run) topology.Topology_State {
+	if run.GetTopology() != nil {
 		return topology.Topology_STATE_INFRASTRUCTURE_DEPLOYED
-	case rec.GetSpec().GetInfrastructurePlan() != nil:
-		return topology.Topology_STATE_INFRASTRUCTURE_PLANNED
-	case rec.GetSpec().GetTopologySpec() != nil:
-		return topology.Topology_STATE_SPEC
-	case rec.GetRecipeTopology() != nil:
-		// Recipe runs never produce a deployment.InfrastructureState/
-		// DeploymentPlan (see runrecipe.go's persist doc) — their topology
-		// snapshot is filled once, right after ProvisionActivity, which is
-		// the closest classic-run equivalent to
-		// STATE_INFRASTRUCTURE_DEPLOYED.
-		return topology.Topology_STATE_INFRASTRUCTURE_DEPLOYED
-	default:
-		return topology.Topology_STATE_UNSPECIFIED
 	}
+	return topology.Topology_STATE_UNSPECIFIED
 }
 
 // pendingOverview is the snapshot returned before the workflow exists: just the
@@ -289,18 +331,18 @@ func pendingOverview(runID string, observedAt *timestamppb.Timestamp) *monitor.O
 	}
 }
 
-func overviewFromRecord(runID string, rec *models.TestRunRecord, presence map[string]*monitor.WorkerInfo, observedAt *timestamppb.Timestamp) *monitor.Overview {
-	if rec == nil {
+func overviewFromRun(runID string, run *models.Run, presence map[string]*monitor.WorkerInfo, observedAt *timestamppb.Timestamp) *monitor.Overview {
+	if run == nil {
 		return pendingOverview(runID, observedAt)
 	}
-	if rec.GetRuntimeState() != nil {
-		overview := projectOverviewWithSource(runID, rec.GetRuntimeState(), observedAt, monitor.ObservationSource_OBSERVATION_SOURCE_PERSISTED_RECORD)
-		overview.Workers = workersFromRecord(rec, presence)
-		sum := rec.GetSummary()
-		runtimeTerminal := isTerminalStatus(rec.GetRuntimeState().GetStatus())
-		stored := rec.GetStatus()
+	if run.GetRuntimeState() != nil {
+		overview := projectOverviewWithSource(runID, run.GetRuntimeState(), observedAt, monitor.ObservationSource_OBSERVATION_SOURCE_PERSISTED_RECORD)
+		overview.Workers = workersFromRun(run, presence)
+		sum := run.GetSummary()
+		runtimeTerminal := isTerminalStatus(run.GetRuntimeState().GetStatus())
+		stored := run.GetStatus()
 		if stored != common.Status_STATUS_UNSPECIFIED && (!runtimeTerminal || stored == common.Status_STATUS_CANCELLING || isTerminalStatus(stored)) {
-			overview.Status = rec.GetStatus()
+			overview.Status = run.GetStatus()
 		}
 		if sum.GetStartedAt() != nil {
 			overview.StartedAt = sum.GetStartedAt()
@@ -321,11 +363,11 @@ func overviewFromRecord(runID string, rec *models.TestRunRecord, presence map[st
 		}
 		return overview
 	}
-	status := rec.GetStatus()
+	status := run.GetStatus()
 	if status == common.Status_STATUS_UNSPECIFIED {
 		status = common.Status_STATUS_PENDING
 	}
-	sum := rec.GetSummary()
+	sum := run.GetSummary()
 	return &monitor.Overview{
 		RunId:       runID,
 		Status:      status,
@@ -333,25 +375,25 @@ func overviewFromRecord(runID string, rec *models.TestRunRecord, presence map[st
 		FinishedAt:  sum.GetFinishedAt(),
 		Duration:    sum.GetDuration(),
 		ProgressPct: sum.GetProgressPct(),
-		Pipeline:    pipelineFromRecord(runID, rec),
-		Workers:     workersFromRecord(rec, presence),
+		Pipeline:    pipelineFromRun(runID, run),
+		Workers:     workersFromRun(run, presence),
 		Timeline:    []*monitor.Event{},
 		ObservedAt:  observedAt,
 		Source:      monitor.ObservationSource_OBSERVATION_SOURCE_PERSISTED_RECORD,
 	}
 }
 
-func mergeOverviewWithRecord(overview *monitor.Overview, rec *models.TestRunRecord, presence map[string]*monitor.WorkerInfo) *monitor.Overview {
+func mergeOverviewWithRun(overview *monitor.Overview, run *models.Run, presence map[string]*monitor.WorkerInfo) *monitor.Overview {
 	if overview == nil {
-		return overviewFromRecord("", rec, presence, timestamppb.Now())
+		return overviewFromRun("", run, presence, timestamppb.Now())
 	}
-	if rec == nil {
+	if run == nil {
 		return overview
 	}
-	overview.Workers = workersFromRecord(rec, presence)
-	stored := rec.GetStatus()
+	overview.Workers = workersFromRun(run, presence)
+	stored := run.GetStatus()
 	if stored == common.Status_STATUS_CANCELLING || isTerminalStatus(stored) {
-		sum := rec.GetSummary()
+		sum := run.GetSummary()
 		overview.Status = stored
 		if sum.GetStartedAt() != nil {
 			overview.StartedAt = sum.GetStartedAt()
@@ -369,57 +411,54 @@ func mergeOverviewWithRecord(overview *monitor.Overview, rec *models.TestRunReco
 	return overview
 }
 
-func pipelineFromRecord(runID string, rec *models.TestRunRecord) *monitor.PipelineView {
+// pipelineFromRun renders the classic 5-stage pipeline skeleton from a run's
+// own status when no live/persisted RunState exists yet (the very first
+// snapshot after a run is created, before RunRecipeWorkflow reports its
+// first stage). Per-component detail (deployment.DeploymentPlan's
+// component/step tree) has no equivalent on models.Run — RunRecipeWorkflow's
+// own dynamic stage names take over via projectOverviewWithSource /
+// overviewFromRun's runtime_state branch as soon as the first stage lands.
+func pipelineFromRun(runID string, run *models.Run) *monitor.PipelineView {
 	pipeline := &monitor.PipelineView{}
-	if rec == nil {
+	if run == nil {
 		return pipeline
 	}
 	pipeline.Roots = []*monitor.PipelineNode{
-		recordStageNode(runID, rec, stageInfrastructureNodeName, 1, recordInfrastructureStatus(rec)),
-		recordStageNode(runID, rec, stageRenderDeploymentPlanNodeName, 2, recordRenderPlanStatus(rec)),
-		recordStageNode(runID, rec, executeDeploymentPlanNodeName, 3, recordExecutePlanStatus(rec)),
-		recordStageNode(runID, rec, stageWorkloadNodeName, 4, recordWorkloadStatus(rec)),
-		recordStageNode(runID, rec, stageTeardownNodeName, 5, recordTeardownStatus(rec)),
-	}
-	if rec.GetSpec().GetInfrastructurePlan() != nil {
-		pipeline.Roots[0].Outputs = appendPipelineOutputs(
-			deploymentbuilder.InfrastructurePlanOutputs(rec.GetSpec().GetInfrastructurePlan()),
-			deploymentbuilder.InfrastructureStateOutputs(rec.GetInfrastructureState())...,
-		)
-	}
-	if rec.GetDeploymentPlan() != nil {
-		pipeline.Roots[1].Outputs = deploymentbuilder.DeploymentPlanOutputs(rec.GetDeploymentPlan())
-		deploymentPlanRoot(runID, rec.GetDeploymentPlan(), pipeline.Roots[2])
+		runStageNode(runID, run, stageInfrastructureNodeName, 1, runInfrastructureStatus(run)),
+		runStageNode(runID, run, stageRenderDeploymentPlanNodeName, 2, runRenderPlanStatus(run)),
+		runStageNode(runID, run, executeDeploymentPlanNodeName, 3, runExecutePlanStatus(run)),
+		runStageNode(runID, run, stageWorkloadNodeName, 4, runWorkloadStatus(run)),
+		runStageNode(runID, run, stageTeardownNodeName, 5, runTeardownStatus(run)),
 	}
 	return pipeline
 }
 
-func (r *OverviewReader) agentPresence(ctx context.Context, runID string, rec *models.TestRunRecord) (map[string]*monitor.WorkerInfo, error) {
-	if r == nil || r.presence == nil || rec == nil {
+func (r *OverviewReader) agentPresence(ctx context.Context, runID string, run *models.Run) (map[string]*monitor.WorkerInfo, error) {
+	if r == nil || r.presence == nil || run == nil {
 		return nil, nil
 	}
-	machineIDs := workerMachineIDs(rec)
+	machineIDs := workerMachineIDsFromRun(run)
 	if len(machineIDs) == 0 {
 		return nil, nil
 	}
 	return r.presence.AgentPresence(ctx, runID, machineIDs)
 }
 
-func workerMachineIDs(rec *models.TestRunRecord) []string {
-	if rec == nil {
+// workerMachineIDsFromRun sources node ids from run.topology.nodes — the
+// only per-machine artifact models.Run carries (see Task 4's discovered-gap
+// fix note: the classic InfrastructureState/DeploymentPlan machine lookup
+// this replaced was always empty for a recipe run, since Run never has
+// those fields).
+func workerMachineIDsFromRun(run *models.Run) []string {
+	if run == nil {
 		return nil
 	}
 	nodeIDs := make(map[string]struct{})
-	for _, machine := range rec.GetInfrastructureState().GetMachines() {
-		if machine == nil || machine.GetNodeId() == "" {
+	for _, node := range run.GetTopology().GetNodes() {
+		if node == nil || node.GetNodeId() == "" {
 			continue
 		}
-		nodeIDs[machine.GetNodeId()] = struct{}{}
-	}
-	for _, component := range rec.GetDeploymentPlan().GetComponents() {
-		if component.GetNodeId() != "" {
-			nodeIDs[component.GetNodeId()] = struct{}{}
-		}
+		nodeIDs[node.GetNodeId()] = struct{}{}
 	}
 	ordered := make([]string, 0, len(nodeIDs))
 	for nodeID := range nodeIDs {
@@ -429,36 +468,42 @@ func workerMachineIDs(rec *models.TestRunRecord) []string {
 	return ordered
 }
 
-func workersFromRecord(rec *models.TestRunRecord, presence map[string]*monitor.WorkerInfo) []*monitor.WorkerInfo {
-	if rec == nil {
+// workersFromRun builds the Agents tab's persisted-fallback worker list from
+// run.topology.nodes (models.RunTopology_MachineNode), which already carries
+// everything a worker row needs (node_id/group/ip/status/services) —
+// replacing the old deploymentpb.MachineState/DeploymentPlan lookup, which
+// was structurally empty for every live recipe run (see Task 4's discovered
+// gap). current_node_execution_id has no equivalent on the topology
+// snapshot (a point-in-time fact, not live-updated — see RunTopology's own
+// doc) and stays unset, same as it already effectively was under the old,
+// always-empty DeploymentPlan lookup.
+func workersFromRun(run *models.Run, presence map[string]*monitor.WorkerInfo) []*monitor.WorkerInfo {
+	if run == nil {
 		return nil
 	}
 
-	machines := make(map[string]*deploymentpb.MachineState)
-	for _, machine := range rec.GetInfrastructureState().GetMachines() {
-		if machine == nil || machine.GetNodeId() == "" {
+	nodesByID := make(map[string]*models.RunTopology_MachineNode)
+	for _, node := range run.GetTopology().GetNodes() {
+		if node == nil || node.GetNodeId() == "" {
 			continue
 		}
-		machines[machine.GetNodeId()] = machine
+		nodesByID[node.GetNodeId()] = node
 	}
-
-	current := currentExecutionByNode(rec.GetDeploymentPlan())
-	ordered := workerMachineIDs(rec)
+	ordered := workerMachineIDsFromRun(run)
 
 	workers := make([]*monitor.WorkerInfo, 0, len(ordered))
 	for _, nodeID := range ordered {
-		machine := machines[nodeID]
-		status := workerStatus(machine, current[nodeID])
+		node := nodesByID[nodeID]
+		status := pendingIfUnspecified(node.GetStatus())
 		worker := &monitor.WorkerInfo{
-			Id:                     "agent/" + nodeID,
-			Kind:                   domainpb.Worker_KIND_AGENT,
-			MachineId:              nodeID,
-			Host:                   machineHost(machine),
-			CurrentNodeExecutionId: current[nodeID],
-			Status:                 status,
-			Presence:               recordWorkerPresence(rec, machine),
-			Source:                 monitor.ObservationSource_OBSERVATION_SOURCE_PERSISTED_RECORD,
-			StatusReason:           recordWorkerStatusReason(rec, machine),
+			Id:           "agent/" + nodeID,
+			Kind:         domainpb.Worker_KIND_AGENT,
+			MachineId:    nodeID,
+			Host:         node.GetIp(),
+			Status:       status,
+			Presence:     runWorkerPresence(run, node),
+			Source:       monitor.ObservationSource_OBSERVATION_SOURCE_PERSISTED_RECORD,
+			StatusReason: runWorkerStatusReason(run, node),
 		}
 		worker.Online = worker.GetPresence() == monitor.WorkerPresence_WORKER_PRESENCE_ONLINE
 		mergeWorkerPresence(worker, presence[nodeID])
@@ -490,47 +535,27 @@ func mergeWorkerPresence(worker *monitor.WorkerInfo, sample *monitor.WorkerInfo)
 	worker.Source = monitor.ObservationSource_OBSERVATION_SOURCE_AGENT_REGISTRY
 }
 
-func recordWorkerPresence(rec *models.TestRunRecord, machine *deploymentpb.MachineState) monitor.WorkerPresence {
-	if rec != nil && isTerminalStatus(rec.GetStatus()) {
+// runWorkerPresence reports TERMINATED for a terminal run; otherwise UNKNOWN
+// pending a real agent-registry sample (mergeWorkerPresence upgrades this
+// once one arrives). Collapses the old machine-liveness branch: it always
+// returned UNKNOWN either way (workerOnline(machine) was never able to
+// distinguish "online" from "unknown" here — a registry sample was the only
+// source of truth for that), so dropping it is not a behavior change.
+func runWorkerPresence(run *models.Run, node *models.RunTopology_MachineNode) monitor.WorkerPresence {
+	if run != nil && isTerminalStatus(run.GetStatus()) {
 		return monitor.WorkerPresence_WORKER_PRESENCE_TERMINATED
-	}
-	if workerOnline(machine) {
-		return monitor.WorkerPresence_WORKER_PRESENCE_UNKNOWN
 	}
 	return monitor.WorkerPresence_WORKER_PRESENCE_UNKNOWN
 }
 
-func recordWorkerStatusReason(rec *models.TestRunRecord, machine *deploymentpb.MachineState) string {
-	if rec != nil && isTerminalStatus(rec.GetStatus()) {
+func runWorkerStatusReason(run *models.Run, node *models.RunTopology_MachineNode) string {
+	if run != nil && isTerminalStatus(run.GetStatus()) {
 		return "run_terminal_no_registry_sample"
 	}
-	if machine == nil {
+	if node == nil {
 		return "machine_not_materialized"
 	}
 	return "no_registry_sample"
-}
-
-func currentExecutionByNode(plan *deploymentpb.DeploymentPlan) map[string]string {
-	current := make(map[string]string)
-	if plan == nil {
-		return current
-	}
-	for _, component := range plan.GetComponents() {
-		if component == nil || component.GetNodeId() == "" {
-			continue
-		}
-		for _, step := range component.GetSteps() {
-			if step == nil || !activeStatus(step.GetStatus()) {
-				continue
-			}
-			current[component.GetNodeId()] = labelOr(step.GetLabels(), deploymentbuilder.LabelNodeExecutionID, deploymentbuilder.StepExecutionID(component.GetComponentId(), step.GetId()))
-			break
-		}
-		if current[component.GetNodeId()] == "" && activeStatus(component.GetStatus()) {
-			current[component.GetNodeId()] = labelOr(component.GetLabels(), deploymentbuilder.LabelNodeExecutionID, deploymentbuilder.ComponentExecutionID(component.GetComponentId()))
-		}
-	}
-	return current
 }
 
 func workerStatus(machine *deploymentpb.MachineState, currentNodeExecutionID string) common.Status {
@@ -541,34 +566,6 @@ func workerStatus(machine *deploymentpb.MachineState, currentNodeExecutionID str
 		return common.Status_STATUS_PENDING
 	}
 	return pendingIfUnspecified(machine.GetStatus())
-}
-
-func workerOnline(machine *deploymentpb.MachineState) bool {
-	if machine == nil {
-		return false
-	}
-	switch pendingIfUnspecified(machine.GetStatus()) {
-	case common.Status_STATUS_DEPLOYED,
-		common.Status_STATUS_COMPLETED,
-		common.Status_STATUS_RUNNING,
-		common.Status_STATUS_DEPLOYMENT:
-		return true
-	default:
-		return false
-	}
-}
-
-func activeStatus(status common.Status) bool {
-	switch pendingIfUnspecified(status) {
-	case common.Status_STATUS_ALLOCATED,
-		common.Status_STATUS_DEPLOYMENT,
-		common.Status_STATUS_RUNNING,
-		common.Status_STATUS_RETRY_WAIT,
-		common.Status_STATUS_CANCELLING:
-		return true
-	default:
-		return false
-	}
 }
 
 func machineHost(machine *deploymentpb.MachineState) string {
@@ -590,7 +587,7 @@ func machineHost(machine *deploymentpb.MachineState) string {
 	return ""
 }
 
-func recordStageNode(runID string, rec *models.TestRunRecord, name string, order uint32, status common.Status) *monitor.PipelineNode {
+func runStageNode(runID string, run *models.Run, name string, order uint32, status common.Status) *monitor.PipelineNode {
 	id := deploymentbuilder.StageExecutionID(name)
 	status = pendingIfUnspecified(status)
 	return &monitor.PipelineNode{
@@ -602,275 +599,100 @@ func recordStageNode(runID string, rec *models.TestRunRecord, name string, order
 		Source:          monitor.ObservationSource_OBSERVATION_SOURCE_PERSISTED_RECORD,
 		Order:           order,
 		Phase:           name,
-		StatusReason:    recordStageStatusReason(rec, name, status),
+		StatusReason:    runStageStatusReason(run, name, status),
 	}
 }
 
-func recordInfrastructureStatus(rec *models.TestRunRecord) common.Status {
-	state := rec.GetInfrastructureState()
-	if state == nil || len(state.GetMachines()) == 0 {
-		if isTerminalStatus(rec.GetStatus()) && rec.GetStatus() != common.Status_STATUS_COMPLETED {
-			return rec.GetStatus()
-		}
-		return common.Status_STATUS_PENDING
-	}
-	var completed, total int
-	for _, machine := range state.GetMachines() {
-		if machine == nil {
-			continue
-		}
-		total++
-		switch pendingIfUnspecified(machine.GetStatus()) {
-		case common.Status_STATUS_FAILED, common.Status_STATUS_CANCELLED:
-			return machine.GetStatus()
-		case common.Status_STATUS_ALLOCATED, common.Status_STATUS_DEPLOYMENT, common.Status_STATUS_RUNNING:
-			return common.Status_STATUS_RUNNING
-		case common.Status_STATUS_DEPLOYED, common.Status_STATUS_COMPLETED:
-			completed++
-		}
-	}
-	if total > 0 && completed == total {
+// runInfrastructureStatus derives the pre-runtime_state "infrastructure"
+// stage status from run.topology alone (models.Run has no
+// InfrastructureState machine list to inspect per-machine) — provisioned
+// (topology != nil) reads COMPLETED, else PENDING/terminal-passthrough.
+func runInfrastructureStatus(run *models.Run) common.Status {
+	if run.GetTopology() != nil {
 		return common.Status_STATUS_COMPLETED
+	}
+	if isTerminalStatus(run.GetStatus()) && run.GetStatus() != common.Status_STATUS_COMPLETED {
+		return run.GetStatus()
 	}
 	return common.Status_STATUS_PENDING
 }
 
-func recordRenderPlanStatus(rec *models.TestRunRecord) common.Status {
-	if rec.GetDeploymentPlan() != nil {
+// runRenderPlanStatus's classic DeploymentPlan-presence check has no
+// equivalent on models.Run; compiled_plan (the compiled DSL plan
+// RunRecipeWorkflow executed) is the closest analog for "the plan is
+// rendered".
+func runRenderPlanStatus(run *models.Run) common.Status {
+	if run.GetCompiledPlan() != nil {
 		return common.Status_STATUS_COMPLETED
 	}
-	if isTerminalStatus(rec.GetStatus()) && recordInfrastructureStatus(rec) == common.Status_STATUS_COMPLETED && rec.GetStatus() != common.Status_STATUS_COMPLETED {
-		return rec.GetStatus()
+	if isTerminalStatus(run.GetStatus()) && runInfrastructureStatus(run) == common.Status_STATUS_COMPLETED && run.GetStatus() != common.Status_STATUS_COMPLETED {
+		return run.GetStatus()
 	}
-	if recordInfrastructureStatus(rec) == common.Status_STATUS_COMPLETED && rec.GetStatus() == common.Status_STATUS_RUNNING {
+	if runInfrastructureStatus(run) == common.Status_STATUS_COMPLETED && run.GetStatus() == common.Status_STATUS_RUNNING {
 		return common.Status_STATUS_RUNNING
 	}
 	return common.Status_STATUS_PENDING
 }
 
-func recordExecutePlanStatus(rec *models.TestRunRecord) common.Status {
-	status := deploymentPlanStatus(rec.GetDeploymentPlan())
-	if status != common.Status_STATUS_PENDING {
-		return status
-	}
-	if rec.GetStatus() == common.Status_STATUS_COMPLETED && rec.GetDeploymentPlan() != nil {
+// runExecutePlanStatus has no per-component DeploymentPlan detail to derive
+// from on models.Run; this only fires before the first runtime_state stage
+// lands (overviewFromRun's runtime_state branch takes over immediately
+// after), so a coarse status/topology-driven signal is all that's needed.
+func runExecutePlanStatus(run *models.Run) common.Status {
+	if run.GetStatus() == common.Status_STATUS_COMPLETED && run.GetTopology() != nil {
 		return common.Status_STATUS_COMPLETED
 	}
-	if isTerminalStatus(rec.GetStatus()) && rec.GetDeploymentPlan() == nil && recordRenderPlanStatus(rec) == common.Status_STATUS_COMPLETED {
-		return rec.GetStatus()
+	if isTerminalStatus(run.GetStatus()) && runRenderPlanStatus(run) == common.Status_STATUS_COMPLETED {
+		return run.GetStatus()
 	}
-	return status
+	return common.Status_STATUS_PENDING
 }
 
-func recordWorkloadStatus(rec *models.TestRunRecord) common.Status {
-	switch rec.GetStatus() {
+func runWorkloadStatus(run *models.Run) common.Status {
+	switch run.GetStatus() {
 	case common.Status_STATUS_COMPLETED:
 		return common.Status_STATUS_COMPLETED
 	case common.Status_STATUS_FAILED, common.Status_STATUS_CANCELLED:
-		if recordExecutePlanStatus(rec) == common.Status_STATUS_COMPLETED {
-			return rec.GetStatus()
+		if runExecutePlanStatus(run) == common.Status_STATUS_COMPLETED {
+			return run.GetStatus()
 		}
 		return common.Status_STATUS_PENDING
 	case common.Status_STATUS_RUNNING, common.Status_STATUS_CANCELLING:
-		if recordExecutePlanStatus(rec) == common.Status_STATUS_COMPLETED {
-			return rec.GetStatus()
+		if runExecutePlanStatus(run) == common.Status_STATUS_COMPLETED {
+			return run.GetStatus()
 		}
 	}
 	return common.Status_STATUS_PENDING
 }
 
-func recordTeardownStatus(rec *models.TestRunRecord) common.Status {
-	switch rec.GetStatus() {
+func runTeardownStatus(run *models.Run) common.Status {
+	switch run.GetStatus() {
 	case common.Status_STATUS_COMPLETED:
 		return common.Status_STATUS_COMPLETED
 	case common.Status_STATUS_FAILED:
-		if recordWorkloadStatus(rec) == common.Status_STATUS_COMPLETED {
+		if runWorkloadStatus(run) == common.Status_STATUS_COMPLETED {
 			return common.Status_STATUS_FAILED
 		}
 	case common.Status_STATUS_CANCELLED:
-		if recordInfrastructureStatus(rec) == common.Status_STATUS_COMPLETED {
+		if runInfrastructureStatus(run) == common.Status_STATUS_COMPLETED {
 			return common.Status_STATUS_CANCELLED
 		}
 	case common.Status_STATUS_RUNNING, common.Status_STATUS_CANCELLING:
-		if recordWorkloadStatus(rec) == common.Status_STATUS_COMPLETED {
+		if runWorkloadStatus(run) == common.Status_STATUS_COMPLETED {
 			return common.Status_STATUS_RUNNING
 		}
 	}
 	return common.Status_STATUS_PENDING
 }
 
-func recordStageStatusReason(rec *models.TestRunRecord, name string, status common.Status) string {
-	if rec != nil && isTerminalStatus(rec.GetStatus()) {
-		return "persisted_record_terminal_" + strings.ToLower(rec.GetStatus().String())
+func runStageStatusReason(run *models.Run, name string, status common.Status) string {
+	if run != nil && isTerminalStatus(run.GetStatus()) {
+		return "persisted_record_terminal_" + strings.ToLower(run.GetStatus().String())
 	}
 	if status == common.Status_STATUS_PENDING {
 		return "persisted_record_missing_live_stage"
 	}
 	return "persisted_record_" + strings.ToLower(status.String())
-}
-
-func deploymentStatusReason(status common.Status) string {
-	status = pendingIfUnspecified(status)
-	if status == common.Status_STATUS_PENDING {
-		return "deployment_plan_pending_or_not_started"
-	}
-	return "deployment_plan_" + strings.ToLower(status.String())
-}
-
-func deploymentPlanRoot(runID string, plan *deploymentpb.DeploymentPlan, root *monitor.PipelineNode) *monitor.PipelineNode {
-	if root == nil {
-		id := deploymentbuilder.StageExecutionID(executeDeploymentPlanNodeName)
-		root = &monitor.PipelineNode{
-			NodeExecutionId: id,
-			Name:            executeDeploymentPlanNodeName,
-			Status:          deploymentPlanStatus(plan),
-			LogRef:          logRef(runID, id, ""),
-			Attempt:         1,
-			Source:          monitor.ObservationSource_OBSERVATION_SOURCE_DEPLOYMENT_PLAN,
-			Order:           3,
-			Phase:           executeDeploymentPlanNodeName,
-		}
-	}
-	if root.GetNodeExecutionId() == "" {
-		root.NodeExecutionId = deploymentbuilder.StageExecutionID(executeDeploymentPlanNodeName)
-	}
-	if root.GetSource() == monitor.ObservationSource_OBSERVATION_SOURCE_UNSPECIFIED ||
-		root.GetSource() == monitor.ObservationSource_OBSERVATION_SOURCE_PERSISTED_RECORD {
-		root.Source = monitor.ObservationSource_OBSERVATION_SOURCE_DEPLOYMENT_PLAN
-	}
-	root.Phase = executeDeploymentPlanNodeName
-	if root.GetOrder() == 0 {
-		root.Order = 3
-	}
-	if root.LogRef == nil {
-		root.LogRef = logRef(runID, root.GetNodeExecutionId(), "")
-	}
-	root.Children = deploymentPlanChildren(runID, plan, root.GetStatus())
-	return root
-}
-
-func deploymentPlanChildren(runID string, plan *deploymentpb.DeploymentPlan, parentStatus common.Status) []*monitor.PipelineNode {
-	components := append([]*deploymentpb.ComponentDeployment(nil), plan.GetComponents()...)
-	sort.SliceStable(components, func(i, j int) bool {
-		left := components[i]
-		right := components[j]
-		if left.GetGlobalPriority() != right.GetGlobalPriority() {
-			return left.GetGlobalPriority() < right.GetGlobalPriority()
-		}
-		if left.GetNodeId() != right.GetNodeId() {
-			return left.GetNodeId() < right.GetNodeId()
-		}
-		if left.GetNodePriority() != right.GetNodePriority() {
-			return left.GetNodePriority() < right.GetNodePriority()
-		}
-		return left.GetComponentId() < right.GetComponentId()
-	})
-	nodes := make([]*monitor.PipelineNode, 0, len(components))
-	parentID := deploymentbuilder.StageExecutionID(executeDeploymentPlanNodeName)
-	for idx, component := range components {
-		if component == nil {
-			continue
-		}
-		componentID := component.GetComponentId()
-		nodeExecutionID := labelOr(component.GetLabels(), deploymentbuilder.LabelNodeExecutionID, deploymentbuilder.ComponentExecutionID(componentID))
-		componentStatus := inheritedDeploymentStatus(component.GetStatus(), parentStatus)
-		nodes = append(nodes, &monitor.PipelineNode{
-			NodeExecutionId: nodeExecutionID,
-			Name:            componentID,
-			Status:          componentStatus,
-			Worker: &domainpb.Worker{
-				Id:   "agent/" + component.GetNodeId(),
-				Kind: domainpb.Worker_KIND_AGENT,
-			},
-			LogRef:                logRef(runID, nodeExecutionID, componentID),
-			Children:              agentStepNodes(runID, component, nodeExecutionID, componentStatus),
-			Attempt:               1,
-			Source:                monitor.ObservationSource_OBSERVATION_SOURCE_DEPLOYMENT_PLAN,
-			Order:                 uint32(idx + 1),
-			ParentNodeExecutionId: parentID,
-			Phase:                 executeDeploymentPlanNodeName,
-			ComponentId:           componentID,
-			MachineId:             component.GetNodeId(),
-			StatusReason:          deploymentStatusReason(componentStatus),
-		})
-	}
-	return nodes
-}
-
-func agentStepNodes(runID string, component *deploymentpb.ComponentDeployment, parentNodeExecutionID string, parentStatus common.Status) []*monitor.PipelineNode {
-	steps := append([]*deploymentpb.AgentStep(nil), component.GetSteps()...)
-	sort.SliceStable(steps, func(i, j int) bool {
-		if steps[i].GetOrder() != steps[j].GetOrder() {
-			return steps[i].GetOrder() < steps[j].GetOrder()
-		}
-		return steps[i].GetId() < steps[j].GetId()
-	})
-	nodes := make([]*monitor.PipelineNode, 0, len(steps))
-	for idx, step := range steps {
-		if step == nil {
-			continue
-		}
-		componentID := component.GetComponentId()
-		nodeExecutionID := labelOr(step.GetLabels(), deploymentbuilder.LabelNodeExecutionID, deploymentbuilder.StepExecutionID(componentID, step.GetId()))
-		operation := deploymentbuilder.AgentStepOperation(step)
-		name := deploymentbuilder.AgentStepStageName(step)
-		stepStatus := inheritedDeploymentStatus(step.GetStatus(), parentStatus)
-		nodes = append(nodes, &monitor.PipelineNode{
-			NodeExecutionId: nodeExecutionID,
-			Name:            name,
-			Status:          stepStatus,
-			Worker: &domainpb.Worker{
-				Id:   "agent/" + component.GetNodeId(),
-				Kind: domainpb.Worker_KIND_AGENT,
-			},
-			LogRef:                logRef(runID, nodeExecutionID, componentID),
-			Attempt:               1,
-			Source:                monitor.ObservationSource_OBSERVATION_SOURCE_DEPLOYMENT_PLAN,
-			Order:                 uint32(idx + 1),
-			ParentNodeExecutionId: parentNodeExecutionID,
-			Phase:                 executeDeploymentPlanNodeName,
-			ComponentId:           componentID,
-			MachineId:             component.GetNodeId(),
-			StatusReason:          deploymentStatusReason(stepStatus),
-			Operation:             operation,
-			Outputs:               deploymentbuilder.AgentStepResultOutputs(component, step),
-		})
-	}
-	return nodes
-}
-
-func inheritedDeploymentStatus(status, parentStatus common.Status) common.Status {
-	resolved := pendingIfUnspecified(status)
-	if resolved != common.Status_STATUS_PENDING {
-		return resolved
-	}
-	switch parentStatus {
-	case common.Status_STATUS_COMPLETED, common.Status_STATUS_DEPLOYED:
-		return common.Status_STATUS_COMPLETED
-	default:
-		return resolved
-	}
-}
-
-func deploymentPlanStatus(plan *deploymentpb.DeploymentPlan) common.Status {
-	if plan == nil || len(plan.GetComponents()) == 0 {
-		return common.Status_STATUS_PENDING
-	}
-	var completed int
-	for _, component := range plan.GetComponents() {
-		switch pendingIfUnspecified(component.GetStatus()) {
-		case common.Status_STATUS_FAILED, common.Status_STATUS_CANCELLED, common.Status_STATUS_SKIPPED:
-			return component.GetStatus()
-		case common.Status_STATUS_DEPLOYMENT, common.Status_STATUS_RUNNING, common.Status_STATUS_ALLOCATED:
-			return common.Status_STATUS_RUNNING
-		case common.Status_STATUS_DEPLOYED, common.Status_STATUS_COMPLETED:
-			completed++
-		}
-	}
-	if completed == len(plan.GetComponents()) {
-		return common.Status_STATUS_COMPLETED
-	}
-	return common.Status_STATUS_PENDING
 }
 
 func pendingIfUnspecified(status common.Status) common.Status {
@@ -895,27 +717,27 @@ func logRef(runID, nodeExecutionID, componentID string) *monitor.LogRef {
 	}
 }
 
-func overlayRunFromOverview(rec *models.TestRunRecord, overview *monitor.Overview) {
-	if rec == nil || overview == nil {
+func overlayRunFromOverview(run *models.Run, overview *monitor.Overview) {
+	if run == nil || overview == nil {
 		return
 	}
-	if rec.GetStatus() != common.Status_STATUS_CANCELLING && !isTerminalStatus(rec.GetStatus()) {
-		rec.Status = overview.GetStatus()
+	if run.GetStatus() != common.Status_STATUS_CANCELLING && !isTerminalStatus(run.GetStatus()) {
+		run.Status = overview.GetStatus()
 	}
-	if rec.Summary == nil {
-		rec.Summary = &models.TestRunRecord_Summary{}
+	if run.Summary == nil {
+		run.Summary = &models.Run_Summary{}
 	}
 	if overview.GetStartedAt() != nil {
-		rec.Summary.StartedAt = overview.GetStartedAt()
+		run.Summary.StartedAt = overview.GetStartedAt()
 	}
 	if overview.GetFinishedAt() != nil {
-		rec.Summary.FinishedAt = overview.GetFinishedAt()
+		run.Summary.FinishedAt = overview.GetFinishedAt()
 	}
 	if overview.GetDuration() != nil {
-		rec.Summary.Duration = overview.GetDuration()
+		run.Summary.Duration = overview.GetDuration()
 	}
-	if overview.GetProgressPct() > rec.Summary.GetProgressPct() {
-		rec.Summary.ProgressPct = overview.GetProgressPct()
+	if overview.GetProgressPct() > run.Summary.GetProgressPct() {
+		run.Summary.ProgressPct = overview.GetProgressPct()
 	}
 }
 
@@ -1168,16 +990,6 @@ func sourceStatusReason(source monitor.ObservationSource, status common.Status) 
 	default:
 		return strings.ToLower(status.String())
 	}
-}
-
-func appendPipelineOutputs(outputs []*monitor.PipelineOutput, extra ...*monitor.PipelineOutput) []*monitor.PipelineOutput {
-	for _, output := range extra {
-		if output == nil {
-			continue
-		}
-		outputs = append(outputs, output)
-	}
-	return outputs
 }
 
 func isPipelineTerminalStatus(s common.Status) bool {

@@ -56,13 +56,13 @@ const metricsTenantPath = "/select/0/prometheus"
 // (which the gateway's vmauth routes to victorialogs); no tenant path segment.
 
 // RunRecordReader is the slice of the run store the metrics reader needs to
-// resolve a run's DB kind and observation window. The persisted
-// models.TestRunRecord (via its Summary facet) carries db_kind / started_at /
-// finished_at — everything the per-DB PromQL set and the query time window need.
-// Injected so the reader stays an execution adapter without owning storage; it is
+// resolve a run's DB kind and observation window. The persisted models.Run
+// (via its Summary facet) carries db_kind / started_at / finished_at —
+// everything the per-DB PromQL set and the query time window need. Injected
+// so the reader stays an execution adapter without owning storage; it is
 // satisfied by the same store that backs SnapshotRunReader.
 type RunRecordReader interface {
-	RunRecord(ctx context.Context, runID string) (*models.TestRunRecord, error)
+	RunRecord(ctx context.Context, runID string) (*models.Run, error)
 }
 
 // LogReader implements test_run_overview.LogReader against VictoriaLogs.
@@ -362,19 +362,19 @@ func (r *MetricsReader) resolveKindAndWindow(ctx context.Context, runID string) 
 		return dbKind, tr
 	}
 
-	rec, err := r.store.RunRecord(ctx, runID)
-	if err != nil || rec == nil {
+	run, err := r.store.RunRecord(ctx, runID)
+	if err != nil || run == nil {
 		if err != nil {
 			r.log.Debug("metrics: run record lookup failed, using defaults", "run_id", runID, "err", err)
 		}
 		return dbKind, tr
 	}
 
-	if k := dbKindString(rec); k != "" {
+	if k := dbKindString(run); k != "" {
 		dbKind = k
 	}
 
-	sum := rec.GetSummary()
+	sum := run.GetSummary()
 	if sum.GetStartedAt() != nil {
 		start := sum.GetStartedAt().AsTime().Add(-pad)
 		end := now
@@ -387,13 +387,11 @@ func (r *MetricsReader) resolveKindAndWindow(ctx context.Context, runID string) 
 }
 
 // dbKindString resolves the run's DB engine to the metrics package's lowercase
-// kind key. The summary facet is authoritative; it falls back to the baked spec.
-func dbKindString(rec *models.TestRunRecord) string {
-	kind := rec.GetSummary().GetDbKind()
-	if kind == domainpb.Database_KIND_UNSPECIFIED {
-		kind = rec.GetSpec().GetDatabase().GetKind()
-	}
-	switch kind {
+// kind key. The summary facet is authoritative — models.Run has no baked spec
+// to fall back to (see Run's doc comment: unlike TestRunRecord, it never
+// carries one), so an unspecified summary kind just returns "".
+func dbKindString(run *models.Run) string {
+	switch run.GetSummary().GetDbKind() {
 	case domainpb.Database_KIND_MYSQL, domainpb.Database_KIND_MARIADB:
 		// MariaDB uses the mysqld_exporter and the same metric names as MySQL.
 		return "mysql"
