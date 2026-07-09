@@ -1,0 +1,80 @@
+{
+  "schema": {
+    "id": {
+      "namespace": "stroppy.test.form",
+      "name": "form",
+      "version": "1"
+    },
+    "fields": [
+      {
+        "name": "db_version",
+        "string": {
+          "default": "16"
+        }
+      },
+      {
+        "name": "threads",
+        "int64": {
+          "default": "4",
+          "gte": "1"
+        }
+      },
+      {
+        "name": "provider",
+        "object": {
+          "schema": {
+            "id": {
+              "namespace": "stroppy.test",
+              "name": "params",
+              "version": "1"
+            },
+            "fields": [
+              {
+                "name": "replicas",
+                "double": {
+                  "default": 3
+                }
+              }
+            ],
+            "strict": true
+          }
+        }
+      }
+    ],
+    "strict": true
+  },
+  "valid_values": {
+    "db_version": "17",
+    "provider": {
+      "replicas": 5
+    },
+    "threads": 8
+  },
+  "invalid_values": {
+    "db_version": "17",
+    "provider": {
+      "replicas": 5
+    },
+    "threads": 0
+  },
+  "undeclared_values": {
+    "db_version": "17",
+    "extra_field": "evil_injected_key",
+    "provider": {
+      "replicas": 5
+    },
+    "threads": 8
+  },
+  "undeclared_provider_values": {
+    "db_version": "17",
+    "provider": {
+      "extra_nested": "evil_injected_key",
+      "replicas": 5
+    },
+    "threads": 8
+  },
+  "invalid_expected_field": "threads",
+  "undeclared_expected_field": "extra_field",
+  "undeclared_provider_expected_field": "provider.extra_nested",
+  "valid_baked_values_sha256": "db3ea3982fcb50f51ea4a002973298289fd6457d66ea998eb8226a0ca43d46a7"
+}
