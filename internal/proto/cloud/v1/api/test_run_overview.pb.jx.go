@@ -515,7 +515,7 @@ func (m *TestRunOverviewSnapshot) Decode(d *jx.Decoder) error {
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			m.Run = &models.TestRunRecord{}
+			m.Run = &models.Run{}
 			if err := jxpb.DecMessage(d, m.Run); err != nil {
 				return err
 			}

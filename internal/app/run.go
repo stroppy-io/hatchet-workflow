@@ -232,7 +232,7 @@ func Run(ctx context.Context, cfg Config) error {
 	metricsComparator := adapters.NewMetricsComparator(metricsReader)
 
 	ratingNames := ratingNames{accounts: store.Accounts(), tenants: store.Tenants()}
-	ratingRuns := ratingRunsLister{db: db, runs: store.TestRuns()}
+	ratingRuns := ratingRunsLister{db: db, runs: store.Runs()}
 	ratingBoard := adapters.NewRatingBoard(ratingRuns, metricsReader, ratingNames)
 	publicRatingBoard := adapters.NewPublicRatingBoard(ratingRuns, metricsReader)
 
@@ -244,9 +244,10 @@ func Run(ctx context.Context, cfg Config) error {
 	// no longer exists.
 	favoriteTargets := adapters.NewFavoriteTargetResolver(adapters.FavoriteTargetRepos{
 		// test_run is keyed by id only — the tenant is validated by the favorite
-		// service after resolution.
+		// service after resolution. SP-E Task 5: reads run_records (models.Run)
+		// rather than test_run_records, mirroring the run-model cutover.
 		TestRuns: adapters.EntityGetterFunc(func(ctx context.Context, _, id string) (*commonEntity, error) {
-			rec, err := bid.testRun(ctx, id)
+			rec, err := bid.run(ctx, id)
 			if err != nil {
 				return nil, err
 			}
@@ -268,7 +269,7 @@ func Run(ctx context.Context, cfg Config) error {
 	tenantGuard := adapters.NewTenantGuard(tenantMembership{memberships: store.Memberships()})
 	shellAudit := adapters.NewSlogShellAudit(log)
 
-	dashRuns := dashboardRuns{runs: store.TestRuns()}
+	dashRuns := dashboardRuns{runs: store.Runs()}
 	runStats := adapters.NewRunStatsReader(dashRuns)
 	recentRuns := adapters.NewRecentRunsReader(dashRuns)
 	scheduleReader := adapters.NewScheduleReader(dashRuns)
@@ -360,7 +361,7 @@ func Run(ctx context.Context, cfg Config) error {
 	quotaService := quotasvc.NewService(quotasvc.Deps{
 		Authn:   authn,
 		Tenants: tenantReader,
-		Runs:    store.TestRuns(),
+		Runs:    store.Runs(),
 		Quotas:  quotaManager,
 	})
 
@@ -376,7 +377,7 @@ func Run(ctx context.Context, cfg Config) error {
 
 	testRunOverviewService := testrunoverview.NewTestRunOverviewService(testrunoverview.TestRunOverviewDeps{
 		Authn:    authn,
-		Runs:     store.TestRuns(),
+		Runs:     store.Runs(),
 		Overview: overviewReader,
 		Logs:     logReader,
 		Metrics:  metricsReader,

@@ -30,7 +30,7 @@ import (
 // the record belongs to the request's tenant so a caller cannot pull a foreign
 // tenant's run into a comparison.
 type TestRunReader interface {
-	Get(ctx context.Context, id string) (*models.TestRunRecord, error)
+	Get(ctx context.Context, id string) (*models.Run, error)
 }
 
 // MetricsComparator computes the per-metric, cross-run diff (monitor.Comparison)
@@ -93,7 +93,7 @@ func doTxRet[T any](ctx context.Context, s *CompareService, fn func(ctx context.
 }
 
 // runColumn projects a stored run record into the comparison's config column.
-func runColumn(rec *models.TestRunRecord) *api.RunColumn {
+func runColumn(rec *models.Run) *api.RunColumn {
 	sum := rec.GetSummary()
 	return &api.RunColumn{
 		RunId:          rec.GetEntity().GetId(),

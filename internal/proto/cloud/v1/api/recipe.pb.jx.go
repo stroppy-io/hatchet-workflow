@@ -708,7 +708,7 @@ func (m *StartRunResponse) Decode(d *jx.Decoder) error {
 			if d.Next() == jx.Null {
 				return d.Null()
 			}
-			m.Run = &models.TestRunRecord{}
+			m.Run = &models.Run{}
 			if err := jxpb.DecMessage(d, m.Run); err != nil {
 				return err
 			}
@@ -849,7 +849,7 @@ func (m *ListRunsResponse) Decode(d *jx.Decoder) error {
 				return d.Null()
 			}
 			return d.Arr(func(d *jx.Decoder) error {
-				el := &models.TestRunRecord{}
+				el := &models.Run{}
 				if err := jxpb.DecMessage(d, el); err != nil {
 					return err
 				}

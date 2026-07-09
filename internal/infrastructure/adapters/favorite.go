@@ -103,7 +103,7 @@ func (r *FavoriteTargetResolver) Resolve(ctx context.Context, kind common.Favori
 // record exposes GetEntity() to an EntityGetter, so the integration layer can
 // plug a typed gormstore repo into FavoriteTargetRepos without writing the
 // closure by hand (e.g.
-// EntityGetterFromRecord(func(ctx, id) (*models.TestRunRecord, error){...})).
+// EntityGetterFromRecord(func(ctx, id) (*models.Run, error){...})).
 func EntityGetterFromRecord[T interface{ GetEntity() *common.Entity }](get func(ctx context.Context, id string) (T, error)) EntityGetterFunc {
 	return func(ctx context.Context, _ string, id string) (*common.Entity, error) {
 		rec, err := get(ctx, id)
@@ -114,4 +114,4 @@ func EntityGetterFromRecord[T interface{ GetEntity() *common.Entity }](get func(
 	}
 }
 
-var _ = EntityGetterFromRecord[*models.TestRunRecord]
+var _ = EntityGetterFromRecord[*models.Run]

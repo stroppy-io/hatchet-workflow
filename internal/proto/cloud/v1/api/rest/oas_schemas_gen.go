@@ -520,43 +520,6 @@ func (s *AsRef) SetURI(val OptString) {
 	s.URI = val
 }
 
-// Ref: #/components/schemas/AutoScale
-type AutoScale struct {
-	CpuUtilizationPercent OptInt32 `json:"cpuUtilizationPercent"`
-	MaxSize               OptInt32 `json:"maxSize"`
-	MinSize               OptInt32 `json:"minSize"`
-}
-
-// GetCpuUtilizationPercent returns the value of CpuUtilizationPercent.
-func (s *AutoScale) GetCpuUtilizationPercent() OptInt32 {
-	return s.CpuUtilizationPercent
-}
-
-// GetMaxSize returns the value of MaxSize.
-func (s *AutoScale) GetMaxSize() OptInt32 {
-	return s.MaxSize
-}
-
-// GetMinSize returns the value of MinSize.
-func (s *AutoScale) GetMinSize() OptInt32 {
-	return s.MinSize
-}
-
-// SetCpuUtilizationPercent sets the value of CpuUtilizationPercent.
-func (s *AutoScale) SetCpuUtilizationPercent(val OptInt32) {
-	s.CpuUtilizationPercent = val
-}
-
-// SetMaxSize sets the value of MaxSize.
-func (s *AutoScale) SetMaxSize(val OptInt32) {
-	s.MaxSize = val
-}
-
-// SetMinSize sets the value of MinSize.
-func (s *AutoScale) SetMinSize(val OptInt32) {
-	s.MinSize = val
-}
-
 // Ref: #/components/schemas/Baked
 type Baked struct {
 	Schema OptSchema `json:"schema"`
@@ -734,43 +697,6 @@ func (s *Cmd) SetSpec(val Spec) {
 	s.Spec = val
 }
 
-// Ref: #/components/schemas/CockroachParams
-type CockroachParams struct {
-	Nodes   OptInt32                  `json:"nodes"`
-	Options OptCockroachParamsOptions `json:"options"`
-}
-
-// GetNodes returns the value of Nodes.
-func (s *CockroachParams) GetNodes() OptInt32 {
-	return s.Nodes
-}
-
-// GetOptions returns the value of Options.
-func (s *CockroachParams) GetOptions() OptCockroachParamsOptions {
-	return s.Options
-}
-
-// SetNodes sets the value of Nodes.
-func (s *CockroachParams) SetNodes(val OptInt32) {
-	s.Nodes = val
-}
-
-// SetOptions sets the value of Options.
-func (s *CockroachParams) SetOptions(val OptCockroachParamsOptions) {
-	s.Options = val
-}
-
-type CockroachParamsOptions map[string]string
-
-func (s *CockroachParamsOptions) init() CockroachParamsOptions {
-	m := *s
-	if m == nil {
-		m = map[string]string{}
-		*s = m
-	}
-	return m
-}
-
 // Ref: #/components/schemas/CompareRunsRequest
 type CompareRunsRequest struct {
 	RunIds   []string  `json:"runIds"`
@@ -884,6 +810,223 @@ func (s *Comparison) SetRunIds(val []string) {
 // SetSummaries sets the value of Summaries.
 func (s *Comparison) SetSummaries(val []RunSummary) {
 	s.Summaries = val
+}
+
+// Ref: #/components/schemas/CompiledJob
+type CompiledJob struct {
+	ID             OptString                    `json:"id"`
+	InputGroups    OptCompiledJobInputGroups    `json:"inputGroups"`
+	Matrix         OptCompiledJobMatrix         `json:"matrix"`
+	Needs          []string                     `json:"needs"`
+	OnGroup        OptString                    `json:"onGroup"`
+	ResolvedInputs OptCompiledJobResolvedInputs `json:"resolvedInputs"`
+	Service        OptString                    `json:"service"`
+	Steps          OptStepList                  `json:"steps"`
+	TargetGroup    OptString                    `json:"targetGroup"`
+	When           OptString                    `json:"when"`
+	With           OptCompiledJobWith           `json:"with"`
+}
+
+// GetID returns the value of ID.
+func (s *CompiledJob) GetID() OptString {
+	return s.ID
+}
+
+// GetInputGroups returns the value of InputGroups.
+func (s *CompiledJob) GetInputGroups() OptCompiledJobInputGroups {
+	return s.InputGroups
+}
+
+// GetMatrix returns the value of Matrix.
+func (s *CompiledJob) GetMatrix() OptCompiledJobMatrix {
+	return s.Matrix
+}
+
+// GetNeeds returns the value of Needs.
+func (s *CompiledJob) GetNeeds() []string {
+	return s.Needs
+}
+
+// GetOnGroup returns the value of OnGroup.
+func (s *CompiledJob) GetOnGroup() OptString {
+	return s.OnGroup
+}
+
+// GetResolvedInputs returns the value of ResolvedInputs.
+func (s *CompiledJob) GetResolvedInputs() OptCompiledJobResolvedInputs {
+	return s.ResolvedInputs
+}
+
+// GetService returns the value of Service.
+func (s *CompiledJob) GetService() OptString {
+	return s.Service
+}
+
+// GetSteps returns the value of Steps.
+func (s *CompiledJob) GetSteps() OptStepList {
+	return s.Steps
+}
+
+// GetTargetGroup returns the value of TargetGroup.
+func (s *CompiledJob) GetTargetGroup() OptString {
+	return s.TargetGroup
+}
+
+// GetWhen returns the value of When.
+func (s *CompiledJob) GetWhen() OptString {
+	return s.When
+}
+
+// GetWith returns the value of With.
+func (s *CompiledJob) GetWith() OptCompiledJobWith {
+	return s.With
+}
+
+// SetID sets the value of ID.
+func (s *CompiledJob) SetID(val OptString) {
+	s.ID = val
+}
+
+// SetInputGroups sets the value of InputGroups.
+func (s *CompiledJob) SetInputGroups(val OptCompiledJobInputGroups) {
+	s.InputGroups = val
+}
+
+// SetMatrix sets the value of Matrix.
+func (s *CompiledJob) SetMatrix(val OptCompiledJobMatrix) {
+	s.Matrix = val
+}
+
+// SetNeeds sets the value of Needs.
+func (s *CompiledJob) SetNeeds(val []string) {
+	s.Needs = val
+}
+
+// SetOnGroup sets the value of OnGroup.
+func (s *CompiledJob) SetOnGroup(val OptString) {
+	s.OnGroup = val
+}
+
+// SetResolvedInputs sets the value of ResolvedInputs.
+func (s *CompiledJob) SetResolvedInputs(val OptCompiledJobResolvedInputs) {
+	s.ResolvedInputs = val
+}
+
+// SetService sets the value of Service.
+func (s *CompiledJob) SetService(val OptString) {
+	s.Service = val
+}
+
+// SetSteps sets the value of Steps.
+func (s *CompiledJob) SetSteps(val OptStepList) {
+	s.Steps = val
+}
+
+// SetTargetGroup sets the value of TargetGroup.
+func (s *CompiledJob) SetTargetGroup(val OptString) {
+	s.TargetGroup = val
+}
+
+// SetWhen sets the value of When.
+func (s *CompiledJob) SetWhen(val OptString) {
+	s.When = val
+}
+
+// SetWith sets the value of With.
+func (s *CompiledJob) SetWith(val OptCompiledJobWith) {
+	s.With = val
+}
+
+type CompiledJobInputGroups map[string]string
+
+func (s *CompiledJobInputGroups) init() CompiledJobInputGroups {
+	m := *s
+	if m == nil {
+		m = map[string]string{}
+		*s = m
+	}
+	return m
+}
+
+type CompiledJobMatrix map[string]string
+
+func (s *CompiledJobMatrix) init() CompiledJobMatrix {
+	m := *s
+	if m == nil {
+		m = map[string]string{}
+		*s = m
+	}
+	return m
+}
+
+type CompiledJobResolvedInputs map[string]string
+
+func (s *CompiledJobResolvedInputs) init() CompiledJobResolvedInputs {
+	m := *s
+	if m == nil {
+		m = map[string]string{}
+		*s = m
+	}
+	return m
+}
+
+type CompiledJobWith map[string]string
+
+func (s *CompiledJobWith) init() CompiledJobWith {
+	m := *s
+	if m == nil {
+		m = map[string]string{}
+		*s = m
+	}
+	return m
+}
+
+// Ref: #/components/schemas/CompiledPlan
+type CompiledPlan struct {
+	Jobs          []CompiledJob  `json:"jobs"`
+	MachineGroups []MachineGroup `json:"machineGroups"`
+	Provider      OptProviderRef `json:"provider"`
+	Services      []ServiceSpec  `json:"services"`
+}
+
+// GetJobs returns the value of Jobs.
+func (s *CompiledPlan) GetJobs() []CompiledJob {
+	return s.Jobs
+}
+
+// GetMachineGroups returns the value of MachineGroups.
+func (s *CompiledPlan) GetMachineGroups() []MachineGroup {
+	return s.MachineGroups
+}
+
+// GetProvider returns the value of Provider.
+func (s *CompiledPlan) GetProvider() OptProviderRef {
+	return s.Provider
+}
+
+// GetServices returns the value of Services.
+func (s *CompiledPlan) GetServices() []ServiceSpec {
+	return s.Services
+}
+
+// SetJobs sets the value of Jobs.
+func (s *CompiledPlan) SetJobs(val []CompiledJob) {
+	s.Jobs = val
+}
+
+// SetMachineGroups sets the value of MachineGroups.
+func (s *CompiledPlan) SetMachineGroups(val []MachineGroup) {
+	s.MachineGroups = val
+}
+
+// SetProvider sets the value of Provider.
+func (s *CompiledPlan) SetProvider(val OptProviderRef) {
+	s.Provider = val
+}
+
+// SetServices sets the value of Services.
+func (s *CompiledPlan) SetServices(val []ServiceSpec) {
+	s.Services = val
 }
 
 // Ref: #/components/schemas/CompleteSSORequest
@@ -1287,6 +1430,32 @@ func (ComputedResult) AllValues() []ComputedResult {
 		ComputedResult5,
 		ComputedResult6,
 	}
+}
+
+// Ref: #/components/schemas/ConfigFile
+type ConfigFile struct {
+	Dest         OptString `json:"dest"`
+	TemplatePath OptString `json:"templatePath"`
+}
+
+// GetDest returns the value of Dest.
+func (s *ConfigFile) GetDest() OptString {
+	return s.Dest
+}
+
+// GetTemplatePath returns the value of TemplatePath.
+func (s *ConfigFile) GetTemplatePath() OptString {
+	return s.TemplatePath
+}
+
+// SetDest sets the value of Dest.
+func (s *ConfigFile) SetDest(val OptString) {
+	s.Dest = val
+}
+
+// SetTemplatePath sets the value of TemplatePath.
+func (s *ConfigFile) SetTemplatePath(val OptString) {
+	s.TemplatePath = val
 }
 
 // Ref: #/components/schemas/ConfirmPasswordResetRequest
@@ -2572,245 +2741,6 @@ func (s *CreateTenantResponse) SetTenant(val Tenant) {
 	s.Tenant = val
 }
 
-// Ref: #/components/schemas/Database
-type Database struct {
-	DatabasePresetId OptPresetId       `json:"databasePresetId"`
-	External         OptExternal       `json:"external"`
-	Kind             OptDatabaseKind   `json:"kind"`
-	PackageId        OptString         `json:"packageId"`
-	Params           OptDatabaseParams `json:"params"`
-	Tags             OptTags           `json:"tags"`
-}
-
-// GetDatabasePresetId returns the value of DatabasePresetId.
-func (s *Database) GetDatabasePresetId() OptPresetId {
-	return s.DatabasePresetId
-}
-
-// GetExternal returns the value of External.
-func (s *Database) GetExternal() OptExternal {
-	return s.External
-}
-
-// GetKind returns the value of Kind.
-func (s *Database) GetKind() OptDatabaseKind {
-	return s.Kind
-}
-
-// GetPackageId returns the value of PackageId.
-func (s *Database) GetPackageId() OptString {
-	return s.PackageId
-}
-
-// GetParams returns the value of Params.
-func (s *Database) GetParams() OptDatabaseParams {
-	return s.Params
-}
-
-// GetTags returns the value of Tags.
-func (s *Database) GetTags() OptTags {
-	return s.Tags
-}
-
-// SetDatabasePresetId sets the value of DatabasePresetId.
-func (s *Database) SetDatabasePresetId(val OptPresetId) {
-	s.DatabasePresetId = val
-}
-
-// SetExternal sets the value of External.
-func (s *Database) SetExternal(val OptExternal) {
-	s.External = val
-}
-
-// SetKind sets the value of Kind.
-func (s *Database) SetKind(val OptDatabaseKind) {
-	s.Kind = val
-}
-
-// SetPackageId sets the value of PackageId.
-func (s *Database) SetPackageId(val OptString) {
-	s.PackageId = val
-}
-
-// SetParams sets the value of Params.
-func (s *Database) SetParams(val OptDatabaseParams) {
-	s.Params = val
-}
-
-// SetTags sets the value of Tags.
-func (s *Database) SetTags(val OptTags) {
-	s.Tags = val
-}
-
-type DatabaseKind int32
-
-const (
-	DatabaseKind1  DatabaseKind = 1
-	DatabaseKind2  DatabaseKind = 2
-	DatabaseKind3  DatabaseKind = 3
-	DatabaseKind4  DatabaseKind = 4
-	DatabaseKind5  DatabaseKind = 5
-	DatabaseKind6  DatabaseKind = 6
-	DatabaseKind7  DatabaseKind = 7
-	DatabaseKind8  DatabaseKind = 8
-	DatabaseKind9  DatabaseKind = 9
-	DatabaseKind10 DatabaseKind = 10
-	DatabaseKind11 DatabaseKind = 11
-)
-
-// AllValues returns all DatabaseKind values.
-func (DatabaseKind) AllValues() []DatabaseKind {
-	return []DatabaseKind{
-		DatabaseKind1,
-		DatabaseKind2,
-		DatabaseKind3,
-		DatabaseKind4,
-		DatabaseKind5,
-		DatabaseKind6,
-		DatabaseKind7,
-		DatabaseKind8,
-		DatabaseKind9,
-		DatabaseKind10,
-		DatabaseKind11,
-	}
-}
-
-// Ref: #/components/schemas/DatabaseParams
-type DatabaseParams struct {
-	Cockroach  OptCockroachParams  `json:"cockroach"`
-	Mariadb    OptMySqlParams      `json:"mariadb"`
-	Mysql      OptMySqlParams      `json:"mysql"`
-	Noop       *NoopParams         `json:"noop"`
-	Orioledb   OptOrioledbParams   `json:"orioledb"`
-	Package    OptPackage          `json:"package"`
-	PgNoop     OptPgNoopParams     `json:"pgNoop"`
-	Picodata   OptPicodataParams   `json:"picodata"`
-	Postgres   OptPostgresParams   `json:"postgres"`
-	Version    OptString           `json:"version"`
-	Ydb        OptYdbParams        `json:"ydb"`
-	YdbManaged OptYdbManagedParams `json:"ydbManaged"`
-}
-
-// GetCockroach returns the value of Cockroach.
-func (s *DatabaseParams) GetCockroach() OptCockroachParams {
-	return s.Cockroach
-}
-
-// GetMariadb returns the value of Mariadb.
-func (s *DatabaseParams) GetMariadb() OptMySqlParams {
-	return s.Mariadb
-}
-
-// GetMysql returns the value of Mysql.
-func (s *DatabaseParams) GetMysql() OptMySqlParams {
-	return s.Mysql
-}
-
-// GetNoop returns the value of Noop.
-func (s *DatabaseParams) GetNoop() *NoopParams {
-	return s.Noop
-}
-
-// GetOrioledb returns the value of Orioledb.
-func (s *DatabaseParams) GetOrioledb() OptOrioledbParams {
-	return s.Orioledb
-}
-
-// GetPackage returns the value of Package.
-func (s *DatabaseParams) GetPackage() OptPackage {
-	return s.Package
-}
-
-// GetPgNoop returns the value of PgNoop.
-func (s *DatabaseParams) GetPgNoop() OptPgNoopParams {
-	return s.PgNoop
-}
-
-// GetPicodata returns the value of Picodata.
-func (s *DatabaseParams) GetPicodata() OptPicodataParams {
-	return s.Picodata
-}
-
-// GetPostgres returns the value of Postgres.
-func (s *DatabaseParams) GetPostgres() OptPostgresParams {
-	return s.Postgres
-}
-
-// GetVersion returns the value of Version.
-func (s *DatabaseParams) GetVersion() OptString {
-	return s.Version
-}
-
-// GetYdb returns the value of Ydb.
-func (s *DatabaseParams) GetYdb() OptYdbParams {
-	return s.Ydb
-}
-
-// GetYdbManaged returns the value of YdbManaged.
-func (s *DatabaseParams) GetYdbManaged() OptYdbManagedParams {
-	return s.YdbManaged
-}
-
-// SetCockroach sets the value of Cockroach.
-func (s *DatabaseParams) SetCockroach(val OptCockroachParams) {
-	s.Cockroach = val
-}
-
-// SetMariadb sets the value of Mariadb.
-func (s *DatabaseParams) SetMariadb(val OptMySqlParams) {
-	s.Mariadb = val
-}
-
-// SetMysql sets the value of Mysql.
-func (s *DatabaseParams) SetMysql(val OptMySqlParams) {
-	s.Mysql = val
-}
-
-// SetNoop sets the value of Noop.
-func (s *DatabaseParams) SetNoop(val *NoopParams) {
-	s.Noop = val
-}
-
-// SetOrioledb sets the value of Orioledb.
-func (s *DatabaseParams) SetOrioledb(val OptOrioledbParams) {
-	s.Orioledb = val
-}
-
-// SetPackage sets the value of Package.
-func (s *DatabaseParams) SetPackage(val OptPackage) {
-	s.Package = val
-}
-
-// SetPgNoop sets the value of PgNoop.
-func (s *DatabaseParams) SetPgNoop(val OptPgNoopParams) {
-	s.PgNoop = val
-}
-
-// SetPicodata sets the value of Picodata.
-func (s *DatabaseParams) SetPicodata(val OptPicodataParams) {
-	s.Picodata = val
-}
-
-// SetPostgres sets the value of Postgres.
-func (s *DatabaseParams) SetPostgres(val OptPostgresParams) {
-	s.Postgres = val
-}
-
-// SetVersion sets the value of Version.
-func (s *DatabaseParams) SetVersion(val OptString) {
-	s.Version = val
-}
-
-// SetYdb sets the value of Ydb.
-func (s *DatabaseParams) SetYdb(val OptYdbParams) {
-	s.Ydb = val
-}
-
-// SetYdbManaged sets the value of YdbManaged.
-func (s *DatabaseParams) SetYdbManaged(val OptYdbManagedParams) {
-	s.YdbManaged = val
-}
-
 // Ref: #/components/schemas/DeleteAccountRequest
 type DeleteAccountRequest struct {
 	ID OptString `json:"id"`
@@ -3215,6 +3145,32 @@ func (s *Disk) SetType(val OptDiskType) {
 	s.Type = val
 }
 
+// Ref: #/components/schemas/DiskSpec
+type DiskSpec struct {
+	SizeGb OptStringUint64 `json:"sizeGb"`
+	Type   OptString       `json:"type"`
+}
+
+// GetSizeGb returns the value of SizeGb.
+func (s *DiskSpec) GetSizeGb() OptStringUint64 {
+	return s.SizeGb
+}
+
+// GetType returns the value of Type.
+func (s *DiskSpec) GetType() OptString {
+	return s.Type
+}
+
+// SetSizeGb sets the value of SizeGb.
+func (s *DiskSpec) SetSizeGb(val OptStringUint64) {
+	s.SizeGb = val
+}
+
+// SetType sets the value of Type.
+func (s *DiskSpec) SetType(val OptString) {
+	s.Type = val
+}
+
 type DiskType string
 
 const (
@@ -3268,6 +3224,32 @@ func (s *DiskType) UnmarshalText(data []byte) error {
 	default:
 		return errors.Errorf("invalid value: %q", data)
 	}
+}
+
+// Ref: #/components/schemas/DslStep
+type DslStep struct {
+	Agent OptAgentStep `json:"agent"`
+	Wait  OptWaitStep  `json:"wait"`
+}
+
+// GetAgent returns the value of Agent.
+func (s *DslStep) GetAgent() OptAgentStep {
+	return s.Agent
+}
+
+// GetWait returns the value of Wait.
+func (s *DslStep) GetWait() OptWaitStep {
+	return s.Wait
+}
+
+// SetAgent sets the value of Agent.
+func (s *DslStep) SetAgent(val OptAgentStep) {
+	s.Agent = val
+}
+
+// SetWait sets the value of Wait.
+func (s *DslStep) SetWait(val OptWaitStep) {
+	s.Wait = val
 }
 
 // Ref: #/components/schemas/Endpoint
@@ -3913,102 +3895,6 @@ func (EventStatus) AllValues() []EventStatus {
 	}
 }
 
-// Ref: #/components/schemas/Execution
-type Execution struct {
-	Duration     OptString `json:"duration"`
-	ExtraArgs    []string  `json:"extraArgs"`
-	Iterations   OptInt32  `json:"iterations"`
-	NoThresholds OptBool   `json:"noThresholds"`
-	Quiet        OptBool   `json:"quiet"`
-	Vus          OptInt32  `json:"vus"`
-}
-
-// GetDuration returns the value of Duration.
-func (s *Execution) GetDuration() OptString {
-	return s.Duration
-}
-
-// GetExtraArgs returns the value of ExtraArgs.
-func (s *Execution) GetExtraArgs() []string {
-	return s.ExtraArgs
-}
-
-// GetIterations returns the value of Iterations.
-func (s *Execution) GetIterations() OptInt32 {
-	return s.Iterations
-}
-
-// GetNoThresholds returns the value of NoThresholds.
-func (s *Execution) GetNoThresholds() OptBool {
-	return s.NoThresholds
-}
-
-// GetQuiet returns the value of Quiet.
-func (s *Execution) GetQuiet() OptBool {
-	return s.Quiet
-}
-
-// GetVus returns the value of Vus.
-func (s *Execution) GetVus() OptInt32 {
-	return s.Vus
-}
-
-// SetDuration sets the value of Duration.
-func (s *Execution) SetDuration(val OptString) {
-	s.Duration = val
-}
-
-// SetExtraArgs sets the value of ExtraArgs.
-func (s *Execution) SetExtraArgs(val []string) {
-	s.ExtraArgs = val
-}
-
-// SetIterations sets the value of Iterations.
-func (s *Execution) SetIterations(val OptInt32) {
-	s.Iterations = val
-}
-
-// SetNoThresholds sets the value of NoThresholds.
-func (s *Execution) SetNoThresholds(val OptBool) {
-	s.NoThresholds = val
-}
-
-// SetQuiet sets the value of Quiet.
-func (s *Execution) SetQuiet(val OptBool) {
-	s.Quiet = val
-}
-
-// SetVus sets the value of Vus.
-func (s *Execution) SetVus(val OptInt32) {
-	s.Vus = val
-}
-
-// Ref: #/components/schemas/External
-type External struct {
-	Dsn  OptString `json:"dsn"`
-	Tags OptTags   `json:"tags"`
-}
-
-// GetDsn returns the value of Dsn.
-func (s *External) GetDsn() OptString {
-	return s.Dsn
-}
-
-// GetTags returns the value of Tags.
-func (s *External) GetTags() OptTags {
-	return s.Tags
-}
-
-// SetDsn sets the value of Dsn.
-func (s *External) SetDsn(val OptString) {
-	s.Dsn = val
-}
-
-// SetTags sets the value of Tags.
-func (s *External) SetTags(val OptTags) {
-	s.Tags = val
-}
-
 // Ref: #/components/schemas/ExternalIdentity
 type ExternalIdentity struct {
 	AccountId  OptString   `json:"accountId"`
@@ -4283,76 +4169,6 @@ func (s *File2) SetMode(val OptInt32) {
 // SetPath sets the value of Path.
 func (s *File2) SetPath(val OptString) {
 	s.Path = val
-}
-
-// Ref: #/components/schemas/FileOverride
-type FileOverride struct {
-	ArtifactId  OptString             `json:"artifactId"`
-	BaseHash    OptString             `json:"baseHash"`
-	ComponentId OptString             `json:"componentId"`
-	File        File                  `json:"file"`
-	Labels      OptFileOverrideLabels `json:"labels"`
-}
-
-// GetArtifactId returns the value of ArtifactId.
-func (s *FileOverride) GetArtifactId() OptString {
-	return s.ArtifactId
-}
-
-// GetBaseHash returns the value of BaseHash.
-func (s *FileOverride) GetBaseHash() OptString {
-	return s.BaseHash
-}
-
-// GetComponentId returns the value of ComponentId.
-func (s *FileOverride) GetComponentId() OptString {
-	return s.ComponentId
-}
-
-// GetFile returns the value of File.
-func (s *FileOverride) GetFile() File {
-	return s.File
-}
-
-// GetLabels returns the value of Labels.
-func (s *FileOverride) GetLabels() OptFileOverrideLabels {
-	return s.Labels
-}
-
-// SetArtifactId sets the value of ArtifactId.
-func (s *FileOverride) SetArtifactId(val OptString) {
-	s.ArtifactId = val
-}
-
-// SetBaseHash sets the value of BaseHash.
-func (s *FileOverride) SetBaseHash(val OptString) {
-	s.BaseHash = val
-}
-
-// SetComponentId sets the value of ComponentId.
-func (s *FileOverride) SetComponentId(val OptString) {
-	s.ComponentId = val
-}
-
-// SetFile sets the value of File.
-func (s *FileOverride) SetFile(val File) {
-	s.File = val
-}
-
-// SetLabels sets the value of Labels.
-func (s *FileOverride) SetLabels(val OptFileOverrideLabels) {
-	s.Labels = val
-}
-
-type FileOverrideLabels map[string]string
-
-func (s *FileOverrideLabels) init() FileOverrideLabels {
-	m := *s
-	if m == nil {
-		m = map[string]string{}
-		*s = m
-	}
-	return m
 }
 
 // Ref: #/components/schemas/Filed
@@ -6433,6 +6249,32 @@ func (s *GetTestRunOverviewResponse) SetSnapshot(val TestRunOverviewSnapshot) {
 	s.Snapshot = val
 }
 
+// Ref: #/components/schemas/HealthCheck
+type HealthCheck struct {
+	HTTP    OptString `json:"http"`
+	Timeout OptString `json:"timeout"`
+}
+
+// GetHTTP returns the value of HTTP.
+func (s *HealthCheck) GetHTTP() OptString {
+	return s.HTTP
+}
+
+// GetTimeout returns the value of Timeout.
+func (s *HealthCheck) GetTimeout() OptString {
+	return s.Timeout
+}
+
+// SetHTTP sets the value of HTTP.
+func (s *HealthCheck) SetHTTP(val OptString) {
+	s.HTTP = val
+}
+
+// SetTimeout sets the value of Timeout.
+func (s *HealthCheck) SetTimeout(val OptString) {
+	s.Timeout = val
+}
+
 // Ref: #/components/schemas/Healthcheck
 type Healthcheck struct {
 	IntervalSeconds    OptInt32 `json:"intervalSeconds"`
@@ -7811,8 +7653,8 @@ func (s *ListRunsRequest) SetTenantId(val OptString) {
 
 // Ref: #/components/schemas/ListRunsResponse
 type ListRunsResponse struct {
-	NextPageToken OptString       `json:"nextPageToken"`
-	Runs          []TestRunRecord `json:"runs"`
+	NextPageToken OptString `json:"nextPageToken"`
+	Runs          []Run     `json:"runs"`
 }
 
 // GetNextPageToken returns the value of NextPageToken.
@@ -7821,7 +7663,7 @@ func (s *ListRunsResponse) GetNextPageToken() OptString {
 }
 
 // GetRuns returns the value of Runs.
-func (s *ListRunsResponse) GetRuns() []TestRunRecord {
+func (s *ListRunsResponse) GetRuns() []Run {
 	return s.Runs
 }
 
@@ -7831,7 +7673,7 @@ func (s *ListRunsResponse) SetNextPageToken(val OptString) {
 }
 
 // SetRuns sets the value of Runs.
-func (s *ListRunsResponse) SetRuns(val []TestRunRecord) {
+func (s *ListRunsResponse) SetRuns(val []Run) {
 	s.Runs = val
 }
 
@@ -8656,6 +8498,76 @@ func (s *LookupAccountByEmailResponse) SetAccount(val Account) {
 	s.Account = val
 }
 
+// Ref: #/components/schemas/MachineGroup
+type MachineGroup struct {
+	Count   OptInt32        `json:"count"`
+	CPU     OptInt32        `json:"cpu"`
+	Disks   []DiskSpec      `json:"disks"`
+	ExtJson OptString       `json:"extJson"`
+	Name    OptString       `json:"name"`
+	RamMb   OptStringUint64 `json:"ramMb"`
+}
+
+// GetCount returns the value of Count.
+func (s *MachineGroup) GetCount() OptInt32 {
+	return s.Count
+}
+
+// GetCPU returns the value of CPU.
+func (s *MachineGroup) GetCPU() OptInt32 {
+	return s.CPU
+}
+
+// GetDisks returns the value of Disks.
+func (s *MachineGroup) GetDisks() []DiskSpec {
+	return s.Disks
+}
+
+// GetExtJson returns the value of ExtJson.
+func (s *MachineGroup) GetExtJson() OptString {
+	return s.ExtJson
+}
+
+// GetName returns the value of Name.
+func (s *MachineGroup) GetName() OptString {
+	return s.Name
+}
+
+// GetRamMb returns the value of RamMb.
+func (s *MachineGroup) GetRamMb() OptStringUint64 {
+	return s.RamMb
+}
+
+// SetCount sets the value of Count.
+func (s *MachineGroup) SetCount(val OptInt32) {
+	s.Count = val
+}
+
+// SetCPU sets the value of CPU.
+func (s *MachineGroup) SetCPU(val OptInt32) {
+	s.CPU = val
+}
+
+// SetDisks sets the value of Disks.
+func (s *MachineGroup) SetDisks(val []DiskSpec) {
+	s.Disks = val
+}
+
+// SetExtJson sets the value of ExtJson.
+func (s *MachineGroup) SetExtJson(val OptString) {
+	s.ExtJson = val
+}
+
+// SetName sets the value of Name.
+func (s *MachineGroup) SetName(val OptString) {
+	s.Name = val
+}
+
+// SetRamMb sets the value of RamMb.
+func (s *MachineGroup) SetRamMb(val OptStringUint64) {
+	s.RamMb = val
+}
+
 // Ref: #/components/schemas/MachineNode
 type MachineNode struct {
 	Group    OptString            `json:"group"`
@@ -9419,120 +9331,6 @@ func (s *MetricSummary) SetUnit(val OptString) {
 	s.Unit = val
 }
 
-// Ref: #/components/schemas/MySqlParams
-type MySqlParams struct {
-	GroupReplication OptBool                       `json:"groupReplication"`
-	PrimaryOptions   OptMySqlParamsPrimaryOptions  `json:"primaryOptions"`
-	Proxysql         OptInt32                      `json:"proxysql"`
-	ProxysqlOptions  OptMySqlParamsProxysqlOptions `json:"proxysqlOptions"`
-	ReplicaOptions   OptMySqlParamsReplicaOptions  `json:"replicaOptions"`
-	Replicas         OptInt32                      `json:"replicas"`
-	SemiSync         OptBool                       `json:"semiSync"`
-}
-
-// GetGroupReplication returns the value of GroupReplication.
-func (s *MySqlParams) GetGroupReplication() OptBool {
-	return s.GroupReplication
-}
-
-// GetPrimaryOptions returns the value of PrimaryOptions.
-func (s *MySqlParams) GetPrimaryOptions() OptMySqlParamsPrimaryOptions {
-	return s.PrimaryOptions
-}
-
-// GetProxysql returns the value of Proxysql.
-func (s *MySqlParams) GetProxysql() OptInt32 {
-	return s.Proxysql
-}
-
-// GetProxysqlOptions returns the value of ProxysqlOptions.
-func (s *MySqlParams) GetProxysqlOptions() OptMySqlParamsProxysqlOptions {
-	return s.ProxysqlOptions
-}
-
-// GetReplicaOptions returns the value of ReplicaOptions.
-func (s *MySqlParams) GetReplicaOptions() OptMySqlParamsReplicaOptions {
-	return s.ReplicaOptions
-}
-
-// GetReplicas returns the value of Replicas.
-func (s *MySqlParams) GetReplicas() OptInt32 {
-	return s.Replicas
-}
-
-// GetSemiSync returns the value of SemiSync.
-func (s *MySqlParams) GetSemiSync() OptBool {
-	return s.SemiSync
-}
-
-// SetGroupReplication sets the value of GroupReplication.
-func (s *MySqlParams) SetGroupReplication(val OptBool) {
-	s.GroupReplication = val
-}
-
-// SetPrimaryOptions sets the value of PrimaryOptions.
-func (s *MySqlParams) SetPrimaryOptions(val OptMySqlParamsPrimaryOptions) {
-	s.PrimaryOptions = val
-}
-
-// SetProxysql sets the value of Proxysql.
-func (s *MySqlParams) SetProxysql(val OptInt32) {
-	s.Proxysql = val
-}
-
-// SetProxysqlOptions sets the value of ProxysqlOptions.
-func (s *MySqlParams) SetProxysqlOptions(val OptMySqlParamsProxysqlOptions) {
-	s.ProxysqlOptions = val
-}
-
-// SetReplicaOptions sets the value of ReplicaOptions.
-func (s *MySqlParams) SetReplicaOptions(val OptMySqlParamsReplicaOptions) {
-	s.ReplicaOptions = val
-}
-
-// SetReplicas sets the value of Replicas.
-func (s *MySqlParams) SetReplicas(val OptInt32) {
-	s.Replicas = val
-}
-
-// SetSemiSync sets the value of SemiSync.
-func (s *MySqlParams) SetSemiSync(val OptBool) {
-	s.SemiSync = val
-}
-
-type MySqlParamsPrimaryOptions map[string]string
-
-func (s *MySqlParamsPrimaryOptions) init() MySqlParamsPrimaryOptions {
-	m := *s
-	if m == nil {
-		m = map[string]string{}
-		*s = m
-	}
-	return m
-}
-
-type MySqlParamsProxysqlOptions map[string]string
-
-func (s *MySqlParamsProxysqlOptions) init() MySqlParamsProxysqlOptions {
-	m := *s
-	if m == nil {
-		m = map[string]string{}
-		*s = m
-	}
-	return m
-}
-
-type MySqlParamsReplicaOptions map[string]string
-
-func (s *MySqlParamsReplicaOptions) init() MySqlParamsReplicaOptions {
-	m := *s
-	if m == nil {
-		m = map[string]string{}
-		*s = m
-	}
-	return m
-}
-
 // Ref: #/components/schemas/Node
 type Node struct {
 	ComponentIds []string      `json:"componentIds"`
@@ -9592,9 +9390,6 @@ func (s *NodeLabels) init() NodeLabels {
 	return m
 }
 
-// Ref: #/components/schemas/NoopParams
-type NoopParams struct{}
-
 // Ref: #/components/schemas/Object
 type Object struct {
 	Schema OptSchema `json:"schema"`
@@ -9608,6 +9403,43 @@ func (s *Object) GetSchema() OptSchema {
 // SetSchema sets the value of Schema.
 func (s *Object) SetSchema(val OptSchema) {
 	s.Schema = val
+}
+
+// Ref: #/components/schemas/ObservabilityRefs
+type ObservabilityRefs struct {
+	GrafanaDashboardUid OptString `json:"grafanaDashboardUid"`
+	LogsQueryKey        OptString `json:"logsQueryKey"`
+	MetricsQueryKey     OptString `json:"metricsQueryKey"`
+}
+
+// GetGrafanaDashboardUid returns the value of GrafanaDashboardUid.
+func (s *ObservabilityRefs) GetGrafanaDashboardUid() OptString {
+	return s.GrafanaDashboardUid
+}
+
+// GetLogsQueryKey returns the value of LogsQueryKey.
+func (s *ObservabilityRefs) GetLogsQueryKey() OptString {
+	return s.LogsQueryKey
+}
+
+// GetMetricsQueryKey returns the value of MetricsQueryKey.
+func (s *ObservabilityRefs) GetMetricsQueryKey() OptString {
+	return s.MetricsQueryKey
+}
+
+// SetGrafanaDashboardUid sets the value of GrafanaDashboardUid.
+func (s *ObservabilityRefs) SetGrafanaDashboardUid(val OptString) {
+	s.GrafanaDashboardUid = val
+}
+
+// SetLogsQueryKey sets the value of LogsQueryKey.
+func (s *ObservabilityRefs) SetLogsQueryKey(val OptString) {
+	s.LogsQueryKey = val
+}
+
+// SetMetricsQueryKey sets the value of MetricsQueryKey.
+func (s *ObservabilityRefs) SetMetricsQueryKey(val OptString) {
+	s.MetricsQueryKey = val
 }
 
 // Ref: #/components/schemas/OneOf
@@ -9687,6 +9519,52 @@ func (o OptAddFavoriteRequestKind) Get() (v AddFavoriteRequestKind, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptAddFavoriteRequestKind) Or(d AddFavoriteRequestKind) AddFavoriteRequestKind {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptAgentStep returns new OptAgentStep with value set to v.
+func NewOptAgentStep(v AgentStep) OptAgentStep {
+	return OptAgentStep{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptAgentStep is optional AgentStep.
+type OptAgentStep struct {
+	Value AgentStep
+	Set   bool
+}
+
+// IsSet returns true if OptAgentStep was set.
+func (o OptAgentStep) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptAgentStep) Reset() {
+	var v AgentStep
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptAgentStep) SetTo(v AgentStep) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptAgentStep) Get() (v AgentStep, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptAgentStep) Or(d AgentStep) AgentStep {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -9923,52 +9801,6 @@ func (o OptAsRef) Or(d AsRef) AsRef {
 	return d
 }
 
-// NewOptAutoScale returns new OptAutoScale with value set to v.
-func NewOptAutoScale(v AutoScale) OptAutoScale {
-	return OptAutoScale{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptAutoScale is optional AutoScale.
-type OptAutoScale struct {
-	Value AutoScale
-	Set   bool
-}
-
-// IsSet returns true if OptAutoScale was set.
-func (o OptAutoScale) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptAutoScale) Reset() {
-	var v AutoScale
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptAutoScale) SetTo(v AutoScale) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptAutoScale) Get() (v AutoScale, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptAutoScale) Or(d AutoScale) AutoScale {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptBaked returns new OptBaked with value set to v.
 func NewOptBaked(v Baked) OptBaked {
 	return OptBaked{
@@ -10107,98 +9939,6 @@ func (o OptCmd) Or(d Cmd) Cmd {
 	return d
 }
 
-// NewOptCockroachParams returns new OptCockroachParams with value set to v.
-func NewOptCockroachParams(v CockroachParams) OptCockroachParams {
-	return OptCockroachParams{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptCockroachParams is optional CockroachParams.
-type OptCockroachParams struct {
-	Value CockroachParams
-	Set   bool
-}
-
-// IsSet returns true if OptCockroachParams was set.
-func (o OptCockroachParams) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptCockroachParams) Reset() {
-	var v CockroachParams
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptCockroachParams) SetTo(v CockroachParams) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptCockroachParams) Get() (v CockroachParams, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptCockroachParams) Or(d CockroachParams) CockroachParams {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptCockroachParamsOptions returns new OptCockroachParamsOptions with value set to v.
-func NewOptCockroachParamsOptions(v CockroachParamsOptions) OptCockroachParamsOptions {
-	return OptCockroachParamsOptions{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptCockroachParamsOptions is optional CockroachParamsOptions.
-type OptCockroachParamsOptions struct {
-	Value CockroachParamsOptions
-	Set   bool
-}
-
-// IsSet returns true if OptCockroachParamsOptions was set.
-func (o OptCockroachParamsOptions) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptCockroachParamsOptions) Reset() {
-	var v CockroachParamsOptions
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptCockroachParamsOptions) SetTo(v CockroachParamsOptions) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptCockroachParamsOptions) Get() (v CockroachParamsOptions, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptCockroachParamsOptions) Or(d CockroachParamsOptions) CockroachParamsOptions {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptComparison returns new OptComparison with value set to v.
 func NewOptComparison(v Comparison) OptComparison {
 	return OptComparison{
@@ -10239,6 +9979,236 @@ func (o OptComparison) Get() (v Comparison, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptComparison) Or(d Comparison) Comparison {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptCompiledJobInputGroups returns new OptCompiledJobInputGroups with value set to v.
+func NewOptCompiledJobInputGroups(v CompiledJobInputGroups) OptCompiledJobInputGroups {
+	return OptCompiledJobInputGroups{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptCompiledJobInputGroups is optional CompiledJobInputGroups.
+type OptCompiledJobInputGroups struct {
+	Value CompiledJobInputGroups
+	Set   bool
+}
+
+// IsSet returns true if OptCompiledJobInputGroups was set.
+func (o OptCompiledJobInputGroups) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptCompiledJobInputGroups) Reset() {
+	var v CompiledJobInputGroups
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptCompiledJobInputGroups) SetTo(v CompiledJobInputGroups) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptCompiledJobInputGroups) Get() (v CompiledJobInputGroups, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptCompiledJobInputGroups) Or(d CompiledJobInputGroups) CompiledJobInputGroups {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptCompiledJobMatrix returns new OptCompiledJobMatrix with value set to v.
+func NewOptCompiledJobMatrix(v CompiledJobMatrix) OptCompiledJobMatrix {
+	return OptCompiledJobMatrix{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptCompiledJobMatrix is optional CompiledJobMatrix.
+type OptCompiledJobMatrix struct {
+	Value CompiledJobMatrix
+	Set   bool
+}
+
+// IsSet returns true if OptCompiledJobMatrix was set.
+func (o OptCompiledJobMatrix) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptCompiledJobMatrix) Reset() {
+	var v CompiledJobMatrix
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptCompiledJobMatrix) SetTo(v CompiledJobMatrix) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptCompiledJobMatrix) Get() (v CompiledJobMatrix, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptCompiledJobMatrix) Or(d CompiledJobMatrix) CompiledJobMatrix {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptCompiledJobResolvedInputs returns new OptCompiledJobResolvedInputs with value set to v.
+func NewOptCompiledJobResolvedInputs(v CompiledJobResolvedInputs) OptCompiledJobResolvedInputs {
+	return OptCompiledJobResolvedInputs{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptCompiledJobResolvedInputs is optional CompiledJobResolvedInputs.
+type OptCompiledJobResolvedInputs struct {
+	Value CompiledJobResolvedInputs
+	Set   bool
+}
+
+// IsSet returns true if OptCompiledJobResolvedInputs was set.
+func (o OptCompiledJobResolvedInputs) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptCompiledJobResolvedInputs) Reset() {
+	var v CompiledJobResolvedInputs
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptCompiledJobResolvedInputs) SetTo(v CompiledJobResolvedInputs) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptCompiledJobResolvedInputs) Get() (v CompiledJobResolvedInputs, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptCompiledJobResolvedInputs) Or(d CompiledJobResolvedInputs) CompiledJobResolvedInputs {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptCompiledJobWith returns new OptCompiledJobWith with value set to v.
+func NewOptCompiledJobWith(v CompiledJobWith) OptCompiledJobWith {
+	return OptCompiledJobWith{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptCompiledJobWith is optional CompiledJobWith.
+type OptCompiledJobWith struct {
+	Value CompiledJobWith
+	Set   bool
+}
+
+// IsSet returns true if OptCompiledJobWith was set.
+func (o OptCompiledJobWith) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptCompiledJobWith) Reset() {
+	var v CompiledJobWith
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptCompiledJobWith) SetTo(v CompiledJobWith) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptCompiledJobWith) Get() (v CompiledJobWith, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptCompiledJobWith) Or(d CompiledJobWith) CompiledJobWith {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptCompiledPlan returns new OptCompiledPlan with value set to v.
+func NewOptCompiledPlan(v CompiledPlan) OptCompiledPlan {
+	return OptCompiledPlan{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptCompiledPlan is optional CompiledPlan.
+type OptCompiledPlan struct {
+	Value CompiledPlan
+	Set   bool
+}
+
+// IsSet returns true if OptCompiledPlan was set.
+func (o OptCompiledPlan) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptCompiledPlan) Reset() {
+	var v CompiledPlan
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptCompiledPlan) SetTo(v CompiledPlan) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptCompiledPlan) Get() (v CompiledPlan, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptCompiledPlan) Or(d CompiledPlan) CompiledPlan {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -11165,98 +11135,6 @@ func (o OptCreateRoleRequestScope) Or(d CreateRoleRequestScope) CreateRoleReques
 	return d
 }
 
-// NewOptDatabaseKind returns new OptDatabaseKind with value set to v.
-func NewOptDatabaseKind(v DatabaseKind) OptDatabaseKind {
-	return OptDatabaseKind{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptDatabaseKind is optional DatabaseKind.
-type OptDatabaseKind struct {
-	Value DatabaseKind
-	Set   bool
-}
-
-// IsSet returns true if OptDatabaseKind was set.
-func (o OptDatabaseKind) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptDatabaseKind) Reset() {
-	var v DatabaseKind
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptDatabaseKind) SetTo(v DatabaseKind) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptDatabaseKind) Get() (v DatabaseKind, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptDatabaseKind) Or(d DatabaseKind) DatabaseKind {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptDatabaseParams returns new OptDatabaseParams with value set to v.
-func NewOptDatabaseParams(v DatabaseParams) OptDatabaseParams {
-	return OptDatabaseParams{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptDatabaseParams is optional DatabaseParams.
-type OptDatabaseParams struct {
-	Value DatabaseParams
-	Set   bool
-}
-
-// IsSet returns true if OptDatabaseParams was set.
-func (o OptDatabaseParams) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptDatabaseParams) Reset() {
-	var v DatabaseParams
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptDatabaseParams) SetTo(v DatabaseParams) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptDatabaseParams) Get() (v DatabaseParams, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptDatabaseParams) Or(d DatabaseParams) DatabaseParams {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptDateTime returns new OptDateTime with value set to v.
 func NewOptDateTime(v time.Time) OptDateTime {
 	return OptDateTime{
@@ -12039,52 +11917,6 @@ func (o OptEventStatus) Or(d EventStatus) EventStatus {
 	return d
 }
 
-// NewOptExternal returns new OptExternal with value set to v.
-func NewOptExternal(v External) OptExternal {
-	return OptExternal{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptExternal is optional External.
-type OptExternal struct {
-	Value External
-	Set   bool
-}
-
-// IsSet returns true if OptExternal was set.
-func (o OptExternal) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptExternal) Reset() {
-	var v External
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptExternal) SetTo(v External) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptExternal) Get() (v External, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptExternal) Or(d External) External {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptExternalIdentityLink returns new OptExternalIdentityLink with value set to v.
 func NewOptExternalIdentityLink(v ExternalIdentityLink) OptExternalIdentityLink {
 	return OptExternalIdentityLink{
@@ -12217,52 +12049,6 @@ func (o OptFile) Get() (v File, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptFile) Or(d File) File {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptFileOverrideLabels returns new OptFileOverrideLabels with value set to v.
-func NewOptFileOverrideLabels(v FileOverrideLabels) OptFileOverrideLabels {
-	return OptFileOverrideLabels{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptFileOverrideLabels is optional FileOverrideLabels.
-type OptFileOverrideLabels struct {
-	Value FileOverrideLabels
-	Set   bool
-}
-
-// IsSet returns true if OptFileOverrideLabels was set.
-func (o OptFileOverrideLabels) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptFileOverrideLabels) Reset() {
-	var v FileOverrideLabels
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptFileOverrideLabels) SetTo(v FileOverrideLabels) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptFileOverrideLabels) Get() (v FileOverrideLabels, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptFileOverrideLabels) Or(d FileOverrideLabels) FileOverrideLabels {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -12861,6 +12647,52 @@ func (o OptFloat64) Get() (v float64, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptFloat64) Or(d float64) float64 {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptHealthCheck returns new OptHealthCheck with value set to v.
+func NewOptHealthCheck(v HealthCheck) OptHealthCheck {
+	return OptHealthCheck{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptHealthCheck is optional HealthCheck.
+type OptHealthCheck struct {
+	Value HealthCheck
+	Set   bool
+}
+
+// IsSet returns true if OptHealthCheck was set.
+func (o OptHealthCheck) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptHealthCheck) Reset() {
+	var v HealthCheck
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptHealthCheck) SetTo(v HealthCheck) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptHealthCheck) Get() (v HealthCheck, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptHealthCheck) Or(d HealthCheck) HealthCheck {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -14017,190 +13849,6 @@ func (o OptMetricCellVerdict) Or(d MetricCellVerdict) MetricCellVerdict {
 	return d
 }
 
-// NewOptMySqlParams returns new OptMySqlParams with value set to v.
-func NewOptMySqlParams(v MySqlParams) OptMySqlParams {
-	return OptMySqlParams{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptMySqlParams is optional MySqlParams.
-type OptMySqlParams struct {
-	Value MySqlParams
-	Set   bool
-}
-
-// IsSet returns true if OptMySqlParams was set.
-func (o OptMySqlParams) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptMySqlParams) Reset() {
-	var v MySqlParams
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptMySqlParams) SetTo(v MySqlParams) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptMySqlParams) Get() (v MySqlParams, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptMySqlParams) Or(d MySqlParams) MySqlParams {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptMySqlParamsPrimaryOptions returns new OptMySqlParamsPrimaryOptions with value set to v.
-func NewOptMySqlParamsPrimaryOptions(v MySqlParamsPrimaryOptions) OptMySqlParamsPrimaryOptions {
-	return OptMySqlParamsPrimaryOptions{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptMySqlParamsPrimaryOptions is optional MySqlParamsPrimaryOptions.
-type OptMySqlParamsPrimaryOptions struct {
-	Value MySqlParamsPrimaryOptions
-	Set   bool
-}
-
-// IsSet returns true if OptMySqlParamsPrimaryOptions was set.
-func (o OptMySqlParamsPrimaryOptions) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptMySqlParamsPrimaryOptions) Reset() {
-	var v MySqlParamsPrimaryOptions
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptMySqlParamsPrimaryOptions) SetTo(v MySqlParamsPrimaryOptions) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptMySqlParamsPrimaryOptions) Get() (v MySqlParamsPrimaryOptions, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptMySqlParamsPrimaryOptions) Or(d MySqlParamsPrimaryOptions) MySqlParamsPrimaryOptions {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptMySqlParamsProxysqlOptions returns new OptMySqlParamsProxysqlOptions with value set to v.
-func NewOptMySqlParamsProxysqlOptions(v MySqlParamsProxysqlOptions) OptMySqlParamsProxysqlOptions {
-	return OptMySqlParamsProxysqlOptions{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptMySqlParamsProxysqlOptions is optional MySqlParamsProxysqlOptions.
-type OptMySqlParamsProxysqlOptions struct {
-	Value MySqlParamsProxysqlOptions
-	Set   bool
-}
-
-// IsSet returns true if OptMySqlParamsProxysqlOptions was set.
-func (o OptMySqlParamsProxysqlOptions) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptMySqlParamsProxysqlOptions) Reset() {
-	var v MySqlParamsProxysqlOptions
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptMySqlParamsProxysqlOptions) SetTo(v MySqlParamsProxysqlOptions) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptMySqlParamsProxysqlOptions) Get() (v MySqlParamsProxysqlOptions, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptMySqlParamsProxysqlOptions) Or(d MySqlParamsProxysqlOptions) MySqlParamsProxysqlOptions {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptMySqlParamsReplicaOptions returns new OptMySqlParamsReplicaOptions with value set to v.
-func NewOptMySqlParamsReplicaOptions(v MySqlParamsReplicaOptions) OptMySqlParamsReplicaOptions {
-	return OptMySqlParamsReplicaOptions{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptMySqlParamsReplicaOptions is optional MySqlParamsReplicaOptions.
-type OptMySqlParamsReplicaOptions struct {
-	Value MySqlParamsReplicaOptions
-	Set   bool
-}
-
-// IsSet returns true if OptMySqlParamsReplicaOptions was set.
-func (o OptMySqlParamsReplicaOptions) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptMySqlParamsReplicaOptions) Reset() {
-	var v MySqlParamsReplicaOptions
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptMySqlParamsReplicaOptions) SetTo(v MySqlParamsReplicaOptions) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptMySqlParamsReplicaOptions) Get() (v MySqlParamsReplicaOptions, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptMySqlParamsReplicaOptions) Or(d MySqlParamsReplicaOptions) MySqlParamsReplicaOptions {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptNodeLabels returns new OptNodeLabels with value set to v.
 func NewOptNodeLabels(v NodeLabels) OptNodeLabels {
 	return OptNodeLabels{
@@ -14287,6 +13935,52 @@ func (o OptObject) Get() (v Object, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptObject) Or(d Object) Object {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptObservabilityRefs returns new OptObservabilityRefs with value set to v.
+func NewOptObservabilityRefs(v ObservabilityRefs) OptObservabilityRefs {
+	return OptObservabilityRefs{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptObservabilityRefs is optional ObservabilityRefs.
+type OptObservabilityRefs struct {
+	Value ObservabilityRefs
+	Set   bool
+}
+
+// IsSet returns true if OptObservabilityRefs was set.
+func (o OptObservabilityRefs) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptObservabilityRefs) Reset() {
+	var v ObservabilityRefs
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptObservabilityRefs) SetTo(v ObservabilityRefs) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptObservabilityRefs) Get() (v ObservabilityRefs, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptObservabilityRefs) Or(d ObservabilityRefs) ObservabilityRefs {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -14385,190 +14079,6 @@ func (o OptOneOfVariants) Or(d OneOfVariants) OneOfVariants {
 	return d
 }
 
-// NewOptOrioledbParams returns new OptOrioledbParams with value set to v.
-func NewOptOrioledbParams(v OrioledbParams) OptOrioledbParams {
-	return OptOrioledbParams{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptOrioledbParams is optional OrioledbParams.
-type OptOrioledbParams struct {
-	Value OrioledbParams
-	Set   bool
-}
-
-// IsSet returns true if OptOrioledbParams was set.
-func (o OptOrioledbParams) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptOrioledbParams) Reset() {
-	var v OrioledbParams
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptOrioledbParams) SetTo(v OrioledbParams) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptOrioledbParams) Get() (v OrioledbParams, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptOrioledbParams) Or(d OrioledbParams) OrioledbParams {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptOrioledbParamsHaproxyOptions returns new OptOrioledbParamsHaproxyOptions with value set to v.
-func NewOptOrioledbParamsHaproxyOptions(v OrioledbParamsHaproxyOptions) OptOrioledbParamsHaproxyOptions {
-	return OptOrioledbParamsHaproxyOptions{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptOrioledbParamsHaproxyOptions is optional OrioledbParamsHaproxyOptions.
-type OptOrioledbParamsHaproxyOptions struct {
-	Value OrioledbParamsHaproxyOptions
-	Set   bool
-}
-
-// IsSet returns true if OptOrioledbParamsHaproxyOptions was set.
-func (o OptOrioledbParamsHaproxyOptions) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptOrioledbParamsHaproxyOptions) Reset() {
-	var v OrioledbParamsHaproxyOptions
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptOrioledbParamsHaproxyOptions) SetTo(v OrioledbParamsHaproxyOptions) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptOrioledbParamsHaproxyOptions) Get() (v OrioledbParamsHaproxyOptions, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptOrioledbParamsHaproxyOptions) Or(d OrioledbParamsHaproxyOptions) OrioledbParamsHaproxyOptions {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptOrioledbParamsPostgresOptions returns new OptOrioledbParamsPostgresOptions with value set to v.
-func NewOptOrioledbParamsPostgresOptions(v OrioledbParamsPostgresOptions) OptOrioledbParamsPostgresOptions {
-	return OptOrioledbParamsPostgresOptions{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptOrioledbParamsPostgresOptions is optional OrioledbParamsPostgresOptions.
-type OptOrioledbParamsPostgresOptions struct {
-	Value OrioledbParamsPostgresOptions
-	Set   bool
-}
-
-// IsSet returns true if OptOrioledbParamsPostgresOptions was set.
-func (o OptOrioledbParamsPostgresOptions) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptOrioledbParamsPostgresOptions) Reset() {
-	var v OrioledbParamsPostgresOptions
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptOrioledbParamsPostgresOptions) SetTo(v OrioledbParamsPostgresOptions) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptOrioledbParamsPostgresOptions) Get() (v OrioledbParamsPostgresOptions, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptOrioledbParamsPostgresOptions) Or(d OrioledbParamsPostgresOptions) OrioledbParamsPostgresOptions {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptOrioledbParamsReplicaOptions returns new OptOrioledbParamsReplicaOptions with value set to v.
-func NewOptOrioledbParamsReplicaOptions(v OrioledbParamsReplicaOptions) OptOrioledbParamsReplicaOptions {
-	return OptOrioledbParamsReplicaOptions{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptOrioledbParamsReplicaOptions is optional OrioledbParamsReplicaOptions.
-type OptOrioledbParamsReplicaOptions struct {
-	Value OrioledbParamsReplicaOptions
-	Set   bool
-}
-
-// IsSet returns true if OptOrioledbParamsReplicaOptions was set.
-func (o OptOrioledbParamsReplicaOptions) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptOrioledbParamsReplicaOptions) Reset() {
-	var v OrioledbParamsReplicaOptions
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptOrioledbParamsReplicaOptions) SetTo(v OrioledbParamsReplicaOptions) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptOrioledbParamsReplicaOptions) Get() (v OrioledbParamsReplicaOptions, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptOrioledbParamsReplicaOptions) Or(d OrioledbParamsReplicaOptions) OrioledbParamsReplicaOptions {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptOverviewSource returns new OptOverviewSource with value set to v.
 func NewOptOverviewSource(v OverviewSource) OptOverviewSource {
 	return OptOverviewSource{
@@ -14655,98 +14165,6 @@ func (o OptOverviewStatus) Get() (v OverviewStatus, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptOverviewStatus) Or(d OverviewStatus) OverviewStatus {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptPackage returns new OptPackage with value set to v.
-func NewOptPackage(v Package) OptPackage {
-	return OptPackage{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptPackage is optional Package.
-type OptPackage struct {
-	Value Package
-	Set   bool
-}
-
-// IsSet returns true if OptPackage was set.
-func (o OptPackage) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptPackage) Reset() {
-	var v Package
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptPackage) SetTo(v Package) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptPackage) Get() (v Package, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptPackage) Or(d Package) Package {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptPackageDbKind returns new OptPackageDbKind with value set to v.
-func NewOptPackageDbKind(v PackageDbKind) OptPackageDbKind {
-	return OptPackageDbKind{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptPackageDbKind is optional PackageDbKind.
-type OptPackageDbKind struct {
-	Value PackageDbKind
-	Set   bool
-}
-
-// IsSet returns true if OptPackageDbKind was set.
-func (o OptPackageDbKind) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptPackageDbKind) Reset() {
-	var v PackageDbKind
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptPackageDbKind) SetTo(v PackageDbKind) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptPackageDbKind) Get() (v PackageDbKind, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptPackageDbKind) Or(d PackageDbKind) PackageDbKind {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -14937,98 +14355,6 @@ func (o OptPage) Or(d Page) Page {
 	return d
 }
 
-// NewOptParameters returns new OptParameters with value set to v.
-func NewOptParameters(v Parameters) OptParameters {
-	return OptParameters{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptParameters is optional Parameters.
-type OptParameters struct {
-	Value Parameters
-	Set   bool
-}
-
-// IsSet returns true if OptParameters was set.
-func (o OptParameters) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptParameters) Reset() {
-	var v Parameters
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptParameters) SetTo(v Parameters) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptParameters) Get() (v Parameters, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptParameters) Or(d Parameters) Parameters {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptParametersEnv returns new OptParametersEnv with value set to v.
-func NewOptParametersEnv(v ParametersEnv) OptParametersEnv {
-	return OptParametersEnv{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptParametersEnv is optional ParametersEnv.
-type OptParametersEnv struct {
-	Value ParametersEnv
-	Set   bool
-}
-
-// IsSet returns true if OptParametersEnv was set.
-func (o OptParametersEnv) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptParametersEnv) Reset() {
-	var v ParametersEnv
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptParametersEnv) SetTo(v ParametersEnv) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptParametersEnv) Get() (v ParametersEnv, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptParametersEnv) Or(d ParametersEnv) ParametersEnv {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptPermissionAction returns new OptPermissionAction with value set to v.
 func NewOptPermissionAction(v PermissionAction) OptPermissionAction {
 	return OptPermissionAction{
@@ -15115,236 +14441,6 @@ func (o OptPermissionResource) Get() (v PermissionResource, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptPermissionResource) Or(d PermissionResource) PermissionResource {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptPgNoopParams returns new OptPgNoopParams with value set to v.
-func NewOptPgNoopParams(v PgNoopParams) OptPgNoopParams {
-	return OptPgNoopParams{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptPgNoopParams is optional PgNoopParams.
-type OptPgNoopParams struct {
-	Value PgNoopParams
-	Set   bool
-}
-
-// IsSet returns true if OptPgNoopParams was set.
-func (o OptPgNoopParams) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptPgNoopParams) Reset() {
-	var v PgNoopParams
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptPgNoopParams) SetTo(v PgNoopParams) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptPgNoopParams) Get() (v PgNoopParams, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptPgNoopParams) Or(d PgNoopParams) PgNoopParams {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptPgNoopParamsOptions returns new OptPgNoopParamsOptions with value set to v.
-func NewOptPgNoopParamsOptions(v PgNoopParamsOptions) OptPgNoopParamsOptions {
-	return OptPgNoopParamsOptions{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptPgNoopParamsOptions is optional PgNoopParamsOptions.
-type OptPgNoopParamsOptions struct {
-	Value PgNoopParamsOptions
-	Set   bool
-}
-
-// IsSet returns true if OptPgNoopParamsOptions was set.
-func (o OptPgNoopParamsOptions) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptPgNoopParamsOptions) Reset() {
-	var v PgNoopParamsOptions
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptPgNoopParamsOptions) SetTo(v PgNoopParamsOptions) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptPgNoopParamsOptions) Get() (v PgNoopParamsOptions, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptPgNoopParamsOptions) Or(d PgNoopParamsOptions) PgNoopParamsOptions {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptPicodataParams returns new OptPicodataParams with value set to v.
-func NewOptPicodataParams(v PicodataParams) OptPicodataParams {
-	return OptPicodataParams{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptPicodataParams is optional PicodataParams.
-type OptPicodataParams struct {
-	Value PicodataParams
-	Set   bool
-}
-
-// IsSet returns true if OptPicodataParams was set.
-func (o OptPicodataParams) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptPicodataParams) Reset() {
-	var v PicodataParams
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptPicodataParams) SetTo(v PicodataParams) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptPicodataParams) Get() (v PicodataParams, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptPicodataParams) Or(d PicodataParams) PicodataParams {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptPicodataParamsHaproxyOptions returns new OptPicodataParamsHaproxyOptions with value set to v.
-func NewOptPicodataParamsHaproxyOptions(v PicodataParamsHaproxyOptions) OptPicodataParamsHaproxyOptions {
-	return OptPicodataParamsHaproxyOptions{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptPicodataParamsHaproxyOptions is optional PicodataParamsHaproxyOptions.
-type OptPicodataParamsHaproxyOptions struct {
-	Value PicodataParamsHaproxyOptions
-	Set   bool
-}
-
-// IsSet returns true if OptPicodataParamsHaproxyOptions was set.
-func (o OptPicodataParamsHaproxyOptions) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptPicodataParamsHaproxyOptions) Reset() {
-	var v PicodataParamsHaproxyOptions
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptPicodataParamsHaproxyOptions) SetTo(v PicodataParamsHaproxyOptions) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptPicodataParamsHaproxyOptions) Get() (v PicodataParamsHaproxyOptions, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptPicodataParamsHaproxyOptions) Or(d PicodataParamsHaproxyOptions) PicodataParamsHaproxyOptions {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptPicodataParamsInstanceOptions returns new OptPicodataParamsInstanceOptions with value set to v.
-func NewOptPicodataParamsInstanceOptions(v PicodataParamsInstanceOptions) OptPicodataParamsInstanceOptions {
-	return OptPicodataParamsInstanceOptions{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptPicodataParamsInstanceOptions is optional PicodataParamsInstanceOptions.
-type OptPicodataParamsInstanceOptions struct {
-	Value PicodataParamsInstanceOptions
-	Set   bool
-}
-
-// IsSet returns true if OptPicodataParamsInstanceOptions was set.
-func (o OptPicodataParamsInstanceOptions) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptPicodataParamsInstanceOptions) Reset() {
-	var v PicodataParamsInstanceOptions
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptPicodataParamsInstanceOptions) SetTo(v PicodataParamsInstanceOptions) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptPicodataParamsInstanceOptions) Get() (v PicodataParamsInstanceOptions, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptPicodataParamsInstanceOptions) Or(d PicodataParamsInstanceOptions) PicodataParamsInstanceOptions {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -15765,38 +14861,38 @@ func (o OptPortBindingProtocol) Or(d PortBindingProtocol) PortBindingProtocol {
 	return d
 }
 
-// NewOptPostgresParams returns new OptPostgresParams with value set to v.
-func NewOptPostgresParams(v PostgresParams) OptPostgresParams {
-	return OptPostgresParams{
+// NewOptProviderRef returns new OptProviderRef with value set to v.
+func NewOptProviderRef(v ProviderRef) OptProviderRef {
+	return OptProviderRef{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptPostgresParams is optional PostgresParams.
-type OptPostgresParams struct {
-	Value PostgresParams
+// OptProviderRef is optional ProviderRef.
+type OptProviderRef struct {
+	Value ProviderRef
 	Set   bool
 }
 
-// IsSet returns true if OptPostgresParams was set.
-func (o OptPostgresParams) IsSet() bool { return o.Set }
+// IsSet returns true if OptProviderRef was set.
+func (o OptProviderRef) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptPostgresParams) Reset() {
-	var v PostgresParams
+func (o *OptProviderRef) Reset() {
+	var v ProviderRef
 	o.Value = v
 	o.Set = false
 }
 
 // SetTo sets value to v.
-func (o *OptPostgresParams) SetTo(v PostgresParams) {
+func (o *OptProviderRef) SetTo(v ProviderRef) {
 	o.Set = true
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptPostgresParams) Get() (v PostgresParams, ok bool) {
+func (o OptProviderRef) Get() (v ProviderRef, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -15804,329 +14900,7 @@ func (o OptPostgresParams) Get() (v PostgresParams, ok bool) {
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptPostgresParams) Or(d PostgresParams) PostgresParams {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptPostgresParamsEtcdOptions returns new OptPostgresParamsEtcdOptions with value set to v.
-func NewOptPostgresParamsEtcdOptions(v PostgresParamsEtcdOptions) OptPostgresParamsEtcdOptions {
-	return OptPostgresParamsEtcdOptions{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptPostgresParamsEtcdOptions is optional PostgresParamsEtcdOptions.
-type OptPostgresParamsEtcdOptions struct {
-	Value PostgresParamsEtcdOptions
-	Set   bool
-}
-
-// IsSet returns true if OptPostgresParamsEtcdOptions was set.
-func (o OptPostgresParamsEtcdOptions) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptPostgresParamsEtcdOptions) Reset() {
-	var v PostgresParamsEtcdOptions
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptPostgresParamsEtcdOptions) SetTo(v PostgresParamsEtcdOptions) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptPostgresParamsEtcdOptions) Get() (v PostgresParamsEtcdOptions, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptPostgresParamsEtcdOptions) Or(d PostgresParamsEtcdOptions) PostgresParamsEtcdOptions {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptPostgresParamsHaproxyOptions returns new OptPostgresParamsHaproxyOptions with value set to v.
-func NewOptPostgresParamsHaproxyOptions(v PostgresParamsHaproxyOptions) OptPostgresParamsHaproxyOptions {
-	return OptPostgresParamsHaproxyOptions{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptPostgresParamsHaproxyOptions is optional PostgresParamsHaproxyOptions.
-type OptPostgresParamsHaproxyOptions struct {
-	Value PostgresParamsHaproxyOptions
-	Set   bool
-}
-
-// IsSet returns true if OptPostgresParamsHaproxyOptions was set.
-func (o OptPostgresParamsHaproxyOptions) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptPostgresParamsHaproxyOptions) Reset() {
-	var v PostgresParamsHaproxyOptions
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptPostgresParamsHaproxyOptions) SetTo(v PostgresParamsHaproxyOptions) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptPostgresParamsHaproxyOptions) Get() (v PostgresParamsHaproxyOptions, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptPostgresParamsHaproxyOptions) Or(d PostgresParamsHaproxyOptions) PostgresParamsHaproxyOptions {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptPostgresParamsMasterOptions returns new OptPostgresParamsMasterOptions with value set to v.
-func NewOptPostgresParamsMasterOptions(v PostgresParamsMasterOptions) OptPostgresParamsMasterOptions {
-	return OptPostgresParamsMasterOptions{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptPostgresParamsMasterOptions is optional PostgresParamsMasterOptions.
-type OptPostgresParamsMasterOptions struct {
-	Value PostgresParamsMasterOptions
-	Set   bool
-}
-
-// IsSet returns true if OptPostgresParamsMasterOptions was set.
-func (o OptPostgresParamsMasterOptions) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptPostgresParamsMasterOptions) Reset() {
-	var v PostgresParamsMasterOptions
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptPostgresParamsMasterOptions) SetTo(v PostgresParamsMasterOptions) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptPostgresParamsMasterOptions) Get() (v PostgresParamsMasterOptions, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptPostgresParamsMasterOptions) Or(d PostgresParamsMasterOptions) PostgresParamsMasterOptions {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptPostgresParamsPatroniOptions returns new OptPostgresParamsPatroniOptions with value set to v.
-func NewOptPostgresParamsPatroniOptions(v PostgresParamsPatroniOptions) OptPostgresParamsPatroniOptions {
-	return OptPostgresParamsPatroniOptions{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptPostgresParamsPatroniOptions is optional PostgresParamsPatroniOptions.
-type OptPostgresParamsPatroniOptions struct {
-	Value PostgresParamsPatroniOptions
-	Set   bool
-}
-
-// IsSet returns true if OptPostgresParamsPatroniOptions was set.
-func (o OptPostgresParamsPatroniOptions) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptPostgresParamsPatroniOptions) Reset() {
-	var v PostgresParamsPatroniOptions
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptPostgresParamsPatroniOptions) SetTo(v PostgresParamsPatroniOptions) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptPostgresParamsPatroniOptions) Get() (v PostgresParamsPatroniOptions, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptPostgresParamsPatroniOptions) Or(d PostgresParamsPatroniOptions) PostgresParamsPatroniOptions {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptPostgresParamsPgbouncerOptions returns new OptPostgresParamsPgbouncerOptions with value set to v.
-func NewOptPostgresParamsPgbouncerOptions(v PostgresParamsPgbouncerOptions) OptPostgresParamsPgbouncerOptions {
-	return OptPostgresParamsPgbouncerOptions{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptPostgresParamsPgbouncerOptions is optional PostgresParamsPgbouncerOptions.
-type OptPostgresParamsPgbouncerOptions struct {
-	Value PostgresParamsPgbouncerOptions
-	Set   bool
-}
-
-// IsSet returns true if OptPostgresParamsPgbouncerOptions was set.
-func (o OptPostgresParamsPgbouncerOptions) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptPostgresParamsPgbouncerOptions) Reset() {
-	var v PostgresParamsPgbouncerOptions
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptPostgresParamsPgbouncerOptions) SetTo(v PostgresParamsPgbouncerOptions) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptPostgresParamsPgbouncerOptions) Get() (v PostgresParamsPgbouncerOptions, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptPostgresParamsPgbouncerOptions) Or(d PostgresParamsPgbouncerOptions) PostgresParamsPgbouncerOptions {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptPostgresParamsReplicaOptions returns new OptPostgresParamsReplicaOptions with value set to v.
-func NewOptPostgresParamsReplicaOptions(v PostgresParamsReplicaOptions) OptPostgresParamsReplicaOptions {
-	return OptPostgresParamsReplicaOptions{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptPostgresParamsReplicaOptions is optional PostgresParamsReplicaOptions.
-type OptPostgresParamsReplicaOptions struct {
-	Value PostgresParamsReplicaOptions
-	Set   bool
-}
-
-// IsSet returns true if OptPostgresParamsReplicaOptions was set.
-func (o OptPostgresParamsReplicaOptions) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptPostgresParamsReplicaOptions) Reset() {
-	var v PostgresParamsReplicaOptions
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptPostgresParamsReplicaOptions) SetTo(v PostgresParamsReplicaOptions) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptPostgresParamsReplicaOptions) Get() (v PostgresParamsReplicaOptions, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptPostgresParamsReplicaOptions) Or(d PostgresParamsReplicaOptions) PostgresParamsReplicaOptions {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptPresetId returns new OptPresetId with value set to v.
-func NewOptPresetId(v PresetId) OptPresetId {
-	return OptPresetId{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptPresetId is optional PresetId.
-type OptPresetId struct {
-	Value PresetId
-	Set   bool
-}
-
-// IsSet returns true if OptPresetId was set.
-func (o OptPresetId) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptPresetId) Reset() {
-	var v PresetId
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptPresetId) SetTo(v PresetId) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptPresetId) Get() (v PresetId, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptPresetId) Or(d PresetId) PresetId {
+func (o OptProviderRef) Or(d ProviderRef) ProviderRef {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -16501,52 +15275,6 @@ func (o OptRecipeBundleFiles) Or(d RecipeBundleFiles) RecipeBundleFiles {
 	return d
 }
 
-// NewOptRecipeTopologySnapshot returns new OptRecipeTopologySnapshot with value set to v.
-func NewOptRecipeTopologySnapshot(v RecipeTopologySnapshot) OptRecipeTopologySnapshot {
-	return OptRecipeTopologySnapshot{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptRecipeTopologySnapshot is optional RecipeTopologySnapshot.
-type OptRecipeTopologySnapshot struct {
-	Value RecipeTopologySnapshot
-	Set   bool
-}
-
-// IsSet returns true if OptRecipeTopologySnapshot was set.
-func (o OptRecipeTopologySnapshot) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptRecipeTopologySnapshot) Reset() {
-	var v RecipeTopologySnapshot
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptRecipeTopologySnapshot) SetTo(v RecipeTopologySnapshot) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptRecipeTopologySnapshot) Get() (v RecipeTopologySnapshot, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptRecipeTopologySnapshot) Or(d RecipeTopologySnapshot) RecipeTopologySnapshot {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptRef returns new OptRef with value set to v.
 func NewOptRef(v Ref) OptRef {
 	return OptRef{
@@ -16771,98 +15499,6 @@ func (o OptRemoveFavoriteRequestKind) Get() (v RemoveFavoriteRequestKind, ok boo
 
 // Or returns value if set, or given parameter if does not.
 func (o OptRemoveFavoriteRequestKind) Or(d RemoveFavoriteRequestKind) RemoveFavoriteRequestKind {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptRenderOverrideSet returns new OptRenderOverrideSet with value set to v.
-func NewOptRenderOverrideSet(v RenderOverrideSet) OptRenderOverrideSet {
-	return OptRenderOverrideSet{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptRenderOverrideSet is optional RenderOverrideSet.
-type OptRenderOverrideSet struct {
-	Value RenderOverrideSet
-	Set   bool
-}
-
-// IsSet returns true if OptRenderOverrideSet was set.
-func (o OptRenderOverrideSet) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptRenderOverrideSet) Reset() {
-	var v RenderOverrideSet
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptRenderOverrideSet) SetTo(v RenderOverrideSet) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptRenderOverrideSet) Get() (v RenderOverrideSet, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptRenderOverrideSet) Or(d RenderOverrideSet) RenderOverrideSet {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptRenderOverrideSetLabels returns new OptRenderOverrideSetLabels with value set to v.
-func NewOptRenderOverrideSetLabels(v RenderOverrideSetLabels) OptRenderOverrideSetLabels {
-	return OptRenderOverrideSetLabels{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptRenderOverrideSetLabels is optional RenderOverrideSetLabels.
-type OptRenderOverrideSetLabels struct {
-	Value RenderOverrideSetLabels
-	Set   bool
-}
-
-// IsSet returns true if OptRenderOverrideSetLabels was set.
-func (o OptRenderOverrideSetLabels) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptRenderOverrideSetLabels) Reset() {
-	var v RenderOverrideSetLabels
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptRenderOverrideSetLabels) SetTo(v RenderOverrideSetLabels) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptRenderOverrideSetLabels) Get() (v RenderOverrideSetLabels, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptRenderOverrideSetLabels) Or(d RenderOverrideSetLabels) RenderOverrideSetLabels {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -17323,6 +15959,144 @@ func (o OptRunStateStatus) Get() (v RunStateStatus, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptRunStateStatus) Or(d RunStateStatus) RunStateStatus {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptRunStatus returns new OptRunStatus with value set to v.
+func NewOptRunStatus(v RunStatus) OptRunStatus {
+	return OptRunStatus{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptRunStatus is optional RunStatus.
+type OptRunStatus struct {
+	Value RunStatus
+	Set   bool
+}
+
+// IsSet returns true if OptRunStatus was set.
+func (o OptRunStatus) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptRunStatus) Reset() {
+	var v RunStatus
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptRunStatus) SetTo(v RunStatus) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptRunStatus) Get() (v RunStatus, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptRunStatus) Or(d RunStatus) RunStatus {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptRunTopology returns new OptRunTopology with value set to v.
+func NewOptRunTopology(v RunTopology) OptRunTopology {
+	return OptRunTopology{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptRunTopology is optional RunTopology.
+type OptRunTopology struct {
+	Value RunTopology
+	Set   bool
+}
+
+// IsSet returns true if OptRunTopology was set.
+func (o OptRunTopology) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptRunTopology) Reset() {
+	var v RunTopology
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptRunTopology) SetTo(v RunTopology) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptRunTopology) Get() (v RunTopology, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptRunTopology) Or(d RunTopology) RunTopology {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptRunTrigger returns new OptRunTrigger with value set to v.
+func NewOptRunTrigger(v RunTrigger) OptRunTrigger {
+	return OptRunTrigger{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptRunTrigger is optional RunTrigger.
+type OptRunTrigger struct {
+	Value RunTrigger
+	Set   bool
+}
+
+// IsSet returns true if OptRunTrigger was set.
+func (o OptRunTrigger) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptRunTrigger) Reset() {
+	var v RunTrigger
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptRunTrigger) SetTo(v RunTrigger) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptRunTrigger) Get() (v RunTrigger, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptRunTrigger) Or(d RunTrigger) RunTrigger {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -17875,6 +16649,52 @@ func (o OptScript) Get() (v Script, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptScript) Or(d Script) Script {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptServiceSpecEnv returns new OptServiceSpecEnv with value set to v.
+func NewOptServiceSpecEnv(v ServiceSpecEnv) OptServiceSpecEnv {
+	return OptServiceSpecEnv{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptServiceSpecEnv is optional ServiceSpecEnv.
+type OptServiceSpecEnv struct {
+	Value ServiceSpecEnv
+	Set   bool
+}
+
+// IsSet returns true if OptServiceSpecEnv was set.
+func (o OptServiceSpecEnv) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptServiceSpecEnv) Reset() {
+	var v ServiceSpecEnv
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptServiceSpecEnv) SetTo(v ServiceSpecEnv) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptServiceSpecEnv) Get() (v ServiceSpecEnv, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptServiceSpecEnv) Or(d ServiceSpecEnv) ServiceSpecEnv {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -18519,6 +17339,52 @@ func (o OptStatusCounts) Get() (v StatusCounts, ok bool) {
 
 // Or returns value if set, or given parameter if does not.
 func (o OptStatusCounts) Or(d StatusCounts) StatusCounts {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
+// NewOptStepList returns new OptStepList with value set to v.
+func NewOptStepList(v StepList) OptStepList {
+	return OptStepList{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptStepList is optional StepList.
+type OptStepList struct {
+	Value StepList
+	Set   bool
+}
+
+// IsSet returns true if OptStepList was set.
+func (o OptStepList) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptStepList) Reset() {
+	var v StepList
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptStepList) SetTo(v StepList) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptStepList) Get() (v StepList, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptStepList) Or(d StepList) StepList {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -19215,98 +18081,6 @@ func (o OptTenantSettingsRecordDefaultProvider) Or(d TenantSettingsRecordDefault
 	return d
 }
 
-// NewOptTestRunRecordStatus returns new OptTestRunRecordStatus with value set to v.
-func NewOptTestRunRecordStatus(v TestRunRecordStatus) OptTestRunRecordStatus {
-	return OptTestRunRecordStatus{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptTestRunRecordStatus is optional TestRunRecordStatus.
-type OptTestRunRecordStatus struct {
-	Value TestRunRecordStatus
-	Set   bool
-}
-
-// IsSet returns true if OptTestRunRecordStatus was set.
-func (o OptTestRunRecordStatus) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptTestRunRecordStatus) Reset() {
-	var v TestRunRecordStatus
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptTestRunRecordStatus) SetTo(v TestRunRecordStatus) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptTestRunRecordStatus) Get() (v TestRunRecordStatus, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptTestRunRecordStatus) Or(d TestRunRecordStatus) TestRunRecordStatus {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptTestRunRecordTrigger returns new OptTestRunRecordTrigger with value set to v.
-func NewOptTestRunRecordTrigger(v TestRunRecordTrigger) OptTestRunRecordTrigger {
-	return OptTestRunRecordTrigger{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptTestRunRecordTrigger is optional TestRunRecordTrigger.
-type OptTestRunRecordTrigger struct {
-	Value TestRunRecordTrigger
-	Set   bool
-}
-
-// IsSet returns true if OptTestRunRecordTrigger was set.
-func (o OptTestRunRecordTrigger) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptTestRunRecordTrigger) Reset() {
-	var v TestRunRecordTrigger
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptTestRunRecordTrigger) SetTo(v TestRunRecordTrigger) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptTestRunRecordTrigger) Get() (v TestRunRecordTrigger, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptTestRunRecordTrigger) Or(d TestRunRecordTrigger) TestRunRecordTrigger {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
 // NewOptTimeRange returns new OptTimeRange with value set to v.
 func NewOptTimeRange(v TimeRange) OptTimeRange {
 	return OptTimeRange{
@@ -19813,6 +18587,52 @@ func (o OptVmOutput) Or(d VmOutput) VmOutput {
 	return d
 }
 
+// NewOptWaitStep returns new OptWaitStep with value set to v.
+func NewOptWaitStep(v WaitStep) OptWaitStep {
+	return OptWaitStep{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptWaitStep is optional WaitStep.
+type OptWaitStep struct {
+	Value WaitStep
+	Set   bool
+}
+
+// IsSet returns true if OptWaitStep was set.
+func (o OptWaitStep) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptWaitStep) Reset() {
+	var v WaitStep
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptWaitStep) SetTo(v WaitStep) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptWaitStep) Get() (v WaitStep, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptWaitStep) Or(d WaitStep) WaitStep {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptWorker returns new OptWorker with value set to v.
 func NewOptWorker(v Worker) OptWorker {
 	return OptWorker{
@@ -20089,637 +18909,6 @@ func (o OptWorkerKind) Or(d WorkerKind) WorkerKind {
 	return d
 }
 
-// NewOptWorkloadProtocol returns new OptWorkloadProtocol with value set to v.
-func NewOptWorkloadProtocol(v WorkloadProtocol) OptWorkloadProtocol {
-	return OptWorkloadProtocol{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptWorkloadProtocol is optional WorkloadProtocol.
-type OptWorkloadProtocol struct {
-	Value WorkloadProtocol
-	Set   bool
-}
-
-// IsSet returns true if OptWorkloadProtocol was set.
-func (o OptWorkloadProtocol) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptWorkloadProtocol) Reset() {
-	var v WorkloadProtocol
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptWorkloadProtocol) SetTo(v WorkloadProtocol) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptWorkloadProtocol) Get() (v WorkloadProtocol, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptWorkloadProtocol) Or(d WorkloadProtocol) WorkloadProtocol {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptYdbManagedParams returns new OptYdbManagedParams with value set to v.
-func NewOptYdbManagedParams(v YdbManagedParams) OptYdbManagedParams {
-	return OptYdbManagedParams{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptYdbManagedParams is optional YdbManagedParams.
-type OptYdbManagedParams struct {
-	Value YdbManagedParams
-	Set   bool
-}
-
-// IsSet returns true if OptYdbManagedParams was set.
-func (o OptYdbManagedParams) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptYdbManagedParams) Reset() {
-	var v YdbManagedParams
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptYdbManagedParams) SetTo(v YdbManagedParams) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptYdbManagedParams) Get() (v YdbManagedParams, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptYdbManagedParams) Or(d YdbManagedParams) YdbManagedParams {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptYdbManagedParamsComputeType returns new OptYdbManagedParamsComputeType with value set to v.
-func NewOptYdbManagedParamsComputeType(v YdbManagedParamsComputeType) OptYdbManagedParamsComputeType {
-	return OptYdbManagedParamsComputeType{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptYdbManagedParamsComputeType is optional YdbManagedParamsComputeType.
-type OptYdbManagedParamsComputeType struct {
-	Value YdbManagedParamsComputeType
-	Set   bool
-}
-
-// IsSet returns true if OptYdbManagedParamsComputeType was set.
-func (o OptYdbManagedParamsComputeType) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptYdbManagedParamsComputeType) Reset() {
-	var v YdbManagedParamsComputeType
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptYdbManagedParamsComputeType) SetTo(v YdbManagedParamsComputeType) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptYdbManagedParamsComputeType) Get() (v YdbManagedParamsComputeType, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptYdbManagedParamsComputeType) Or(d YdbManagedParamsComputeType) YdbManagedParamsComputeType {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptYdbManagedParamsType returns new OptYdbManagedParamsType with value set to v.
-func NewOptYdbManagedParamsType(v YdbManagedParamsType) OptYdbManagedParamsType {
-	return OptYdbManagedParamsType{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptYdbManagedParamsType is optional YdbManagedParamsType.
-type OptYdbManagedParamsType struct {
-	Value YdbManagedParamsType
-	Set   bool
-}
-
-// IsSet returns true if OptYdbManagedParamsType was set.
-func (o OptYdbManagedParamsType) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptYdbManagedParamsType) Reset() {
-	var v YdbManagedParamsType
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptYdbManagedParamsType) SetTo(v YdbManagedParamsType) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptYdbManagedParamsType) Get() (v YdbManagedParamsType, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptYdbManagedParamsType) Or(d YdbManagedParamsType) YdbManagedParamsType {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptYdbParams returns new OptYdbParams with value set to v.
-func NewOptYdbParams(v YdbParams) OptYdbParams {
-	return OptYdbParams{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptYdbParams is optional YdbParams.
-type OptYdbParams struct {
-	Value YdbParams
-	Set   bool
-}
-
-// IsSet returns true if OptYdbParams was set.
-func (o OptYdbParams) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptYdbParams) Reset() {
-	var v YdbParams
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptYdbParams) SetTo(v YdbParams) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptYdbParams) Get() (v YdbParams, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptYdbParams) Or(d YdbParams) YdbParams {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptYdbParamsDatabaseOptions returns new OptYdbParamsDatabaseOptions with value set to v.
-func NewOptYdbParamsDatabaseOptions(v YdbParamsDatabaseOptions) OptYdbParamsDatabaseOptions {
-	return OptYdbParamsDatabaseOptions{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptYdbParamsDatabaseOptions is optional YdbParamsDatabaseOptions.
-type OptYdbParamsDatabaseOptions struct {
-	Value YdbParamsDatabaseOptions
-	Set   bool
-}
-
-// IsSet returns true if OptYdbParamsDatabaseOptions was set.
-func (o OptYdbParamsDatabaseOptions) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptYdbParamsDatabaseOptions) Reset() {
-	var v YdbParamsDatabaseOptions
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptYdbParamsDatabaseOptions) SetTo(v YdbParamsDatabaseOptions) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptYdbParamsDatabaseOptions) Get() (v YdbParamsDatabaseOptions, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptYdbParamsDatabaseOptions) Or(d YdbParamsDatabaseOptions) YdbParamsDatabaseOptions {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptYdbParamsDefaultDiskType returns new OptYdbParamsDefaultDiskType with value set to v.
-func NewOptYdbParamsDefaultDiskType(v YdbParamsDefaultDiskType) OptYdbParamsDefaultDiskType {
-	return OptYdbParamsDefaultDiskType{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptYdbParamsDefaultDiskType is optional YdbParamsDefaultDiskType.
-type OptYdbParamsDefaultDiskType struct {
-	Value YdbParamsDefaultDiskType
-	Set   bool
-}
-
-// IsSet returns true if OptYdbParamsDefaultDiskType was set.
-func (o OptYdbParamsDefaultDiskType) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptYdbParamsDefaultDiskType) Reset() {
-	var v YdbParamsDefaultDiskType
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptYdbParamsDefaultDiskType) SetTo(v YdbParamsDefaultDiskType) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptYdbParamsDefaultDiskType) Get() (v YdbParamsDefaultDiskType, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptYdbParamsDefaultDiskType) Or(d YdbParamsDefaultDiskType) YdbParamsDefaultDiskType {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptYdbParamsFailureDomainType returns new OptYdbParamsFailureDomainType with value set to v.
-func NewOptYdbParamsFailureDomainType(v YdbParamsFailureDomainType) OptYdbParamsFailureDomainType {
-	return OptYdbParamsFailureDomainType{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptYdbParamsFailureDomainType is optional YdbParamsFailureDomainType.
-type OptYdbParamsFailureDomainType struct {
-	Value YdbParamsFailureDomainType
-	Set   bool
-}
-
-// IsSet returns true if OptYdbParamsFailureDomainType was set.
-func (o OptYdbParamsFailureDomainType) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptYdbParamsFailureDomainType) Reset() {
-	var v YdbParamsFailureDomainType
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptYdbParamsFailureDomainType) SetTo(v YdbParamsFailureDomainType) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptYdbParamsFailureDomainType) Get() (v YdbParamsFailureDomainType, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptYdbParamsFailureDomainType) Or(d YdbParamsFailureDomainType) YdbParamsFailureDomainType {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptYdbParamsFaultTolerance returns new OptYdbParamsFaultTolerance with value set to v.
-func NewOptYdbParamsFaultTolerance(v YdbParamsFaultTolerance) OptYdbParamsFaultTolerance {
-	return OptYdbParamsFaultTolerance{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptYdbParamsFaultTolerance is optional YdbParamsFaultTolerance.
-type OptYdbParamsFaultTolerance struct {
-	Value YdbParamsFaultTolerance
-	Set   bool
-}
-
-// IsSet returns true if OptYdbParamsFaultTolerance was set.
-func (o OptYdbParamsFaultTolerance) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptYdbParamsFaultTolerance) Reset() {
-	var v YdbParamsFaultTolerance
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptYdbParamsFaultTolerance) SetTo(v YdbParamsFaultTolerance) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptYdbParamsFaultTolerance) Get() (v YdbParamsFaultTolerance, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptYdbParamsFaultTolerance) Or(d YdbParamsFaultTolerance) YdbParamsFaultTolerance {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptYdbParamsHaproxyOptions returns new OptYdbParamsHaproxyOptions with value set to v.
-func NewOptYdbParamsHaproxyOptions(v YdbParamsHaproxyOptions) OptYdbParamsHaproxyOptions {
-	return OptYdbParamsHaproxyOptions{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptYdbParamsHaproxyOptions is optional YdbParamsHaproxyOptions.
-type OptYdbParamsHaproxyOptions struct {
-	Value YdbParamsHaproxyOptions
-	Set   bool
-}
-
-// IsSet returns true if OptYdbParamsHaproxyOptions was set.
-func (o OptYdbParamsHaproxyOptions) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptYdbParamsHaproxyOptions) Reset() {
-	var v YdbParamsHaproxyOptions
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptYdbParamsHaproxyOptions) SetTo(v YdbParamsHaproxyOptions) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptYdbParamsHaproxyOptions) Get() (v YdbParamsHaproxyOptions, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptYdbParamsHaproxyOptions) Or(d YdbParamsHaproxyOptions) YdbParamsHaproxyOptions {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// NewOptYdbParamsStorageOptions returns new OptYdbParamsStorageOptions with value set to v.
-func NewOptYdbParamsStorageOptions(v YdbParamsStorageOptions) OptYdbParamsStorageOptions {
-	return OptYdbParamsStorageOptions{
-		Value: v,
-		Set:   true,
-	}
-}
-
-// OptYdbParamsStorageOptions is optional YdbParamsStorageOptions.
-type OptYdbParamsStorageOptions struct {
-	Value YdbParamsStorageOptions
-	Set   bool
-}
-
-// IsSet returns true if OptYdbParamsStorageOptions was set.
-func (o OptYdbParamsStorageOptions) IsSet() bool { return o.Set }
-
-// Reset unsets value.
-func (o *OptYdbParamsStorageOptions) Reset() {
-	var v YdbParamsStorageOptions
-	o.Value = v
-	o.Set = false
-}
-
-// SetTo sets value to v.
-func (o *OptYdbParamsStorageOptions) SetTo(v YdbParamsStorageOptions) {
-	o.Set = true
-	o.Value = v
-}
-
-// Get returns value and boolean that denotes whether value was set.
-func (o OptYdbParamsStorageOptions) Get() (v YdbParamsStorageOptions, ok bool) {
-	if !o.Set {
-		return v, false
-	}
-	return o.Value, true
-}
-
-// Or returns value if set, or given parameter if does not.
-func (o OptYdbParamsStorageOptions) Or(d YdbParamsStorageOptions) YdbParamsStorageOptions {
-	if v, ok := o.Get(); ok {
-		return v
-	}
-	return d
-}
-
-// Ref: #/components/schemas/OrioledbParams
-type OrioledbParams struct {
-	Haproxy         OptInt32                         `json:"haproxy"`
-	HaproxyOptions  OptOrioledbParamsHaproxyOptions  `json:"haproxyOptions"`
-	Image           OptString                        `json:"image"`
-	InitdbLocale    OptString                        `json:"initdbLocale"`
-	PostgresOptions OptOrioledbParamsPostgresOptions `json:"postgresOptions"`
-	ReplicaOptions  OptOrioledbParamsReplicaOptions  `json:"replicaOptions"`
-	Replicas        OptInt32                         `json:"replicas"`
-	SharedBuffersMb OptInt32                         `json:"sharedBuffersMb"`
-}
-
-// GetHaproxy returns the value of Haproxy.
-func (s *OrioledbParams) GetHaproxy() OptInt32 {
-	return s.Haproxy
-}
-
-// GetHaproxyOptions returns the value of HaproxyOptions.
-func (s *OrioledbParams) GetHaproxyOptions() OptOrioledbParamsHaproxyOptions {
-	return s.HaproxyOptions
-}
-
-// GetImage returns the value of Image.
-func (s *OrioledbParams) GetImage() OptString {
-	return s.Image
-}
-
-// GetInitdbLocale returns the value of InitdbLocale.
-func (s *OrioledbParams) GetInitdbLocale() OptString {
-	return s.InitdbLocale
-}
-
-// GetPostgresOptions returns the value of PostgresOptions.
-func (s *OrioledbParams) GetPostgresOptions() OptOrioledbParamsPostgresOptions {
-	return s.PostgresOptions
-}
-
-// GetReplicaOptions returns the value of ReplicaOptions.
-func (s *OrioledbParams) GetReplicaOptions() OptOrioledbParamsReplicaOptions {
-	return s.ReplicaOptions
-}
-
-// GetReplicas returns the value of Replicas.
-func (s *OrioledbParams) GetReplicas() OptInt32 {
-	return s.Replicas
-}
-
-// GetSharedBuffersMb returns the value of SharedBuffersMb.
-func (s *OrioledbParams) GetSharedBuffersMb() OptInt32 {
-	return s.SharedBuffersMb
-}
-
-// SetHaproxy sets the value of Haproxy.
-func (s *OrioledbParams) SetHaproxy(val OptInt32) {
-	s.Haproxy = val
-}
-
-// SetHaproxyOptions sets the value of HaproxyOptions.
-func (s *OrioledbParams) SetHaproxyOptions(val OptOrioledbParamsHaproxyOptions) {
-	s.HaproxyOptions = val
-}
-
-// SetImage sets the value of Image.
-func (s *OrioledbParams) SetImage(val OptString) {
-	s.Image = val
-}
-
-// SetInitdbLocale sets the value of InitdbLocale.
-func (s *OrioledbParams) SetInitdbLocale(val OptString) {
-	s.InitdbLocale = val
-}
-
-// SetPostgresOptions sets the value of PostgresOptions.
-func (s *OrioledbParams) SetPostgresOptions(val OptOrioledbParamsPostgresOptions) {
-	s.PostgresOptions = val
-}
-
-// SetReplicaOptions sets the value of ReplicaOptions.
-func (s *OrioledbParams) SetReplicaOptions(val OptOrioledbParamsReplicaOptions) {
-	s.ReplicaOptions = val
-}
-
-// SetReplicas sets the value of Replicas.
-func (s *OrioledbParams) SetReplicas(val OptInt32) {
-	s.Replicas = val
-}
-
-// SetSharedBuffersMb sets the value of SharedBuffersMb.
-func (s *OrioledbParams) SetSharedBuffersMb(val OptInt32) {
-	s.SharedBuffersMb = val
-}
-
-type OrioledbParamsHaproxyOptions map[string]string
-
-func (s *OrioledbParamsHaproxyOptions) init() OrioledbParamsHaproxyOptions {
-	m := *s
-	if m == nil {
-		m = map[string]string{}
-		*s = m
-	}
-	return m
-}
-
-type OrioledbParamsPostgresOptions map[string]string
-
-func (s *OrioledbParamsPostgresOptions) init() OrioledbParamsPostgresOptions {
-	m := *s
-	if m == nil {
-		m = map[string]string{}
-		*s = m
-	}
-	return m
-}
-
-type OrioledbParamsReplicaOptions map[string]string
-
-func (s *OrioledbParamsReplicaOptions) init() OrioledbParamsReplicaOptions {
-	m := *s
-	if m == nil {
-		m = map[string]string{}
-		*s = m
-	}
-	return m
-}
-
 // Ref: #/components/schemas/Overview
 type Overview struct {
 	DegradedReasons []string          `json:"degradedReasons"`
@@ -20911,164 +19100,6 @@ func (OverviewStatus) AllValues() []OverviewStatus {
 		OverviewStatus9,
 		OverviewStatus10,
 		OverviewStatus11,
-	}
-}
-
-// Ref: #/components/schemas/Package
-type Package struct {
-	AptPackages     []string         `json:"aptPackages"`
-	CustomRepo      OptString        `json:"customRepo"`
-	CustomRepoKey   OptString        `json:"customRepoKey"`
-	DbKind          OptPackageDbKind `json:"dbKind"`
-	DbVersion       OptString        `json:"dbVersion"`
-	DebFilename     OptString        `json:"debFilename"`
-	ID              OptString        `json:"id"`
-	IsBuiltin       OptBool          `json:"isBuiltin"`
-	Name            OptString        `json:"name"`
-	PackageRecordId OptString        `json:"packageRecordId"`
-	PreInstall      []string         `json:"preInstall"`
-}
-
-// GetAptPackages returns the value of AptPackages.
-func (s *Package) GetAptPackages() []string {
-	return s.AptPackages
-}
-
-// GetCustomRepo returns the value of CustomRepo.
-func (s *Package) GetCustomRepo() OptString {
-	return s.CustomRepo
-}
-
-// GetCustomRepoKey returns the value of CustomRepoKey.
-func (s *Package) GetCustomRepoKey() OptString {
-	return s.CustomRepoKey
-}
-
-// GetDbKind returns the value of DbKind.
-func (s *Package) GetDbKind() OptPackageDbKind {
-	return s.DbKind
-}
-
-// GetDbVersion returns the value of DbVersion.
-func (s *Package) GetDbVersion() OptString {
-	return s.DbVersion
-}
-
-// GetDebFilename returns the value of DebFilename.
-func (s *Package) GetDebFilename() OptString {
-	return s.DebFilename
-}
-
-// GetID returns the value of ID.
-func (s *Package) GetID() OptString {
-	return s.ID
-}
-
-// GetIsBuiltin returns the value of IsBuiltin.
-func (s *Package) GetIsBuiltin() OptBool {
-	return s.IsBuiltin
-}
-
-// GetName returns the value of Name.
-func (s *Package) GetName() OptString {
-	return s.Name
-}
-
-// GetPackageRecordId returns the value of PackageRecordId.
-func (s *Package) GetPackageRecordId() OptString {
-	return s.PackageRecordId
-}
-
-// GetPreInstall returns the value of PreInstall.
-func (s *Package) GetPreInstall() []string {
-	return s.PreInstall
-}
-
-// SetAptPackages sets the value of AptPackages.
-func (s *Package) SetAptPackages(val []string) {
-	s.AptPackages = val
-}
-
-// SetCustomRepo sets the value of CustomRepo.
-func (s *Package) SetCustomRepo(val OptString) {
-	s.CustomRepo = val
-}
-
-// SetCustomRepoKey sets the value of CustomRepoKey.
-func (s *Package) SetCustomRepoKey(val OptString) {
-	s.CustomRepoKey = val
-}
-
-// SetDbKind sets the value of DbKind.
-func (s *Package) SetDbKind(val OptPackageDbKind) {
-	s.DbKind = val
-}
-
-// SetDbVersion sets the value of DbVersion.
-func (s *Package) SetDbVersion(val OptString) {
-	s.DbVersion = val
-}
-
-// SetDebFilename sets the value of DebFilename.
-func (s *Package) SetDebFilename(val OptString) {
-	s.DebFilename = val
-}
-
-// SetID sets the value of ID.
-func (s *Package) SetID(val OptString) {
-	s.ID = val
-}
-
-// SetIsBuiltin sets the value of IsBuiltin.
-func (s *Package) SetIsBuiltin(val OptBool) {
-	s.IsBuiltin = val
-}
-
-// SetName sets the value of Name.
-func (s *Package) SetName(val OptString) {
-	s.Name = val
-}
-
-// SetPackageRecordId sets the value of PackageRecordId.
-func (s *Package) SetPackageRecordId(val OptString) {
-	s.PackageRecordId = val
-}
-
-// SetPreInstall sets the value of PreInstall.
-func (s *Package) SetPreInstall(val []string) {
-	s.PreInstall = val
-}
-
-type PackageDbKind int32
-
-const (
-	PackageDbKind1  PackageDbKind = 1
-	PackageDbKind2  PackageDbKind = 2
-	PackageDbKind3  PackageDbKind = 3
-	PackageDbKind4  PackageDbKind = 4
-	PackageDbKind5  PackageDbKind = 5
-	PackageDbKind6  PackageDbKind = 6
-	PackageDbKind7  PackageDbKind = 7
-	PackageDbKind8  PackageDbKind = 8
-	PackageDbKind9  PackageDbKind = 9
-	PackageDbKind10 PackageDbKind = 10
-	PackageDbKind11 PackageDbKind = 11
-)
-
-// AllValues returns all PackageDbKind values.
-func (PackageDbKind) AllValues() []PackageDbKind {
-	return []PackageDbKind{
-		PackageDbKind1,
-		PackageDbKind2,
-		PackageDbKind3,
-		PackageDbKind4,
-		PackageDbKind5,
-		PackageDbKind6,
-		PackageDbKind7,
-		PackageDbKind8,
-		PackageDbKind9,
-		PackageDbKind10,
-		PackageDbKind11,
 	}
 }
 
@@ -21294,98 +19325,6 @@ func (s *Page) SetToken(val OptString) {
 	s.Token = val
 }
 
-// Ref: #/components/schemas/Parameters
-type Parameters struct {
-	BulkSize            OptInt32         `json:"bulkSize"`
-	DefaultInsertMethod OptString        `json:"defaultInsertMethod"`
-	Env                 OptParametersEnv `json:"env"`
-	NoSteps             []string         `json:"noSteps"`
-	PoolSize            OptInt32         `json:"poolSize"`
-	ScaleFactor         OptFloat64       `json:"scaleFactor"`
-	Steps               []string         `json:"steps"`
-}
-
-// GetBulkSize returns the value of BulkSize.
-func (s *Parameters) GetBulkSize() OptInt32 {
-	return s.BulkSize
-}
-
-// GetDefaultInsertMethod returns the value of DefaultInsertMethod.
-func (s *Parameters) GetDefaultInsertMethod() OptString {
-	return s.DefaultInsertMethod
-}
-
-// GetEnv returns the value of Env.
-func (s *Parameters) GetEnv() OptParametersEnv {
-	return s.Env
-}
-
-// GetNoSteps returns the value of NoSteps.
-func (s *Parameters) GetNoSteps() []string {
-	return s.NoSteps
-}
-
-// GetPoolSize returns the value of PoolSize.
-func (s *Parameters) GetPoolSize() OptInt32 {
-	return s.PoolSize
-}
-
-// GetScaleFactor returns the value of ScaleFactor.
-func (s *Parameters) GetScaleFactor() OptFloat64 {
-	return s.ScaleFactor
-}
-
-// GetSteps returns the value of Steps.
-func (s *Parameters) GetSteps() []string {
-	return s.Steps
-}
-
-// SetBulkSize sets the value of BulkSize.
-func (s *Parameters) SetBulkSize(val OptInt32) {
-	s.BulkSize = val
-}
-
-// SetDefaultInsertMethod sets the value of DefaultInsertMethod.
-func (s *Parameters) SetDefaultInsertMethod(val OptString) {
-	s.DefaultInsertMethod = val
-}
-
-// SetEnv sets the value of Env.
-func (s *Parameters) SetEnv(val OptParametersEnv) {
-	s.Env = val
-}
-
-// SetNoSteps sets the value of NoSteps.
-func (s *Parameters) SetNoSteps(val []string) {
-	s.NoSteps = val
-}
-
-// SetPoolSize sets the value of PoolSize.
-func (s *Parameters) SetPoolSize(val OptInt32) {
-	s.PoolSize = val
-}
-
-// SetScaleFactor sets the value of ScaleFactor.
-func (s *Parameters) SetScaleFactor(val OptFloat64) {
-	s.ScaleFactor = val
-}
-
-// SetSteps sets the value of Steps.
-func (s *Parameters) SetSteps(val []string) {
-	s.Steps = val
-}
-
-type ParametersEnv map[string]string
-
-func (s *ParametersEnv) init() ParametersEnv {
-	m := *s
-	if m == nil {
-		m = map[string]string{}
-		*s = m
-	}
-	return m
-}
-
 // Ref: #/components/schemas/Permission
 type Permission struct {
 	Action   OptPermissionAction   `json:"action"`
@@ -21478,194 +19417,6 @@ func (PermissionResource) AllValues() []PermissionResource {
 		PermissionResource16,
 		PermissionResource17,
 	}
-}
-
-// Ref: #/components/schemas/PgNoopParams
-type PgNoopParams struct {
-	Options OptPgNoopParamsOptions `json:"options"`
-	Workers OptInt32               `json:"workers"`
-}
-
-// GetOptions returns the value of Options.
-func (s *PgNoopParams) GetOptions() OptPgNoopParamsOptions {
-	return s.Options
-}
-
-// GetWorkers returns the value of Workers.
-func (s *PgNoopParams) GetWorkers() OptInt32 {
-	return s.Workers
-}
-
-// SetOptions sets the value of Options.
-func (s *PgNoopParams) SetOptions(val OptPgNoopParamsOptions) {
-	s.Options = val
-}
-
-// SetWorkers sets the value of Workers.
-func (s *PgNoopParams) SetWorkers(val OptInt32) {
-	s.Workers = val
-}
-
-type PgNoopParamsOptions map[string]string
-
-func (s *PgNoopParamsOptions) init() PgNoopParamsOptions {
-	m := *s
-	if m == nil {
-		m = map[string]string{}
-		*s = m
-	}
-	return m
-}
-
-// Ref: #/components/schemas/PicodataParams
-type PicodataParams struct {
-	Haproxy           OptInt32                         `json:"haproxy"`
-	HaproxyOptions    OptPicodataParamsHaproxyOptions  `json:"haproxyOptions"`
-	InstanceOptions   OptPicodataParamsInstanceOptions `json:"instanceOptions"`
-	Instances         OptInt32                         `json:"instances"`
-	ReplicationFactor OptInt32                         `json:"replicationFactor"`
-	Shards            OptInt32                         `json:"shards"`
-	Tiers             []PicodataTier                   `json:"tiers"`
-}
-
-// GetHaproxy returns the value of Haproxy.
-func (s *PicodataParams) GetHaproxy() OptInt32 {
-	return s.Haproxy
-}
-
-// GetHaproxyOptions returns the value of HaproxyOptions.
-func (s *PicodataParams) GetHaproxyOptions() OptPicodataParamsHaproxyOptions {
-	return s.HaproxyOptions
-}
-
-// GetInstanceOptions returns the value of InstanceOptions.
-func (s *PicodataParams) GetInstanceOptions() OptPicodataParamsInstanceOptions {
-	return s.InstanceOptions
-}
-
-// GetInstances returns the value of Instances.
-func (s *PicodataParams) GetInstances() OptInt32 {
-	return s.Instances
-}
-
-// GetReplicationFactor returns the value of ReplicationFactor.
-func (s *PicodataParams) GetReplicationFactor() OptInt32 {
-	return s.ReplicationFactor
-}
-
-// GetShards returns the value of Shards.
-func (s *PicodataParams) GetShards() OptInt32 {
-	return s.Shards
-}
-
-// GetTiers returns the value of Tiers.
-func (s *PicodataParams) GetTiers() []PicodataTier {
-	return s.Tiers
-}
-
-// SetHaproxy sets the value of Haproxy.
-func (s *PicodataParams) SetHaproxy(val OptInt32) {
-	s.Haproxy = val
-}
-
-// SetHaproxyOptions sets the value of HaproxyOptions.
-func (s *PicodataParams) SetHaproxyOptions(val OptPicodataParamsHaproxyOptions) {
-	s.HaproxyOptions = val
-}
-
-// SetInstanceOptions sets the value of InstanceOptions.
-func (s *PicodataParams) SetInstanceOptions(val OptPicodataParamsInstanceOptions) {
-	s.InstanceOptions = val
-}
-
-// SetInstances sets the value of Instances.
-func (s *PicodataParams) SetInstances(val OptInt32) {
-	s.Instances = val
-}
-
-// SetReplicationFactor sets the value of ReplicationFactor.
-func (s *PicodataParams) SetReplicationFactor(val OptInt32) {
-	s.ReplicationFactor = val
-}
-
-// SetShards sets the value of Shards.
-func (s *PicodataParams) SetShards(val OptInt32) {
-	s.Shards = val
-}
-
-// SetTiers sets the value of Tiers.
-func (s *PicodataParams) SetTiers(val []PicodataTier) {
-	s.Tiers = val
-}
-
-type PicodataParamsHaproxyOptions map[string]string
-
-func (s *PicodataParamsHaproxyOptions) init() PicodataParamsHaproxyOptions {
-	m := *s
-	if m == nil {
-		m = map[string]string{}
-		*s = m
-	}
-	return m
-}
-
-type PicodataParamsInstanceOptions map[string]string
-
-func (s *PicodataParamsInstanceOptions) init() PicodataParamsInstanceOptions {
-	m := *s
-	if m == nil {
-		m = map[string]string{}
-		*s = m
-	}
-	return m
-}
-
-// Ref: #/components/schemas/PicodataTier
-type PicodataTier struct {
-	CanVote           OptBool   `json:"canVote"`
-	Count             OptInt32  `json:"count"`
-	Name              OptString `json:"name"`
-	ReplicationFactor OptInt32  `json:"replicationFactor"`
-}
-
-// GetCanVote returns the value of CanVote.
-func (s *PicodataTier) GetCanVote() OptBool {
-	return s.CanVote
-}
-
-// GetCount returns the value of Count.
-func (s *PicodataTier) GetCount() OptInt32 {
-	return s.Count
-}
-
-// GetName returns the value of Name.
-func (s *PicodataTier) GetName() OptString {
-	return s.Name
-}
-
-// GetReplicationFactor returns the value of ReplicationFactor.
-func (s *PicodataTier) GetReplicationFactor() OptInt32 {
-	return s.ReplicationFactor
-}
-
-// SetCanVote sets the value of CanVote.
-func (s *PicodataTier) SetCanVote(val OptBool) {
-	s.CanVote = val
-}
-
-// SetCount sets the value of Count.
-func (s *PicodataTier) SetCount(val OptInt32) {
-	s.Count = val
-}
-
-// SetName sets the value of Name.
-func (s *PicodataTier) SetName(val OptString) {
-	s.Name = val
-}
-
-// SetReplicationFactor sets the value of ReplicationFactor.
-func (s *PicodataTier) SetReplicationFactor(val OptInt32) {
-	s.ReplicationFactor = val
 }
 
 // Ref: #/components/schemas/PipelineNode
@@ -22550,221 +20301,30 @@ func (PortBindingProtocol) AllValues() []PortBindingProtocol {
 	}
 }
 
-// Ref: #/components/schemas/PostgresParams
-type PostgresParams struct {
-	Etcd             OptBool                           `json:"etcd"`
-	EtcdOptions      OptPostgresParamsEtcdOptions      `json:"etcdOptions"`
-	Haproxy          OptInt32                          `json:"haproxy"`
-	HaproxyOptions   OptPostgresParamsHaproxyOptions   `json:"haproxyOptions"`
-	MasterOptions    OptPostgresParamsMasterOptions    `json:"masterOptions"`
-	Patroni          OptBool                           `json:"patroni"`
-	PatroniOptions   OptPostgresParamsPatroniOptions   `json:"patroniOptions"`
-	Pgbouncer        OptBool                           `json:"pgbouncer"`
-	PgbouncerOptions OptPostgresParamsPgbouncerOptions `json:"pgbouncerOptions"`
-	ReplicaOptions   OptPostgresParamsReplicaOptions   `json:"replicaOptions"`
-	Replicas         OptInt32                          `json:"replicas"`
-	SyncReplicas     OptInt32                          `json:"syncReplicas"`
+// Ref: #/components/schemas/ProviderRef
+type ProviderRef struct {
+	Name       OptString `json:"name"`
+	ParamsJson OptString `json:"paramsJson"`
 }
 
-// GetEtcd returns the value of Etcd.
-func (s *PostgresParams) GetEtcd() OptBool {
-	return s.Etcd
+// GetName returns the value of Name.
+func (s *ProviderRef) GetName() OptString {
+	return s.Name
 }
 
-// GetEtcdOptions returns the value of EtcdOptions.
-func (s *PostgresParams) GetEtcdOptions() OptPostgresParamsEtcdOptions {
-	return s.EtcdOptions
+// GetParamsJson returns the value of ParamsJson.
+func (s *ProviderRef) GetParamsJson() OptString {
+	return s.ParamsJson
 }
 
-// GetHaproxy returns the value of Haproxy.
-func (s *PostgresParams) GetHaproxy() OptInt32 {
-	return s.Haproxy
+// SetName sets the value of Name.
+func (s *ProviderRef) SetName(val OptString) {
+	s.Name = val
 }
 
-// GetHaproxyOptions returns the value of HaproxyOptions.
-func (s *PostgresParams) GetHaproxyOptions() OptPostgresParamsHaproxyOptions {
-	return s.HaproxyOptions
-}
-
-// GetMasterOptions returns the value of MasterOptions.
-func (s *PostgresParams) GetMasterOptions() OptPostgresParamsMasterOptions {
-	return s.MasterOptions
-}
-
-// GetPatroni returns the value of Patroni.
-func (s *PostgresParams) GetPatroni() OptBool {
-	return s.Patroni
-}
-
-// GetPatroniOptions returns the value of PatroniOptions.
-func (s *PostgresParams) GetPatroniOptions() OptPostgresParamsPatroniOptions {
-	return s.PatroniOptions
-}
-
-// GetPgbouncer returns the value of Pgbouncer.
-func (s *PostgresParams) GetPgbouncer() OptBool {
-	return s.Pgbouncer
-}
-
-// GetPgbouncerOptions returns the value of PgbouncerOptions.
-func (s *PostgresParams) GetPgbouncerOptions() OptPostgresParamsPgbouncerOptions {
-	return s.PgbouncerOptions
-}
-
-// GetReplicaOptions returns the value of ReplicaOptions.
-func (s *PostgresParams) GetReplicaOptions() OptPostgresParamsReplicaOptions {
-	return s.ReplicaOptions
-}
-
-// GetReplicas returns the value of Replicas.
-func (s *PostgresParams) GetReplicas() OptInt32 {
-	return s.Replicas
-}
-
-// GetSyncReplicas returns the value of SyncReplicas.
-func (s *PostgresParams) GetSyncReplicas() OptInt32 {
-	return s.SyncReplicas
-}
-
-// SetEtcd sets the value of Etcd.
-func (s *PostgresParams) SetEtcd(val OptBool) {
-	s.Etcd = val
-}
-
-// SetEtcdOptions sets the value of EtcdOptions.
-func (s *PostgresParams) SetEtcdOptions(val OptPostgresParamsEtcdOptions) {
-	s.EtcdOptions = val
-}
-
-// SetHaproxy sets the value of Haproxy.
-func (s *PostgresParams) SetHaproxy(val OptInt32) {
-	s.Haproxy = val
-}
-
-// SetHaproxyOptions sets the value of HaproxyOptions.
-func (s *PostgresParams) SetHaproxyOptions(val OptPostgresParamsHaproxyOptions) {
-	s.HaproxyOptions = val
-}
-
-// SetMasterOptions sets the value of MasterOptions.
-func (s *PostgresParams) SetMasterOptions(val OptPostgresParamsMasterOptions) {
-	s.MasterOptions = val
-}
-
-// SetPatroni sets the value of Patroni.
-func (s *PostgresParams) SetPatroni(val OptBool) {
-	s.Patroni = val
-}
-
-// SetPatroniOptions sets the value of PatroniOptions.
-func (s *PostgresParams) SetPatroniOptions(val OptPostgresParamsPatroniOptions) {
-	s.PatroniOptions = val
-}
-
-// SetPgbouncer sets the value of Pgbouncer.
-func (s *PostgresParams) SetPgbouncer(val OptBool) {
-	s.Pgbouncer = val
-}
-
-// SetPgbouncerOptions sets the value of PgbouncerOptions.
-func (s *PostgresParams) SetPgbouncerOptions(val OptPostgresParamsPgbouncerOptions) {
-	s.PgbouncerOptions = val
-}
-
-// SetReplicaOptions sets the value of ReplicaOptions.
-func (s *PostgresParams) SetReplicaOptions(val OptPostgresParamsReplicaOptions) {
-	s.ReplicaOptions = val
-}
-
-// SetReplicas sets the value of Replicas.
-func (s *PostgresParams) SetReplicas(val OptInt32) {
-	s.Replicas = val
-}
-
-// SetSyncReplicas sets the value of SyncReplicas.
-func (s *PostgresParams) SetSyncReplicas(val OptInt32) {
-	s.SyncReplicas = val
-}
-
-type PostgresParamsEtcdOptions map[string]string
-
-func (s *PostgresParamsEtcdOptions) init() PostgresParamsEtcdOptions {
-	m := *s
-	if m == nil {
-		m = map[string]string{}
-		*s = m
-	}
-	return m
-}
-
-type PostgresParamsHaproxyOptions map[string]string
-
-func (s *PostgresParamsHaproxyOptions) init() PostgresParamsHaproxyOptions {
-	m := *s
-	if m == nil {
-		m = map[string]string{}
-		*s = m
-	}
-	return m
-}
-
-type PostgresParamsMasterOptions map[string]string
-
-func (s *PostgresParamsMasterOptions) init() PostgresParamsMasterOptions {
-	m := *s
-	if m == nil {
-		m = map[string]string{}
-		*s = m
-	}
-	return m
-}
-
-type PostgresParamsPatroniOptions map[string]string
-
-func (s *PostgresParamsPatroniOptions) init() PostgresParamsPatroniOptions {
-	m := *s
-	if m == nil {
-		m = map[string]string{}
-		*s = m
-	}
-	return m
-}
-
-type PostgresParamsPgbouncerOptions map[string]string
-
-func (s *PostgresParamsPgbouncerOptions) init() PostgresParamsPgbouncerOptions {
-	m := *s
-	if m == nil {
-		m = map[string]string{}
-		*s = m
-	}
-	return m
-}
-
-type PostgresParamsReplicaOptions map[string]string
-
-func (s *PostgresParamsReplicaOptions) init() PostgresParamsReplicaOptions {
-	m := *s
-	if m == nil {
-		m = map[string]string{}
-		*s = m
-	}
-	return m
-}
-
-// Ref: #/components/schemas/PresetId
-type PresetId struct {
-	ID OptString `json:"id"`
-}
-
-// GetID returns the value of ID.
-func (s *PresetId) GetID() OptString {
-	return s.ID
-}
-
-// SetID sets the value of ID.
-func (s *PresetId) SetID(val OptString) {
-	s.ID = val
+// SetParamsJson sets the value of ParamsJson.
+func (s *ProviderRef) SetParamsJson(val OptString) {
+	s.ParamsJson = val
 }
 
 // Ref: #/components/schemas/ProviderSettings
@@ -23760,32 +21320,6 @@ func (s *RecipeRecord) SetVersion(val OptInt32) {
 	s.Version = val
 }
 
-// Ref: #/components/schemas/RecipeTopologySnapshot
-type RecipeTopologySnapshot struct {
-	Nodes    []MachineNode `json:"nodes"`
-	Provider OptString     `json:"provider"`
-}
-
-// GetNodes returns the value of Nodes.
-func (s *RecipeTopologySnapshot) GetNodes() []MachineNode {
-	return s.Nodes
-}
-
-// GetProvider returns the value of Provider.
-func (s *RecipeTopologySnapshot) GetProvider() OptString {
-	return s.Provider
-}
-
-// SetNodes sets the value of Nodes.
-func (s *RecipeTopologySnapshot) SetNodes(val []MachineNode) {
-	s.Nodes = val
-}
-
-// SetProvider sets the value of Provider.
-func (s *RecipeTopologySnapshot) SetProvider(val OptString) {
-	s.Provider = val
-}
-
 // Ref: #/components/schemas/Ref
 type Ref struct {
 	ID   OptSchemaIdentity `json:"id"`
@@ -24112,54 +21646,6 @@ func (RemoveFavoriteRequestKind) AllValues() []RemoveFavoriteRequestKind {
 
 // Ref: #/components/schemas/RemoveFavoriteResponse
 type RemoveFavoriteResponse struct{}
-
-// Ref: #/components/schemas/RenderOverrideSet
-type RenderOverrideSet struct {
-	Files  []FileOverride             `json:"files"`
-	Labels OptRenderOverrideSetLabels `json:"labels"`
-	Tags   OptTags                    `json:"tags"`
-}
-
-// GetFiles returns the value of Files.
-func (s *RenderOverrideSet) GetFiles() []FileOverride {
-	return s.Files
-}
-
-// GetLabels returns the value of Labels.
-func (s *RenderOverrideSet) GetLabels() OptRenderOverrideSetLabels {
-	return s.Labels
-}
-
-// GetTags returns the value of Tags.
-func (s *RenderOverrideSet) GetTags() OptTags {
-	return s.Tags
-}
-
-// SetFiles sets the value of Files.
-func (s *RenderOverrideSet) SetFiles(val []FileOverride) {
-	s.Files = val
-}
-
-// SetLabels sets the value of Labels.
-func (s *RenderOverrideSet) SetLabels(val OptRenderOverrideSetLabels) {
-	s.Labels = val
-}
-
-// SetTags sets the value of Tags.
-func (s *RenderOverrideSet) SetTags(val OptTags) {
-	s.Tags = val
-}
-
-type RenderOverrideSetLabels map[string]string
-
-func (s *RenderOverrideSetLabels) init() RenderOverrideSetLabels {
-	m := *s
-	if m == nil {
-		m = map[string]string{}
-		*s = m
-	}
-	return m
-}
 
 // Ref: #/components/schemas/Request
 type Request struct {
@@ -24627,6 +22113,153 @@ func (RuleSeverity) AllValues() []RuleSeverity {
 	}
 }
 
+// Ref: #/components/schemas/Run
+type Run struct {
+	Baked           OptBaked             `json:"baked"`
+	CompiledPlan    OptCompiledPlan      `json:"compiledPlan"`
+	Entity          Entity               `json:"entity"`
+	InGlobalRating  OptBool              `json:"inGlobalRating"`
+	InTenantRating  OptBool              `json:"inTenantRating"`
+	Observability   OptObservabilityRefs `json:"observability"`
+	RuntimeState    OptRunState          `json:"runtimeState"`
+	Status          OptRunStatus         `json:"status"`
+	Summary         OptSummary2          `json:"summary"`
+	Topology        OptRunTopology       `json:"topology"`
+	Trigger         OptRunTrigger        `json:"trigger"`
+	WorkflowId      OptString            `json:"workflowId"`
+	WorkflowVersion OptString            `json:"workflowVersion"`
+}
+
+// GetBaked returns the value of Baked.
+func (s *Run) GetBaked() OptBaked {
+	return s.Baked
+}
+
+// GetCompiledPlan returns the value of CompiledPlan.
+func (s *Run) GetCompiledPlan() OptCompiledPlan {
+	return s.CompiledPlan
+}
+
+// GetEntity returns the value of Entity.
+func (s *Run) GetEntity() Entity {
+	return s.Entity
+}
+
+// GetInGlobalRating returns the value of InGlobalRating.
+func (s *Run) GetInGlobalRating() OptBool {
+	return s.InGlobalRating
+}
+
+// GetInTenantRating returns the value of InTenantRating.
+func (s *Run) GetInTenantRating() OptBool {
+	return s.InTenantRating
+}
+
+// GetObservability returns the value of Observability.
+func (s *Run) GetObservability() OptObservabilityRefs {
+	return s.Observability
+}
+
+// GetRuntimeState returns the value of RuntimeState.
+func (s *Run) GetRuntimeState() OptRunState {
+	return s.RuntimeState
+}
+
+// GetStatus returns the value of Status.
+func (s *Run) GetStatus() OptRunStatus {
+	return s.Status
+}
+
+// GetSummary returns the value of Summary.
+func (s *Run) GetSummary() OptSummary2 {
+	return s.Summary
+}
+
+// GetTopology returns the value of Topology.
+func (s *Run) GetTopology() OptRunTopology {
+	return s.Topology
+}
+
+// GetTrigger returns the value of Trigger.
+func (s *Run) GetTrigger() OptRunTrigger {
+	return s.Trigger
+}
+
+// GetWorkflowId returns the value of WorkflowId.
+func (s *Run) GetWorkflowId() OptString {
+	return s.WorkflowId
+}
+
+// GetWorkflowVersion returns the value of WorkflowVersion.
+func (s *Run) GetWorkflowVersion() OptString {
+	return s.WorkflowVersion
+}
+
+// SetBaked sets the value of Baked.
+func (s *Run) SetBaked(val OptBaked) {
+	s.Baked = val
+}
+
+// SetCompiledPlan sets the value of CompiledPlan.
+func (s *Run) SetCompiledPlan(val OptCompiledPlan) {
+	s.CompiledPlan = val
+}
+
+// SetEntity sets the value of Entity.
+func (s *Run) SetEntity(val Entity) {
+	s.Entity = val
+}
+
+// SetInGlobalRating sets the value of InGlobalRating.
+func (s *Run) SetInGlobalRating(val OptBool) {
+	s.InGlobalRating = val
+}
+
+// SetInTenantRating sets the value of InTenantRating.
+func (s *Run) SetInTenantRating(val OptBool) {
+	s.InTenantRating = val
+}
+
+// SetObservability sets the value of Observability.
+func (s *Run) SetObservability(val OptObservabilityRefs) {
+	s.Observability = val
+}
+
+// SetRuntimeState sets the value of RuntimeState.
+func (s *Run) SetRuntimeState(val OptRunState) {
+	s.RuntimeState = val
+}
+
+// SetStatus sets the value of Status.
+func (s *Run) SetStatus(val OptRunStatus) {
+	s.Status = val
+}
+
+// SetSummary sets the value of Summary.
+func (s *Run) SetSummary(val OptSummary2) {
+	s.Summary = val
+}
+
+// SetTopology sets the value of Topology.
+func (s *Run) SetTopology(val OptRunTopology) {
+	s.Topology = val
+}
+
+// SetTrigger sets the value of Trigger.
+func (s *Run) SetTrigger(val OptRunTrigger) {
+	s.Trigger = val
+}
+
+// SetWorkflowId sets the value of WorkflowId.
+func (s *Run) SetWorkflowId(val OptString) {
+	s.WorkflowId = val
+}
+
+// SetWorkflowVersion sets the value of WorkflowVersion.
+func (s *Run) SetWorkflowVersion(val OptString) {
+	s.WorkflowVersion = val
+}
+
 // Ref: #/components/schemas/RunColumn
 type RunColumn struct {
 	DbKind         OptRunColumnDbKind   `json:"dbKind"`
@@ -24948,6 +22581,41 @@ func (RunStateStatus) AllValues() []RunStateStatus {
 	}
 }
 
+type RunStatus int32
+
+const (
+	RunStatus0  RunStatus = 0
+	RunStatus1  RunStatus = 1
+	RunStatus2  RunStatus = 2
+	RunStatus5  RunStatus = 5
+	RunStatus3  RunStatus = 3
+	RunStatus4  RunStatus = 4
+	RunStatus6  RunStatus = 6
+	RunStatus7  RunStatus = 7
+	RunStatus8  RunStatus = 8
+	RunStatus9  RunStatus = 9
+	RunStatus10 RunStatus = 10
+	RunStatus11 RunStatus = 11
+)
+
+// AllValues returns all RunStatus values.
+func (RunStatus) AllValues() []RunStatus {
+	return []RunStatus{
+		RunStatus0,
+		RunStatus1,
+		RunStatus2,
+		RunStatus5,
+		RunStatus3,
+		RunStatus4,
+		RunStatus6,
+		RunStatus7,
+		RunStatus8,
+		RunStatus9,
+		RunStatus10,
+		RunStatus11,
+	}
+}
+
 // Ref: #/components/schemas/RunSummary
 type RunSummary struct {
 	Better        OptInt32  `json:"better"`
@@ -25016,6 +22684,51 @@ func (s *RunSummary) SetSame(val OptInt32) {
 // SetWorse sets the value of Worse.
 func (s *RunSummary) SetWorse(val OptInt32) {
 	s.Worse = val
+}
+
+// Ref: #/components/schemas/RunTopology
+type RunTopology struct {
+	Nodes    []MachineNode `json:"nodes"`
+	Provider OptString     `json:"provider"`
+}
+
+// GetNodes returns the value of Nodes.
+func (s *RunTopology) GetNodes() []MachineNode {
+	return s.Nodes
+}
+
+// GetProvider returns the value of Provider.
+func (s *RunTopology) GetProvider() OptString {
+	return s.Provider
+}
+
+// SetNodes sets the value of Nodes.
+func (s *RunTopology) SetNodes(val []MachineNode) {
+	s.Nodes = val
+}
+
+// SetProvider sets the value of Provider.
+func (s *RunTopology) SetProvider(val OptString) {
+	s.Provider = val
+}
+
+type RunTrigger int32
+
+const (
+	RunTrigger0 RunTrigger = 0
+	RunTrigger1 RunTrigger = 1
+	RunTrigger2 RunTrigger = 2
+	RunTrigger3 RunTrigger = 3
+)
+
+// AllValues returns all RunTrigger values.
+func (RunTrigger) AllValues() []RunTrigger {
+	return []RunTrigger{
+		RunTrigger0,
+		RunTrigger1,
+		RunTrigger2,
+		RunTrigger3,
+	}
 }
 
 // Ref: #/components/schemas/RuntimeConnection
@@ -25755,76 +23468,6 @@ func (s *Script) SetText(val OptString) {
 	s.Text = val
 }
 
-// Ref: #/components/schemas/Segment
-type Segment struct {
-	Execution  Execution      `json:"execution"`
-	Files      []WorkloadFile `json:"files"`
-	Name       OptString      `json:"name"`
-	Parameters OptParameters  `json:"parameters"`
-	Script     OptString      `json:"script"`
-	SQL        OptString      `json:"sql"`
-}
-
-// GetExecution returns the value of Execution.
-func (s *Segment) GetExecution() Execution {
-	return s.Execution
-}
-
-// GetFiles returns the value of Files.
-func (s *Segment) GetFiles() []WorkloadFile {
-	return s.Files
-}
-
-// GetName returns the value of Name.
-func (s *Segment) GetName() OptString {
-	return s.Name
-}
-
-// GetParameters returns the value of Parameters.
-func (s *Segment) GetParameters() OptParameters {
-	return s.Parameters
-}
-
-// GetScript returns the value of Script.
-func (s *Segment) GetScript() OptString {
-	return s.Script
-}
-
-// GetSQL returns the value of SQL.
-func (s *Segment) GetSQL() OptString {
-	return s.SQL
-}
-
-// SetExecution sets the value of Execution.
-func (s *Segment) SetExecution(val Execution) {
-	s.Execution = val
-}
-
-// SetFiles sets the value of Files.
-func (s *Segment) SetFiles(val []WorkloadFile) {
-	s.Files = val
-}
-
-// SetName sets the value of Name.
-func (s *Segment) SetName(val OptString) {
-	s.Name = val
-}
-
-// SetParameters sets the value of Parameters.
-func (s *Segment) SetParameters(val OptParameters) {
-	s.Parameters = val
-}
-
-// SetScript sets the value of Script.
-func (s *Segment) SetScript(val OptString) {
-	s.Script = val
-}
-
-// SetSQL sets the value of SQL.
-func (s *Segment) SetSQL(val OptString) {
-	s.SQL = val
-}
-
 // Ref: #/components/schemas/ServiceNode
 type ServiceNode struct {
 	Image OptString `json:"image"`
@@ -25849,6 +23492,109 @@ func (s *ServiceNode) SetImage(val OptString) {
 // SetName sets the value of Name.
 func (s *ServiceNode) SetName(val OptString) {
 	s.Name = val
+}
+
+// Ref: #/components/schemas/ServiceSpec
+type ServiceSpec struct {
+	Configs []ConfigFile      `json:"configs"`
+	Env     OptServiceSpecEnv `json:"env"`
+	Health  OptHealthCheck    `json:"health"`
+	Image   OptString         `json:"image"`
+	Name    OptString         `json:"name"`
+	Network OptString         `json:"network"`
+	OnGroup OptString         `json:"onGroup"`
+	Volumes []string          `json:"volumes"`
+}
+
+// GetConfigs returns the value of Configs.
+func (s *ServiceSpec) GetConfigs() []ConfigFile {
+	return s.Configs
+}
+
+// GetEnv returns the value of Env.
+func (s *ServiceSpec) GetEnv() OptServiceSpecEnv {
+	return s.Env
+}
+
+// GetHealth returns the value of Health.
+func (s *ServiceSpec) GetHealth() OptHealthCheck {
+	return s.Health
+}
+
+// GetImage returns the value of Image.
+func (s *ServiceSpec) GetImage() OptString {
+	return s.Image
+}
+
+// GetName returns the value of Name.
+func (s *ServiceSpec) GetName() OptString {
+	return s.Name
+}
+
+// GetNetwork returns the value of Network.
+func (s *ServiceSpec) GetNetwork() OptString {
+	return s.Network
+}
+
+// GetOnGroup returns the value of OnGroup.
+func (s *ServiceSpec) GetOnGroup() OptString {
+	return s.OnGroup
+}
+
+// GetVolumes returns the value of Volumes.
+func (s *ServiceSpec) GetVolumes() []string {
+	return s.Volumes
+}
+
+// SetConfigs sets the value of Configs.
+func (s *ServiceSpec) SetConfigs(val []ConfigFile) {
+	s.Configs = val
+}
+
+// SetEnv sets the value of Env.
+func (s *ServiceSpec) SetEnv(val OptServiceSpecEnv) {
+	s.Env = val
+}
+
+// SetHealth sets the value of Health.
+func (s *ServiceSpec) SetHealth(val OptHealthCheck) {
+	s.Health = val
+}
+
+// SetImage sets the value of Image.
+func (s *ServiceSpec) SetImage(val OptString) {
+	s.Image = val
+}
+
+// SetName sets the value of Name.
+func (s *ServiceSpec) SetName(val OptString) {
+	s.Name = val
+}
+
+// SetNetwork sets the value of Network.
+func (s *ServiceSpec) SetNetwork(val OptString) {
+	s.Network = val
+}
+
+// SetOnGroup sets the value of OnGroup.
+func (s *ServiceSpec) SetOnGroup(val OptString) {
+	s.OnGroup = val
+}
+
+// SetVolumes sets the value of Volumes.
+func (s *ServiceSpec) SetVolumes(val []string) {
+	s.Volumes = val
+}
+
+type ServiceSpecEnv map[string]string
+
+func (s *ServiceSpecEnv) init() ServiceSpecEnv {
+	m := *s
+	if m == nil {
+		m = map[string]string{}
+		*s = m
+	}
+	return m
 }
 
 // Ref: #/components/schemas/SetShareExpiryRequest
@@ -27093,16 +24839,16 @@ func (s *StartRunRequest) SetTenantId(val OptString) {
 
 // Ref: #/components/schemas/StartRunResponse
 type StartRunResponse struct {
-	Run TestRunRecord `json:"run"`
+	Run Run `json:"run"`
 }
 
 // GetRun returns the value of Run.
-func (s *StartRunResponse) GetRun() TestRunRecord {
+func (s *StartRunResponse) GetRun() Run {
 	return s.Run
 }
 
 // SetRun sets the value of Run.
-func (s *StartRunResponse) SetRun(val TestRunRecord) {
+func (s *StartRunResponse) SetRun(val Run) {
 	s.Run = val
 }
 
@@ -27215,6 +24961,21 @@ func (s *StatusCounts) SetRunning(val OptInt32) {
 // SetTotal sets the value of Total.
 func (s *StatusCounts) SetTotal(val OptInt32) {
 	s.Total = val
+}
+
+// Ref: #/components/schemas/StepList
+type StepList struct {
+	Steps []DslStep `json:"steps"`
+}
+
+// GetSteps returns the value of Steps.
+func (s *StepList) GetSteps() []DslStep {
+	return s.Steps
+}
+
+// SetSteps sets the value of Steps.
+func (s *StepList) SetSteps(val []DslStep) {
+	s.Steps = val
 }
 
 type StreamLogsOK struct {
@@ -27884,7 +25645,7 @@ func (s *Tenant) SetUpdatedAt(val OptDateTime) {
 
 // Ref: #/components/schemas/TenantDashboard
 type TenantDashboard struct {
-	RecentRuns    []TestRunRecord `json:"recentRuns"`
+	RecentRuns    []Run           `json:"recentRuns"`
 	RunCounts     OptStatusCounts `json:"runCounts"`
 	SuccessRate   OptFloat32      `json:"successRate"`
 	TopBenchmarks []RatingEntry   `json:"topBenchmarks"`
@@ -27892,7 +25653,7 @@ type TenantDashboard struct {
 }
 
 // GetRecentRuns returns the value of RecentRuns.
-func (s *TenantDashboard) GetRecentRuns() []TestRunRecord {
+func (s *TenantDashboard) GetRecentRuns() []Run {
 	return s.RecentRuns
 }
 
@@ -27917,7 +25678,7 @@ func (s *TenantDashboard) GetUpcoming() []UpcomingSuite {
 }
 
 // SetRecentRuns sets the value of RecentRuns.
-func (s *TenantDashboard) SetRecentRuns(val []TestRunRecord) {
+func (s *TenantDashboard) SetRecentRuns(val []Run) {
 	s.RecentRuns = val
 }
 
@@ -28039,103 +25800,11 @@ func (TenantSettingsRecordDefaultProvider) AllValues() []TenantSettingsRecordDef
 	}
 }
 
-// Ref: #/components/schemas/TestRun
-type TestRun struct {
-	Database           Database             `json:"database"`
-	ID                 OptString            `json:"id"`
-	InfrastructurePlan InfrastructurePlan   `json:"infrastructurePlan"`
-	RenderOverrides    OptRenderOverrideSet `json:"renderOverrides"`
-	SuiteId            OptString            `json:"suiteId"`
-	Tags               OptTags              `json:"tags"`
-	TopologySpec       TopologySpec         `json:"topologySpec"`
-	Workload           Workload             `json:"workload"`
-}
-
-// GetDatabase returns the value of Database.
-func (s *TestRun) GetDatabase() Database {
-	return s.Database
-}
-
-// GetID returns the value of ID.
-func (s *TestRun) GetID() OptString {
-	return s.ID
-}
-
-// GetInfrastructurePlan returns the value of InfrastructurePlan.
-func (s *TestRun) GetInfrastructurePlan() InfrastructurePlan {
-	return s.InfrastructurePlan
-}
-
-// GetRenderOverrides returns the value of RenderOverrides.
-func (s *TestRun) GetRenderOverrides() OptRenderOverrideSet {
-	return s.RenderOverrides
-}
-
-// GetSuiteId returns the value of SuiteId.
-func (s *TestRun) GetSuiteId() OptString {
-	return s.SuiteId
-}
-
-// GetTags returns the value of Tags.
-func (s *TestRun) GetTags() OptTags {
-	return s.Tags
-}
-
-// GetTopologySpec returns the value of TopologySpec.
-func (s *TestRun) GetTopologySpec() TopologySpec {
-	return s.TopologySpec
-}
-
-// GetWorkload returns the value of Workload.
-func (s *TestRun) GetWorkload() Workload {
-	return s.Workload
-}
-
-// SetDatabase sets the value of Database.
-func (s *TestRun) SetDatabase(val Database) {
-	s.Database = val
-}
-
-// SetID sets the value of ID.
-func (s *TestRun) SetID(val OptString) {
-	s.ID = val
-}
-
-// SetInfrastructurePlan sets the value of InfrastructurePlan.
-func (s *TestRun) SetInfrastructurePlan(val InfrastructurePlan) {
-	s.InfrastructurePlan = val
-}
-
-// SetRenderOverrides sets the value of RenderOverrides.
-func (s *TestRun) SetRenderOverrides(val OptRenderOverrideSet) {
-	s.RenderOverrides = val
-}
-
-// SetSuiteId sets the value of SuiteId.
-func (s *TestRun) SetSuiteId(val OptString) {
-	s.SuiteId = val
-}
-
-// SetTags sets the value of Tags.
-func (s *TestRun) SetTags(val OptTags) {
-	s.Tags = val
-}
-
-// SetTopologySpec sets the value of TopologySpec.
-func (s *TestRun) SetTopologySpec(val TopologySpec) {
-	s.TopologySpec = val
-}
-
-// SetWorkload sets the value of Workload.
-func (s *TestRun) SetWorkload(val Workload) {
-	s.Workload = val
-}
-
 // Ref: #/components/schemas/TestRunOverviewSnapshot
 type TestRunOverviewSnapshot struct {
-	Overview Overview      `json:"overview"`
-	Run      TestRunRecord `json:"run"`
-	Topology Topology      `json:"topology"`
+	Overview Overview `json:"overview"`
+	Run      Run      `json:"run"`
+	Topology Topology `json:"topology"`
 }
 
 // GetOverview returns the value of Overview.
@@ -28144,7 +25813,7 @@ func (s *TestRunOverviewSnapshot) GetOverview() Overview {
 }
 
 // GetRun returns the value of Run.
-func (s *TestRunOverviewSnapshot) GetRun() TestRunRecord {
+func (s *TestRunOverviewSnapshot) GetRun() Run {
 	return s.Run
 }
 
@@ -28159,225 +25828,13 @@ func (s *TestRunOverviewSnapshot) SetOverview(val Overview) {
 }
 
 // SetRun sets the value of Run.
-func (s *TestRunOverviewSnapshot) SetRun(val TestRunRecord) {
+func (s *TestRunOverviewSnapshot) SetRun(val Run) {
 	s.Run = val
 }
 
 // SetTopology sets the value of Topology.
 func (s *TestRunOverviewSnapshot) SetTopology(val Topology) {
 	s.Topology = val
-}
-
-// Ref: #/components/schemas/TestRunRecord
-type TestRunRecord struct {
-	DeploymentPlan      OptDeploymentPlan         `json:"deploymentPlan"`
-	Entity              Entity                    `json:"entity"`
-	InGlobalRating      OptBool                   `json:"inGlobalRating"`
-	InTenantRating      OptBool                   `json:"inTenantRating"`
-	InfrastructureState OptInfrastructureState    `json:"infrastructureState"`
-	RecipeId            OptString                 `json:"recipeId"`
-	RecipeTopology      OptRecipeTopologySnapshot `json:"recipeTopology"`
-	RuntimeState        OptRunState               `json:"runtimeState"`
-	Spec                TestRun                   `json:"spec"`
-	Status              OptTestRunRecordStatus    `json:"status"`
-	SuiteCellId         OptString                 `json:"suiteCellId"`
-	SuiteRunId          OptString                 `json:"suiteRunId"`
-	Summary             OptSummary2               `json:"summary"`
-	Trigger             OptTestRunRecordTrigger   `json:"trigger"`
-}
-
-// GetDeploymentPlan returns the value of DeploymentPlan.
-func (s *TestRunRecord) GetDeploymentPlan() OptDeploymentPlan {
-	return s.DeploymentPlan
-}
-
-// GetEntity returns the value of Entity.
-func (s *TestRunRecord) GetEntity() Entity {
-	return s.Entity
-}
-
-// GetInGlobalRating returns the value of InGlobalRating.
-func (s *TestRunRecord) GetInGlobalRating() OptBool {
-	return s.InGlobalRating
-}
-
-// GetInTenantRating returns the value of InTenantRating.
-func (s *TestRunRecord) GetInTenantRating() OptBool {
-	return s.InTenantRating
-}
-
-// GetInfrastructureState returns the value of InfrastructureState.
-func (s *TestRunRecord) GetInfrastructureState() OptInfrastructureState {
-	return s.InfrastructureState
-}
-
-// GetRecipeId returns the value of RecipeId.
-func (s *TestRunRecord) GetRecipeId() OptString {
-	return s.RecipeId
-}
-
-// GetRecipeTopology returns the value of RecipeTopology.
-func (s *TestRunRecord) GetRecipeTopology() OptRecipeTopologySnapshot {
-	return s.RecipeTopology
-}
-
-// GetRuntimeState returns the value of RuntimeState.
-func (s *TestRunRecord) GetRuntimeState() OptRunState {
-	return s.RuntimeState
-}
-
-// GetSpec returns the value of Spec.
-func (s *TestRunRecord) GetSpec() TestRun {
-	return s.Spec
-}
-
-// GetStatus returns the value of Status.
-func (s *TestRunRecord) GetStatus() OptTestRunRecordStatus {
-	return s.Status
-}
-
-// GetSuiteCellId returns the value of SuiteCellId.
-func (s *TestRunRecord) GetSuiteCellId() OptString {
-	return s.SuiteCellId
-}
-
-// GetSuiteRunId returns the value of SuiteRunId.
-func (s *TestRunRecord) GetSuiteRunId() OptString {
-	return s.SuiteRunId
-}
-
-// GetSummary returns the value of Summary.
-func (s *TestRunRecord) GetSummary() OptSummary2 {
-	return s.Summary
-}
-
-// GetTrigger returns the value of Trigger.
-func (s *TestRunRecord) GetTrigger() OptTestRunRecordTrigger {
-	return s.Trigger
-}
-
-// SetDeploymentPlan sets the value of DeploymentPlan.
-func (s *TestRunRecord) SetDeploymentPlan(val OptDeploymentPlan) {
-	s.DeploymentPlan = val
-}
-
-// SetEntity sets the value of Entity.
-func (s *TestRunRecord) SetEntity(val Entity) {
-	s.Entity = val
-}
-
-// SetInGlobalRating sets the value of InGlobalRating.
-func (s *TestRunRecord) SetInGlobalRating(val OptBool) {
-	s.InGlobalRating = val
-}
-
-// SetInTenantRating sets the value of InTenantRating.
-func (s *TestRunRecord) SetInTenantRating(val OptBool) {
-	s.InTenantRating = val
-}
-
-// SetInfrastructureState sets the value of InfrastructureState.
-func (s *TestRunRecord) SetInfrastructureState(val OptInfrastructureState) {
-	s.InfrastructureState = val
-}
-
-// SetRecipeId sets the value of RecipeId.
-func (s *TestRunRecord) SetRecipeId(val OptString) {
-	s.RecipeId = val
-}
-
-// SetRecipeTopology sets the value of RecipeTopology.
-func (s *TestRunRecord) SetRecipeTopology(val OptRecipeTopologySnapshot) {
-	s.RecipeTopology = val
-}
-
-// SetRuntimeState sets the value of RuntimeState.
-func (s *TestRunRecord) SetRuntimeState(val OptRunState) {
-	s.RuntimeState = val
-}
-
-// SetSpec sets the value of Spec.
-func (s *TestRunRecord) SetSpec(val TestRun) {
-	s.Spec = val
-}
-
-// SetStatus sets the value of Status.
-func (s *TestRunRecord) SetStatus(val OptTestRunRecordStatus) {
-	s.Status = val
-}
-
-// SetSuiteCellId sets the value of SuiteCellId.
-func (s *TestRunRecord) SetSuiteCellId(val OptString) {
-	s.SuiteCellId = val
-}
-
-// SetSuiteRunId sets the value of SuiteRunId.
-func (s *TestRunRecord) SetSuiteRunId(val OptString) {
-	s.SuiteRunId = val
-}
-
-// SetSummary sets the value of Summary.
-func (s *TestRunRecord) SetSummary(val OptSummary2) {
-	s.Summary = val
-}
-
-// SetTrigger sets the value of Trigger.
-func (s *TestRunRecord) SetTrigger(val OptTestRunRecordTrigger) {
-	s.Trigger = val
-}
-
-type TestRunRecordStatus int32
-
-const (
-	TestRunRecordStatus0  TestRunRecordStatus = 0
-	TestRunRecordStatus1  TestRunRecordStatus = 1
-	TestRunRecordStatus2  TestRunRecordStatus = 2
-	TestRunRecordStatus5  TestRunRecordStatus = 5
-	TestRunRecordStatus3  TestRunRecordStatus = 3
-	TestRunRecordStatus4  TestRunRecordStatus = 4
-	TestRunRecordStatus6  TestRunRecordStatus = 6
-	TestRunRecordStatus7  TestRunRecordStatus = 7
-	TestRunRecordStatus8  TestRunRecordStatus = 8
-	TestRunRecordStatus9  TestRunRecordStatus = 9
-	TestRunRecordStatus10 TestRunRecordStatus = 10
-	TestRunRecordStatus11 TestRunRecordStatus = 11
-)
-
-// AllValues returns all TestRunRecordStatus values.
-func (TestRunRecordStatus) AllValues() []TestRunRecordStatus {
-	return []TestRunRecordStatus{
-		TestRunRecordStatus0,
-		TestRunRecordStatus1,
-		TestRunRecordStatus2,
-		TestRunRecordStatus5,
-		TestRunRecordStatus3,
-		TestRunRecordStatus4,
-		TestRunRecordStatus6,
-		TestRunRecordStatus7,
-		TestRunRecordStatus8,
-		TestRunRecordStatus9,
-		TestRunRecordStatus10,
-		TestRunRecordStatus11,
-	}
-}
-
-type TestRunRecordTrigger int32
-
-const (
-	TestRunRecordTrigger0 TestRunRecordTrigger = 0
-	TestRunRecordTrigger1 TestRunRecordTrigger = 1
-	TestRunRecordTrigger2 TestRunRecordTrigger = 2
-	TestRunRecordTrigger3 TestRunRecordTrigger = 3
-)
-
-// AllValues returns all TestRunRecordTrigger values.
-func (TestRunRecordTrigger) AllValues() []TestRunRecordTrigger {
-	return []TestRunRecordTrigger{
-		TestRunRecordTrigger0,
-		TestRunRecordTrigger1,
-		TestRunRecordTrigger2,
-		TestRunRecordTrigger3,
-	}
 }
 
 // Ref: #/components/schemas/TimeRange
@@ -29546,6 +27003,32 @@ func (s *VolumeMount) SetTarget(val OptString) {
 	s.Target = val
 }
 
+// Ref: #/components/schemas/WaitStep
+type WaitStep struct {
+	HTTP    OptString `json:"http"`
+	Timeout OptString `json:"timeout"`
+}
+
+// GetHTTP returns the value of HTTP.
+func (s *WaitStep) GetHTTP() OptString {
+	return s.HTTP
+}
+
+// GetTimeout returns the value of Timeout.
+func (s *WaitStep) GetTimeout() OptString {
+	return s.Timeout
+}
+
+// SetHTTP sets the value of HTTP.
+func (s *WaitStep) SetHTTP(val OptString) {
+	s.HTTP = val
+}
+
+// SetTimeout sets the value of Timeout.
+func (s *WaitStep) SetTimeout(val OptString) {
+	s.Timeout = val
+}
+
 // Ref: #/components/schemas/Worker
 type Worker struct {
 	ID   OptString     `json:"id"`
@@ -29865,473 +27348,4 @@ func (WorkerKind) AllValues() []WorkerKind {
 		WorkerKind1,
 		WorkerKind2,
 	}
-}
-
-// Ref: #/components/schemas/Workload
-type Workload struct {
-	Protocol       OptWorkloadProtocol `json:"protocol"`
-	Segments       []Segment           `json:"segments"`
-	StroppyVersion OptString           `json:"stroppyVersion"`
-	Tags           OptTags             `json:"tags"`
-}
-
-// GetProtocol returns the value of Protocol.
-func (s *Workload) GetProtocol() OptWorkloadProtocol {
-	return s.Protocol
-}
-
-// GetSegments returns the value of Segments.
-func (s *Workload) GetSegments() []Segment {
-	return s.Segments
-}
-
-// GetStroppyVersion returns the value of StroppyVersion.
-func (s *Workload) GetStroppyVersion() OptString {
-	return s.StroppyVersion
-}
-
-// GetTags returns the value of Tags.
-func (s *Workload) GetTags() OptTags {
-	return s.Tags
-}
-
-// SetProtocol sets the value of Protocol.
-func (s *Workload) SetProtocol(val OptWorkloadProtocol) {
-	s.Protocol = val
-}
-
-// SetSegments sets the value of Segments.
-func (s *Workload) SetSegments(val []Segment) {
-	s.Segments = val
-}
-
-// SetStroppyVersion sets the value of StroppyVersion.
-func (s *Workload) SetStroppyVersion(val OptString) {
-	s.StroppyVersion = val
-}
-
-// SetTags sets the value of Tags.
-func (s *Workload) SetTags(val OptTags) {
-	s.Tags = val
-}
-
-// Ref: #/components/schemas/WorkloadFile
-type WorkloadFile struct {
-	Content OptString `json:"content"`
-	Kind    OptString `json:"kind"`
-	Name    OptString `json:"name"`
-}
-
-// GetContent returns the value of Content.
-func (s *WorkloadFile) GetContent() OptString {
-	return s.Content
-}
-
-// GetKind returns the value of Kind.
-func (s *WorkloadFile) GetKind() OptString {
-	return s.Kind
-}
-
-// GetName returns the value of Name.
-func (s *WorkloadFile) GetName() OptString {
-	return s.Name
-}
-
-// SetContent sets the value of Content.
-func (s *WorkloadFile) SetContent(val OptString) {
-	s.Content = val
-}
-
-// SetKind sets the value of Kind.
-func (s *WorkloadFile) SetKind(val OptString) {
-	s.Kind = val
-}
-
-// SetName sets the value of Name.
-func (s *WorkloadFile) SetName(val OptString) {
-	s.Name = val
-}
-
-type WorkloadProtocol int32
-
-const (
-	WorkloadProtocol0 WorkloadProtocol = 0
-	WorkloadProtocol1 WorkloadProtocol = 1
-	WorkloadProtocol2 WorkloadProtocol = 2
-	WorkloadProtocol3 WorkloadProtocol = 3
-	WorkloadProtocol4 WorkloadProtocol = 4
-	WorkloadProtocol5 WorkloadProtocol = 5
-	WorkloadProtocol7 WorkloadProtocol = 7
-	WorkloadProtocol8 WorkloadProtocol = 8
-)
-
-// AllValues returns all WorkloadProtocol values.
-func (WorkloadProtocol) AllValues() []WorkloadProtocol {
-	return []WorkloadProtocol{
-		WorkloadProtocol0,
-		WorkloadProtocol1,
-		WorkloadProtocol2,
-		WorkloadProtocol3,
-		WorkloadProtocol4,
-		WorkloadProtocol5,
-		WorkloadProtocol7,
-		WorkloadProtocol8,
-	}
-}
-
-// Ref: #/components/schemas/YdbManagedParams
-type YdbManagedParams struct {
-	AutoScale        OptAutoScale                   `json:"autoScale"`
-	ComputeType      OptYdbManagedParamsComputeType `json:"computeType"`
-	NodeCount        OptInt32                       `json:"nodeCount"`
-	ResourcePresetId OptString                      `json:"resourcePresetId"`
-	StorageGroups    OptInt32                       `json:"storageGroups"`
-	StorageType      OptString                      `json:"storageType"`
-	ThrottlingRcus   OptInt32                       `json:"throttlingRcus"`
-	Type             OptYdbManagedParamsType        `json:"type"`
-}
-
-// GetAutoScale returns the value of AutoScale.
-func (s *YdbManagedParams) GetAutoScale() OptAutoScale {
-	return s.AutoScale
-}
-
-// GetComputeType returns the value of ComputeType.
-func (s *YdbManagedParams) GetComputeType() OptYdbManagedParamsComputeType {
-	return s.ComputeType
-}
-
-// GetNodeCount returns the value of NodeCount.
-func (s *YdbManagedParams) GetNodeCount() OptInt32 {
-	return s.NodeCount
-}
-
-// GetResourcePresetId returns the value of ResourcePresetId.
-func (s *YdbManagedParams) GetResourcePresetId() OptString {
-	return s.ResourcePresetId
-}
-
-// GetStorageGroups returns the value of StorageGroups.
-func (s *YdbManagedParams) GetStorageGroups() OptInt32 {
-	return s.StorageGroups
-}
-
-// GetStorageType returns the value of StorageType.
-func (s *YdbManagedParams) GetStorageType() OptString {
-	return s.StorageType
-}
-
-// GetThrottlingRcus returns the value of ThrottlingRcus.
-func (s *YdbManagedParams) GetThrottlingRcus() OptInt32 {
-	return s.ThrottlingRcus
-}
-
-// GetType returns the value of Type.
-func (s *YdbManagedParams) GetType() OptYdbManagedParamsType {
-	return s.Type
-}
-
-// SetAutoScale sets the value of AutoScale.
-func (s *YdbManagedParams) SetAutoScale(val OptAutoScale) {
-	s.AutoScale = val
-}
-
-// SetComputeType sets the value of ComputeType.
-func (s *YdbManagedParams) SetComputeType(val OptYdbManagedParamsComputeType) {
-	s.ComputeType = val
-}
-
-// SetNodeCount sets the value of NodeCount.
-func (s *YdbManagedParams) SetNodeCount(val OptInt32) {
-	s.NodeCount = val
-}
-
-// SetResourcePresetId sets the value of ResourcePresetId.
-func (s *YdbManagedParams) SetResourcePresetId(val OptString) {
-	s.ResourcePresetId = val
-}
-
-// SetStorageGroups sets the value of StorageGroups.
-func (s *YdbManagedParams) SetStorageGroups(val OptInt32) {
-	s.StorageGroups = val
-}
-
-// SetStorageType sets the value of StorageType.
-func (s *YdbManagedParams) SetStorageType(val OptString) {
-	s.StorageType = val
-}
-
-// SetThrottlingRcus sets the value of ThrottlingRcus.
-func (s *YdbManagedParams) SetThrottlingRcus(val OptInt32) {
-	s.ThrottlingRcus = val
-}
-
-// SetType sets the value of Type.
-func (s *YdbManagedParams) SetType(val OptYdbManagedParamsType) {
-	s.Type = val
-}
-
-type YdbManagedParamsComputeType int32
-
-const (
-	YdbManagedParamsComputeType0 YdbManagedParamsComputeType = 0
-	YdbManagedParamsComputeType1 YdbManagedParamsComputeType = 1
-	YdbManagedParamsComputeType2 YdbManagedParamsComputeType = 2
-)
-
-// AllValues returns all YdbManagedParamsComputeType values.
-func (YdbManagedParamsComputeType) AllValues() []YdbManagedParamsComputeType {
-	return []YdbManagedParamsComputeType{
-		YdbManagedParamsComputeType0,
-		YdbManagedParamsComputeType1,
-		YdbManagedParamsComputeType2,
-	}
-}
-
-type YdbManagedParamsType int32
-
-const (
-	YdbManagedParamsType1 YdbManagedParamsType = 1
-	YdbManagedParamsType2 YdbManagedParamsType = 2
-)
-
-// AllValues returns all YdbManagedParamsType values.
-func (YdbManagedParamsType) AllValues() []YdbManagedParamsType {
-	return []YdbManagedParamsType{
-		YdbManagedParamsType1,
-		YdbManagedParamsType2,
-	}
-}
-
-// Ref: #/components/schemas/YdbParams
-type YdbParams struct {
-	AutoSizePdisks       OptBool                       `json:"autoSizePdisks"`
-	DatabaseNodes        OptInt32                      `json:"databaseNodes"`
-	DatabaseOptions      OptYdbParamsDatabaseOptions   `json:"databaseOptions"`
-	DatabasePath         OptString                     `json:"databasePath"`
-	DefaultDiskType      OptYdbParamsDefaultDiskType   `json:"defaultDiskType"`
-	FailureDomainType    OptYdbParamsFailureDomainType `json:"failureDomainType"`
-	FaultTolerance       OptYdbParamsFaultTolerance    `json:"faultTolerance"`
-	Haproxy              OptInt32                      `json:"haproxy"`
-	HaproxyOptions       OptYdbParamsHaproxyOptions    `json:"haproxyOptions"`
-	PdisksPerStorageNode OptInt32                      `json:"pdisksPerStorageNode"`
-	StorageGroups        OptInt32                      `json:"storageGroups"`
-	StorageNodes         OptInt32                      `json:"storageNodes"`
-	StorageOptions       OptYdbParamsStorageOptions    `json:"storageOptions"`
-}
-
-// GetAutoSizePdisks returns the value of AutoSizePdisks.
-func (s *YdbParams) GetAutoSizePdisks() OptBool {
-	return s.AutoSizePdisks
-}
-
-// GetDatabaseNodes returns the value of DatabaseNodes.
-func (s *YdbParams) GetDatabaseNodes() OptInt32 {
-	return s.DatabaseNodes
-}
-
-// GetDatabaseOptions returns the value of DatabaseOptions.
-func (s *YdbParams) GetDatabaseOptions() OptYdbParamsDatabaseOptions {
-	return s.DatabaseOptions
-}
-
-// GetDatabasePath returns the value of DatabasePath.
-func (s *YdbParams) GetDatabasePath() OptString {
-	return s.DatabasePath
-}
-
-// GetDefaultDiskType returns the value of DefaultDiskType.
-func (s *YdbParams) GetDefaultDiskType() OptYdbParamsDefaultDiskType {
-	return s.DefaultDiskType
-}
-
-// GetFailureDomainType returns the value of FailureDomainType.
-func (s *YdbParams) GetFailureDomainType() OptYdbParamsFailureDomainType {
-	return s.FailureDomainType
-}
-
-// GetFaultTolerance returns the value of FaultTolerance.
-func (s *YdbParams) GetFaultTolerance() OptYdbParamsFaultTolerance {
-	return s.FaultTolerance
-}
-
-// GetHaproxy returns the value of Haproxy.
-func (s *YdbParams) GetHaproxy() OptInt32 {
-	return s.Haproxy
-}
-
-// GetHaproxyOptions returns the value of HaproxyOptions.
-func (s *YdbParams) GetHaproxyOptions() OptYdbParamsHaproxyOptions {
-	return s.HaproxyOptions
-}
-
-// GetPdisksPerStorageNode returns the value of PdisksPerStorageNode.
-func (s *YdbParams) GetPdisksPerStorageNode() OptInt32 {
-	return s.PdisksPerStorageNode
-}
-
-// GetStorageGroups returns the value of StorageGroups.
-func (s *YdbParams) GetStorageGroups() OptInt32 {
-	return s.StorageGroups
-}
-
-// GetStorageNodes returns the value of StorageNodes.
-func (s *YdbParams) GetStorageNodes() OptInt32 {
-	return s.StorageNodes
-}
-
-// GetStorageOptions returns the value of StorageOptions.
-func (s *YdbParams) GetStorageOptions() OptYdbParamsStorageOptions {
-	return s.StorageOptions
-}
-
-// SetAutoSizePdisks sets the value of AutoSizePdisks.
-func (s *YdbParams) SetAutoSizePdisks(val OptBool) {
-	s.AutoSizePdisks = val
-}
-
-// SetDatabaseNodes sets the value of DatabaseNodes.
-func (s *YdbParams) SetDatabaseNodes(val OptInt32) {
-	s.DatabaseNodes = val
-}
-
-// SetDatabaseOptions sets the value of DatabaseOptions.
-func (s *YdbParams) SetDatabaseOptions(val OptYdbParamsDatabaseOptions) {
-	s.DatabaseOptions = val
-}
-
-// SetDatabasePath sets the value of DatabasePath.
-func (s *YdbParams) SetDatabasePath(val OptString) {
-	s.DatabasePath = val
-}
-
-// SetDefaultDiskType sets the value of DefaultDiskType.
-func (s *YdbParams) SetDefaultDiskType(val OptYdbParamsDefaultDiskType) {
-	s.DefaultDiskType = val
-}
-
-// SetFailureDomainType sets the value of FailureDomainType.
-func (s *YdbParams) SetFailureDomainType(val OptYdbParamsFailureDomainType) {
-	s.FailureDomainType = val
-}
-
-// SetFaultTolerance sets the value of FaultTolerance.
-func (s *YdbParams) SetFaultTolerance(val OptYdbParamsFaultTolerance) {
-	s.FaultTolerance = val
-}
-
-// SetHaproxy sets the value of Haproxy.
-func (s *YdbParams) SetHaproxy(val OptInt32) {
-	s.Haproxy = val
-}
-
-// SetHaproxyOptions sets the value of HaproxyOptions.
-func (s *YdbParams) SetHaproxyOptions(val OptYdbParamsHaproxyOptions) {
-	s.HaproxyOptions = val
-}
-
-// SetPdisksPerStorageNode sets the value of PdisksPerStorageNode.
-func (s *YdbParams) SetPdisksPerStorageNode(val OptInt32) {
-	s.PdisksPerStorageNode = val
-}
-
-// SetStorageGroups sets the value of StorageGroups.
-func (s *YdbParams) SetStorageGroups(val OptInt32) {
-	s.StorageGroups = val
-}
-
-// SetStorageNodes sets the value of StorageNodes.
-func (s *YdbParams) SetStorageNodes(val OptInt32) {
-	s.StorageNodes = val
-}
-
-// SetStorageOptions sets the value of StorageOptions.
-func (s *YdbParams) SetStorageOptions(val OptYdbParamsStorageOptions) {
-	s.StorageOptions = val
-}
-
-type YdbParamsDatabaseOptions map[string]string
-
-func (s *YdbParamsDatabaseOptions) init() YdbParamsDatabaseOptions {
-	m := *s
-	if m == nil {
-		m = map[string]string{}
-		*s = m
-	}
-	return m
-}
-
-type YdbParamsDefaultDiskType int32
-
-const (
-	YdbParamsDefaultDiskType0 YdbParamsDefaultDiskType = 0
-	YdbParamsDefaultDiskType1 YdbParamsDefaultDiskType = 1
-	YdbParamsDefaultDiskType2 YdbParamsDefaultDiskType = 2
-	YdbParamsDefaultDiskType3 YdbParamsDefaultDiskType = 3
-)
-
-// AllValues returns all YdbParamsDefaultDiskType values.
-func (YdbParamsDefaultDiskType) AllValues() []YdbParamsDefaultDiskType {
-	return []YdbParamsDefaultDiskType{
-		YdbParamsDefaultDiskType0,
-		YdbParamsDefaultDiskType1,
-		YdbParamsDefaultDiskType2,
-		YdbParamsDefaultDiskType3,
-	}
-}
-
-type YdbParamsFailureDomainType int32
-
-const (
-	YdbParamsFailureDomainType0 YdbParamsFailureDomainType = 0
-	YdbParamsFailureDomainType1 YdbParamsFailureDomainType = 1
-)
-
-// AllValues returns all YdbParamsFailureDomainType values.
-func (YdbParamsFailureDomainType) AllValues() []YdbParamsFailureDomainType {
-	return []YdbParamsFailureDomainType{
-		YdbParamsFailureDomainType0,
-		YdbParamsFailureDomainType1,
-	}
-}
-
-type YdbParamsFaultTolerance int32
-
-const (
-	YdbParamsFaultTolerance0 YdbParamsFaultTolerance = 0
-	YdbParamsFaultTolerance1 YdbParamsFaultTolerance = 1
-	YdbParamsFaultTolerance2 YdbParamsFaultTolerance = 2
-	YdbParamsFaultTolerance3 YdbParamsFaultTolerance = 3
-)
-
-// AllValues returns all YdbParamsFaultTolerance values.
-func (YdbParamsFaultTolerance) AllValues() []YdbParamsFaultTolerance {
-	return []YdbParamsFaultTolerance{
-		YdbParamsFaultTolerance0,
-		YdbParamsFaultTolerance1,
-		YdbParamsFaultTolerance2,
-		YdbParamsFaultTolerance3,
-	}
-}
-
-type YdbParamsHaproxyOptions map[string]string
-
-func (s *YdbParamsHaproxyOptions) init() YdbParamsHaproxyOptions {
-	m := *s
-	if m == nil {
-		m = map[string]string{}
-		*s = m
-	}
-	return m
-}
-
-type YdbParamsStorageOptions map[string]string
-
-func (s *YdbParamsStorageOptions) init() YdbParamsStorageOptions {
-	m := *s
-	if m == nil {
-		m = map[string]string{}
-		*s = m
-	}
-	return m
 }

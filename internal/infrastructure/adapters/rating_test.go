@@ -14,14 +14,14 @@ import (
 
 func TestRankRunsSkipsSoftDeletedRuns(t *testing.T) {
 	deletedAt := timestamppb.Now()
-	runs := []*models.TestRunRecord{
+	runs := []*models.Run{
 		{
 			Entity:  &common.Entity{Id: "deleted", Timings: &common.Timings{DeletedAt: deletedAt}},
-			Summary: &models.TestRunRecord_Summary{},
+			Summary: &models.Run_Summary{},
 		},
 		{
 			Entity:  &common.Entity{Id: "active", Timings: &common.Timings{}},
-			Summary: &models.TestRunRecord_Summary{},
+			Summary: &models.Run_Summary{},
 		},
 	}
 	metrics := fakeRunMetricsGetter{
@@ -49,9 +49,9 @@ func TestRankRunsSkipsSoftDeletedRuns(t *testing.T) {
 func TestRatingBoardFallsBackFromDbTpsToDbQps(t *testing.T) {
 	board := NewRatingBoard(
 		fakeRatingRunsLister{
-			runs: []*models.TestRunRecord{{
+			runs: []*models.Run{{
 				Entity:  &common.Entity{Id: "run-a", Timings: &common.Timings{}},
-				Summary: &models.TestRunRecord_Summary{},
+				Summary: &models.Run_Summary{},
 			}},
 		},
 		fakeRunMetricsGetter{
@@ -79,9 +79,9 @@ func TestRatingBoardFallsBackFromDbTpsToDbQps(t *testing.T) {
 func TestPublicRatingBoardAllowsUnsetTimeWindow(t *testing.T) {
 	board := NewPublicRatingBoard(
 		fakeRatingRunsLister{
-			runs: []*models.TestRunRecord{{
+			runs: []*models.Run{{
 				Entity:  &common.Entity{Id: "run-a", Timings: &common.Timings{}},
-				Summary: &models.TestRunRecord_Summary{},
+				Summary: &models.Run_Summary{},
 			}},
 		},
 		fakeRunMetricsGetter{
@@ -99,6 +99,36 @@ func TestPublicRatingBoardAllowsUnsetTimeWindow(t *testing.T) {
 	}
 	if len(entries) != 1 {
 		t.Fatalf("entries = %d, want 1", len(entries))
+	}
+}
+
+// TestRankRuns_UsesRunTopLevelRatingFlags asserts rankRuns/matchFacets read the
+// SP-E Task 5-migrated models.Run shape directly (top-level InTenantRating/
+// Entity, not the retired models.TestRunRecord).
+func TestRankRuns_UsesRunTopLevelRatingFlags(t *testing.T) {
+	runs := []*models.Run{{
+		Entity:         &common.Entity{Id: "r1"},
+		InTenantRating: true,
+		Summary:        &models.Run_Summary{},
+	}}
+	metrics := fakeRunMetricsGetter{
+		byRunID: map[string]*monitor.RunMetrics{
+			"r1": {RunId: "r1", Metrics: []*monitor.MetricSummary{{Key: "throughput", Avg: 42, HigherIsBetter: true}}},
+		},
+	}
+
+	ranked, found, err := rankRuns(context.Background(), metrics, runs, ratingFacets{metricKey: "throughput"})
+	if err != nil {
+		t.Fatalf("rank runs: %v", err)
+	}
+	if !found {
+		t.Fatal("metric was not found")
+	}
+	if len(ranked) != 1 {
+		t.Fatalf("ranked runs = %d, want 1", len(ranked))
+	}
+	if !ranked[0].run.GetInTenantRating() {
+		t.Fatal("ranked run should carry InTenantRating from the source models.Run")
 	}
 }
 

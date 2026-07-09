@@ -48,7 +48,7 @@ func (m *RandomTokenMinter) Mint() (string, error) {
 type ShareRunReader interface {
 	// GetTestRun loads a test run by id (tenant ownership is asserted by the
 	// builder against the returned record's entity).
-	GetTestRun(ctx context.Context, id string) (*models.TestRunRecord, error)
+	GetTestRun(ctx context.Context, id string) (*models.Run, error)
 }
 
 // ShareMetricsReader optionally yields a run's computed metric snapshot so the
@@ -96,7 +96,7 @@ func (b *RunSnapshotBuilder) Build(ctx context.Context, tenantID string, target 
 }
 
 // sharedTestRun projects a stored test run into its limited public view.
-func (b *RunSnapshotBuilder) sharedTestRun(ctx context.Context, rec *models.TestRunRecord) *models.SharedTestRun {
+func (b *RunSnapshotBuilder) sharedTestRun(ctx context.Context, rec *models.Run) *models.SharedTestRun {
 	sum := rec.GetSummary()
 	view := &models.SharedTestRun{
 		Name:           rec.GetEntity().GetName(),

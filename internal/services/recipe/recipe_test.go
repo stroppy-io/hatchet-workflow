@@ -518,8 +518,8 @@ func TestStartRunStampsRecipeIDLabel(t *testing.T) {
 	if err != nil {
 		t.Fatalf("start run: %v", err)
 	}
-	if resp.GetRun().GetRecipeId() != recipeID {
-		t.Fatalf("run.recipe_id = %q, want %q", resp.GetRun().GetRecipeId(), recipeID)
+	if resp.GetRun().GetWorkflowId() != recipeID {
+		t.Fatalf("run.workflow_id = %q, want %q", resp.GetRun().GetWorkflowId(), recipeID)
 	}
 }
 
@@ -592,8 +592,8 @@ func TestListRunsFiltersByRecipeID(t *testing.T) {
 	if len(resp.GetRuns()) != 1 {
 		t.Fatalf("runs = %d, want 1", len(resp.GetRuns()))
 	}
-	if resp.GetRuns()[0].GetRecipeId() != recipeIDs[0] {
-		t.Fatalf("run.recipe_id = %q, want %q", resp.GetRuns()[0].GetRecipeId(), recipeIDs[0])
+	if resp.GetRuns()[0].GetWorkflowId() != recipeIDs[0] {
+		t.Fatalf("run.workflow_id = %q, want %q", resp.GetRuns()[0].GetWorkflowId(), recipeIDs[0])
 	}
 }
 
@@ -743,7 +743,7 @@ func TestListRunsRecipeIDFilterAppliesPerPage(t *testing.T) {
 	if err != nil {
 		t.Fatalf("list runs page 2: %v", err)
 	}
-	if len(secondPage.GetRuns()) != 1 || secondPage.GetRuns()[0].GetRecipeId() != targetID {
+	if len(secondPage.GetRuns()) != 1 || secondPage.GetRuns()[0].GetWorkflowId() != targetID {
 		t.Fatalf("page 2 filtered runs = %v, want exactly the target run", secondPage.GetRuns())
 	}
 }

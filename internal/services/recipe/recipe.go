@@ -247,15 +247,7 @@ func (s *Service) StartRun(ctx context.Context, req *api.StartRunRequest) (*api.
 		}
 		return nil, status.Error(codes.Internal, err.Error())
 	}
-	// api.StartRunResponse.run is still models.TestRunRecord-typed —
-	// protocols/cloud/v1/api/recipe.proto is not retyped to models.Run until
-	// SP-E Task 5 (see that task's "Modify: protocols/cloud/v1/api/
-	// recipe.proto (StartRunResponse.run, ListRunsResponse.runs field
-	// types)" step). runToAPIResponse bridges the gap until then, mirroring
-	// execution.apiRunFromRun's identical adapter (duplicated rather than
-	// imported: execution already imports this package for RecipeWorkflows,
-	// so the reverse import would cycle).
-	return &api.StartRunResponse{Run: runToAPIResponse(run)}, nil
+	return &api.StartRunResponse{Run: run}, nil
 }
 
 // ListRuns returns one page of runs for the tenant, optionally narrowed to a
@@ -309,14 +301,7 @@ func (s *Service) ListRuns(ctx context.Context, req *api.ListRunsRequest) (*api.
 		runs = filtered
 	}
 
-	// api.ListRunsResponse.runs is still models.TestRunRecord-typed until
-	// SP-E Task 5 — see StartRun's identical runToAPIResponse note above.
-	wireRuns := make([]*models.TestRunRecord, 0, len(runs))
-	for _, run := range runs {
-		wireRuns = append(wireRuns, runToAPIResponse(run))
-	}
-
-	return &api.ListRunsResponse{Runs: wireRuns, NextPageToken: nextPageToken}, nil
+	return &api.ListRunsResponse{Runs: runs, NextPageToken: nextPageToken}, nil
 }
 
 // CancelRun requests cancellation of an in-flight recipe run's
@@ -411,62 +396,6 @@ func markRunFailed(rec *models.Run, now *timestamppb.Timestamp) {
 		rec.Entity.Timings = &common.Timings{CreatedAt: now}
 	}
 	rec.Entity.Timings.UpdatedAt = now
-}
-
-// runToAPIResponse adapts a persisted models.Run onto the models.TestRunRecord
-// shape api.StartRunResponse.run / api.ListRunsResponse.runs still expect —
-// protocols/cloud/v1/api/recipe.proto is not retyped to models.Run until
-// SP-E Task 5. Deliberately lossy (mirrors
-// internal/infrastructure/execution/overview.go's apiRunFromRun, which
-// exists for the exact same reason on the OverviewReader side — Task 4
-// deleted the Task 3->4 transition shim this comment used to reference,
-// run_shim.go's RunToTestRunRecord; apiRunFromRun is its Task-5-pending
-// replacement, not a transition shim; duplicated here rather than imported
-// since execution already imports this package for RecipeWorkflows — the
-// reverse import would cycle). Delete both adapters once Task 5 lands and
-// the wire types carry models.Run directly.
-func runToAPIResponse(run *models.Run) *models.TestRunRecord {
-	if run == nil {
-		return nil
-	}
-	return &models.TestRunRecord{
-		Entity:         run.GetEntity(),
-		Status:         run.GetStatus(),
-		Trigger:        run.GetTrigger(),
-		InTenantRating: run.GetInTenantRating(),
-		InGlobalRating: run.GetInGlobalRating(),
-		Summary:        runSummaryToAPIResponse(run.GetSummary()),
-		RuntimeState:   run.GetRuntimeState(),
-		RecipeId:       run.GetWorkflowId(),
-	}
-}
-
-// runSummaryToAPIResponse field-copies a models.Run_Summary onto a
-// models.TestRunRecord_Summary — the two messages share an identical field
-// set (see models/test_run.proto's Run.Summary doc: "same 15 fields as
-// TestRunRecord.Summary"), so this is a straight, lossless copy.
-func runSummaryToAPIResponse(s *models.Run_Summary) *models.TestRunRecord_Summary {
-	if s == nil {
-		return nil
-	}
-	return &models.TestRunRecord_Summary{
-		DbKind:           s.GetDbKind(),
-		DbPresetId:       s.GetDbPresetId(),
-		DbPresetName:     s.GetDbPresetName(),
-		WorkloadPresetId: s.GetWorkloadPresetId(),
-		WorkloadName:     s.GetWorkloadName(),
-		StroppyVersion:   s.GetStroppyVersion(),
-		WorkloadProtocol: s.GetWorkloadProtocol(),
-		TestPresetId:     s.GetTestPresetId(),
-		TestPresetName:   s.GetTestPresetName(),
-		TopologyLabel:    s.GetTopologyLabel(),
-		NodeCount:        s.GetNodeCount(),
-		Provider:         s.GetProvider(),
-		ProgressPct:      s.GetProgressPct(),
-		StartedAt:        s.GetStartedAt(),
-		FinishedAt:       s.GetFinishedAt(),
-		Duration:         s.GetDuration(),
-	}
 }
 
 // requireTenant validates tenant_id is present. RBAC is enforced upstream by

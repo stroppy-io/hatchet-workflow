@@ -118,7 +118,7 @@ func (r *OverviewReader) Get(ctx context.Context, runID string) (*api.TestRunOve
 	// overlayRunFromOverview's status/summary mutation below is reflected in
 	// the converted value too.
 	finish := func() (*api.TestRunOverviewSnapshot, error) {
-		snap.Run = apiRunFromRun(run)
+		snap.Run = run
 		return snap, nil
 	}
 
@@ -180,61 +180,6 @@ func persistedRunIsTerminal(run *models.Run) bool {
 		return false
 	}
 	return isTerminalStatus(run.GetStatus()) || isTerminalStatus(run.GetRuntimeState().GetStatus())
-}
-
-// apiRunFromRun adapts run onto the api.TestRunOverviewSnapshot.Run shape,
-// which is still *models.TestRunRecord-typed — protocols/cloud/v1/api/
-// test_run_overview.proto is not retyped to models.Run until SP-E Task 5 (see
-// that task's brief). This is NOT the Task 3 -> Task 4 transition shim
-// (run_shim.go/RunToTestRunRecord, deleted by this task): it is a small,
-// permanent-until-Task-5 adapter populating exactly the fields the field
-// carries losslessly (Entity/Status/Trigger/rating flags/Summary/
-// RuntimeState/workflow_id -> recipe_id); Spec/InfrastructureState/
-// DeploymentPlan/RecipeTopology stay nil since models.Run never had them.
-// Returns nil for a nil run.
-func apiRunFromRun(run *models.Run) *models.TestRunRecord {
-	if run == nil {
-		return nil
-	}
-	return &models.TestRunRecord{
-		Entity:         run.GetEntity(),
-		Status:         run.GetStatus(),
-		Trigger:        run.GetTrigger(),
-		InTenantRating: run.GetInTenantRating(),
-		InGlobalRating: run.GetInGlobalRating(),
-		Summary:        apiRunSummaryFromRunSummary(run.GetSummary()),
-		RuntimeState:   run.GetRuntimeState(),
-		RecipeId:       run.GetWorkflowId(),
-	}
-}
-
-// apiRunSummaryFromRunSummary field-copies a models.Run_Summary onto a
-// models.TestRunRecord_Summary — the two messages share an identical field
-// set (see models/test_run.proto's Run.Summary doc: "same 15 fields as
-// TestRunRecord.Summary"), so this is a straight, lossless copy. Returns nil
-// for nil.
-func apiRunSummaryFromRunSummary(s *models.Run_Summary) *models.TestRunRecord_Summary {
-	if s == nil {
-		return nil
-	}
-	return &models.TestRunRecord_Summary{
-		DbKind:           s.GetDbKind(),
-		DbPresetId:       s.GetDbPresetId(),
-		DbPresetName:     s.GetDbPresetName(),
-		WorkloadPresetId: s.GetWorkloadPresetId(),
-		WorkloadName:     s.GetWorkloadName(),
-		StroppyVersion:   s.GetStroppyVersion(),
-		WorkloadProtocol: s.GetWorkloadProtocol(),
-		TestPresetId:     s.GetTestPresetId(),
-		TestPresetName:   s.GetTestPresetName(),
-		TopologyLabel:    s.GetTopologyLabel(),
-		NodeCount:        s.GetNodeCount(),
-		Provider:         s.GetProvider(),
-		ProgressPct:      s.GetProgressPct(),
-		StartedAt:        s.GetStartedAt(),
-		FinishedAt:       s.GetFinishedAt(),
-		Duration:         s.GetDuration(),
-	}
 }
 
 // Stream pushes a fresh full snapshot every tick until ctx is cancelled or the

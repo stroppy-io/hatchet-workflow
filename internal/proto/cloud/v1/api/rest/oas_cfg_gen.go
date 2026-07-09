@@ -18,13 +18,10 @@ import (
 )
 
 var regexMap = map[string]ogenregex.Regexp{
-	"^([0-9]+(ns|us|ms|s|m|h))+$": ogenregex.MustCompile("^([0-9]+(ns|us|ms|s|m|h))+$"),
-	"^[0-9a-fA-F]{64}$":           ogenregex.MustCompile("^[0-9a-fA-F]{64}$"),
-	"^[A-Za-z0-9._-]+$":           ogenregex.MustCompile("^[A-Za-z0-9._-]+$"),
-	"^[a-z0-9_-]+$":               ogenregex.MustCompile("^[a-z0-9_-]+$"),
-	"^[a-zA-Z0-9_.-]+$":           ogenregex.MustCompile("^[a-zA-Z0-9_.-]+$"),
-	"^[a-z][a-z0-9_]*$":           ogenregex.MustCompile("^[a-z][a-z0-9_]*$"),
-	"^https://":                   ogenregex.MustCompile("^https://"),
+	"^[0-9a-fA-F]{64}$": ogenregex.MustCompile("^[0-9a-fA-F]{64}$"),
+	"^[a-z0-9_-]+$":     ogenregex.MustCompile("^[a-z0-9_-]+$"),
+	"^[a-zA-Z0-9_.-]+$": ogenregex.MustCompile("^[a-zA-Z0-9_.-]+$"),
+	"^https://":         ogenregex.MustCompile("^https://"),
 }
 var (
 	// Allocate option closure once.

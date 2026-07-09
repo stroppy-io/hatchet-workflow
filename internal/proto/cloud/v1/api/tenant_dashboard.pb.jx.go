@@ -334,7 +334,7 @@ func (m *TenantDashboard) Decode(d *jx.Decoder) error {
 				return d.Null()
 			}
 			return d.Arr(func(d *jx.Decoder) error {
-				el := &models.TestRunRecord{}
+				el := &models.Run{}
 				if err := jxpb.DecMessage(d, el); err != nil {
 					return err
 				}

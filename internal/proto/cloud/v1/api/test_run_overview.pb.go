@@ -291,7 +291,7 @@ type TestRunOverviewSnapshot struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// run is the persisted run record, including immutable spec and any stored
 	// infrastructure/deployment artifacts.
-	Run *models.TestRunRecord `protobuf:"bytes,1,opt,name=run,proto3" json:"run,omitempty"`
+	Run *models.Run `protobuf:"bytes,1,opt,name=run,proto3" json:"run,omitempty"`
 	// topology is the staged topology envelope composed from the run spec,
 	// infrastructure state and deployment plan.
 	Topology *topology.Topology `protobuf:"bytes,2,opt,name=topology,proto3" json:"topology,omitempty"`
@@ -331,7 +331,7 @@ func (*TestRunOverviewSnapshot) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_api_test_run_overview_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *TestRunOverviewSnapshot) GetRun() *models.TestRunRecord {
+func (x *TestRunOverviewSnapshot) GetRun() *models.Run {
 	if x != nil {
 		return x.Run
 	}
@@ -1239,9 +1239,9 @@ const file_cloud_v1_api_test_run_overview_proto_rawDesc = "" +
 	"\x10\x80\x02\"\x05r\x03\x18\x80\x01R\n" +
 	"machineIds\x12&\n" +
 	"\x05units\x18\x12 \x03(\tB\x10\xfaB\r\x92\x01\n" +
-	"\x10\x80\x02\"\x05r\x03\x18\x80\x02R\x05units\"\xeb\x01\n" +
-	"\x17TestRunOverviewSnapshot\x12:\n" +
-	"\x03run\x18\x01 \x01(\v2\x1e.cloud.v1.models.TestRunRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x03run\x12A\n" +
+	"\x10\x80\x02\"\x05r\x03\x18\x80\x02R\x05units\"\xe1\x01\n" +
+	"\x17TestRunOverviewSnapshot\x120\n" +
+	"\x03run\x18\x01 \x01(\v2\x14.cloud.v1.models.RunB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x03run\x12A\n" +
 	"\btopology\x18\x02 \x01(\v2\x1b.cloud.v1.topology.TopologyB\b\xfaB\x05\x8a\x01\x02\x10\x01R\btopology\x12@\n" +
 	"\boverview\x18\x03 \x01(\v2\x1a.cloud.v1.monitor.OverviewB\b\xfaB\x05\x8a\x01\x02\x10\x01R\boverviewJ\x04\b\x04\x10\x05R\tsuite_run\"f\n" +
 	"\x19GetTestRunOverviewRequest\x12&\n" +
@@ -1356,7 +1356,7 @@ var file_cloud_v1_api_test_run_overview_proto_goTypes = []any{
 	(monitor.Source)(0),                  // 17: cloud.v1.monitor.Source
 	(monitor.Stream)(0),                  // 18: cloud.v1.monitor.Stream
 	(*timestamppb.Timestamp)(nil),        // 19: google.protobuf.Timestamp
-	(*models.TestRunRecord)(nil),         // 20: cloud.v1.models.TestRunRecord
+	(*models.Run)(nil),                   // 20: cloud.v1.models.Run
 	(*topology.Topology)(nil),            // 21: cloud.v1.topology.Topology
 	(*monitor.Overview)(nil),             // 22: cloud.v1.monitor.Overview
 	(*monitor.LogCursor)(nil),            // 23: cloud.v1.monitor.LogCursor
@@ -1370,7 +1370,7 @@ var file_cloud_v1_api_test_run_overview_proto_depIdxs = []int32{
 	18, // 1: cloud.v1.api.LogFilter.streams:type_name -> cloud.v1.monitor.Stream
 	19, // 2: cloud.v1.api.LogFilter.start:type_name -> google.protobuf.Timestamp
 	19, // 3: cloud.v1.api.LogFilter.end:type_name -> google.protobuf.Timestamp
-	20, // 4: cloud.v1.api.TestRunOverviewSnapshot.run:type_name -> cloud.v1.models.TestRunRecord
+	20, // 4: cloud.v1.api.TestRunOverviewSnapshot.run:type_name -> cloud.v1.models.Run
 	21, // 5: cloud.v1.api.TestRunOverviewSnapshot.topology:type_name -> cloud.v1.topology.Topology
 	22, // 6: cloud.v1.api.TestRunOverviewSnapshot.overview:type_name -> cloud.v1.monitor.Overview
 	2,  // 7: cloud.v1.api.GetTestRunOverviewResponse.snapshot:type_name -> cloud.v1.api.TestRunOverviewSnapshot

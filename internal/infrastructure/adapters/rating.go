@@ -35,7 +35,7 @@ const (
 // completed runs so a ranked entry always has metrics. The boards apply the
 // remaining facets, ranking and pagination in memory.
 type RatingRunsLister interface {
-	ListRatingRuns(ctx context.Context, scope RatingRunsScope, tenantID string) ([]*models.TestRunRecord, error)
+	ListRatingRuns(ctx context.Context, scope RatingRunsScope, tenantID string) ([]*models.Run, error)
 }
 
 // RatingNameResolver optionally resolves display names for the entries
@@ -240,7 +240,7 @@ type ratingFacets struct {
 
 // rankedRun is one ranked board row.
 type rankedRun struct {
-	run   *models.TestRunRecord
+	run   *models.Run
 	value float64
 	unit  string
 	rank  uint32
@@ -249,7 +249,7 @@ type rankedRun struct {
 // rankRuns filters the candidate runs by the facets, reads each survivor's metric
 // value for metricKey, sorts by that value honoring higher_is_better, assigns
 // absolute ranks and reports whether the metric key was present on any run.
-func rankRuns(ctx context.Context, metrics RunMetricsGetter, runs []*models.TestRunRecord, f ratingFacets) ([]rankedRun, bool, error) {
+func rankRuns(ctx context.Context, metrics RunMetricsGetter, runs []*models.Run, f ratingFacets) ([]rankedRun, bool, error) {
 	var ranked []rankedRun
 	metricSeen := false
 	higherIsBetter := true
@@ -296,7 +296,7 @@ func rankRuns(ctx context.Context, metrics RunMetricsGetter, runs []*models.Test
 }
 
 // matchFacets reports whether a run passes every AND-ed facet filter.
-func matchFacets(run *models.TestRunRecord, f ratingFacets) bool {
+func matchFacets(run *models.Run, f ratingFacets) bool {
 	sum := run.GetSummary()
 	if len(f.dbKinds) > 0 && !containsKind(f.dbKinds, sum.GetDbKind()) {
 		return false

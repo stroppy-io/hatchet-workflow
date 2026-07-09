@@ -128,7 +128,7 @@ message TestRunOverviewSnapshot {
         run is the persisted run record, including immutable spec and any stored
         infrastructure/deployment artifacts.
      */
-    models.TestRunRecord run = 1 [(validate.rules).message.required = true];
+    models.Run run = 1 [(validate.rules).message.required = true];
     /*
         topology is the staged topology envelope composed from the run spec,
         infrastructure state and deployment plan.

@@ -72,7 +72,7 @@ func (s *CompareService) CompareRuns(ctx context.Context, req *api.CompareRunsRe
 // assertTenant rejects a run that does not belong to the comparison's tenant.
 // Returning NotFound (not PermissionDenied) avoids leaking the existence of a
 // run in another tenant to the caller.
-func (s *CompareService) assertTenant(rec *models.TestRunRecord, tenantID string) error {
+func (s *CompareService) assertTenant(rec *models.Run, tenantID string) error {
 	if rec.GetEntity().GetTenantId() != tenantID {
 		return status.Errorf(codes.NotFound, "run %q not found in tenant", rec.GetEntity().GetId())
 	}

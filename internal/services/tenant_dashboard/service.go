@@ -58,7 +58,7 @@ type RunStatsReader interface {
 // RecentRunsReader yields the most recent test runs of a tenant, newest first,
 // capped at limit.
 type RecentRunsReader interface {
-	RecentRuns(ctx context.Context, tenantID string, limit uint32) ([]*models.TestRunRecord, error)
+	RecentRuns(ctx context.Context, tenantID string, limit uint32) ([]*models.Run, error)
 }
 
 // ScheduleReader yields the tenant's scheduled suites together with their next

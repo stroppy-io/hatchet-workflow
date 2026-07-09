@@ -811,7 +811,7 @@ func (src *TestRunOverviewSnapshot) ToOgen() (*rest.TestRunOverviewSnapshot, err
 	if src == nil {
 		return &dst, nil
 	}
-	o1, err := TestRunRecordToOgen(src.GetRun())
+	o1, err := RunToOgen(src.GetRun())
 	if err != nil {
 		return nil, err
 	}
@@ -835,7 +835,7 @@ func TestRunOverviewSnapshotFromOgen(src *rest.TestRunOverviewSnapshot) (*TestRu
 		return nil, nil
 	}
 	dst := &TestRunOverviewSnapshot{}
-	m1, err := TestRunRecordFromOgen(&src.Run)
+	m1, err := RunFromOgen(&src.Run)
 	if err != nil {
 		return nil, err
 	}

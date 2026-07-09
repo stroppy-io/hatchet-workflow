@@ -185,23 +185,6 @@ components:
                     minLength: 1
                     type: string
             type: object
-        AutoScale:
-            additionalProperties: false
-            properties:
-                cpuUtilizationPercent:
-                    format: int32
-                    maximum: 100
-                    minimum: 0
-                    type: integer
-                maxSize:
-                    format: int32
-                    minimum: 1
-                    type: integer
-                minSize:
-                    format: int32
-                    minimum: 1
-                    type: integer
-            type: object
         Baked:
             additionalProperties: false
             properties:
@@ -281,18 +264,6 @@ components:
             required:
                 - spec
             type: object
-        CockroachParams:
-            additionalProperties: false
-            properties:
-                nodes:
-                    format: int32
-                    minimum: 1
-                    type: integer
-                options:
-                    additionalProperties:
-                        type: string
-                    type: object
-            type: object
         CompareRunsRequest:
             additionalProperties: false
             properties:
@@ -347,6 +318,65 @@ components:
                     items:
                         $ref: '#/components/schemas/RunSummary'
                     maxItems: 16
+                    type: array
+            type: object
+        CompiledJob:
+            additionalProperties: false
+            oneOf:
+                - required:
+                    - steps
+                - required:
+                    - service
+            properties:
+                id:
+                    type: string
+                inputGroups:
+                    additionalProperties:
+                        type: string
+                    type: object
+                matrix:
+                    additionalProperties:
+                        type: string
+                    type: object
+                needs:
+                    items:
+                        type: string
+                    type: array
+                onGroup:
+                    type: string
+                resolvedInputs:
+                    additionalProperties:
+                        type: string
+                    type: object
+                service:
+                    type: string
+                steps:
+                    $ref: '#/components/schemas/StepList'
+                targetGroup:
+                    type: string
+                when:
+                    type: string
+                with:
+                    additionalProperties:
+                        type: string
+                    type: object
+            type: object
+        CompiledPlan:
+            additionalProperties: false
+            properties:
+                jobs:
+                    items:
+                        $ref: '#/components/schemas/CompiledJob'
+                    type: array
+                machineGroups:
+                    items:
+                        $ref: '#/components/schemas/MachineGroup'
+                    type: array
+                provider:
+                    $ref: '#/components/schemas/ProviderRef'
+                services:
+                    items:
+                        $ref: '#/components/schemas/ServiceSpec'
                     type: array
             type: object
         CompleteSSORequest:
@@ -500,6 +530,14 @@ components:
                         - 6
                     format: int32
                     type: integer
+            type: object
+        ConfigFile:
+            additionalProperties: false
+            properties:
+                dest:
+                    type: string
+                templatePath:
+                    type: string
             type: object
         ConfirmPasswordResetRequest:
             additionalProperties: false
@@ -975,91 +1013,6 @@ components:
             required:
                 - tenant
             type: object
-        Database:
-            additionalProperties: false
-            oneOf:
-                - required:
-                    - params
-                - required:
-                    - external
-                - required:
-                    - databasePresetId
-            properties:
-                databasePresetId:
-                    $ref: '#/components/schemas/PresetId'
-                external:
-                    $ref: '#/components/schemas/External'
-                kind:
-                    enum:
-                        - 1
-                        - 2
-                        - 3
-                        - 4
-                        - 5
-                        - 6
-                        - 7
-                        - 8
-                        - 9
-                        - 10
-                        - 11
-                    format: int32
-                    type: integer
-                packageId:
-                    type: string
-                params:
-                    $ref: '#/components/schemas/DatabaseParams'
-                tags:
-                    $ref: '#/components/schemas/Tags'
-            type: object
-        DatabaseParams:
-            additionalProperties: false
-            oneOf:
-                - required:
-                    - postgres
-                - required:
-                    - mysql
-                - required:
-                    - mariadb
-                - required:
-                    - picodata
-                - required:
-                    - ydb
-                - required:
-                    - ydbManaged
-                - required:
-                    - cockroach
-                - required:
-                    - orioledb
-                - required:
-                    - noop
-                - required:
-                    - pgNoop
-            properties:
-                cockroach:
-                    $ref: '#/components/schemas/CockroachParams'
-                mariadb:
-                    $ref: '#/components/schemas/MySqlParams'
-                mysql:
-                    $ref: '#/components/schemas/MySqlParams'
-                noop:
-                    $ref: '#/components/schemas/NoopParams'
-                orioledb:
-                    $ref: '#/components/schemas/OrioledbParams'
-                package:
-                    $ref: '#/components/schemas/Package'
-                pgNoop:
-                    $ref: '#/components/schemas/PgNoopParams'
-                picodata:
-                    $ref: '#/components/schemas/PicodataParams'
-                postgres:
-                    $ref: '#/components/schemas/PostgresParams'
-                version:
-                    type: string
-                ydb:
-                    $ref: '#/components/schemas/YdbParams'
-                ydbManaged:
-                    $ref: '#/components/schemas/YdbManagedParams'
-            type: object
         DeleteAccountRequest:
             additionalProperties: false
             properties:
@@ -1253,6 +1206,28 @@ components:
                         - network-ssd-nonreplicated
                         - network-ssd-io-m3
                     type: string
+            type: object
+        DiskSpec:
+            additionalProperties: false
+            properties:
+                sizeGb:
+                    format: uint64
+                    type: string
+                type:
+                    type: string
+            type: object
+        DslStep:
+            additionalProperties: false
+            oneOf:
+                - required:
+                    - agent
+                - required:
+                    - wait
+            properties:
+                agent:
+                    $ref: '#/components/schemas/AgentStep'
+                wait:
+                    $ref: '#/components/schemas/WaitStep'
             type: object
         Endpoint:
             additionalProperties: false
@@ -1455,48 +1430,6 @@ components:
                     format: int32
                     type: integer
             type: object
-        Execution:
-            additionalProperties: false
-            oneOf:
-                - required:
-                    - duration
-                - required:
-                    - iterations
-            properties:
-                duration:
-                    maxLength: 32
-                    pattern: ^([0-9]+(ns|us|ms|s|m|h))+$
-                    type: string
-                extraArgs:
-                    items:
-                        maxLength: 256
-                        minLength: 1
-                        type: string
-                    maxItems: 64
-                    type: array
-                iterations:
-                    format: int32
-                    minimum: 1
-                    type: integer
-                noThresholds:
-                    type: boolean
-                quiet:
-                    type: boolean
-                vus:
-                    format: int32
-                    maximum: 100000
-                    minimum: 1
-                    type: integer
-            type: object
-        External:
-            additionalProperties: false
-            properties:
-                dsn:
-                    minLength: 1
-                    type: string
-                tags:
-                    $ref: '#/components/schemas/Tags'
-            type: object
         ExternalIdentity:
             additionalProperties: false
             properties:
@@ -1603,30 +1536,6 @@ components:
                 path:
                     minLength: 1
                     type: string
-            type: object
-        FileOverride:
-            additionalProperties: false
-            properties:
-                artifactId:
-                    maxLength: 256
-                    minLength: 1
-                    type: string
-                baseHash:
-                    maxLength: 128
-                    type: string
-                componentId:
-                    maxLength: 128
-                    minLength: 1
-                    type: string
-                file:
-                    $ref: '#/components/schemas/File'
-                labels:
-                    additionalProperties:
-                        type: string
-                    maxProperties: 128
-                    type: object
-            required:
-                - file
             type: object
         Filed:
             additionalProperties: false
@@ -2448,6 +2357,14 @@ components:
             required:
                 - snapshot
             type: object
+        HealthCheck:
+            additionalProperties: false
+            properties:
+                http:
+                    type: string
+                timeout:
+                    type: string
+            type: object
         Healthcheck:
             additionalProperties: false
             properties:
@@ -2984,7 +2901,7 @@ components:
                     type: string
                 runs:
                     items:
-                        $ref: '#/components/schemas/TestRunRecord'
+                        $ref: '#/components/schemas/Run'
                     type: array
             type: object
         ListSharesRequest:
@@ -3217,7 +3134,7 @@ components:
                     type: string
                 runs:
                     items:
-                        $ref: '#/components/schemas/TestRunRecord'
+                        $ref: '#/components/schemas/Run'
                     type: array
             type: object
         LogCursor:
@@ -3492,6 +3409,29 @@ components:
             required:
                 - account
             type: object
+        MachineGroup:
+            additionalProperties: false
+            properties:
+                count:
+                    format: int32
+                    minimum: 0
+                    type: integer
+                cpu:
+                    format: int32
+                    minimum: 0
+                    type: integer
+                disks:
+                    items:
+                        $ref: '#/components/schemas/DiskSpec'
+                    type: array
+                extJson:
+                    type: string
+                name:
+                    type: string
+                ramMb:
+                    format: uint64
+                    type: string
+            type: object
         MachineNode:
             additionalProperties: false
             properties:
@@ -3746,34 +3686,6 @@ components:
                     maxLength: 32
                     type: string
             type: object
-        MySqlParams:
-            additionalProperties: false
-            properties:
-                groupReplication:
-                    type: boolean
-                primaryOptions:
-                    additionalProperties:
-                        type: string
-                    type: object
-                proxysql:
-                    format: int32
-                    minimum: 0
-                    type: integer
-                proxysqlOptions:
-                    additionalProperties:
-                        type: string
-                    type: object
-                replicaOptions:
-                    additionalProperties:
-                        type: string
-                    type: object
-                replicas:
-                    format: int32
-                    minimum: 0
-                    type: integer
-                semiSync:
-                    type: boolean
-            type: object
         Node:
             additionalProperties: false
             properties:
@@ -3797,15 +3709,21 @@ components:
                 tags:
                     $ref: '#/components/schemas/Tags'
             type: object
-        NoopParams:
-            additionalProperties: false
-            properties: {}
-            type: object
         Object:
             additionalProperties: false
             properties:
                 schema:
                     $ref: '#/components/schemas/Schema'
+            type: object
+        ObservabilityRefs:
+            additionalProperties: false
+            properties:
+                grafanaDashboardUid:
+                    type: string
+                logsQueryKey:
+                    type: string
+                metricsQueryKey:
+                    type: string
             type: object
         OneOf:
             additionalProperties: false
@@ -3816,38 +3734,6 @@ components:
                     additionalProperties:
                         $ref: '#/components/schemas/Schema'
                     type: object
-            type: object
-        OrioledbParams:
-            additionalProperties: false
-            properties:
-                haproxy:
-                    format: int32
-                    minimum: 0
-                    type: integer
-                haproxyOptions:
-                    additionalProperties:
-                        type: string
-                    type: object
-                image:
-                    type: string
-                initdbLocale:
-                    type: string
-                postgresOptions:
-                    additionalProperties:
-                        type: string
-                    type: object
-                replicaOptions:
-                    additionalProperties:
-                        type: string
-                    type: object
-                replicas:
-                    format: int32
-                    minimum: 0
-                    type: integer
-                sharedBuffersMb:
-                    format: int32
-                    minimum: 0
-                    type: integer
             type: object
         Overview:
             additionalProperties: false
@@ -3913,50 +3799,6 @@ components:
                 workers:
                     items:
                         $ref: '#/components/schemas/WorkerInfo'
-                    type: array
-            type: object
-        Package:
-            additionalProperties: false
-            properties:
-                aptPackages:
-                    items:
-                        type: string
-                    type: array
-                customRepo:
-                    type: string
-                customRepoKey:
-                    type: string
-                dbKind:
-                    enum:
-                        - 1
-                        - 2
-                        - 3
-                        - 4
-                        - 5
-                        - 6
-                        - 7
-                        - 8
-                        - 9
-                        - 10
-                        - 11
-                    format: int32
-                    type: integer
-                dbVersion:
-                    maxLength: 128
-                    type: string
-                debFilename:
-                    type: string
-                id:
-                    type: string
-                isBuiltin:
-                    type: boolean
-                name:
-                    type: string
-                packageRecordId:
-                    type: string
-                preInstall:
-                    items:
-                        type: string
                     type: array
             type: object
         PackageRecord:
@@ -4030,51 +3872,6 @@ components:
                 token:
                     type: string
             type: object
-        Parameters:
-            additionalProperties: false
-            properties:
-                bulkSize:
-                    format: int32
-                    maximum: 1000000
-                    minimum: 0
-                    type: integer
-                defaultInsertMethod:
-                    maxLength: 64
-                    type: string
-                env:
-                    additionalProperties:
-                        maxLength: 8192
-                        type: string
-                    maxProperties: 256
-                    type: object
-                noSteps:
-                    items:
-                        maxLength: 64
-                        minLength: 1
-                        pattern: ^[a-z][a-z0-9_]*$
-                        type: string
-                    maxItems: 32
-                    type: array
-                poolSize:
-                    format: int32
-                    maximum: 65535
-                    minimum: 0
-                    type: integer
-                scaleFactor:
-                    exclusiveMinimum: true
-                    format: double
-                    maximum: 100000
-                    minimum: 0
-                    type: number
-                steps:
-                    items:
-                        maxLength: 64
-                        minLength: 1
-                        pattern: ^[a-z][a-z0-9_]*$
-                        type: string
-                    maxItems: 32
-                    type: array
-            type: object
         Permission:
             additionalProperties: false
             properties:
@@ -4108,67 +3905,6 @@ components:
                         - 16
                         - 17
                     format: int32
-                    type: integer
-            type: object
-        PgNoopParams:
-            additionalProperties: false
-            properties:
-                options:
-                    additionalProperties:
-                        type: string
-                    type: object
-                workers:
-                    format: int32
-                    minimum: 0
-                    type: integer
-            type: object
-        PicodataParams:
-            additionalProperties: false
-            properties:
-                haproxy:
-                    format: int32
-                    minimum: 0
-                    type: integer
-                haproxyOptions:
-                    additionalProperties:
-                        type: string
-                    type: object
-                instanceOptions:
-                    additionalProperties:
-                        type: string
-                    type: object
-                instances:
-                    format: int32
-                    minimum: 1
-                    type: integer
-                replicationFactor:
-                    format: int32
-                    minimum: 0
-                    type: integer
-                shards:
-                    format: int32
-                    minimum: 0
-                    type: integer
-                tiers:
-                    items:
-                        $ref: '#/components/schemas/PicodataTier'
-                    type: array
-            type: object
-        PicodataTier:
-            additionalProperties: false
-            properties:
-                canVote:
-                    type: boolean
-                count:
-                    format: int32
-                    minimum: 0
-                    type: integer
-                name:
-                    minLength: 1
-                    type: string
-                replicationFactor:
-                    format: int32
-                    minimum: 0
                     type: integer
             type: object
         PipelineNode:
@@ -4434,57 +4170,12 @@ components:
                     format: int32
                     type: integer
             type: object
-        PostgresParams:
+        ProviderRef:
             additionalProperties: false
             properties:
-                etcd:
-                    type: boolean
-                etcdOptions:
-                    additionalProperties:
-                        type: string
-                    type: object
-                haproxy:
-                    format: int32
-                    minimum: 0
-                    type: integer
-                haproxyOptions:
-                    additionalProperties:
-                        type: string
-                    type: object
-                masterOptions:
-                    additionalProperties:
-                        type: string
-                    type: object
-                patroni:
-                    type: boolean
-                patroniOptions:
-                    additionalProperties:
-                        type: string
-                    type: object
-                pgbouncer:
-                    type: boolean
-                pgbouncerOptions:
-                    additionalProperties:
-                        type: string
-                    type: object
-                replicaOptions:
-                    additionalProperties:
-                        type: string
-                    type: object
-                replicas:
-                    format: int32
-                    minimum: 0
-                    type: integer
-                syncReplicas:
-                    format: int32
-                    minimum: 0
-                    type: integer
-            type: object
-        PresetId:
-            additionalProperties: false
-            properties:
-                id:
-                    minLength: 1
+                name:
+                    type: string
+                paramsJson:
                     type: string
             type: object
         ProviderSettings:
@@ -4821,16 +4512,6 @@ components:
                 - bundle
                 - entity
             type: object
-        RecipeTopologySnapshot:
-            additionalProperties: false
-            properties:
-                nodes:
-                    items:
-                        $ref: '#/components/schemas/MachineNode'
-                    type: array
-                provider:
-                    type: string
-            type: object
         Ref:
             additionalProperties: false
             oneOf:
@@ -4959,22 +4640,6 @@ components:
         RemoveFavoriteResponse:
             additionalProperties: false
             properties: {}
-            type: object
-        RenderOverrideSet:
-            additionalProperties: false
-            properties:
-                files:
-                    items:
-                        $ref: '#/components/schemas/FileOverride'
-                    maxItems: 1024
-                    type: array
-                labels:
-                    additionalProperties:
-                        type: string
-                    maxProperties: 128
-                    type: object
-                tags:
-                    $ref: '#/components/schemas/Tags'
             type: object
         Request:
             additionalProperties: false
@@ -5162,6 +4827,60 @@ components:
                     format: int32
                     type: integer
             type: object
+        Run:
+            additionalProperties: false
+            properties:
+                baked:
+                    $ref: '#/components/schemas/Baked'
+                compiledPlan:
+                    $ref: '#/components/schemas/CompiledPlan'
+                entity:
+                    $ref: '#/components/schemas/Entity'
+                inGlobalRating:
+                    type: boolean
+                inTenantRating:
+                    type: boolean
+                observability:
+                    $ref: '#/components/schemas/ObservabilityRefs'
+                runtimeState:
+                    $ref: '#/components/schemas/RunState'
+                status:
+                    enum:
+                        - 0
+                        - 1
+                        - 2
+                        - 5
+                        - 3
+                        - 4
+                        - 6
+                        - 7
+                        - 8
+                        - 9
+                        - 10
+                        - 11
+                    format: int32
+                    type: integer
+                summary:
+                    $ref: '#/components/schemas/Summary2'
+                topology:
+                    $ref: '#/components/schemas/RunTopology'
+                trigger:
+                    enum:
+                        - 0
+                        - 1
+                        - 2
+                        - 3
+                    format: int32
+                    type: integer
+                workflowId:
+                    maxLength: 64
+                    type: string
+                workflowVersion:
+                    maxLength: 32
+                    type: string
+            required:
+                - entity
+            type: object
         RunColumn:
             additionalProperties: false
             properties:
@@ -5302,6 +5021,16 @@ components:
                     format: int32
                     minimum: 0
                     type: integer
+            type: object
+        RunTopology:
+            additionalProperties: false
+            properties:
+                nodes:
+                    items:
+                        $ref: '#/components/schemas/MachineNode'
+                    type: array
+                provider:
+                    type: string
             type: object
         RuntimeConnection:
             additionalProperties: false
@@ -5529,32 +5258,6 @@ components:
                     minLength: 1
                     type: string
             type: object
-        Segment:
-            additionalProperties: false
-            properties:
-                execution:
-                    $ref: '#/components/schemas/Execution'
-                files:
-                    items:
-                        $ref: '#/components/schemas/WorkloadFile'
-                    maxItems: 64
-                    type: array
-                name:
-                    maxLength: 64
-                    minLength: 1
-                    type: string
-                parameters:
-                    $ref: '#/components/schemas/Parameters'
-                script:
-                    maxLength: 512
-                    minLength: 1
-                    type: string
-                sql:
-                    maxLength: 512
-                    type: string
-            required:
-                - execution
-            type: object
         ServiceNode:
             additionalProperties: false
             properties:
@@ -5562,6 +5265,32 @@ components:
                     type: string
                 name:
                     type: string
+            type: object
+        ServiceSpec:
+            additionalProperties: false
+            properties:
+                configs:
+                    items:
+                        $ref: '#/components/schemas/ConfigFile'
+                    type: array
+                env:
+                    additionalProperties:
+                        type: string
+                    type: object
+                health:
+                    $ref: '#/components/schemas/HealthCheck'
+                image:
+                    type: string
+                name:
+                    type: string
+                network:
+                    type: string
+                onGroup:
+                    type: string
+                volumes:
+                    items:
+                        type: string
+                    type: array
             type: object
         SetShareExpiryRequest:
             additionalProperties: false
@@ -6017,7 +5746,7 @@ components:
             additionalProperties: false
             properties:
                 run:
-                    $ref: '#/components/schemas/TestRunRecord'
+                    $ref: '#/components/schemas/Run'
             required:
                 - run
             type: object
@@ -6068,6 +5797,14 @@ components:
                     format: int32
                     minimum: 0
                     type: integer
+            type: object
+        StepList:
+            additionalProperties: false
+            properties:
+                steps:
+                    items:
+                        $ref: '#/components/schemas/DslStep'
+                    type: array
             type: object
         StreamLogsRequest:
             additionalProperties: false
@@ -6315,7 +6052,7 @@ components:
             properties:
                 recentRuns:
                     items:
-                        $ref: '#/components/schemas/TestRunRecord'
+                        $ref: '#/components/schemas/Run'
                     type: array
                 runCounts:
                     $ref: '#/components/schemas/StatusCounts'
@@ -6360,103 +6097,19 @@ components:
             required:
                 - entity
             type: object
-        TestRun:
-            additionalProperties: false
-            properties:
-                database:
-                    $ref: '#/components/schemas/Database'
-                id:
-                    maxLength: 64
-                    type: string
-                infrastructurePlan:
-                    $ref: '#/components/schemas/InfrastructurePlan'
-                renderOverrides:
-                    $ref: '#/components/schemas/RenderOverrideSet'
-                suiteId:
-                    type: string
-                tags:
-                    $ref: '#/components/schemas/Tags'
-                topologySpec:
-                    $ref: '#/components/schemas/TopologySpec'
-                workload:
-                    $ref: '#/components/schemas/Workload'
-            required:
-                - database
-                - infrastructurePlan
-                - topologySpec
-                - workload
-            type: object
         TestRunOverviewSnapshot:
             additionalProperties: false
             properties:
                 overview:
                     $ref: '#/components/schemas/Overview'
                 run:
-                    $ref: '#/components/schemas/TestRunRecord'
+                    $ref: '#/components/schemas/Run'
                 topology:
                     $ref: '#/components/schemas/Topology'
             required:
                 - overview
                 - run
                 - topology
-            type: object
-        TestRunRecord:
-            additionalProperties: false
-            properties:
-                deploymentPlan:
-                    $ref: '#/components/schemas/DeploymentPlan'
-                entity:
-                    $ref: '#/components/schemas/Entity'
-                inGlobalRating:
-                    type: boolean
-                inTenantRating:
-                    type: boolean
-                infrastructureState:
-                    $ref: '#/components/schemas/InfrastructureState'
-                recipeId:
-                    maxLength: 64
-                    type: string
-                recipeTopology:
-                    $ref: '#/components/schemas/RecipeTopologySnapshot'
-                runtimeState:
-                    $ref: '#/components/schemas/RunState'
-                spec:
-                    $ref: '#/components/schemas/TestRun'
-                status:
-                    enum:
-                        - 0
-                        - 1
-                        - 2
-                        - 5
-                        - 3
-                        - 4
-                        - 6
-                        - 7
-                        - 8
-                        - 9
-                        - 10
-                        - 11
-                    format: int32
-                    type: integer
-                suiteCellId:
-                    maxLength: 64
-                    type: string
-                suiteRunId:
-                    maxLength: 64
-                    type: string
-                summary:
-                    $ref: '#/components/schemas/Summary2'
-                trigger:
-                    enum:
-                        - 0
-                        - 1
-                        - 2
-                        - 3
-                    format: int32
-                    type: integer
-            required:
-                - entity
-                - spec
             type: object
         TimeRange:
             additionalProperties: false
@@ -6879,6 +6532,14 @@ components:
                     minLength: 1
                     type: string
             type: object
+        WaitStep:
+            additionalProperties: false
+            properties:
+                http:
+                    type: string
+                timeout:
+                    type: string
+            type: object
         Worker:
             additionalProperties: false
             properties:
@@ -6973,144 +6634,6 @@ components:
                 statusReason:
                     maxLength: 256
                     type: string
-            type: object
-        Workload:
-            additionalProperties: false
-            properties:
-                protocol:
-                    enum:
-                        - 0
-                        - 1
-                        - 2
-                        - 3
-                        - 4
-                        - 5
-                        - 7
-                        - 8
-                    format: int32
-                    type: integer
-                segments:
-                    items:
-                        $ref: '#/components/schemas/Segment'
-                    maxItems: 16
-                    minItems: 1
-                    type: array
-                stroppyVersion:
-                    maxLength: 64
-                    type: string
-                tags:
-                    $ref: '#/components/schemas/Tags'
-            type: object
-        WorkloadFile:
-            additionalProperties: false
-            properties:
-                content:
-                    type: string
-                kind:
-                    maxLength: 32
-                    type: string
-                name:
-                    maxLength: 256
-                    minLength: 1
-                    pattern: ^[A-Za-z0-9._-]+$
-                    type: string
-            type: object
-        YdbManagedParams:
-            additionalProperties: false
-            properties:
-                autoScale:
-                    $ref: '#/components/schemas/AutoScale'
-                computeType:
-                    enum:
-                        - 0
-                        - 1
-                        - 2
-                    format: int32
-                    type: integer
-                nodeCount:
-                    format: int32
-                    minimum: 0
-                    type: integer
-                resourcePresetId:
-                    type: string
-                storageGroups:
-                    format: int32
-                    minimum: 0
-                    type: integer
-                storageType:
-                    type: string
-                throttlingRcus:
-                    format: int32
-                    minimum: 0
-                    type: integer
-                type:
-                    enum:
-                        - 1
-                        - 2
-                    format: int32
-                    type: integer
-            type: object
-        YdbParams:
-            additionalProperties: false
-            properties:
-                autoSizePdisks:
-                    type: boolean
-                databaseNodes:
-                    format: int32
-                    minimum: 0
-                    type: integer
-                databaseOptions:
-                    additionalProperties:
-                        type: string
-                    type: object
-                databasePath:
-                    type: string
-                defaultDiskType:
-                    enum:
-                        - 0
-                        - 1
-                        - 2
-                        - 3
-                    format: int32
-                    type: integer
-                failureDomainType:
-                    enum:
-                        - 0
-                        - 1
-                    format: int32
-                    type: integer
-                faultTolerance:
-                    enum:
-                        - 0
-                        - 1
-                        - 2
-                        - 3
-                    format: int32
-                    type: integer
-                haproxy:
-                    format: int32
-                    minimum: 0
-                    type: integer
-                haproxyOptions:
-                    additionalProperties:
-                        type: string
-                    type: object
-                pdisksPerStorageNode:
-                    format: int32
-                    minimum: 0
-                    type: integer
-                storageGroups:
-                    format: int32
-                    minimum: 0
-                    type: integer
-                storageNodes:
-                    format: int32
-                    minimum: 1
-                    type: integer
-                storageOptions:
-                    additionalProperties:
-                        type: string
-                    type: object
             type: object
     securitySchemes:
         bearerAuth:

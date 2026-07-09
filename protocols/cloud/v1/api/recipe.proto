@@ -166,7 +166,7 @@ message StartRunRequest {
 }
 /*
     StartRunResponse returns the persisted, launched run record. The run
-    reuses models.TestRunRecord so overview/metrics/logs work unchanged for
+    reuses models.Run so overview/metrics/logs work unchanged for
     a recipe run; its spec/topology fields are left empty (a recipe run has
     no baked domain.TestRun — its input is the recipe bundle, carried by the
     launched RunRecipeWorkflow instead).
@@ -175,7 +175,7 @@ message StartRunResponse {
     /*
         run is the persisted, launched run record.
      */
-    models.TestRunRecord run = 1 [(validate.rules).message.required = true];
+    models.Run run = 1 [(validate.rules).message.required = true];
 }
 
 /*
@@ -189,7 +189,7 @@ message ListRunsRequest {
     string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
     /*
         recipe_id, when set, filters to runs launched from that recipe record
-        (matches models.TestRunRecord.recipe_id). Empty returns every recipe
+        (matches models.Run.recipe_id). Empty returns every recipe
         run for the tenant.
      */
     string recipe_id = 2 [(validate.rules).string.max_len = 64];
@@ -206,7 +206,7 @@ message ListRunsResponse {
     /*
         runs is the matching page of run records.
      */
-    repeated models.TestRunRecord runs = 1;
+    repeated models.Run runs = 1;
     /*
         next_page_token fetches the following page; empty when at the end.
 

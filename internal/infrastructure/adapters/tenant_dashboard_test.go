@@ -11,10 +11,10 @@ import (
 
 func TestDashboardRatingReaderFallsBackToAvailableThroughputMetric(t *testing.T) {
 	runs := fakeRatingRunsLister{
-		runs: []*models.TestRunRecord{
+		runs: []*models.Run{
 			{
 				Entity: &common.Entity{Id: "run-a", TenantId: "tenant-a", Timings: &common.Timings{}},
-				Summary: &models.TestRunRecord_Summary{
+				Summary: &models.Run_Summary{
 					WorkloadName: "workload",
 				},
 			},
@@ -49,9 +49,9 @@ func TestDashboardRatingReaderFallsBackToAvailableThroughputMetric(t *testing.T)
 }
 
 type fakeRatingRunsLister struct {
-	runs []*models.TestRunRecord
+	runs []*models.Run
 }
 
-func (l fakeRatingRunsLister) ListRatingRuns(context.Context, RatingRunsScope, string) ([]*models.TestRunRecord, error) {
+func (l fakeRatingRunsLister) ListRatingRuns(context.Context, RatingRunsScope, string) ([]*models.Run, error) {
 	return l.runs, nil
 }

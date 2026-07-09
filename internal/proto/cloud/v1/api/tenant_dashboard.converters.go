@@ -114,8 +114,8 @@ func (src *TenantDashboard) ToOgen() (*rest.TenantDashboard, error) {
 		dst.RunCounts.SetTo(*o1)
 	}
 	dst.SuccessRate.SetTo(float32(src.GetSuccessRate()))
-	c2, err := convert.SliceErr(src.GetRecentRuns(), func(e *models.TestRunRecord) (zero rest.TestRunRecord, _ error) {
-		o3, err := TestRunRecordToOgen(e)
+	c2, err := convert.SliceErr(src.GetRecentRuns(), func(e *models.Run) (zero rest.Run, _ error) {
+		o3, err := RunToOgen(e)
 		if err != nil {
 			return zero, err
 		}
@@ -166,8 +166,8 @@ func TenantDashboardFromOgen(src *rest.TenantDashboard) (*TenantDashboard, error
 	if v3, ok := src.SuccessRate.Get(); ok {
 		dst.SuccessRate = float32(v3)
 	}
-	c4, err := convert.SliceErr(src.RecentRuns, func(e rest.TestRunRecord) (zero *models.TestRunRecord, _ error) {
-		m5, err := TestRunRecordFromOgen(&e)
+	c4, err := convert.SliceErr(src.RecentRuns, func(e rest.Run) (zero *models.Run, _ error) {
+		m5, err := RunFromOgen(&e)
 		if err != nil {
 			return zero, err
 		}

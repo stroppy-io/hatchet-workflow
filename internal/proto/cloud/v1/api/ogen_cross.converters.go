@@ -424,36 +424,6 @@ func AsRefFromOgen(src *rest.AsRef) (*common.File_AsRef, error) {
 	return dst, nil
 }
 
-// AutoScaleToOgen converts domain.YdbManagedParams_AutoScale (an imported type) to its ogen representation.
-func AutoScaleToOgen(src *domain.YdbManagedParams_AutoScale) (*rest.AutoScale, error) {
-	var dst rest.AutoScale
-	if src == nil {
-		return &dst, nil
-	}
-	dst.MinSize.SetTo(int32(src.GetMinSize()))
-	dst.MaxSize.SetTo(int32(src.GetMaxSize()))
-	dst.CpuUtilizationPercent.SetTo(int32(src.GetCpuUtilizationPercent()))
-	return &dst, nil
-}
-
-// AutoScaleFromOgen converts the ogen representation back to YdbManagedParams_AutoScale.
-func AutoScaleFromOgen(src *rest.AutoScale) (*domain.YdbManagedParams_AutoScale, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &domain.YdbManagedParams_AutoScale{}
-	if v1, ok := src.MinSize.Get(); ok {
-		dst.MinSize = uint32(v1)
-	}
-	if v2, ok := src.MaxSize.Get(); ok {
-		dst.MaxSize = uint32(v2)
-	}
-	if v3, ok := src.CpuUtilizationPercent.Get(); ok {
-		dst.CpuUtilizationPercent = uint32(v3)
-	}
-	return dst, nil
-}
-
 // BakedToOgen converts schemapb.Baked (an imported type) to its ogen representation.
 func BakedToOgen(src *schemapb.Baked) (*rest.Baked, error) {
 	var dst rest.Baked
@@ -534,38 +504,6 @@ func CmdFromOgen(src *rest.Cmd) (*common.Cmd, error) {
 			return nil, err
 		}
 		dst.Result = m3
-	}
-	return dst, nil
-}
-
-// CockroachParamsToOgen converts domain.CockroachParams (an imported type) to its ogen representation.
-func CockroachParamsToOgen(src *domain.CockroachParams) (*rest.CockroachParams, error) {
-	var dst rest.CockroachParams
-	if src == nil {
-		return &dst, nil
-	}
-	dst.Nodes.SetTo(int32(src.GetNodes()))
-	c1 := convert.Map(src.GetOptions(), func(v string) string {
-		return string(v)
-	})
-	dst.Options.SetTo(c1)
-	return &dst, nil
-}
-
-// CockroachParamsFromOgen converts the ogen representation back to CockroachParams.
-func CockroachParamsFromOgen(src *rest.CockroachParams) (*domain.CockroachParams, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &domain.CockroachParams{}
-	if v1, ok := src.Nodes.Get(); ok {
-		dst.Nodes = uint32(v1)
-	}
-	if mv2, ok := src.Options.Get(); ok {
-		c3 := convert.Map(mv2, func(v string) string {
-			return string(v)
-		})
-		dst.Options = c3
 	}
 	return dst, nil
 }
@@ -651,6 +589,206 @@ func ComparisonFromOgen(src *rest.Comparison) (*monitor.Comparison, error) {
 		return nil, err
 	}
 	dst.Summaries = c6
+	return dst, nil
+}
+
+// CompiledJobToOgen converts dsl.CompiledJob (an imported type) to its ogen representation.
+func CompiledJobToOgen(src *dsl.CompiledJob) (*rest.CompiledJob, error) {
+	var dst rest.CompiledJob
+	if src == nil {
+		return &dst, nil
+	}
+	dst.ID.SetTo(string(src.GetId()))
+	c1 := convert.Slice(src.GetNeeds(), func(e string) string {
+		return string(e)
+	})
+	dst.Needs = c1
+	dst.OnGroup.SetTo(string(src.GetOnGroup()))
+	c2 := convert.Map(src.GetMatrix(), func(v string) string {
+		return string(v)
+	})
+	dst.Matrix.SetTo(c2)
+	dst.When.SetTo(string(src.GetWhen()))
+	c3 := convert.Map(src.GetWith(), func(v string) string {
+		return string(v)
+	})
+	dst.With.SetTo(c3)
+	c4 := convert.Map(src.GetResolvedInputs(), func(v string) string {
+		return string(v)
+	})
+	dst.ResolvedInputs.SetTo(c4)
+	c5 := convert.Map(src.GetInputGroups(), func(v string) string {
+		return string(v)
+	})
+	dst.InputGroups.SetTo(c5)
+	dst.TargetGroup.SetTo(string(src.GetTargetGroup()))
+	switch src.GetAction().(type) {
+	case *dsl.CompiledJob_Steps:
+		o6, err := StepListToOgen(src.GetSteps())
+		if err != nil {
+			return nil, err
+		}
+		dst.Steps.SetTo(*o6)
+	case *dsl.CompiledJob_Service:
+		dst.Service.SetTo(string(src.GetService()))
+	}
+	return &dst, nil
+}
+
+// CompiledJobFromOgen converts the ogen representation back to CompiledJob.
+func CompiledJobFromOgen(src *rest.CompiledJob) (*dsl.CompiledJob, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &dsl.CompiledJob{}
+	if v1, ok := src.ID.Get(); ok {
+		dst.Id = string(v1)
+	}
+	c2 := convert.Slice(src.Needs, func(e string) string {
+		return string(e)
+	})
+	dst.Needs = c2
+	if v3, ok := src.OnGroup.Get(); ok {
+		dst.OnGroup = string(v3)
+	}
+	if mv4, ok := src.Matrix.Get(); ok {
+		c5 := convert.Map(mv4, func(v string) string {
+			return string(v)
+		})
+		dst.Matrix = c5
+	}
+	if v6, ok := src.When.Get(); ok {
+		dst.When = string(v6)
+	}
+	if mv7, ok := src.With.Get(); ok {
+		c8 := convert.Map(mv7, func(v string) string {
+			return string(v)
+		})
+		dst.With = c8
+	}
+	if mv9, ok := src.ResolvedInputs.Get(); ok {
+		c10 := convert.Map(mv9, func(v string) string {
+			return string(v)
+		})
+		dst.ResolvedInputs = c10
+	}
+	if mv11, ok := src.InputGroups.Get(); ok {
+		c12 := convert.Map(mv11, func(v string) string {
+			return string(v)
+		})
+		dst.InputGroups = c12
+	}
+	if v13, ok := src.TargetGroup.Get(); ok {
+		dst.TargetGroup = string(v13)
+	}
+	if v14, ok := src.Steps.Get(); ok {
+		m15, err := StepListFromOgen(&v14)
+		if err != nil {
+			return nil, err
+		}
+		dst.Action = &dsl.CompiledJob_Steps{Steps: m15}
+	}
+	if v16, ok := src.Service.Get(); ok {
+		dst.Action = &dsl.CompiledJob_Service{Service: string(v16)}
+	}
+	return dst, nil
+}
+
+// CompiledPlanToOgen converts dsl.CompiledPlan (an imported type) to its ogen representation.
+func CompiledPlanToOgen(src *dsl.CompiledPlan) (*rest.CompiledPlan, error) {
+	var dst rest.CompiledPlan
+	if src == nil {
+		return &dst, nil
+	}
+	if src.Provider != nil {
+		o1, err := ProviderRefToOgen(src.GetProvider())
+		if err != nil {
+			return nil, err
+		}
+		dst.Provider.SetTo(*o1)
+	}
+	c2, err := convert.SliceErr(src.GetMachineGroups(), func(e *dsl.MachineGroup) (zero rest.MachineGroup, _ error) {
+		o3, err := MachineGroupToOgen(e)
+		if err != nil {
+			return zero, err
+		}
+		return *o3, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dst.MachineGroups = c2
+	c4, err := convert.SliceErr(src.GetServices(), func(e *dsl.ServiceSpec) (zero rest.ServiceSpec, _ error) {
+		o5, err := ServiceSpecToOgen(e)
+		if err != nil {
+			return zero, err
+		}
+		return *o5, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dst.Services = c4
+	c6, err := convert.SliceErr(src.GetJobs(), func(e *dsl.CompiledJob) (zero rest.CompiledJob, _ error) {
+		o7, err := CompiledJobToOgen(e)
+		if err != nil {
+			return zero, err
+		}
+		return *o7, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dst.Jobs = c6
+	return &dst, nil
+}
+
+// CompiledPlanFromOgen converts the ogen representation back to CompiledPlan.
+func CompiledPlanFromOgen(src *rest.CompiledPlan) (*dsl.CompiledPlan, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &dsl.CompiledPlan{}
+	if v1, ok := src.Provider.Get(); ok {
+		m2, err := ProviderRefFromOgen(&v1)
+		if err != nil {
+			return nil, err
+		}
+		dst.Provider = m2
+	}
+	c3, err := convert.SliceErr(src.MachineGroups, func(e rest.MachineGroup) (zero *dsl.MachineGroup, _ error) {
+		m4, err := MachineGroupFromOgen(&e)
+		if err != nil {
+			return zero, err
+		}
+		return m4, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dst.MachineGroups = c3
+	c5, err := convert.SliceErr(src.Services, func(e rest.ServiceSpec) (zero *dsl.ServiceSpec, _ error) {
+		m6, err := ServiceSpecFromOgen(&e)
+		if err != nil {
+			return zero, err
+		}
+		return m6, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dst.Services = c5
+	c7, err := convert.SliceErr(src.Jobs, func(e rest.CompiledJob) (zero *dsl.CompiledJob, _ error) {
+		m8, err := CompiledJobFromOgen(&e)
+		if err != nil {
+			return zero, err
+		}
+		return m8, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dst.Jobs = c7
 	return dst, nil
 }
 
@@ -971,6 +1109,32 @@ func ComputedFromOgen(src *rest.Computed) (*schemapb.Schema_Filed_Computed, erro
 		}
 		p4 := en3
 		dst.Result = &p4
+	}
+	return dst, nil
+}
+
+// ConfigFileToOgen converts dsl.ConfigFile (an imported type) to its ogen representation.
+func ConfigFileToOgen(src *dsl.ConfigFile) (*rest.ConfigFile, error) {
+	var dst rest.ConfigFile
+	if src == nil {
+		return &dst, nil
+	}
+	dst.TemplatePath.SetTo(string(src.GetTemplatePath()))
+	dst.Dest.SetTo(string(src.GetDest()))
+	return &dst, nil
+}
+
+// ConfigFileFromOgen converts the ogen representation back to ConfigFile.
+func ConfigFileFromOgen(src *rest.ConfigFile) (*dsl.ConfigFile, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &dsl.ConfigFile{}
+	if v1, ok := src.TemplatePath.Get(); ok {
+		dst.TemplatePath = string(v1)
+	}
+	if v2, ok := src.Dest.Get(); ok {
+		dst.Dest = string(v2)
 	}
 	return dst, nil
 }
@@ -1445,297 +1609,6 @@ func ContainerOutputFromOgen(src *rest.ContainerOutput) (*deployment.Docker_Cont
 	return dst, nil
 }
 
-// DatabaseToOgen converts domain.Database (an imported type) to its ogen representation.
-func DatabaseToOgen(src *domain.Database) (*rest.Database, error) {
-	var dst rest.Database
-	if src == nil {
-		return &dst, nil
-	}
-	var en1 rest.DatabaseKind
-	switch src.GetKind() {
-	case domain.Database_KIND_POSTGRES:
-		en1 = rest.DatabaseKind1
-	case domain.Database_KIND_MYSQL:
-		en1 = rest.DatabaseKind2
-	case domain.Database_KIND_MARIADB:
-		en1 = rest.DatabaseKind3
-	case domain.Database_KIND_YDB:
-		en1 = rest.DatabaseKind4
-	case domain.Database_KIND_YDB_MANAGED:
-		en1 = rest.DatabaseKind5
-	case domain.Database_KIND_COCKROACH:
-		en1 = rest.DatabaseKind6
-	case domain.Database_KIND_PICODATA:
-		en1 = rest.DatabaseKind7
-	case domain.Database_KIND_EXTERNAL:
-		en1 = rest.DatabaseKind8
-	case domain.Database_KIND_ORIOLEDB:
-		en1 = rest.DatabaseKind9
-	case domain.Database_KIND_NOOP:
-		en1 = rest.DatabaseKind10
-	case domain.Database_KIND_PG_NOOP:
-		en1 = rest.DatabaseKind11
-	default:
-		return nil, fmt.Errorf("cloud.v1.domain.Database.kind: enum value %v has no ogen DatabaseKind variant", src.GetKind())
-	}
-	dst.Kind.SetTo(en1)
-	dst.PackageId.SetTo(string(src.GetPackageId()))
-	if src.Tags != nil {
-		o2, err := TagsToOgen(src.GetTags())
-		if err != nil {
-			return nil, err
-		}
-		dst.Tags.SetTo(*o2)
-	}
-	switch src.GetSource().(type) {
-	case *domain.Database_Params:
-		o3, err := DatabaseParamsToOgen(src.GetParams())
-		if err != nil {
-			return nil, err
-		}
-		dst.Params.SetTo(*o3)
-	case *domain.Database_External_:
-		o4, err := ExternalToOgen(src.GetExternal())
-		if err != nil {
-			return nil, err
-		}
-		dst.External.SetTo(*o4)
-	case *domain.Database_DatabasePresetId:
-		o5, err := PresetIdToOgen(src.GetDatabasePresetId())
-		if err != nil {
-			return nil, err
-		}
-		dst.DatabasePresetId.SetTo(*o5)
-	}
-	return &dst, nil
-}
-
-// DatabaseFromOgen converts the ogen representation back to Database.
-func DatabaseFromOgen(src *rest.Database) (*domain.Database, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &domain.Database{}
-	if v1, ok := src.Kind.Get(); ok {
-		var en2 domain.Database_Kind
-		switch v1 {
-		case rest.DatabaseKind1:
-			en2 = domain.Database_KIND_POSTGRES
-		case rest.DatabaseKind2:
-			en2 = domain.Database_KIND_MYSQL
-		case rest.DatabaseKind3:
-			en2 = domain.Database_KIND_MARIADB
-		case rest.DatabaseKind4:
-			en2 = domain.Database_KIND_YDB
-		case rest.DatabaseKind5:
-			en2 = domain.Database_KIND_YDB_MANAGED
-		case rest.DatabaseKind6:
-			en2 = domain.Database_KIND_COCKROACH
-		case rest.DatabaseKind7:
-			en2 = domain.Database_KIND_PICODATA
-		case rest.DatabaseKind8:
-			en2 = domain.Database_KIND_EXTERNAL
-		case rest.DatabaseKind9:
-			en2 = domain.Database_KIND_ORIOLEDB
-		case rest.DatabaseKind10:
-			en2 = domain.Database_KIND_NOOP
-		case rest.DatabaseKind11:
-			en2 = domain.Database_KIND_PG_NOOP
-		default:
-			return nil, fmt.Errorf("cloud.v1.domain.Database.kind: enum value %v has no Database_Kind variant", v1)
-		}
-		dst.Kind = en2
-	}
-	if v3, ok := src.PackageId.Get(); ok {
-		dst.PackageId = string(v3)
-	}
-	if v4, ok := src.Tags.Get(); ok {
-		m5, err := TagsFromOgen(&v4)
-		if err != nil {
-			return nil, err
-		}
-		dst.Tags = m5
-	}
-	if v6, ok := src.Params.Get(); ok {
-		m7, err := DatabaseParamsFromOgen(&v6)
-		if err != nil {
-			return nil, err
-		}
-		dst.Source = &domain.Database_Params{Params: m7}
-	}
-	if v8, ok := src.External.Get(); ok {
-		m9, err := ExternalFromOgen(&v8)
-		if err != nil {
-			return nil, err
-		}
-		dst.Source = &domain.Database_External_{External: m9}
-	}
-	if v10, ok := src.DatabasePresetId.Get(); ok {
-		m11, err := PresetIdFromOgen(&v10)
-		if err != nil {
-			return nil, err
-		}
-		dst.Source = &domain.Database_DatabasePresetId{DatabasePresetId: m11}
-	}
-	return dst, nil
-}
-
-// DatabaseParamsToOgen converts domain.DatabaseParams (an imported type) to its ogen representation.
-func DatabaseParamsToOgen(src *domain.DatabaseParams) (*rest.DatabaseParams, error) {
-	var dst rest.DatabaseParams
-	if src == nil {
-		return &dst, nil
-	}
-	dst.Version.SetTo(string(src.GetVersion()))
-	if src.Package != nil {
-		o1, err := PackageToOgen(src.GetPackage())
-		if err != nil {
-			return nil, err
-		}
-		dst.Package.SetTo(*o1)
-	}
-	switch src.GetEngine().(type) {
-	case *domain.DatabaseParams_Postgres:
-		o2, err := PostgresParamsToOgen(src.GetPostgres())
-		if err != nil {
-			return nil, err
-		}
-		dst.Postgres.SetTo(*o2)
-	case *domain.DatabaseParams_Mysql:
-		o3, err := MySqlParamsToOgen(src.GetMysql())
-		if err != nil {
-			return nil, err
-		}
-		dst.Mysql.SetTo(*o3)
-	case *domain.DatabaseParams_Mariadb:
-		o4, err := MySqlParamsToOgen(src.GetMariadb())
-		if err != nil {
-			return nil, err
-		}
-		dst.Mariadb.SetTo(*o4)
-	case *domain.DatabaseParams_Picodata:
-		o5, err := PicodataParamsToOgen(src.GetPicodata())
-		if err != nil {
-			return nil, err
-		}
-		dst.Picodata.SetTo(*o5)
-	case *domain.DatabaseParams_Ydb:
-		o6, err := YdbParamsToOgen(src.GetYdb())
-		if err != nil {
-			return nil, err
-		}
-		dst.Ydb.SetTo(*o6)
-	case *domain.DatabaseParams_YdbManaged:
-		o7, err := YdbManagedParamsToOgen(src.GetYdbManaged())
-		if err != nil {
-			return nil, err
-		}
-		dst.YdbManaged.SetTo(*o7)
-	case *domain.DatabaseParams_Cockroach:
-		o8, err := CockroachParamsToOgen(src.GetCockroach())
-		if err != nil {
-			return nil, err
-		}
-		dst.Cockroach.SetTo(*o8)
-	case *domain.DatabaseParams_Orioledb:
-		o9, err := OrioledbParamsToOgen(src.GetOrioledb())
-		if err != nil {
-			return nil, err
-		}
-		dst.Orioledb.SetTo(*o9)
-	case *domain.DatabaseParams_Noop:
-	case *domain.DatabaseParams_PgNoop:
-		o10, err := PgNoopParamsToOgen(src.GetPgNoop())
-		if err != nil {
-			return nil, err
-		}
-		dst.PgNoop.SetTo(*o10)
-	}
-	return &dst, nil
-}
-
-// DatabaseParamsFromOgen converts the ogen representation back to DatabaseParams.
-func DatabaseParamsFromOgen(src *rest.DatabaseParams) (*domain.DatabaseParams, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &domain.DatabaseParams{}
-	if v1, ok := src.Version.Get(); ok {
-		dst.Version = string(v1)
-	}
-	if v2, ok := src.Package.Get(); ok {
-		m3, err := PackageFromOgen(&v2)
-		if err != nil {
-			return nil, err
-		}
-		dst.Package = m3
-	}
-	if v4, ok := src.Postgres.Get(); ok {
-		m5, err := PostgresParamsFromOgen(&v4)
-		if err != nil {
-			return nil, err
-		}
-		dst.Engine = &domain.DatabaseParams_Postgres{Postgres: m5}
-	}
-	if v6, ok := src.Mysql.Get(); ok {
-		m7, err := MySqlParamsFromOgen(&v6)
-		if err != nil {
-			return nil, err
-		}
-		dst.Engine = &domain.DatabaseParams_Mysql{Mysql: m7}
-	}
-	if v8, ok := src.Mariadb.Get(); ok {
-		m9, err := MySqlParamsFromOgen(&v8)
-		if err != nil {
-			return nil, err
-		}
-		dst.Engine = &domain.DatabaseParams_Mariadb{Mariadb: m9}
-	}
-	if v10, ok := src.Picodata.Get(); ok {
-		m11, err := PicodataParamsFromOgen(&v10)
-		if err != nil {
-			return nil, err
-		}
-		dst.Engine = &domain.DatabaseParams_Picodata{Picodata: m11}
-	}
-	if v12, ok := src.Ydb.Get(); ok {
-		m13, err := YdbParamsFromOgen(&v12)
-		if err != nil {
-			return nil, err
-		}
-		dst.Engine = &domain.DatabaseParams_Ydb{Ydb: m13}
-	}
-	if v14, ok := src.YdbManaged.Get(); ok {
-		m15, err := YdbManagedParamsFromOgen(&v14)
-		if err != nil {
-			return nil, err
-		}
-		dst.Engine = &domain.DatabaseParams_YdbManaged{YdbManaged: m15}
-	}
-	if v16, ok := src.Cockroach.Get(); ok {
-		m17, err := CockroachParamsFromOgen(&v16)
-		if err != nil {
-			return nil, err
-		}
-		dst.Engine = &domain.DatabaseParams_Cockroach{Cockroach: m17}
-	}
-	if v18, ok := src.Orioledb.Get(); ok {
-		m19, err := OrioledbParamsFromOgen(&v18)
-		if err != nil {
-			return nil, err
-		}
-		dst.Engine = &domain.DatabaseParams_Orioledb{Orioledb: m19}
-	}
-	if v20, ok := src.PgNoop.Get(); ok {
-		m21, err := PgNoopParamsFromOgen(&v20)
-		if err != nil {
-			return nil, err
-		}
-		dst.Engine = &domain.DatabaseParams_PgNoop{PgNoop: m21}
-	}
-	return dst, nil
-}
-
 // DeploymentPlanToOgen converts deployment.DeploymentPlan (an imported type) to its ogen representation.
 func DeploymentPlanToOgen(src *deployment.DeploymentPlan) (*rest.DeploymentPlan, error) {
 	var dst rest.DeploymentPlan
@@ -1922,6 +1795,78 @@ func DiskFromOgen(src *rest.Disk) (*deployment.Yandex_Disk, error) {
 	}
 	if v3, ok := src.Type.Get(); ok {
 		dst.Type = string(v3)
+	}
+	return dst, nil
+}
+
+// DiskSpecToOgen converts dsl.DiskSpec (an imported type) to its ogen representation.
+func DiskSpecToOgen(src *dsl.DiskSpec) (*rest.DiskSpec, error) {
+	var dst rest.DiskSpec
+	if src == nil {
+		return &dst, nil
+	}
+	dst.SizeGb.SetTo(uint64(src.GetSizeGb()))
+	dst.Type.SetTo(string(src.GetType()))
+	return &dst, nil
+}
+
+// DiskSpecFromOgen converts the ogen representation back to DiskSpec.
+func DiskSpecFromOgen(src *rest.DiskSpec) (*dsl.DiskSpec, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &dsl.DiskSpec{}
+	if v1, ok := src.SizeGb.Get(); ok {
+		dst.SizeGb = uint64(v1)
+	}
+	if v2, ok := src.Type.Get(); ok {
+		dst.Type = string(v2)
+	}
+	return dst, nil
+}
+
+// DslStepToOgen converts dsl.DslStep (an imported type) to its ogen representation.
+func DslStepToOgen(src *dsl.DslStep) (*rest.DslStep, error) {
+	var dst rest.DslStep
+	if src == nil {
+		return &dst, nil
+	}
+	switch src.GetStep().(type) {
+	case *dsl.DslStep_Agent:
+		o1, err := AgentStepToOgen(src.GetAgent())
+		if err != nil {
+			return nil, err
+		}
+		dst.Agent.SetTo(*o1)
+	case *dsl.DslStep_Wait:
+		o2, err := WaitStepToOgen(src.GetWait())
+		if err != nil {
+			return nil, err
+		}
+		dst.Wait.SetTo(*o2)
+	}
+	return &dst, nil
+}
+
+// DslStepFromOgen converts the ogen representation back to DslStep.
+func DslStepFromOgen(src *rest.DslStep) (*dsl.DslStep, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &dsl.DslStep{}
+	if v1, ok := src.Agent.Get(); ok {
+		m2, err := AgentStepFromOgen(&v1)
+		if err != nil {
+			return nil, err
+		}
+		dst.Step = &dsl.DslStep_Agent{Agent: m2}
+	}
+	if v3, ok := src.Wait.Get(); ok {
+		m4, err := WaitStepFromOgen(&v3)
+		if err != nil {
+			return nil, err
+		}
+		dst.Step = &dsl.DslStep_Wait{Wait: m4}
 	}
 	return dst, nil
 }
@@ -2441,98 +2386,6 @@ func EventFromOgen(src *rest.Event) (*monitor.Event, error) {
 	return dst, nil
 }
 
-// ExecutionToOgen converts domain.Workload_Execution (an imported type) to its ogen representation.
-func ExecutionToOgen(src *domain.Workload_Execution) (*rest.Execution, error) {
-	var dst rest.Execution
-	if src == nil {
-		return &dst, nil
-	}
-	if src.Vus != nil {
-		dst.Vus.SetTo(int32(src.GetVus()))
-	}
-	if src.Quiet != nil {
-		dst.Quiet.SetTo(bool(src.GetQuiet()))
-	}
-	dst.NoThresholds.SetTo(bool(src.GetNoThresholds()))
-	c1 := convert.Slice(src.GetExtraArgs(), func(e string) string {
-		return string(e)
-	})
-	dst.ExtraArgs = c1
-	switch src.GetLimit().(type) {
-	case *domain.Workload_Execution_Duration:
-		dst.Duration.SetTo(string(src.GetDuration()))
-	case *domain.Workload_Execution_Iterations:
-		dst.Iterations.SetTo(int32(src.GetIterations()))
-	}
-	return &dst, nil
-}
-
-// ExecutionFromOgen converts the ogen representation back to Workload_Execution.
-func ExecutionFromOgen(src *rest.Execution) (*domain.Workload_Execution, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &domain.Workload_Execution{}
-	if v1, ok := src.Vus.Get(); ok {
-		p2 := uint32(v1)
-		dst.Vus = &p2
-	}
-	if v3, ok := src.Quiet.Get(); ok {
-		p4 := bool(v3)
-		dst.Quiet = &p4
-	}
-	if v5, ok := src.NoThresholds.Get(); ok {
-		dst.NoThresholds = bool(v5)
-	}
-	c6 := convert.Slice(src.ExtraArgs, func(e string) string {
-		return string(e)
-	})
-	dst.ExtraArgs = c6
-	if v7, ok := src.Duration.Get(); ok {
-		dst.Limit = &domain.Workload_Execution_Duration{Duration: string(v7)}
-	}
-	if v8, ok := src.Iterations.Get(); ok {
-		dst.Limit = &domain.Workload_Execution_Iterations{Iterations: uint32(v8)}
-	}
-	return dst, nil
-}
-
-// ExternalToOgen converts domain.Database_External (an imported type) to its ogen representation.
-func ExternalToOgen(src *domain.Database_External) (*rest.External, error) {
-	var dst rest.External
-	if src == nil {
-		return &dst, nil
-	}
-	dst.Dsn.SetTo(string(src.GetDsn()))
-	if src.Tags != nil {
-		o1, err := TagsToOgen(src.GetTags())
-		if err != nil {
-			return nil, err
-		}
-		dst.Tags.SetTo(*o1)
-	}
-	return &dst, nil
-}
-
-// ExternalFromOgen converts the ogen representation back to Database_External.
-func ExternalFromOgen(src *rest.External) (*domain.Database_External, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &domain.Database_External{}
-	if v1, ok := src.Dsn.Get(); ok {
-		dst.Dsn = string(v1)
-	}
-	if v2, ok := src.Tags.Get(); ok {
-		m3, err := TagsFromOgen(&v2)
-		if err != nil {
-			return nil, err
-		}
-		dst.Tags = m3
-	}
-	return dst, nil
-}
-
 // ExternalIdentityToOgen converts iam.ExternalIdentity (an imported type) to its ogen representation.
 func ExternalIdentityToOgen(src *iam.ExternalIdentity) (*rest.ExternalIdentity, error) {
 	var dst rest.ExternalIdentity
@@ -2735,56 +2588,6 @@ func File2FromOgen(src *rest.File2) (*deployment.Docker_File, error) {
 	dst.Content = []byte(src.Content)
 	if v2, ok := src.Mode.Get(); ok {
 		dst.Mode = uint32(v2)
-	}
-	return dst, nil
-}
-
-// FileOverrideToOgen converts deployment.FileOverride (an imported type) to its ogen representation.
-func FileOverrideToOgen(src *deployment.FileOverride) (*rest.FileOverride, error) {
-	var dst rest.FileOverride
-	if src == nil {
-		return &dst, nil
-	}
-	dst.ArtifactId.SetTo(string(src.GetArtifactId()))
-	dst.ComponentId.SetTo(string(src.GetComponentId()))
-	dst.BaseHash.SetTo(string(src.GetBaseHash()))
-	o1, err := FileToOgen(src.GetFile())
-	if err != nil {
-		return nil, err
-	}
-	dst.File = *o1
-	c2 := convert.Map(src.GetLabels(), func(v string) string {
-		return string(v)
-	})
-	dst.Labels.SetTo(c2)
-	return &dst, nil
-}
-
-// FileOverrideFromOgen converts the ogen representation back to FileOverride.
-func FileOverrideFromOgen(src *rest.FileOverride) (*deployment.FileOverride, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &deployment.FileOverride{}
-	if v1, ok := src.ArtifactId.Get(); ok {
-		dst.ArtifactId = string(v1)
-	}
-	if v2, ok := src.ComponentId.Get(); ok {
-		dst.ComponentId = string(v2)
-	}
-	if v3, ok := src.BaseHash.Get(); ok {
-		dst.BaseHash = string(v3)
-	}
-	m4, err := FileFromOgen(&src.File)
-	if err != nil {
-		return nil, err
-	}
-	dst.File = m4
-	if mv5, ok := src.Labels.Get(); ok {
-		c6 := convert.Map(mv5, func(v string) string {
-			return string(v)
-		})
-		dst.Labels = c6
 	}
 	return dst, nil
 }
@@ -3890,6 +3693,32 @@ func FiledUInt64FromOgen(src *rest.FiledUInt64) (*schemapb.Schema_Filed_UInt64, 
 	return dst, nil
 }
 
+// HealthCheckToOgen converts dsl.HealthCheck (an imported type) to its ogen representation.
+func HealthCheckToOgen(src *dsl.HealthCheck) (*rest.HealthCheck, error) {
+	var dst rest.HealthCheck
+	if src == nil {
+		return &dst, nil
+	}
+	dst.HTTP.SetTo(string(src.GetHttp()))
+	dst.Timeout.SetTo(string(src.GetTimeout()))
+	return &dst, nil
+}
+
+// HealthCheckFromOgen converts the ogen representation back to HealthCheck.
+func HealthCheckFromOgen(src *rest.HealthCheck) (*dsl.HealthCheck, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &dsl.HealthCheck{}
+	if v1, ok := src.HTTP.Get(); ok {
+		dst.Http = string(v1)
+	}
+	if v2, ok := src.Timeout.Get(); ok {
+		dst.Timeout = string(v2)
+	}
+	return dst, nil
+}
+
 // HealthcheckToOgen converts deployment.Docker_Healthcheck (an imported type) to its ogen representation.
 func HealthcheckToOgen(src *deployment.Docker_Healthcheck) (*rest.Healthcheck, error) {
 	var dst rest.Healthcheck
@@ -4625,8 +4454,68 @@ func LogRefFromOgen(src *rest.LogRef) (*monitor.LogRef, error) {
 	return dst, nil
 }
 
-// MachineNodeToOgen converts models.RecipeTopologySnapshot_MachineNode (an imported type) to its ogen representation.
-func MachineNodeToOgen(src *models.RecipeTopologySnapshot_MachineNode) (*rest.MachineNode, error) {
+// MachineGroupToOgen converts dsl.MachineGroup (an imported type) to its ogen representation.
+func MachineGroupToOgen(src *dsl.MachineGroup) (*rest.MachineGroup, error) {
+	var dst rest.MachineGroup
+	if src == nil {
+		return &dst, nil
+	}
+	dst.Name.SetTo(string(src.GetName()))
+	dst.Count.SetTo(int32(src.GetCount()))
+	dst.CPU.SetTo(int32(src.GetCpu()))
+	dst.RamMb.SetTo(uint64(src.GetRamMb()))
+	c1, err := convert.SliceErr(src.GetDisks(), func(e *dsl.DiskSpec) (zero rest.DiskSpec, _ error) {
+		o2, err := DiskSpecToOgen(e)
+		if err != nil {
+			return zero, err
+		}
+		return *o2, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dst.Disks = c1
+	dst.ExtJson.SetTo(string(src.GetExtJson()))
+	return &dst, nil
+}
+
+// MachineGroupFromOgen converts the ogen representation back to MachineGroup.
+func MachineGroupFromOgen(src *rest.MachineGroup) (*dsl.MachineGroup, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &dsl.MachineGroup{}
+	if v1, ok := src.Name.Get(); ok {
+		dst.Name = string(v1)
+	}
+	if v2, ok := src.Count.Get(); ok {
+		dst.Count = uint32(v2)
+	}
+	if v3, ok := src.CPU.Get(); ok {
+		dst.Cpu = uint32(v3)
+	}
+	if v4, ok := src.RamMb.Get(); ok {
+		dst.RamMb = uint64(v4)
+	}
+	c5, err := convert.SliceErr(src.Disks, func(e rest.DiskSpec) (zero *dsl.DiskSpec, _ error) {
+		m6, err := DiskSpecFromOgen(&e)
+		if err != nil {
+			return zero, err
+		}
+		return m6, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dst.Disks = c5
+	if v7, ok := src.ExtJson.Get(); ok {
+		dst.ExtJson = string(v7)
+	}
+	return dst, nil
+}
+
+// MachineNodeToOgen converts models.RunTopology_MachineNode (an imported type) to its ogen representation.
+func MachineNodeToOgen(src *models.RunTopology_MachineNode) (*rest.MachineNode, error) {
 	var dst rest.MachineNode
 	if src == nil {
 		return &dst, nil
@@ -4661,10 +4550,10 @@ func MachineNodeToOgen(src *models.RecipeTopologySnapshot_MachineNode) (*rest.Ma
 	case common.Status_STATUS_DEPLOYED:
 		en1 = rest.MachineNodeStatus11
 	default:
-		return nil, fmt.Errorf("cloud.v1.models.RecipeTopologySnapshot.MachineNode.status: enum value %v has no ogen MachineNodeStatus variant", src.GetStatus())
+		return nil, fmt.Errorf("cloud.v1.models.RunTopology.MachineNode.status: enum value %v has no ogen MachineNodeStatus variant", src.GetStatus())
 	}
 	dst.Status.SetTo(en1)
-	c2, err := convert.SliceErr(src.GetServices(), func(e *models.RecipeTopologySnapshot_ServiceNode) (zero rest.ServiceNode, _ error) {
+	c2, err := convert.SliceErr(src.GetServices(), func(e *models.RunTopology_ServiceNode) (zero rest.ServiceNode, _ error) {
 		o3, err := ServiceNodeToOgen(e)
 		if err != nil {
 			return zero, err
@@ -4682,12 +4571,12 @@ func MachineNodeToOgen(src *models.RecipeTopologySnapshot_MachineNode) (*rest.Ma
 	return &dst, nil
 }
 
-// MachineNodeFromOgen converts the ogen representation back to RecipeTopologySnapshot_MachineNode.
-func MachineNodeFromOgen(src *rest.MachineNode) (*models.RecipeTopologySnapshot_MachineNode, error) {
+// MachineNodeFromOgen converts the ogen representation back to RunTopology_MachineNode.
+func MachineNodeFromOgen(src *rest.MachineNode) (*models.RunTopology_MachineNode, error) {
 	if src == nil {
 		return nil, nil
 	}
-	dst := &models.RecipeTopologySnapshot_MachineNode{}
+	dst := &models.RunTopology_MachineNode{}
 	if v1, ok := src.NodeId.Get(); ok {
 		dst.NodeId = string(v1)
 	}
@@ -4725,11 +4614,11 @@ func MachineNodeFromOgen(src *rest.MachineNode) (*models.RecipeTopologySnapshot_
 		case rest.MachineNodeStatus11:
 			en5 = common.Status_STATUS_DEPLOYED
 		default:
-			return nil, fmt.Errorf("cloud.v1.models.RecipeTopologySnapshot.MachineNode.status: enum value %v has no Status variant", v4)
+			return nil, fmt.Errorf("cloud.v1.models.RunTopology.MachineNode.status: enum value %v has no Status variant", v4)
 		}
 		dst.Status = en5
 	}
-	c6, err := convert.SliceErr(src.Services, func(e rest.ServiceNode) (zero *models.RecipeTopologySnapshot_ServiceNode, _ error) {
+	c6, err := convert.SliceErr(src.Services, func(e rest.ServiceNode) (zero *models.RunTopology_ServiceNode, _ error) {
 		m7, err := ServiceNodeFromOgen(&e)
 		if err != nil {
 			return zero, err
@@ -5281,70 +5170,6 @@ func MetricSummaryFromOgen(src *rest.MetricSummary) (*monitor.MetricSummary, err
 	return dst, nil
 }
 
-// MySqlParamsToOgen converts domain.MySqlParams (an imported type) to its ogen representation.
-func MySqlParamsToOgen(src *domain.MySqlParams) (*rest.MySqlParams, error) {
-	var dst rest.MySqlParams
-	if src == nil {
-		return &dst, nil
-	}
-	dst.Replicas.SetTo(int32(src.GetReplicas()))
-	dst.Proxysql.SetTo(int32(src.GetProxysql()))
-	dst.GroupReplication.SetTo(bool(src.GetGroupReplication()))
-	dst.SemiSync.SetTo(bool(src.GetSemiSync()))
-	c1 := convert.Map(src.GetPrimaryOptions(), func(v string) string {
-		return string(v)
-	})
-	dst.PrimaryOptions.SetTo(c1)
-	c2 := convert.Map(src.GetReplicaOptions(), func(v string) string {
-		return string(v)
-	})
-	dst.ReplicaOptions.SetTo(c2)
-	c3 := convert.Map(src.GetProxysqlOptions(), func(v string) string {
-		return string(v)
-	})
-	dst.ProxysqlOptions.SetTo(c3)
-	return &dst, nil
-}
-
-// MySqlParamsFromOgen converts the ogen representation back to MySqlParams.
-func MySqlParamsFromOgen(src *rest.MySqlParams) (*domain.MySqlParams, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &domain.MySqlParams{}
-	if v1, ok := src.Replicas.Get(); ok {
-		dst.Replicas = uint32(v1)
-	}
-	if v2, ok := src.Proxysql.Get(); ok {
-		dst.Proxysql = uint32(v2)
-	}
-	if v3, ok := src.GroupReplication.Get(); ok {
-		dst.GroupReplication = bool(v3)
-	}
-	if v4, ok := src.SemiSync.Get(); ok {
-		dst.SemiSync = bool(v4)
-	}
-	if mv5, ok := src.PrimaryOptions.Get(); ok {
-		c6 := convert.Map(mv5, func(v string) string {
-			return string(v)
-		})
-		dst.PrimaryOptions = c6
-	}
-	if mv7, ok := src.ReplicaOptions.Get(); ok {
-		c8 := convert.Map(mv7, func(v string) string {
-			return string(v)
-		})
-		dst.ReplicaOptions = c8
-	}
-	if mv9, ok := src.ProxysqlOptions.Get(); ok {
-		c10 := convert.Map(mv9, func(v string) string {
-			return string(v)
-		})
-		dst.ProxysqlOptions = c10
-	}
-	return dst, nil
-}
-
 // NodeToOgen converts topology.Node (an imported type) to its ogen representation.
 func NodeToOgen(src *topology.Node) (*rest.Node, error) {
 	var dst rest.Node
@@ -5399,24 +5224,6 @@ func NodeFromOgen(src *rest.Node) (*topology.Node, error) {
 	return dst, nil
 }
 
-// NoopParamsToOgen converts domain.NoopParams (an imported type) to its ogen representation.
-func NoopParamsToOgen(src *domain.NoopParams) (*rest.NoopParams, error) {
-	var dst rest.NoopParams
-	if src == nil {
-		return &dst, nil
-	}
-	return &dst, nil
-}
-
-// NoopParamsFromOgen converts the ogen representation back to NoopParams.
-func NoopParamsFromOgen(src *rest.NoopParams) (*domain.NoopParams, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &domain.NoopParams{}
-	return dst, nil
-}
-
 // ObjectToOgen converts schemapb.Schema_Filed_Object (an imported type) to its ogen representation.
 func ObjectToOgen(src *schemapb.Schema_Filed_Object) (*rest.Object, error) {
 	var dst rest.Object
@@ -5445,6 +5252,36 @@ func ObjectFromOgen(src *rest.Object) (*schemapb.Schema_Filed_Object, error) {
 			return nil, err
 		}
 		dst.Schema = m2
+	}
+	return dst, nil
+}
+
+// ObservabilityRefsToOgen converts models.ObservabilityRefs (an imported type) to its ogen representation.
+func ObservabilityRefsToOgen(src *models.ObservabilityRefs) (*rest.ObservabilityRefs, error) {
+	var dst rest.ObservabilityRefs
+	if src == nil {
+		return &dst, nil
+	}
+	dst.MetricsQueryKey.SetTo(string(src.GetMetricsQueryKey()))
+	dst.LogsQueryKey.SetTo(string(src.GetLogsQueryKey()))
+	dst.GrafanaDashboardUid.SetTo(string(src.GetGrafanaDashboardUid()))
+	return &dst, nil
+}
+
+// ObservabilityRefsFromOgen converts the ogen representation back to ObservabilityRefs.
+func ObservabilityRefsFromOgen(src *rest.ObservabilityRefs) (*models.ObservabilityRefs, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &models.ObservabilityRefs{}
+	if v1, ok := src.MetricsQueryKey.Get(); ok {
+		dst.MetricsQueryKey = string(v1)
+	}
+	if v2, ok := src.LogsQueryKey.Get(); ok {
+		dst.LogsQueryKey = string(v2)
+	}
+	if v3, ok := src.GrafanaDashboardUid.Get(); ok {
+		dst.GrafanaDashboardUid = string(v3)
 	}
 	return dst, nil
 }
@@ -5491,74 +5328,6 @@ func OneOfFromOgen(src *rest.OneOf) (*schemapb.Schema_Filed_OneOf, error) {
 			return nil, err
 		}
 		dst.Variants = c3
-	}
-	return dst, nil
-}
-
-// OrioledbParamsToOgen converts domain.OrioledbParams (an imported type) to its ogen representation.
-func OrioledbParamsToOgen(src *domain.OrioledbParams) (*rest.OrioledbParams, error) {
-	var dst rest.OrioledbParams
-	if src == nil {
-		return &dst, nil
-	}
-	dst.Image.SetTo(string(src.GetImage()))
-	c1 := convert.Map(src.GetPostgresOptions(), func(v string) string {
-		return string(v)
-	})
-	dst.PostgresOptions.SetTo(c1)
-	dst.InitdbLocale.SetTo(string(src.GetInitdbLocale()))
-	dst.SharedBuffersMb.SetTo(int32(src.GetSharedBuffersMb()))
-	dst.Replicas.SetTo(int32(src.GetReplicas()))
-	dst.Haproxy.SetTo(int32(src.GetHaproxy()))
-	c2 := convert.Map(src.GetReplicaOptions(), func(v string) string {
-		return string(v)
-	})
-	dst.ReplicaOptions.SetTo(c2)
-	c3 := convert.Map(src.GetHaproxyOptions(), func(v string) string {
-		return string(v)
-	})
-	dst.HaproxyOptions.SetTo(c3)
-	return &dst, nil
-}
-
-// OrioledbParamsFromOgen converts the ogen representation back to OrioledbParams.
-func OrioledbParamsFromOgen(src *rest.OrioledbParams) (*domain.OrioledbParams, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &domain.OrioledbParams{}
-	if v1, ok := src.Image.Get(); ok {
-		dst.Image = string(v1)
-	}
-	if mv2, ok := src.PostgresOptions.Get(); ok {
-		c3 := convert.Map(mv2, func(v string) string {
-			return string(v)
-		})
-		dst.PostgresOptions = c3
-	}
-	if v4, ok := src.InitdbLocale.Get(); ok {
-		dst.InitdbLocale = string(v4)
-	}
-	if v5, ok := src.SharedBuffersMb.Get(); ok {
-		dst.SharedBuffersMb = uint32(v5)
-	}
-	if v6, ok := src.Replicas.Get(); ok {
-		dst.Replicas = uint32(v6)
-	}
-	if v7, ok := src.Haproxy.Get(); ok {
-		dst.Haproxy = uint32(v7)
-	}
-	if mv8, ok := src.ReplicaOptions.Get(); ok {
-		c9 := convert.Map(mv8, func(v string) string {
-			return string(v)
-		})
-		dst.ReplicaOptions = c9
-	}
-	if mv10, ok := src.HaproxyOptions.Get(); ok {
-		c11 := convert.Map(mv10, func(v string) string {
-			return string(v)
-		})
-		dst.HaproxyOptions = c11
 	}
 	return dst, nil
 }
@@ -5779,130 +5548,6 @@ func OverviewFromOgen(src *rest.Overview) (*monitor.Overview, error) {
 	return dst, nil
 }
 
-// PackageToOgen converts domain.Package (an imported type) to its ogen representation.
-func PackageToOgen(src *domain.Package) (*rest.Package, error) {
-	var dst rest.Package
-	if src == nil {
-		return &dst, nil
-	}
-	dst.ID.SetTo(string(src.GetId()))
-	dst.Name.SetTo(string(src.GetName()))
-	var en1 rest.PackageDbKind
-	switch src.GetDbKind() {
-	case domain.Database_KIND_POSTGRES:
-		en1 = rest.PackageDbKind1
-	case domain.Database_KIND_MYSQL:
-		en1 = rest.PackageDbKind2
-	case domain.Database_KIND_MARIADB:
-		en1 = rest.PackageDbKind3
-	case domain.Database_KIND_YDB:
-		en1 = rest.PackageDbKind4
-	case domain.Database_KIND_YDB_MANAGED:
-		en1 = rest.PackageDbKind5
-	case domain.Database_KIND_COCKROACH:
-		en1 = rest.PackageDbKind6
-	case domain.Database_KIND_PICODATA:
-		en1 = rest.PackageDbKind7
-	case domain.Database_KIND_EXTERNAL:
-		en1 = rest.PackageDbKind8
-	case domain.Database_KIND_ORIOLEDB:
-		en1 = rest.PackageDbKind9
-	case domain.Database_KIND_NOOP:
-		en1 = rest.PackageDbKind10
-	case domain.Database_KIND_PG_NOOP:
-		en1 = rest.PackageDbKind11
-	default:
-		return nil, fmt.Errorf("cloud.v1.domain.Package.db_kind: enum value %v has no ogen PackageDbKind variant", src.GetDbKind())
-	}
-	dst.DbKind.SetTo(en1)
-	dst.DbVersion.SetTo(string(src.GetDbVersion()))
-	dst.IsBuiltin.SetTo(bool(src.GetIsBuiltin()))
-	c2 := convert.Slice(src.GetAptPackages(), func(e string) string {
-		return string(e)
-	})
-	dst.AptPackages = c2
-	c3 := convert.Slice(src.GetPreInstall(), func(e string) string {
-		return string(e)
-	})
-	dst.PreInstall = c3
-	dst.CustomRepo.SetTo(string(src.GetCustomRepo()))
-	dst.CustomRepoKey.SetTo(string(src.GetCustomRepoKey()))
-	dst.DebFilename.SetTo(string(src.GetDebFilename()))
-	dst.PackageRecordId.SetTo(string(src.GetPackageRecordId()))
-	return &dst, nil
-}
-
-// PackageFromOgen converts the ogen representation back to Package.
-func PackageFromOgen(src *rest.Package) (*domain.Package, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &domain.Package{}
-	if v1, ok := src.ID.Get(); ok {
-		dst.Id = string(v1)
-	}
-	if v2, ok := src.Name.Get(); ok {
-		dst.Name = string(v2)
-	}
-	if v3, ok := src.DbKind.Get(); ok {
-		var en4 domain.Database_Kind
-		switch v3 {
-		case rest.PackageDbKind1:
-			en4 = domain.Database_KIND_POSTGRES
-		case rest.PackageDbKind2:
-			en4 = domain.Database_KIND_MYSQL
-		case rest.PackageDbKind3:
-			en4 = domain.Database_KIND_MARIADB
-		case rest.PackageDbKind4:
-			en4 = domain.Database_KIND_YDB
-		case rest.PackageDbKind5:
-			en4 = domain.Database_KIND_YDB_MANAGED
-		case rest.PackageDbKind6:
-			en4 = domain.Database_KIND_COCKROACH
-		case rest.PackageDbKind7:
-			en4 = domain.Database_KIND_PICODATA
-		case rest.PackageDbKind8:
-			en4 = domain.Database_KIND_EXTERNAL
-		case rest.PackageDbKind9:
-			en4 = domain.Database_KIND_ORIOLEDB
-		case rest.PackageDbKind10:
-			en4 = domain.Database_KIND_NOOP
-		case rest.PackageDbKind11:
-			en4 = domain.Database_KIND_PG_NOOP
-		default:
-			return nil, fmt.Errorf("cloud.v1.domain.Package.db_kind: enum value %v has no Database_Kind variant", v3)
-		}
-		dst.DbKind = en4
-	}
-	if v5, ok := src.DbVersion.Get(); ok {
-		dst.DbVersion = string(v5)
-	}
-	if v6, ok := src.IsBuiltin.Get(); ok {
-		dst.IsBuiltin = bool(v6)
-	}
-	c7 := convert.Slice(src.AptPackages, func(e string) string {
-		return string(e)
-	})
-	dst.AptPackages = c7
-	c8 := convert.Slice(src.PreInstall, func(e string) string {
-		return string(e)
-	})
-	dst.PreInstall = c8
-	if v9, ok := src.CustomRepo.Get(); ok {
-		dst.CustomRepo = string(v9)
-	}
-	if v10, ok := src.CustomRepoKey.Get(); ok {
-		dst.CustomRepoKey = string(v10)
-	}
-	if v11, ok := src.DebFilename.Get(); ok {
-		dst.DebFilename = string(v11)
-	}
-	if v12, ok := src.PackageRecordId.Get(); ok {
-		dst.PackageRecordId = string(v12)
-	}
-	return dst, nil
-}
-
 // PackageRecordToOgen converts models.PackageRecord (an imported type) to its ogen representation.
 func PackageRecordToOgen(src *models.PackageRecord) (*rest.PackageRecord, error) {
 	var dst rest.PackageRecord
@@ -6103,66 +5748,6 @@ func PageFromOgen(src *rest.Page) (*common.Page, error) {
 	return dst, nil
 }
 
-// ParametersToOgen converts domain.Workload_Parameters (an imported type) to its ogen representation.
-func ParametersToOgen(src *domain.Workload_Parameters) (*rest.Parameters, error) {
-	var dst rest.Parameters
-	if src == nil {
-		return &dst, nil
-	}
-	dst.PoolSize.SetTo(int32(src.GetPoolSize()))
-	dst.ScaleFactor.SetTo(float64(src.GetScaleFactor()))
-	dst.DefaultInsertMethod.SetTo(string(src.GetDefaultInsertMethod()))
-	c1 := convert.Map(src.GetEnv(), func(v string) string {
-		return string(v)
-	})
-	dst.Env.SetTo(c1)
-	c2 := convert.Slice(src.GetSteps(), func(e string) string {
-		return string(e)
-	})
-	dst.Steps = c2
-	c3 := convert.Slice(src.GetNoSteps(), func(e string) string {
-		return string(e)
-	})
-	dst.NoSteps = c3
-	dst.BulkSize.SetTo(int32(src.GetBulkSize()))
-	return &dst, nil
-}
-
-// ParametersFromOgen converts the ogen representation back to Workload_Parameters.
-func ParametersFromOgen(src *rest.Parameters) (*domain.Workload_Parameters, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &domain.Workload_Parameters{}
-	if v1, ok := src.PoolSize.Get(); ok {
-		dst.PoolSize = uint32(v1)
-	}
-	if v2, ok := src.ScaleFactor.Get(); ok {
-		dst.ScaleFactor = float64(v2)
-	}
-	if v3, ok := src.DefaultInsertMethod.Get(); ok {
-		dst.DefaultInsertMethod = string(v3)
-	}
-	if mv4, ok := src.Env.Get(); ok {
-		c5 := convert.Map(mv4, func(v string) string {
-			return string(v)
-		})
-		dst.Env = c5
-	}
-	c6 := convert.Slice(src.Steps, func(e string) string {
-		return string(e)
-	})
-	dst.Steps = c6
-	c7 := convert.Slice(src.NoSteps, func(e string) string {
-		return string(e)
-	})
-	dst.NoSteps = c7
-	if v8, ok := src.BulkSize.Get(); ok {
-		dst.BulkSize = uint32(v8)
-	}
-	return dst, nil
-}
-
 // PermissionToOgen converts iam.Permission (an imported type) to its ogen representation.
 func PermissionToOgen(src *iam.Permission) (*rest.Permission, error) {
 	var dst rest.Permission
@@ -6297,148 +5882,6 @@ func PermissionFromOgen(src *rest.Permission) (*iam.Permission, error) {
 			return nil, fmt.Errorf("cloud.v1.iam.Permission.action: enum value %v has no Action variant", v3)
 		}
 		dst.Action = en4
-	}
-	return dst, nil
-}
-
-// PgNoopParamsToOgen converts domain.PgNoopParams (an imported type) to its ogen representation.
-func PgNoopParamsToOgen(src *domain.PgNoopParams) (*rest.PgNoopParams, error) {
-	var dst rest.PgNoopParams
-	if src == nil {
-		return &dst, nil
-	}
-	dst.Workers.SetTo(int32(src.GetWorkers()))
-	c1 := convert.Map(src.GetOptions(), func(v string) string {
-		return string(v)
-	})
-	dst.Options.SetTo(c1)
-	return &dst, nil
-}
-
-// PgNoopParamsFromOgen converts the ogen representation back to PgNoopParams.
-func PgNoopParamsFromOgen(src *rest.PgNoopParams) (*domain.PgNoopParams, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &domain.PgNoopParams{}
-	if v1, ok := src.Workers.Get(); ok {
-		dst.Workers = uint32(v1)
-	}
-	if mv2, ok := src.Options.Get(); ok {
-		c3 := convert.Map(mv2, func(v string) string {
-			return string(v)
-		})
-		dst.Options = c3
-	}
-	return dst, nil
-}
-
-// PicodataParamsToOgen converts domain.PicodataParams (an imported type) to its ogen representation.
-func PicodataParamsToOgen(src *domain.PicodataParams) (*rest.PicodataParams, error) {
-	var dst rest.PicodataParams
-	if src == nil {
-		return &dst, nil
-	}
-	dst.Instances.SetTo(int32(src.GetInstances()))
-	dst.Haproxy.SetTo(int32(src.GetHaproxy()))
-	dst.ReplicationFactor.SetTo(int32(src.GetReplicationFactor()))
-	dst.Shards.SetTo(int32(src.GetShards()))
-	c1, err := convert.SliceErr(src.GetTiers(), func(e *domain.PicodataTier) (zero rest.PicodataTier, _ error) {
-		o2, err := PicodataTierToOgen(e)
-		if err != nil {
-			return zero, err
-		}
-		return *o2, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.Tiers = c1
-	c3 := convert.Map(src.GetInstanceOptions(), func(v string) string {
-		return string(v)
-	})
-	dst.InstanceOptions.SetTo(c3)
-	c4 := convert.Map(src.GetHaproxyOptions(), func(v string) string {
-		return string(v)
-	})
-	dst.HaproxyOptions.SetTo(c4)
-	return &dst, nil
-}
-
-// PicodataParamsFromOgen converts the ogen representation back to PicodataParams.
-func PicodataParamsFromOgen(src *rest.PicodataParams) (*domain.PicodataParams, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &domain.PicodataParams{}
-	if v1, ok := src.Instances.Get(); ok {
-		dst.Instances = uint32(v1)
-	}
-	if v2, ok := src.Haproxy.Get(); ok {
-		dst.Haproxy = uint32(v2)
-	}
-	if v3, ok := src.ReplicationFactor.Get(); ok {
-		dst.ReplicationFactor = uint32(v3)
-	}
-	if v4, ok := src.Shards.Get(); ok {
-		dst.Shards = uint32(v4)
-	}
-	c5, err := convert.SliceErr(src.Tiers, func(e rest.PicodataTier) (zero *domain.PicodataTier, _ error) {
-		m6, err := PicodataTierFromOgen(&e)
-		if err != nil {
-			return zero, err
-		}
-		return m6, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.Tiers = c5
-	if mv7, ok := src.InstanceOptions.Get(); ok {
-		c8 := convert.Map(mv7, func(v string) string {
-			return string(v)
-		})
-		dst.InstanceOptions = c8
-	}
-	if mv9, ok := src.HaproxyOptions.Get(); ok {
-		c10 := convert.Map(mv9, func(v string) string {
-			return string(v)
-		})
-		dst.HaproxyOptions = c10
-	}
-	return dst, nil
-}
-
-// PicodataTierToOgen converts domain.PicodataTier (an imported type) to its ogen representation.
-func PicodataTierToOgen(src *domain.PicodataTier) (*rest.PicodataTier, error) {
-	var dst rest.PicodataTier
-	if src == nil {
-		return &dst, nil
-	}
-	dst.Name.SetTo(string(src.GetName()))
-	dst.ReplicationFactor.SetTo(int32(src.GetReplicationFactor()))
-	dst.CanVote.SetTo(bool(src.GetCanVote()))
-	dst.Count.SetTo(int32(src.GetCount()))
-	return &dst, nil
-}
-
-// PicodataTierFromOgen converts the ogen representation back to PicodataTier.
-func PicodataTierFromOgen(src *rest.PicodataTier) (*domain.PicodataTier, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &domain.PicodataTier{}
-	if v1, ok := src.Name.Get(); ok {
-		dst.Name = string(v1)
-	}
-	if v2, ok := src.ReplicationFactor.Get(); ok {
-		dst.ReplicationFactor = uint32(v2)
-	}
-	if v3, ok := src.CanVote.Get(); ok {
-		dst.CanVote = bool(v3)
-	}
-	if v4, ok := src.Count.Get(); ok {
-		dst.Count = uint32(v4)
 	}
 	return dst, nil
 }
@@ -7115,126 +6558,28 @@ func PortBindingFromOgen(src *rest.PortBinding) (*deployment.Docker_PortBinding,
 	return dst, nil
 }
 
-// PostgresParamsToOgen converts domain.PostgresParams (an imported type) to its ogen representation.
-func PostgresParamsToOgen(src *domain.PostgresParams) (*rest.PostgresParams, error) {
-	var dst rest.PostgresParams
+// ProviderRefToOgen converts dsl.ProviderRef (an imported type) to its ogen representation.
+func ProviderRefToOgen(src *dsl.ProviderRef) (*rest.ProviderRef, error) {
+	var dst rest.ProviderRef
 	if src == nil {
 		return &dst, nil
 	}
-	dst.Replicas.SetTo(int32(src.GetReplicas()))
-	dst.Haproxy.SetTo(int32(src.GetHaproxy()))
-	dst.Pgbouncer.SetTo(bool(src.GetPgbouncer()))
-	dst.Patroni.SetTo(bool(src.GetPatroni()))
-	dst.Etcd.SetTo(bool(src.GetEtcd()))
-	dst.SyncReplicas.SetTo(int32(src.GetSyncReplicas()))
-	c1 := convert.Map(src.GetMasterOptions(), func(v string) string {
-		return string(v)
-	})
-	dst.MasterOptions.SetTo(c1)
-	c2 := convert.Map(src.GetReplicaOptions(), func(v string) string {
-		return string(v)
-	})
-	dst.ReplicaOptions.SetTo(c2)
-	c3 := convert.Map(src.GetHaproxyOptions(), func(v string) string {
-		return string(v)
-	})
-	dst.HaproxyOptions.SetTo(c3)
-	c4 := convert.Map(src.GetPgbouncerOptions(), func(v string) string {
-		return string(v)
-	})
-	dst.PgbouncerOptions.SetTo(c4)
-	c5 := convert.Map(src.GetPatroniOptions(), func(v string) string {
-		return string(v)
-	})
-	dst.PatroniOptions.SetTo(c5)
-	c6 := convert.Map(src.GetEtcdOptions(), func(v string) string {
-		return string(v)
-	})
-	dst.EtcdOptions.SetTo(c6)
+	dst.Name.SetTo(string(src.GetName()))
+	dst.ParamsJson.SetTo(string(src.GetParamsJson()))
 	return &dst, nil
 }
 
-// PostgresParamsFromOgen converts the ogen representation back to PostgresParams.
-func PostgresParamsFromOgen(src *rest.PostgresParams) (*domain.PostgresParams, error) {
+// ProviderRefFromOgen converts the ogen representation back to ProviderRef.
+func ProviderRefFromOgen(src *rest.ProviderRef) (*dsl.ProviderRef, error) {
 	if src == nil {
 		return nil, nil
 	}
-	dst := &domain.PostgresParams{}
-	if v1, ok := src.Replicas.Get(); ok {
-		dst.Replicas = uint32(v1)
+	dst := &dsl.ProviderRef{}
+	if v1, ok := src.Name.Get(); ok {
+		dst.Name = string(v1)
 	}
-	if v2, ok := src.Haproxy.Get(); ok {
-		dst.Haproxy = uint32(v2)
-	}
-	if v3, ok := src.Pgbouncer.Get(); ok {
-		dst.Pgbouncer = bool(v3)
-	}
-	if v4, ok := src.Patroni.Get(); ok {
-		dst.Patroni = bool(v4)
-	}
-	if v5, ok := src.Etcd.Get(); ok {
-		dst.Etcd = bool(v5)
-	}
-	if v6, ok := src.SyncReplicas.Get(); ok {
-		dst.SyncReplicas = uint32(v6)
-	}
-	if mv7, ok := src.MasterOptions.Get(); ok {
-		c8 := convert.Map(mv7, func(v string) string {
-			return string(v)
-		})
-		dst.MasterOptions = c8
-	}
-	if mv9, ok := src.ReplicaOptions.Get(); ok {
-		c10 := convert.Map(mv9, func(v string) string {
-			return string(v)
-		})
-		dst.ReplicaOptions = c10
-	}
-	if mv11, ok := src.HaproxyOptions.Get(); ok {
-		c12 := convert.Map(mv11, func(v string) string {
-			return string(v)
-		})
-		dst.HaproxyOptions = c12
-	}
-	if mv13, ok := src.PgbouncerOptions.Get(); ok {
-		c14 := convert.Map(mv13, func(v string) string {
-			return string(v)
-		})
-		dst.PgbouncerOptions = c14
-	}
-	if mv15, ok := src.PatroniOptions.Get(); ok {
-		c16 := convert.Map(mv15, func(v string) string {
-			return string(v)
-		})
-		dst.PatroniOptions = c16
-	}
-	if mv17, ok := src.EtcdOptions.Get(); ok {
-		c18 := convert.Map(mv17, func(v string) string {
-			return string(v)
-		})
-		dst.EtcdOptions = c18
-	}
-	return dst, nil
-}
-
-// PresetIdToOgen converts domain.Database_PresetId (an imported type) to its ogen representation.
-func PresetIdToOgen(src *domain.Database_PresetId) (*rest.PresetId, error) {
-	var dst rest.PresetId
-	if src == nil {
-		return &dst, nil
-	}
-	dst.ID.SetTo(string(src.GetId()))
-	return &dst, nil
-}
-
-// PresetIdFromOgen converts the ogen representation back to Database_PresetId.
-func PresetIdFromOgen(src *rest.PresetId) (*domain.Database_PresetId, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &domain.Database_PresetId{}
-	if v1, ok := src.ID.Get(); ok {
-		dst.Id = string(v1)
+	if v2, ok := src.ParamsJson.Get(); ok {
+		dst.ParamsJson = string(v2)
 	}
 	return dst, nil
 }
@@ -7357,50 +6702,6 @@ func RecipeRecordFromOgen(src *rest.RecipeRecord) (*models.RecipeRecord, error) 
 	return dst, nil
 }
 
-// RecipeTopologySnapshotToOgen converts models.RecipeTopologySnapshot (an imported type) to its ogen representation.
-func RecipeTopologySnapshotToOgen(src *models.RecipeTopologySnapshot) (*rest.RecipeTopologySnapshot, error) {
-	var dst rest.RecipeTopologySnapshot
-	if src == nil {
-		return &dst, nil
-	}
-	dst.Provider.SetTo(string(src.GetProvider()))
-	c1, err := convert.SliceErr(src.GetNodes(), func(e *models.RecipeTopologySnapshot_MachineNode) (zero rest.MachineNode, _ error) {
-		o2, err := MachineNodeToOgen(e)
-		if err != nil {
-			return zero, err
-		}
-		return *o2, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.Nodes = c1
-	return &dst, nil
-}
-
-// RecipeTopologySnapshotFromOgen converts the ogen representation back to RecipeTopologySnapshot.
-func RecipeTopologySnapshotFromOgen(src *rest.RecipeTopologySnapshot) (*models.RecipeTopologySnapshot, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &models.RecipeTopologySnapshot{}
-	if v1, ok := src.Provider.Get(); ok {
-		dst.Provider = string(v1)
-	}
-	c2, err := convert.SliceErr(src.Nodes, func(e rest.MachineNode) (zero *models.RecipeTopologySnapshot_MachineNode, _ error) {
-		m3, err := MachineNodeFromOgen(&e)
-		if err != nil {
-			return zero, err
-		}
-		return m3, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.Nodes = c2
-	return dst, nil
-}
-
 // RefToOgen converts schemapb.Schema_Filed_Ref (an imported type) to its ogen representation.
 func RefToOgen(src *schemapb.Schema_Filed_Ref) (*rest.Ref, error) {
 	var dst rest.Ref
@@ -7435,70 +6736,6 @@ func RefFromOgen(src *rest.Ref) (*schemapb.Schema_Filed_Ref, error) {
 			return nil, err
 		}
 		dst.Target = &schemapb.Schema_Filed_Ref_Id{Id: m3}
-	}
-	return dst, nil
-}
-
-// RenderOverrideSetToOgen converts deployment.RenderOverrideSet (an imported type) to its ogen representation.
-func RenderOverrideSetToOgen(src *deployment.RenderOverrideSet) (*rest.RenderOverrideSet, error) {
-	var dst rest.RenderOverrideSet
-	if src == nil {
-		return &dst, nil
-	}
-	c1, err := convert.SliceErr(src.GetFiles(), func(e *deployment.FileOverride) (zero rest.FileOverride, _ error) {
-		o2, err := FileOverrideToOgen(e)
-		if err != nil {
-			return zero, err
-		}
-		return *o2, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.Files = c1
-	c3 := convert.Map(src.GetLabels(), func(v string) string {
-		return string(v)
-	})
-	dst.Labels.SetTo(c3)
-	if src.Tags != nil {
-		o4, err := TagsToOgen(src.GetTags())
-		if err != nil {
-			return nil, err
-		}
-		dst.Tags.SetTo(*o4)
-	}
-	return &dst, nil
-}
-
-// RenderOverrideSetFromOgen converts the ogen representation back to RenderOverrideSet.
-func RenderOverrideSetFromOgen(src *rest.RenderOverrideSet) (*deployment.RenderOverrideSet, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &deployment.RenderOverrideSet{}
-	c1, err := convert.SliceErr(src.Files, func(e rest.FileOverride) (zero *deployment.FileOverride, _ error) {
-		m2, err := FileOverrideFromOgen(&e)
-		if err != nil {
-			return zero, err
-		}
-		return m2, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.Files = c1
-	if mv3, ok := src.Labels.Get(); ok {
-		c4 := convert.Map(mv3, func(v string) string {
-			return string(v)
-		})
-		dst.Labels = c4
-	}
-	if v5, ok := src.Tags.Get(); ok {
-		m6, err := TagsFromOgen(&v5)
-		if err != nil {
-			return nil, err
-		}
-		dst.Tags = m6
 	}
 	return dst, nil
 }
@@ -7753,6 +6990,226 @@ func RuleFromOgen(src *rest.Rule) (*schemapb.Schema_Filed_Rule, error) {
 	return dst, nil
 }
 
+// RunToOgen converts models.Run (an imported type) to its ogen representation.
+func RunToOgen(src *models.Run) (*rest.Run, error) {
+	var dst rest.Run
+	if src == nil {
+		return &dst, nil
+	}
+	o1, err := EntityToOgen(src.GetEntity())
+	if err != nil {
+		return nil, err
+	}
+	dst.Entity = *o1
+	var en2 rest.RunStatus
+	switch src.GetStatus() {
+	case common.Status_STATUS_UNSPECIFIED:
+		en2 = rest.RunStatus0
+	case common.Status_STATUS_PENDING:
+		en2 = rest.RunStatus1
+	case common.Status_STATUS_RUNNING:
+		en2 = rest.RunStatus2
+	case common.Status_STATUS_RETRY_WAIT:
+		en2 = rest.RunStatus5
+	case common.Status_STATUS_COMPLETED:
+		en2 = rest.RunStatus3
+	case common.Status_STATUS_FAILED:
+		en2 = rest.RunStatus4
+	case common.Status_STATUS_SKIPPED:
+		en2 = rest.RunStatus6
+	case common.Status_STATUS_CANCELLING:
+		en2 = rest.RunStatus7
+	case common.Status_STATUS_CANCELLED:
+		en2 = rest.RunStatus8
+	case common.Status_STATUS_ALLOCATED:
+		en2 = rest.RunStatus9
+	case common.Status_STATUS_DEPLOYMENT:
+		en2 = rest.RunStatus10
+	case common.Status_STATUS_DEPLOYED:
+		en2 = rest.RunStatus11
+	default:
+		return nil, fmt.Errorf("cloud.v1.models.Run.status: enum value %v has no ogen RunStatus variant", src.GetStatus())
+	}
+	dst.Status.SetTo(en2)
+	var en3 rest.RunTrigger
+	switch src.GetTrigger() {
+	case common.Trigger_TRIGGER_UNSPECIFIED:
+		en3 = rest.RunTrigger0
+	case common.Trigger_TRIGGER_MANUAL:
+		en3 = rest.RunTrigger1
+	case common.Trigger_TRIGGER_CRON:
+		en3 = rest.RunTrigger2
+	case common.Trigger_TRIGGER_API:
+		en3 = rest.RunTrigger3
+	default:
+		return nil, fmt.Errorf("cloud.v1.models.Run.trigger: enum value %v has no ogen RunTrigger variant", src.GetTrigger())
+	}
+	dst.Trigger.SetTo(en3)
+	dst.WorkflowId.SetTo(string(src.GetWorkflowId()))
+	dst.WorkflowVersion.SetTo(string(src.GetWorkflowVersion()))
+	if src.Baked != nil {
+		o4, err := BakedToOgen(src.GetBaked())
+		if err != nil {
+			return nil, err
+		}
+		dst.Baked.SetTo(*o4)
+	}
+	if src.CompiledPlan != nil {
+		o5, err := CompiledPlanToOgen(src.GetCompiledPlan())
+		if err != nil {
+			return nil, err
+		}
+		dst.CompiledPlan.SetTo(*o5)
+	}
+	if src.Topology != nil {
+		o6, err := RunTopologyToOgen(src.GetTopology())
+		if err != nil {
+			return nil, err
+		}
+		dst.Topology.SetTo(*o6)
+	}
+	if src.RuntimeState != nil {
+		o7, err := RunStateToOgen(src.GetRuntimeState())
+		if err != nil {
+			return nil, err
+		}
+		dst.RuntimeState.SetTo(*o7)
+	}
+	if src.Observability != nil {
+		o8, err := ObservabilityRefsToOgen(src.GetObservability())
+		if err != nil {
+			return nil, err
+		}
+		dst.Observability.SetTo(*o8)
+	}
+	dst.InTenantRating.SetTo(bool(src.GetInTenantRating()))
+	dst.InGlobalRating.SetTo(bool(src.GetInGlobalRating()))
+	if src.Summary != nil {
+		o9, err := Summary2ToOgen(src.GetSummary())
+		if err != nil {
+			return nil, err
+		}
+		dst.Summary.SetTo(*o9)
+	}
+	return &dst, nil
+}
+
+// RunFromOgen converts the ogen representation back to Run.
+func RunFromOgen(src *rest.Run) (*models.Run, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &models.Run{}
+	m1, err := EntityFromOgen(&src.Entity)
+	if err != nil {
+		return nil, err
+	}
+	dst.Entity = m1
+	if v2, ok := src.Status.Get(); ok {
+		var en3 common.Status
+		switch v2 {
+		case rest.RunStatus0:
+			en3 = common.Status_STATUS_UNSPECIFIED
+		case rest.RunStatus1:
+			en3 = common.Status_STATUS_PENDING
+		case rest.RunStatus2:
+			en3 = common.Status_STATUS_RUNNING
+		case rest.RunStatus5:
+			en3 = common.Status_STATUS_RETRY_WAIT
+		case rest.RunStatus3:
+			en3 = common.Status_STATUS_COMPLETED
+		case rest.RunStatus4:
+			en3 = common.Status_STATUS_FAILED
+		case rest.RunStatus6:
+			en3 = common.Status_STATUS_SKIPPED
+		case rest.RunStatus7:
+			en3 = common.Status_STATUS_CANCELLING
+		case rest.RunStatus8:
+			en3 = common.Status_STATUS_CANCELLED
+		case rest.RunStatus9:
+			en3 = common.Status_STATUS_ALLOCATED
+		case rest.RunStatus10:
+			en3 = common.Status_STATUS_DEPLOYMENT
+		case rest.RunStatus11:
+			en3 = common.Status_STATUS_DEPLOYED
+		default:
+			return nil, fmt.Errorf("cloud.v1.models.Run.status: enum value %v has no Status variant", v2)
+		}
+		dst.Status = en3
+	}
+	if v4, ok := src.Trigger.Get(); ok {
+		var en5 common.Trigger
+		switch v4 {
+		case rest.RunTrigger0:
+			en5 = common.Trigger_TRIGGER_UNSPECIFIED
+		case rest.RunTrigger1:
+			en5 = common.Trigger_TRIGGER_MANUAL
+		case rest.RunTrigger2:
+			en5 = common.Trigger_TRIGGER_CRON
+		case rest.RunTrigger3:
+			en5 = common.Trigger_TRIGGER_API
+		default:
+			return nil, fmt.Errorf("cloud.v1.models.Run.trigger: enum value %v has no Trigger variant", v4)
+		}
+		dst.Trigger = en5
+	}
+	if v6, ok := src.WorkflowId.Get(); ok {
+		dst.WorkflowId = string(v6)
+	}
+	if v7, ok := src.WorkflowVersion.Get(); ok {
+		dst.WorkflowVersion = string(v7)
+	}
+	if v8, ok := src.Baked.Get(); ok {
+		m9, err := BakedFromOgen(&v8)
+		if err != nil {
+			return nil, err
+		}
+		dst.Baked = m9
+	}
+	if v10, ok := src.CompiledPlan.Get(); ok {
+		m11, err := CompiledPlanFromOgen(&v10)
+		if err != nil {
+			return nil, err
+		}
+		dst.CompiledPlan = m11
+	}
+	if v12, ok := src.Topology.Get(); ok {
+		m13, err := RunTopologyFromOgen(&v12)
+		if err != nil {
+			return nil, err
+		}
+		dst.Topology = m13
+	}
+	if v14, ok := src.RuntimeState.Get(); ok {
+		m15, err := RunStateFromOgen(&v14)
+		if err != nil {
+			return nil, err
+		}
+		dst.RuntimeState = m15
+	}
+	if v16, ok := src.Observability.Get(); ok {
+		m17, err := ObservabilityRefsFromOgen(&v16)
+		if err != nil {
+			return nil, err
+		}
+		dst.Observability = m17
+	}
+	if v18, ok := src.InTenantRating.Get(); ok {
+		dst.InTenantRating = bool(v18)
+	}
+	if v19, ok := src.InGlobalRating.Get(); ok {
+		dst.InGlobalRating = bool(v19)
+	}
+	if v20, ok := src.Summary.Get(); ok {
+		m21, err := Summary2FromOgen(&v20)
+		if err != nil {
+			return nil, err
+		}
+		dst.Summary = m21
+	}
+	return dst, nil
+}
+
 // RunMetricsToOgen converts monitor.RunMetrics (an imported type) to its ogen representation.
 func RunMetricsToOgen(src *monitor.RunMetrics) (*rest.RunMetrics, error) {
 	var dst rest.RunMetrics
@@ -7948,6 +7405,50 @@ func RunSummaryFromOgen(src *rest.RunSummary) (*monitor.Comparison_RunSummary, e
 	if v6, ok := src.NotComparable.Get(); ok {
 		dst.NotComparable = uint32(v6)
 	}
+	return dst, nil
+}
+
+// RunTopologyToOgen converts models.RunTopology (an imported type) to its ogen representation.
+func RunTopologyToOgen(src *models.RunTopology) (*rest.RunTopology, error) {
+	var dst rest.RunTopology
+	if src == nil {
+		return &dst, nil
+	}
+	dst.Provider.SetTo(string(src.GetProvider()))
+	c1, err := convert.SliceErr(src.GetNodes(), func(e *models.RunTopology_MachineNode) (zero rest.MachineNode, _ error) {
+		o2, err := MachineNodeToOgen(e)
+		if err != nil {
+			return zero, err
+		}
+		return *o2, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dst.Nodes = c1
+	return &dst, nil
+}
+
+// RunTopologyFromOgen converts the ogen representation back to RunTopology.
+func RunTopologyFromOgen(src *rest.RunTopology) (*models.RunTopology, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &models.RunTopology{}
+	if v1, ok := src.Provider.Get(); ok {
+		dst.Provider = string(v1)
+	}
+	c2, err := convert.SliceErr(src.Nodes, func(e rest.MachineNode) (zero *models.RunTopology_MachineNode, _ error) {
+		m3, err := MachineNodeFromOgen(&e)
+		if err != nil {
+			return zero, err
+		}
+		return m3, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dst.Nodes = c2
 	return dst, nil
 }
 
@@ -8630,84 +8131,8 @@ func ScriptFromOgen(src *rest.Script) (*common.Cmd_Script, error) {
 	return dst, nil
 }
 
-// SegmentToOgen converts domain.Workload_Segment (an imported type) to its ogen representation.
-func SegmentToOgen(src *domain.Workload_Segment) (*rest.Segment, error) {
-	var dst rest.Segment
-	if src == nil {
-		return &dst, nil
-	}
-	dst.Name.SetTo(string(src.GetName()))
-	dst.Script.SetTo(string(src.GetScript()))
-	dst.SQL.SetTo(string(src.GetSql()))
-	o1, err := ExecutionToOgen(src.GetExecution())
-	if err != nil {
-		return nil, err
-	}
-	dst.Execution = *o1
-	if src.Parameters != nil {
-		o2, err := ParametersToOgen(src.GetParameters())
-		if err != nil {
-			return nil, err
-		}
-		dst.Parameters.SetTo(*o2)
-	}
-	c3, err := convert.SliceErr(src.GetFiles(), func(e *domain.Workload_WorkloadFile) (zero rest.WorkloadFile, _ error) {
-		o4, err := WorkloadFileToOgen(e)
-		if err != nil {
-			return zero, err
-		}
-		return *o4, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.Files = c3
-	return &dst, nil
-}
-
-// SegmentFromOgen converts the ogen representation back to Workload_Segment.
-func SegmentFromOgen(src *rest.Segment) (*domain.Workload_Segment, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &domain.Workload_Segment{}
-	if v1, ok := src.Name.Get(); ok {
-		dst.Name = string(v1)
-	}
-	if v2, ok := src.Script.Get(); ok {
-		dst.Script = string(v2)
-	}
-	if v3, ok := src.SQL.Get(); ok {
-		dst.Sql = string(v3)
-	}
-	m4, err := ExecutionFromOgen(&src.Execution)
-	if err != nil {
-		return nil, err
-	}
-	dst.Execution = m4
-	if v5, ok := src.Parameters.Get(); ok {
-		m6, err := ParametersFromOgen(&v5)
-		if err != nil {
-			return nil, err
-		}
-		dst.Parameters = m6
-	}
-	c7, err := convert.SliceErr(src.Files, func(e rest.WorkloadFile) (zero *domain.Workload_WorkloadFile, _ error) {
-		m8, err := WorkloadFileFromOgen(&e)
-		if err != nil {
-			return zero, err
-		}
-		return m8, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.Files = c7
-	return dst, nil
-}
-
-// ServiceNodeToOgen converts models.RecipeTopologySnapshot_ServiceNode (an imported type) to its ogen representation.
-func ServiceNodeToOgen(src *models.RecipeTopologySnapshot_ServiceNode) (*rest.ServiceNode, error) {
+// ServiceNodeToOgen converts models.RunTopology_ServiceNode (an imported type) to its ogen representation.
+func ServiceNodeToOgen(src *models.RunTopology_ServiceNode) (*rest.ServiceNode, error) {
 	var dst rest.ServiceNode
 	if src == nil {
 		return &dst, nil
@@ -8717,17 +8142,105 @@ func ServiceNodeToOgen(src *models.RecipeTopologySnapshot_ServiceNode) (*rest.Se
 	return &dst, nil
 }
 
-// ServiceNodeFromOgen converts the ogen representation back to RecipeTopologySnapshot_ServiceNode.
-func ServiceNodeFromOgen(src *rest.ServiceNode) (*models.RecipeTopologySnapshot_ServiceNode, error) {
+// ServiceNodeFromOgen converts the ogen representation back to RunTopology_ServiceNode.
+func ServiceNodeFromOgen(src *rest.ServiceNode) (*models.RunTopology_ServiceNode, error) {
 	if src == nil {
 		return nil, nil
 	}
-	dst := &models.RecipeTopologySnapshot_ServiceNode{}
+	dst := &models.RunTopology_ServiceNode{}
 	if v1, ok := src.Name.Get(); ok {
 		dst.Name = string(v1)
 	}
 	if v2, ok := src.Image.Get(); ok {
 		dst.Image = string(v2)
+	}
+	return dst, nil
+}
+
+// ServiceSpecToOgen converts dsl.ServiceSpec (an imported type) to its ogen representation.
+func ServiceSpecToOgen(src *dsl.ServiceSpec) (*rest.ServiceSpec, error) {
+	var dst rest.ServiceSpec
+	if src == nil {
+		return &dst, nil
+	}
+	dst.Name.SetTo(string(src.GetName()))
+	dst.OnGroup.SetTo(string(src.GetOnGroup()))
+	dst.Image.SetTo(string(src.GetImage()))
+	dst.Network.SetTo(string(src.GetNetwork()))
+	c1 := convert.Slice(src.GetVolumes(), func(e string) string {
+		return string(e)
+	})
+	dst.Volumes = c1
+	c2 := convert.Map(src.GetEnv(), func(v string) string {
+		return string(v)
+	})
+	dst.Env.SetTo(c2)
+	c3, err := convert.SliceErr(src.GetConfigs(), func(e *dsl.ConfigFile) (zero rest.ConfigFile, _ error) {
+		o4, err := ConfigFileToOgen(e)
+		if err != nil {
+			return zero, err
+		}
+		return *o4, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dst.Configs = c3
+	if src.Health != nil {
+		o5, err := HealthCheckToOgen(src.GetHealth())
+		if err != nil {
+			return nil, err
+		}
+		dst.Health.SetTo(*o5)
+	}
+	return &dst, nil
+}
+
+// ServiceSpecFromOgen converts the ogen representation back to ServiceSpec.
+func ServiceSpecFromOgen(src *rest.ServiceSpec) (*dsl.ServiceSpec, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &dsl.ServiceSpec{}
+	if v1, ok := src.Name.Get(); ok {
+		dst.Name = string(v1)
+	}
+	if v2, ok := src.OnGroup.Get(); ok {
+		dst.OnGroup = string(v2)
+	}
+	if v3, ok := src.Image.Get(); ok {
+		dst.Image = string(v3)
+	}
+	if v4, ok := src.Network.Get(); ok {
+		dst.Network = string(v4)
+	}
+	c5 := convert.Slice(src.Volumes, func(e string) string {
+		return string(e)
+	})
+	dst.Volumes = c5
+	if mv6, ok := src.Env.Get(); ok {
+		c7 := convert.Map(mv6, func(v string) string {
+			return string(v)
+		})
+		dst.Env = c7
+	}
+	c8, err := convert.SliceErr(src.Configs, func(e rest.ConfigFile) (zero *dsl.ConfigFile, _ error) {
+		m9, err := ConfigFileFromOgen(&e)
+		if err != nil {
+			return zero, err
+		}
+		return m9, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dst.Configs = c8
+	if v10, ok := src.Health.Get(); ok {
+		m11, err := HealthCheckFromOgen(&v10)
+		if err != nil {
+			return nil, err
+		}
+		dst.Health = m11
 	}
 	return dst, nil
 }
@@ -9740,6 +9253,46 @@ func StageFromOgen(src *rest.Stage) (*workflow.Stage, error) {
 	return dst, nil
 }
 
+// StepListToOgen converts dsl.StepList (an imported type) to its ogen representation.
+func StepListToOgen(src *dsl.StepList) (*rest.StepList, error) {
+	var dst rest.StepList
+	if src == nil {
+		return &dst, nil
+	}
+	c1, err := convert.SliceErr(src.GetSteps(), func(e *dsl.DslStep) (zero rest.DslStep, _ error) {
+		o2, err := DslStepToOgen(e)
+		if err != nil {
+			return zero, err
+		}
+		return *o2, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dst.Steps = c1
+	return &dst, nil
+}
+
+// StepListFromOgen converts the ogen representation back to StepList.
+func StepListFromOgen(src *rest.StepList) (*dsl.StepList, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &dsl.StepList{}
+	c1, err := convert.SliceErr(src.Steps, func(e rest.DslStep) (zero *dsl.DslStep, _ error) {
+		m2, err := DslStepFromOgen(&e)
+		if err != nil {
+			return zero, err
+		}
+		return m2, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dst.Steps = c1
+	return dst, nil
+}
+
 // StreamsToOgen converts common.Cmd_Streams (an imported type) to its ogen representation.
 func StreamsToOgen(src *common.Cmd_Streams) (*rest.Streams, error) {
 	var dst rest.Streams
@@ -9860,8 +9413,8 @@ func SummaryFromOgen(src *rest.Summary) (*models.RecipeRecord_Summary, error) {
 	return dst, nil
 }
 
-// Summary2ToOgen converts models.TestRunRecord_Summary (an imported type) to its ogen representation.
-func Summary2ToOgen(src *models.TestRunRecord_Summary) (*rest.Summary2, error) {
+// Summary2ToOgen converts models.Run_Summary (an imported type) to its ogen representation.
+func Summary2ToOgen(src *models.Run_Summary) (*rest.Summary2, error) {
 	var dst rest.Summary2
 	if src == nil {
 		return &dst, nil
@@ -9893,7 +9446,7 @@ func Summary2ToOgen(src *models.TestRunRecord_Summary) (*rest.Summary2, error) {
 	case domain.Database_KIND_PG_NOOP:
 		en1 = rest.Summary2DbKind11
 	default:
-		return nil, fmt.Errorf("cloud.v1.models.TestRunRecord.Summary.db_kind: enum value %v has no ogen Summary2DbKind variant", src.GetDbKind())
+		return nil, fmt.Errorf("cloud.v1.models.Run.Summary.db_kind: enum value %v has no ogen Summary2DbKind variant", src.GetDbKind())
 	}
 	dst.DbKind.SetTo(en1)
 	dst.DbPresetId.SetTo(string(src.GetDbPresetId()))
@@ -9920,7 +9473,7 @@ func Summary2ToOgen(src *models.TestRunRecord_Summary) (*rest.Summary2, error) {
 	case domain.Workload_PROTOCOL_NOOP:
 		en2 = rest.Summary2WorkloadProtocol8
 	default:
-		return nil, fmt.Errorf("cloud.v1.models.TestRunRecord.Summary.workload_protocol: enum value %v has no ogen Summary2WorkloadProtocol variant", src.GetWorkloadProtocol())
+		return nil, fmt.Errorf("cloud.v1.models.Run.Summary.workload_protocol: enum value %v has no ogen Summary2WorkloadProtocol variant", src.GetWorkloadProtocol())
 	}
 	dst.WorkloadProtocol.SetTo(en2)
 	dst.TestPresetId.SetTo(string(src.GetTestPresetId()))
@@ -9936,7 +9489,7 @@ func Summary2ToOgen(src *models.TestRunRecord_Summary) (*rest.Summary2, error) {
 	case deployment.Provider_PROVIDER_YANDEX:
 		en3 = rest.Summary2Provider2
 	default:
-		return nil, fmt.Errorf("cloud.v1.models.TestRunRecord.Summary.provider: enum value %v has no ogen Summary2Provider variant", src.GetProvider())
+		return nil, fmt.Errorf("cloud.v1.models.Run.Summary.provider: enum value %v has no ogen Summary2Provider variant", src.GetProvider())
 	}
 	dst.Provider.SetTo(en3)
 	dst.ProgressPct.SetTo(int32(src.GetProgressPct()))
@@ -9952,12 +9505,12 @@ func Summary2ToOgen(src *models.TestRunRecord_Summary) (*rest.Summary2, error) {
 	return &dst, nil
 }
 
-// Summary2FromOgen converts the ogen representation back to TestRunRecord_Summary.
-func Summary2FromOgen(src *rest.Summary2) (*models.TestRunRecord_Summary, error) {
+// Summary2FromOgen converts the ogen representation back to Run_Summary.
+func Summary2FromOgen(src *rest.Summary2) (*models.Run_Summary, error) {
 	if src == nil {
 		return nil, nil
 	}
-	dst := &models.TestRunRecord_Summary{}
+	dst := &models.Run_Summary{}
 	if v1, ok := src.DbKind.Get(); ok {
 		var en2 domain.Database_Kind
 		switch v1 {
@@ -9986,7 +9539,7 @@ func Summary2FromOgen(src *rest.Summary2) (*models.TestRunRecord_Summary, error)
 		case rest.Summary2DbKind11:
 			en2 = domain.Database_KIND_PG_NOOP
 		default:
-			return nil, fmt.Errorf("cloud.v1.models.TestRunRecord.Summary.db_kind: enum value %v has no Database_Kind variant", v1)
+			return nil, fmt.Errorf("cloud.v1.models.Run.Summary.db_kind: enum value %v has no Database_Kind variant", v1)
 		}
 		dst.DbKind = en2
 	}
@@ -10025,7 +9578,7 @@ func Summary2FromOgen(src *rest.Summary2) (*models.TestRunRecord_Summary, error)
 		case rest.Summary2WorkloadProtocol8:
 			en9 = domain.Workload_PROTOCOL_NOOP
 		default:
-			return nil, fmt.Errorf("cloud.v1.models.TestRunRecord.Summary.workload_protocol: enum value %v has no Workload_Protocol variant", v8)
+			return nil, fmt.Errorf("cloud.v1.models.Run.Summary.workload_protocol: enum value %v has no Workload_Protocol variant", v8)
 		}
 		dst.WorkloadProtocol = en9
 	}
@@ -10051,7 +9604,7 @@ func Summary2FromOgen(src *rest.Summary2) (*models.TestRunRecord_Summary, error)
 		case rest.Summary2Provider2:
 			en15 = deployment.Provider_PROVIDER_YANDEX
 		default:
-			return nil, fmt.Errorf("cloud.v1.models.TestRunRecord.Summary.provider: enum value %v has no Provider variant", v14)
+			return nil, fmt.Errorf("cloud.v1.models.Run.Summary.provider: enum value %v has no Provider variant", v14)
 		}
 		dst.Provider = en15
 	}
@@ -10296,320 +9849,6 @@ func TenantSettingsRecordFromOgen(src *rest.TenantSettingsRecord) (*models.Tenan
 			return nil, err
 		}
 		dst.YandexSettings = m11
-	}
-	return dst, nil
-}
-
-// TestRunToOgen converts domain.TestRun (an imported type) to its ogen representation.
-func TestRunToOgen(src *domain.TestRun) (*rest.TestRun, error) {
-	var dst rest.TestRun
-	if src == nil {
-		return &dst, nil
-	}
-	dst.ID.SetTo(string(src.GetId()))
-	dst.SuiteId.SetTo(string(src.GetSuiteId()))
-	o1, err := DatabaseToOgen(src.GetDatabase())
-	if err != nil {
-		return nil, err
-	}
-	dst.Database = *o1
-	o2, err := WorkloadToOgen(src.GetWorkload())
-	if err != nil {
-		return nil, err
-	}
-	dst.Workload = *o2
-	o3, err := TopologySpecToOgen(src.GetTopologySpec())
-	if err != nil {
-		return nil, err
-	}
-	dst.TopologySpec = *o3
-	o4, err := InfrastructurePlanToOgen(src.GetInfrastructurePlan())
-	if err != nil {
-		return nil, err
-	}
-	dst.InfrastructurePlan = *o4
-	if src.RenderOverrides != nil {
-		o5, err := RenderOverrideSetToOgen(src.GetRenderOverrides())
-		if err != nil {
-			return nil, err
-		}
-		dst.RenderOverrides.SetTo(*o5)
-	}
-	if src.Tags != nil {
-		o6, err := TagsToOgen(src.GetTags())
-		if err != nil {
-			return nil, err
-		}
-		dst.Tags.SetTo(*o6)
-	}
-	return &dst, nil
-}
-
-// TestRunFromOgen converts the ogen representation back to TestRun.
-func TestRunFromOgen(src *rest.TestRun) (*domain.TestRun, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &domain.TestRun{}
-	if v1, ok := src.ID.Get(); ok {
-		dst.Id = string(v1)
-	}
-	if v2, ok := src.SuiteId.Get(); ok {
-		dst.SuiteId = string(v2)
-	}
-	m3, err := DatabaseFromOgen(&src.Database)
-	if err != nil {
-		return nil, err
-	}
-	dst.Database = m3
-	m4, err := WorkloadFromOgen(&src.Workload)
-	if err != nil {
-		return nil, err
-	}
-	dst.Workload = m4
-	m5, err := TopologySpecFromOgen(&src.TopologySpec)
-	if err != nil {
-		return nil, err
-	}
-	dst.TopologySpec = m5
-	m6, err := InfrastructurePlanFromOgen(&src.InfrastructurePlan)
-	if err != nil {
-		return nil, err
-	}
-	dst.InfrastructurePlan = m6
-	if v7, ok := src.RenderOverrides.Get(); ok {
-		m8, err := RenderOverrideSetFromOgen(&v7)
-		if err != nil {
-			return nil, err
-		}
-		dst.RenderOverrides = m8
-	}
-	if v9, ok := src.Tags.Get(); ok {
-		m10, err := TagsFromOgen(&v9)
-		if err != nil {
-			return nil, err
-		}
-		dst.Tags = m10
-	}
-	return dst, nil
-}
-
-// TestRunRecordToOgen converts models.TestRunRecord (an imported type) to its ogen representation.
-func TestRunRecordToOgen(src *models.TestRunRecord) (*rest.TestRunRecord, error) {
-	var dst rest.TestRunRecord
-	if src == nil {
-		return &dst, nil
-	}
-	o1, err := EntityToOgen(src.GetEntity())
-	if err != nil {
-		return nil, err
-	}
-	dst.Entity = *o1
-	o2, err := TestRunToOgen(src.GetSpec())
-	if err != nil {
-		return nil, err
-	}
-	dst.Spec = *o2
-	var en3 rest.TestRunRecordStatus
-	switch src.GetStatus() {
-	case common.Status_STATUS_UNSPECIFIED:
-		en3 = rest.TestRunRecordStatus0
-	case common.Status_STATUS_PENDING:
-		en3 = rest.TestRunRecordStatus1
-	case common.Status_STATUS_RUNNING:
-		en3 = rest.TestRunRecordStatus2
-	case common.Status_STATUS_RETRY_WAIT:
-		en3 = rest.TestRunRecordStatus5
-	case common.Status_STATUS_COMPLETED:
-		en3 = rest.TestRunRecordStatus3
-	case common.Status_STATUS_FAILED:
-		en3 = rest.TestRunRecordStatus4
-	case common.Status_STATUS_SKIPPED:
-		en3 = rest.TestRunRecordStatus6
-	case common.Status_STATUS_CANCELLING:
-		en3 = rest.TestRunRecordStatus7
-	case common.Status_STATUS_CANCELLED:
-		en3 = rest.TestRunRecordStatus8
-	case common.Status_STATUS_ALLOCATED:
-		en3 = rest.TestRunRecordStatus9
-	case common.Status_STATUS_DEPLOYMENT:
-		en3 = rest.TestRunRecordStatus10
-	case common.Status_STATUS_DEPLOYED:
-		en3 = rest.TestRunRecordStatus11
-	default:
-		return nil, fmt.Errorf("cloud.v1.models.TestRunRecord.status: enum value %v has no ogen TestRunRecordStatus variant", src.GetStatus())
-	}
-	dst.Status.SetTo(en3)
-	dst.SuiteRunId.SetTo(string(src.GetSuiteRunId()))
-	dst.SuiteCellId.SetTo(string(src.GetSuiteCellId()))
-	var en4 rest.TestRunRecordTrigger
-	switch src.GetTrigger() {
-	case common.Trigger_TRIGGER_UNSPECIFIED:
-		en4 = rest.TestRunRecordTrigger0
-	case common.Trigger_TRIGGER_MANUAL:
-		en4 = rest.TestRunRecordTrigger1
-	case common.Trigger_TRIGGER_CRON:
-		en4 = rest.TestRunRecordTrigger2
-	case common.Trigger_TRIGGER_API:
-		en4 = rest.TestRunRecordTrigger3
-	default:
-		return nil, fmt.Errorf("cloud.v1.models.TestRunRecord.trigger: enum value %v has no ogen TestRunRecordTrigger variant", src.GetTrigger())
-	}
-	dst.Trigger.SetTo(en4)
-	dst.InTenantRating.SetTo(bool(src.GetInTenantRating()))
-	dst.InGlobalRating.SetTo(bool(src.GetInGlobalRating()))
-	if src.Summary != nil {
-		o5, err := Summary2ToOgen(src.GetSummary())
-		if err != nil {
-			return nil, err
-		}
-		dst.Summary.SetTo(*o5)
-	}
-	if src.InfrastructureState != nil {
-		o6, err := InfrastructureStateToOgen(src.GetInfrastructureState())
-		if err != nil {
-			return nil, err
-		}
-		dst.InfrastructureState.SetTo(*o6)
-	}
-	if src.DeploymentPlan != nil {
-		o7, err := DeploymentPlanToOgen(src.GetDeploymentPlan())
-		if err != nil {
-			return nil, err
-		}
-		dst.DeploymentPlan.SetTo(*o7)
-	}
-	if src.RuntimeState != nil {
-		o8, err := RunStateToOgen(src.GetRuntimeState())
-		if err != nil {
-			return nil, err
-		}
-		dst.RuntimeState.SetTo(*o8)
-	}
-	dst.RecipeId.SetTo(string(src.GetRecipeId()))
-	if src.RecipeTopology != nil {
-		o9, err := RecipeTopologySnapshotToOgen(src.GetRecipeTopology())
-		if err != nil {
-			return nil, err
-		}
-		dst.RecipeTopology.SetTo(*o9)
-	}
-	return &dst, nil
-}
-
-// TestRunRecordFromOgen converts the ogen representation back to TestRunRecord.
-func TestRunRecordFromOgen(src *rest.TestRunRecord) (*models.TestRunRecord, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &models.TestRunRecord{}
-	m1, err := EntityFromOgen(&src.Entity)
-	if err != nil {
-		return nil, err
-	}
-	dst.Entity = m1
-	m2, err := TestRunFromOgen(&src.Spec)
-	if err != nil {
-		return nil, err
-	}
-	dst.Spec = m2
-	if v3, ok := src.Status.Get(); ok {
-		var en4 common.Status
-		switch v3 {
-		case rest.TestRunRecordStatus0:
-			en4 = common.Status_STATUS_UNSPECIFIED
-		case rest.TestRunRecordStatus1:
-			en4 = common.Status_STATUS_PENDING
-		case rest.TestRunRecordStatus2:
-			en4 = common.Status_STATUS_RUNNING
-		case rest.TestRunRecordStatus5:
-			en4 = common.Status_STATUS_RETRY_WAIT
-		case rest.TestRunRecordStatus3:
-			en4 = common.Status_STATUS_COMPLETED
-		case rest.TestRunRecordStatus4:
-			en4 = common.Status_STATUS_FAILED
-		case rest.TestRunRecordStatus6:
-			en4 = common.Status_STATUS_SKIPPED
-		case rest.TestRunRecordStatus7:
-			en4 = common.Status_STATUS_CANCELLING
-		case rest.TestRunRecordStatus8:
-			en4 = common.Status_STATUS_CANCELLED
-		case rest.TestRunRecordStatus9:
-			en4 = common.Status_STATUS_ALLOCATED
-		case rest.TestRunRecordStatus10:
-			en4 = common.Status_STATUS_DEPLOYMENT
-		case rest.TestRunRecordStatus11:
-			en4 = common.Status_STATUS_DEPLOYED
-		default:
-			return nil, fmt.Errorf("cloud.v1.models.TestRunRecord.status: enum value %v has no Status variant", v3)
-		}
-		dst.Status = en4
-	}
-	if v5, ok := src.SuiteRunId.Get(); ok {
-		dst.SuiteRunId = string(v5)
-	}
-	if v6, ok := src.SuiteCellId.Get(); ok {
-		dst.SuiteCellId = string(v6)
-	}
-	if v7, ok := src.Trigger.Get(); ok {
-		var en8 common.Trigger
-		switch v7 {
-		case rest.TestRunRecordTrigger0:
-			en8 = common.Trigger_TRIGGER_UNSPECIFIED
-		case rest.TestRunRecordTrigger1:
-			en8 = common.Trigger_TRIGGER_MANUAL
-		case rest.TestRunRecordTrigger2:
-			en8 = common.Trigger_TRIGGER_CRON
-		case rest.TestRunRecordTrigger3:
-			en8 = common.Trigger_TRIGGER_API
-		default:
-			return nil, fmt.Errorf("cloud.v1.models.TestRunRecord.trigger: enum value %v has no Trigger variant", v7)
-		}
-		dst.Trigger = en8
-	}
-	if v9, ok := src.InTenantRating.Get(); ok {
-		dst.InTenantRating = bool(v9)
-	}
-	if v10, ok := src.InGlobalRating.Get(); ok {
-		dst.InGlobalRating = bool(v10)
-	}
-	if v11, ok := src.Summary.Get(); ok {
-		m12, err := Summary2FromOgen(&v11)
-		if err != nil {
-			return nil, err
-		}
-		dst.Summary = m12
-	}
-	if v13, ok := src.InfrastructureState.Get(); ok {
-		m14, err := InfrastructureStateFromOgen(&v13)
-		if err != nil {
-			return nil, err
-		}
-		dst.InfrastructureState = m14
-	}
-	if v15, ok := src.DeploymentPlan.Get(); ok {
-		m16, err := DeploymentPlanFromOgen(&v15)
-		if err != nil {
-			return nil, err
-		}
-		dst.DeploymentPlan = m16
-	}
-	if v17, ok := src.RuntimeState.Get(); ok {
-		m18, err := RunStateFromOgen(&v17)
-		if err != nil {
-			return nil, err
-		}
-		dst.RuntimeState = m18
-	}
-	if v19, ok := src.RecipeId.Get(); ok {
-		dst.RecipeId = string(v19)
-	}
-	if v20, ok := src.RecipeTopology.Get(); ok {
-		m21, err := RecipeTopologySnapshotFromOgen(&v20)
-		if err != nil {
-			return nil, err
-		}
-		dst.RecipeTopology = m21
 	}
 	return dst, nil
 }
@@ -11116,6 +10355,32 @@ func VolumeMountFromOgen(src *rest.VolumeMount) (*deployment.Docker_VolumeMount,
 	return dst, nil
 }
 
+// WaitStepToOgen converts dsl.WaitStep (an imported type) to its ogen representation.
+func WaitStepToOgen(src *dsl.WaitStep) (*rest.WaitStep, error) {
+	var dst rest.WaitStep
+	if src == nil {
+		return &dst, nil
+	}
+	dst.HTTP.SetTo(string(src.GetHttp()))
+	dst.Timeout.SetTo(string(src.GetTimeout()))
+	return &dst, nil
+}
+
+// WaitStepFromOgen converts the ogen representation back to WaitStep.
+func WaitStepFromOgen(src *rest.WaitStep) (*dsl.WaitStep, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &dsl.WaitStep{}
+	if v1, ok := src.HTTP.Get(); ok {
+		dst.Http = string(v1)
+	}
+	if v2, ok := src.Timeout.Get(); ok {
+		dst.Timeout = string(v2)
+	}
+	return dst, nil
+}
+
 // WorkerToOgen converts domain.Worker (an imported type) to its ogen representation.
 func WorkerToOgen(src *domain.Worker) (*rest.Worker, error) {
 	var dst rest.Worker
@@ -11404,398 +10669,6 @@ func WorkerInfoFromOgen(src *rest.WorkerInfo) (*monitor.WorkerInfo, error) {
 			return nil, fmt.Errorf("cloud.v1.monitor.WorkerInfo.source: enum value %v has no ObservationSource variant", v18)
 		}
 		dst.Source = en19
-	}
-	return dst, nil
-}
-
-// WorkloadToOgen converts domain.Workload (an imported type) to its ogen representation.
-func WorkloadToOgen(src *domain.Workload) (*rest.Workload, error) {
-	var dst rest.Workload
-	if src == nil {
-		return &dst, nil
-	}
-	dst.StroppyVersion.SetTo(string(src.GetStroppyVersion()))
-	var en1 rest.WorkloadProtocol
-	switch src.GetProtocol() {
-	case domain.Workload_PROTOCOL_UNSPECIFIED:
-		en1 = rest.WorkloadProtocol0
-	case domain.Workload_PROTOCOL_PG:
-		en1 = rest.WorkloadProtocol1
-	case domain.Workload_PROTOCOL_MYSQL:
-		en1 = rest.WorkloadProtocol2
-	case domain.Workload_PROTOCOL_PICODATA:
-		en1 = rest.WorkloadProtocol3
-	case domain.Workload_PROTOCOL_YDB_GRPC:
-		en1 = rest.WorkloadProtocol4
-	case domain.Workload_PROTOCOL_YDB_GRPCS:
-		en1 = rest.WorkloadProtocol5
-	case domain.Workload_PROTOCOL_COCKROACH:
-		en1 = rest.WorkloadProtocol7
-	case domain.Workload_PROTOCOL_NOOP:
-		en1 = rest.WorkloadProtocol8
-	default:
-		return nil, fmt.Errorf("cloud.v1.domain.Workload.protocol: enum value %v has no ogen WorkloadProtocol variant", src.GetProtocol())
-	}
-	dst.Protocol.SetTo(en1)
-	c2, err := convert.SliceErr(src.GetSegments(), func(e *domain.Workload_Segment) (zero rest.Segment, _ error) {
-		o3, err := SegmentToOgen(e)
-		if err != nil {
-			return zero, err
-		}
-		return *o3, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.Segments = c2
-	if src.Tags != nil {
-		o4, err := TagsToOgen(src.GetTags())
-		if err != nil {
-			return nil, err
-		}
-		dst.Tags.SetTo(*o4)
-	}
-	return &dst, nil
-}
-
-// WorkloadFromOgen converts the ogen representation back to Workload.
-func WorkloadFromOgen(src *rest.Workload) (*domain.Workload, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &domain.Workload{}
-	if v1, ok := src.StroppyVersion.Get(); ok {
-		dst.StroppyVersion = string(v1)
-	}
-	if v2, ok := src.Protocol.Get(); ok {
-		var en3 domain.Workload_Protocol
-		switch v2 {
-		case rest.WorkloadProtocol0:
-			en3 = domain.Workload_PROTOCOL_UNSPECIFIED
-		case rest.WorkloadProtocol1:
-			en3 = domain.Workload_PROTOCOL_PG
-		case rest.WorkloadProtocol2:
-			en3 = domain.Workload_PROTOCOL_MYSQL
-		case rest.WorkloadProtocol3:
-			en3 = domain.Workload_PROTOCOL_PICODATA
-		case rest.WorkloadProtocol4:
-			en3 = domain.Workload_PROTOCOL_YDB_GRPC
-		case rest.WorkloadProtocol5:
-			en3 = domain.Workload_PROTOCOL_YDB_GRPCS
-		case rest.WorkloadProtocol7:
-			en3 = domain.Workload_PROTOCOL_COCKROACH
-		case rest.WorkloadProtocol8:
-			en3 = domain.Workload_PROTOCOL_NOOP
-		default:
-			return nil, fmt.Errorf("cloud.v1.domain.Workload.protocol: enum value %v has no Workload_Protocol variant", v2)
-		}
-		dst.Protocol = en3
-	}
-	c4, err := convert.SliceErr(src.Segments, func(e rest.Segment) (zero *domain.Workload_Segment, _ error) {
-		m5, err := SegmentFromOgen(&e)
-		if err != nil {
-			return zero, err
-		}
-		return m5, nil
-	})
-	if err != nil {
-		return nil, err
-	}
-	dst.Segments = c4
-	if v6, ok := src.Tags.Get(); ok {
-		m7, err := TagsFromOgen(&v6)
-		if err != nil {
-			return nil, err
-		}
-		dst.Tags = m7
-	}
-	return dst, nil
-}
-
-// WorkloadFileToOgen converts domain.Workload_WorkloadFile (an imported type) to its ogen representation.
-func WorkloadFileToOgen(src *domain.Workload_WorkloadFile) (*rest.WorkloadFile, error) {
-	var dst rest.WorkloadFile
-	if src == nil {
-		return &dst, nil
-	}
-	dst.Name.SetTo(string(src.GetName()))
-	dst.Kind.SetTo(string(src.GetKind()))
-	dst.Content.SetTo(string(src.GetContent()))
-	return &dst, nil
-}
-
-// WorkloadFileFromOgen converts the ogen representation back to Workload_WorkloadFile.
-func WorkloadFileFromOgen(src *rest.WorkloadFile) (*domain.Workload_WorkloadFile, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &domain.Workload_WorkloadFile{}
-	if v1, ok := src.Name.Get(); ok {
-		dst.Name = string(v1)
-	}
-	if v2, ok := src.Kind.Get(); ok {
-		dst.Kind = string(v2)
-	}
-	if v3, ok := src.Content.Get(); ok {
-		dst.Content = string(v3)
-	}
-	return dst, nil
-}
-
-// YdbManagedParamsToOgen converts domain.YdbManagedParams (an imported type) to its ogen representation.
-func YdbManagedParamsToOgen(src *domain.YdbManagedParams) (*rest.YdbManagedParams, error) {
-	var dst rest.YdbManagedParams
-	if src == nil {
-		return &dst, nil
-	}
-	var en1 rest.YdbManagedParamsType
-	switch src.GetType() {
-	case domain.YdbManagedParams_TYPE_SERVERLESS:
-		en1 = rest.YdbManagedParamsType1
-	case domain.YdbManagedParams_TYPE_DEDICATED:
-		en1 = rest.YdbManagedParamsType2
-	default:
-		return nil, fmt.Errorf("cloud.v1.domain.YdbManagedParams.type: enum value %v has no ogen YdbManagedParamsType variant", src.GetType())
-	}
-	dst.Type.SetTo(en1)
-	var en2 rest.YdbManagedParamsComputeType
-	switch src.GetComputeType() {
-	case domain.YdbManagedParams_COMPUTE_TYPE_UNSPECIFIED:
-		en2 = rest.YdbManagedParamsComputeType0
-	case domain.YdbManagedParams_COMPUTE_TYPE_OLTP:
-		en2 = rest.YdbManagedParamsComputeType1
-	case domain.YdbManagedParams_COMPUTE_TYPE_OLAP:
-		en2 = rest.YdbManagedParamsComputeType2
-	default:
-		return nil, fmt.Errorf("cloud.v1.domain.YdbManagedParams.compute_type: enum value %v has no ogen YdbManagedParamsComputeType variant", src.GetComputeType())
-	}
-	dst.ComputeType.SetTo(en2)
-	dst.ResourcePresetId.SetTo(string(src.GetResourcePresetId()))
-	dst.NodeCount.SetTo(int32(src.GetNodeCount()))
-	if src.AutoScale != nil {
-		o3, err := AutoScaleToOgen(src.GetAutoScale())
-		if err != nil {
-			return nil, err
-		}
-		dst.AutoScale.SetTo(*o3)
-	}
-	dst.StorageGroups.SetTo(int32(src.GetStorageGroups()))
-	dst.StorageType.SetTo(string(src.GetStorageType()))
-	dst.ThrottlingRcus.SetTo(int32(src.GetThrottlingRcus()))
-	return &dst, nil
-}
-
-// YdbManagedParamsFromOgen converts the ogen representation back to YdbManagedParams.
-func YdbManagedParamsFromOgen(src *rest.YdbManagedParams) (*domain.YdbManagedParams, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &domain.YdbManagedParams{}
-	if v1, ok := src.Type.Get(); ok {
-		var en2 domain.YdbManagedParams_Type
-		switch v1 {
-		case rest.YdbManagedParamsType1:
-			en2 = domain.YdbManagedParams_TYPE_SERVERLESS
-		case rest.YdbManagedParamsType2:
-			en2 = domain.YdbManagedParams_TYPE_DEDICATED
-		default:
-			return nil, fmt.Errorf("cloud.v1.domain.YdbManagedParams.type: enum value %v has no YdbManagedParams_Type variant", v1)
-		}
-		dst.Type = en2
-	}
-	if v3, ok := src.ComputeType.Get(); ok {
-		var en4 domain.YdbManagedParams_ComputeType
-		switch v3 {
-		case rest.YdbManagedParamsComputeType0:
-			en4 = domain.YdbManagedParams_COMPUTE_TYPE_UNSPECIFIED
-		case rest.YdbManagedParamsComputeType1:
-			en4 = domain.YdbManagedParams_COMPUTE_TYPE_OLTP
-		case rest.YdbManagedParamsComputeType2:
-			en4 = domain.YdbManagedParams_COMPUTE_TYPE_OLAP
-		default:
-			return nil, fmt.Errorf("cloud.v1.domain.YdbManagedParams.compute_type: enum value %v has no YdbManagedParams_ComputeType variant", v3)
-		}
-		dst.ComputeType = en4
-	}
-	if v5, ok := src.ResourcePresetId.Get(); ok {
-		dst.ResourcePresetId = string(v5)
-	}
-	if v6, ok := src.NodeCount.Get(); ok {
-		dst.NodeCount = uint32(v6)
-	}
-	if v7, ok := src.AutoScale.Get(); ok {
-		m8, err := AutoScaleFromOgen(&v7)
-		if err != nil {
-			return nil, err
-		}
-		dst.AutoScale = m8
-	}
-	if v9, ok := src.StorageGroups.Get(); ok {
-		dst.StorageGroups = uint32(v9)
-	}
-	if v10, ok := src.StorageType.Get(); ok {
-		dst.StorageType = string(v10)
-	}
-	if v11, ok := src.ThrottlingRcus.Get(); ok {
-		dst.ThrottlingRcus = uint32(v11)
-	}
-	return dst, nil
-}
-
-// YdbParamsToOgen converts domain.YdbParams (an imported type) to its ogen representation.
-func YdbParamsToOgen(src *domain.YdbParams) (*rest.YdbParams, error) {
-	var dst rest.YdbParams
-	if src == nil {
-		return &dst, nil
-	}
-	dst.StorageNodes.SetTo(int32(src.GetStorageNodes()))
-	dst.DatabaseNodes.SetTo(int32(src.GetDatabaseNodes()))
-	dst.Haproxy.SetTo(int32(src.GetHaproxy()))
-	dst.PdisksPerStorageNode.SetTo(int32(src.GetPdisksPerStorageNode()))
-	var en1 rest.YdbParamsFaultTolerance
-	switch src.GetFaultTolerance() {
-	case domain.YdbParams_FAULT_TOLERANCE_UNSPECIFIED:
-		en1 = rest.YdbParamsFaultTolerance0
-	case domain.YdbParams_FAULT_TOLERANCE_NONE:
-		en1 = rest.YdbParamsFaultTolerance1
-	case domain.YdbParams_FAULT_TOLERANCE_BLOCK_4_2:
-		en1 = rest.YdbParamsFaultTolerance2
-	case domain.YdbParams_FAULT_TOLERANCE_MIRROR_3_DC:
-		en1 = rest.YdbParamsFaultTolerance3
-	default:
-		return nil, fmt.Errorf("cloud.v1.domain.YdbParams.fault_tolerance: enum value %v has no ogen YdbParamsFaultTolerance variant", src.GetFaultTolerance())
-	}
-	dst.FaultTolerance.SetTo(en1)
-	var en2 rest.YdbParamsFailureDomainType
-	switch src.GetFailureDomainType() {
-	case domain.YdbParams_FAILURE_DOMAIN_UNSPECIFIED:
-		en2 = rest.YdbParamsFailureDomainType0
-	case domain.YdbParams_FAILURE_DOMAIN_DISK:
-		en2 = rest.YdbParamsFailureDomainType1
-	default:
-		return nil, fmt.Errorf("cloud.v1.domain.YdbParams.failure_domain_type: enum value %v has no ogen YdbParamsFailureDomainType variant", src.GetFailureDomainType())
-	}
-	dst.FailureDomainType.SetTo(en2)
-	var en3 rest.YdbParamsDefaultDiskType
-	switch src.GetDefaultDiskType() {
-	case domain.YdbParams_DISK_TYPE_UNSPECIFIED:
-		en3 = rest.YdbParamsDefaultDiskType0
-	case domain.YdbParams_DISK_TYPE_SSD:
-		en3 = rest.YdbParamsDefaultDiskType1
-	case domain.YdbParams_DISK_TYPE_NVME:
-		en3 = rest.YdbParamsDefaultDiskType2
-	case domain.YdbParams_DISK_TYPE_ROT:
-		en3 = rest.YdbParamsDefaultDiskType3
-	default:
-		return nil, fmt.Errorf("cloud.v1.domain.YdbParams.default_disk_type: enum value %v has no ogen YdbParamsDefaultDiskType variant", src.GetDefaultDiskType())
-	}
-	dst.DefaultDiskType.SetTo(en3)
-	dst.StorageGroups.SetTo(int32(src.GetStorageGroups()))
-	dst.AutoSizePdisks.SetTo(bool(src.GetAutoSizePdisks()))
-	dst.DatabasePath.SetTo(string(src.GetDatabasePath()))
-	c4 := convert.Map(src.GetStorageOptions(), func(v string) string {
-		return string(v)
-	})
-	dst.StorageOptions.SetTo(c4)
-	c5 := convert.Map(src.GetDatabaseOptions(), func(v string) string {
-		return string(v)
-	})
-	dst.DatabaseOptions.SetTo(c5)
-	c6 := convert.Map(src.GetHaproxyOptions(), func(v string) string {
-		return string(v)
-	})
-	dst.HaproxyOptions.SetTo(c6)
-	return &dst, nil
-}
-
-// YdbParamsFromOgen converts the ogen representation back to YdbParams.
-func YdbParamsFromOgen(src *rest.YdbParams) (*domain.YdbParams, error) {
-	if src == nil {
-		return nil, nil
-	}
-	dst := &domain.YdbParams{}
-	if v1, ok := src.StorageNodes.Get(); ok {
-		dst.StorageNodes = uint32(v1)
-	}
-	if v2, ok := src.DatabaseNodes.Get(); ok {
-		dst.DatabaseNodes = uint32(v2)
-	}
-	if v3, ok := src.Haproxy.Get(); ok {
-		dst.Haproxy = uint32(v3)
-	}
-	if v4, ok := src.PdisksPerStorageNode.Get(); ok {
-		dst.PdisksPerStorageNode = uint32(v4)
-	}
-	if v5, ok := src.FaultTolerance.Get(); ok {
-		var en6 domain.YdbParams_FaultTolerance
-		switch v5 {
-		case rest.YdbParamsFaultTolerance0:
-			en6 = domain.YdbParams_FAULT_TOLERANCE_UNSPECIFIED
-		case rest.YdbParamsFaultTolerance1:
-			en6 = domain.YdbParams_FAULT_TOLERANCE_NONE
-		case rest.YdbParamsFaultTolerance2:
-			en6 = domain.YdbParams_FAULT_TOLERANCE_BLOCK_4_2
-		case rest.YdbParamsFaultTolerance3:
-			en6 = domain.YdbParams_FAULT_TOLERANCE_MIRROR_3_DC
-		default:
-			return nil, fmt.Errorf("cloud.v1.domain.YdbParams.fault_tolerance: enum value %v has no YdbParams_FaultTolerance variant", v5)
-		}
-		dst.FaultTolerance = en6
-	}
-	if v7, ok := src.FailureDomainType.Get(); ok {
-		var en8 domain.YdbParams_FailureDomain
-		switch v7 {
-		case rest.YdbParamsFailureDomainType0:
-			en8 = domain.YdbParams_FAILURE_DOMAIN_UNSPECIFIED
-		case rest.YdbParamsFailureDomainType1:
-			en8 = domain.YdbParams_FAILURE_DOMAIN_DISK
-		default:
-			return nil, fmt.Errorf("cloud.v1.domain.YdbParams.failure_domain_type: enum value %v has no YdbParams_FailureDomain variant", v7)
-		}
-		dst.FailureDomainType = en8
-	}
-	if v9, ok := src.DefaultDiskType.Get(); ok {
-		var en10 domain.YdbParams_DiskType
-		switch v9 {
-		case rest.YdbParamsDefaultDiskType0:
-			en10 = domain.YdbParams_DISK_TYPE_UNSPECIFIED
-		case rest.YdbParamsDefaultDiskType1:
-			en10 = domain.YdbParams_DISK_TYPE_SSD
-		case rest.YdbParamsDefaultDiskType2:
-			en10 = domain.YdbParams_DISK_TYPE_NVME
-		case rest.YdbParamsDefaultDiskType3:
-			en10 = domain.YdbParams_DISK_TYPE_ROT
-		default:
-			return nil, fmt.Errorf("cloud.v1.domain.YdbParams.default_disk_type: enum value %v has no YdbParams_DiskType variant", v9)
-		}
-		dst.DefaultDiskType = en10
-	}
-	if v11, ok := src.StorageGroups.Get(); ok {
-		dst.StorageGroups = uint32(v11)
-	}
-	if v12, ok := src.AutoSizePdisks.Get(); ok {
-		dst.AutoSizePdisks = bool(v12)
-	}
-	if v13, ok := src.DatabasePath.Get(); ok {
-		dst.DatabasePath = string(v13)
-	}
-	if mv14, ok := src.StorageOptions.Get(); ok {
-		c15 := convert.Map(mv14, func(v string) string {
-			return string(v)
-		})
-		dst.StorageOptions = c15
-	}
-	if mv16, ok := src.DatabaseOptions.Get(); ok {
-		c17 := convert.Map(mv16, func(v string) string {
-			return string(v)
-		})
-		dst.DatabaseOptions = c17
-	}
-	if mv18, ok := src.HaproxyOptions.Get(); ok {
-		c19 := convert.Map(mv18, func(v string) string {
-			return string(v)
-		})
-		dst.HaproxyOptions = c19
 	}
 	return dst, nil
 }

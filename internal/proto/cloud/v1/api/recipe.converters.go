@@ -461,8 +461,8 @@ func (src *ListRunsResponse) ToOgen() (*rest.ListRunsResponse, error) {
 	if src == nil {
 		return &dst, nil
 	}
-	c1, err := convert.SliceErr(src.GetRuns(), func(e *models.TestRunRecord) (zero rest.TestRunRecord, _ error) {
-		o2, err := TestRunRecordToOgen(e)
+	c1, err := convert.SliceErr(src.GetRuns(), func(e *models.Run) (zero rest.Run, _ error) {
+		o2, err := RunToOgen(e)
 		if err != nil {
 			return zero, err
 		}
@@ -482,8 +482,8 @@ func ListRunsResponseFromOgen(src *rest.ListRunsResponse) (*ListRunsResponse, er
 		return nil, nil
 	}
 	dst := &ListRunsResponse{}
-	c1, err := convert.SliceErr(src.Runs, func(e rest.TestRunRecord) (zero *models.TestRunRecord, _ error) {
-		m2, err := TestRunRecordFromOgen(&e)
+	c1, err := convert.SliceErr(src.Runs, func(e rest.Run) (zero *models.Run, _ error) {
+		m2, err := RunFromOgen(&e)
 		if err != nil {
 			return zero, err
 		}
@@ -531,7 +531,7 @@ func (src *StartRunResponse) ToOgen() (*rest.StartRunResponse, error) {
 	if src == nil {
 		return &dst, nil
 	}
-	o1, err := TestRunRecordToOgen(src.GetRun())
+	o1, err := RunToOgen(src.GetRun())
 	if err != nil {
 		return nil, err
 	}
@@ -545,7 +545,7 @@ func StartRunResponseFromOgen(src *rest.StartRunResponse) (*StartRunResponse, er
 		return nil, nil
 	}
 	dst := &StartRunResponse{}
-	m1, err := TestRunRecordFromOgen(&src.Run)
+	m1, err := RunFromOgen(&src.Run)
 	if err != nil {
 		return nil, err
 	}

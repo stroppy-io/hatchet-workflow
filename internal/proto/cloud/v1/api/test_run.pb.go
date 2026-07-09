@@ -385,7 +385,7 @@ func (x *ListTestRunsRequest) GetPage() *common.Page {
 type ListTestRunsResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// runs is the matching page of run records.
-	Runs []*models.TestRunRecord `protobuf:"bytes,1,rep,name=runs,proto3" json:"runs,omitempty"`
+	Runs []*models.Run `protobuf:"bytes,1,rep,name=runs,proto3" json:"runs,omitempty"`
 	// next_page_token fetches the following page; empty when at the end.
 	NextPageToken string `protobuf:"bytes,2,opt,name=next_page_token,json=nextPageToken,proto3" json:"next_page_token,omitempty"`
 	unknownFields protoimpl.UnknownFields
@@ -422,7 +422,7 @@ func (*ListTestRunsResponse) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_api_test_run_proto_rawDescGZIP(), []int{1}
 }
 
-func (x *ListTestRunsResponse) GetRuns() []*models.TestRunRecord {
+func (x *ListTestRunsResponse) GetRuns() []*models.Run {
 	if x != nil {
 		return x.Runs
 	}
@@ -730,9 +730,9 @@ const file_cloud_v1_api_test_run_proto_rawDesc = "" +
 	"\x02by\x12\x06\xf2\xa7\x1d\x02\b\x03B\r\n" +
 	"\v_standaloneB\x0f\n" +
 	"\r_progress_minB\x0f\n" +
-	"\r_progress_max\"r\n" +
-	"\x14ListTestRunsResponse\x122\n" +
-	"\x04runs\x18\x01 \x03(\v2\x1e.cloud.v1.models.TestRunRecordR\x04runs\x12&\n" +
+	"\r_progress_max\"h\n" +
+	"\x14ListTestRunsResponse\x12(\n" +
+	"\x04runs\x18\x01 \x03(\v2\x14.cloud.v1.models.RunR\x04runs\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"y\n" +
 	"\x18ListTestRunFacetsRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x125\n" +
@@ -775,7 +775,7 @@ var file_cloud_v1_api_test_run_proto_goTypes = []any{
 	(*timestamppb.Timestamp)(nil),      // 12: google.protobuf.Timestamp
 	(common.Trigger)(0),                // 13: cloud.v1.common.Trigger
 	(*common.Page)(nil),                // 14: cloud.v1.common.Page
-	(*models.TestRunRecord)(nil),       // 15: cloud.v1.models.TestRunRecord
+	(*models.Run)(nil),                 // 15: cloud.v1.models.Run
 	(common.EntitySortField)(0),        // 16: cloud.v1.common.EntitySortField
 }
 var file_cloud_v1_api_test_run_proto_depIdxs = []int32{
@@ -793,7 +793,7 @@ var file_cloud_v1_api_test_run_proto_depIdxs = []int32{
 	13, // 11: cloud.v1.api.ListTestRunsRequest.triggers:type_name -> cloud.v1.common.Trigger
 	5,  // 12: cloud.v1.api.ListTestRunsRequest.sort:type_name -> cloud.v1.api.ListTestRunsRequest.Sort
 	14, // 13: cloud.v1.api.ListTestRunsRequest.page:type_name -> cloud.v1.common.Page
-	15, // 14: cloud.v1.api.ListTestRunsResponse.runs:type_name -> cloud.v1.models.TestRunRecord
+	15, // 14: cloud.v1.api.ListTestRunsResponse.runs:type_name -> cloud.v1.models.Run
 	6,  // 15: cloud.v1.api.ListTestRunFacetsRequest.filter:type_name -> cloud.v1.common.EntityFilter
 	16, // 16: cloud.v1.api.ListTestRunsRequest.Sort.entity:type_name -> cloud.v1.common.EntitySortField
 	0,  // 17: cloud.v1.api.ListTestRunsRequest.Sort.kind:type_name -> cloud.v1.api.ListTestRunsRequest.Sort.Kind

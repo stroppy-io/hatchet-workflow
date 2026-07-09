@@ -8,7 +8,7 @@ import type { RatingEntry, RatingEntryJson } from "./rating_pb.ts";
 import { file_cloud_v1_api_rating } from "./rating_pb.ts";
 import { file_cloud_v1_iam_options } from "../iam/options_pb.ts";
 import { file_cloud_v1_iam_permission } from "../iam/permission_pb.ts";
-import type { TestRunRecord, TestRunRecordJson } from "../models/test_run_pb.ts";
+import type { Run, RunJson } from "../models/test_run_pb.ts";
 import { file_cloud_v1_models_test_run } from "../models/test_run_pb.ts";
 import type { Timestamp, TimestampJson } from "@bufbuild/protobuf/wkt";
 import { file_google_protobuf_timestamp } from "@bufbuild/protobuf/wkt";
@@ -20,7 +20,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/api/tenant_dashboard.proto.
  */
 export const file_cloud_v1_api_tenant_dashboard: GenFile = /*@__PURE__*/
-  fileDesc("CiNjbG91ZC92MS9hcGkvdGVuYW50X2Rhc2hib2FyZC5wcm90bxIMY2xvdWQudjEuYXBpInUKDFN0YXR1c0NvdW50cxINCgV0b3RhbBgBIAEoDRIPCgdwZW5kaW5nGAIgASgNEg8KB3J1bm5pbmcYAyABKA0SEQoJY29tcGxldGVkGAQgASgNEg4KBmZhaWxlZBgFIAEoDRIRCgljYW5jZWxsZWQYBiABKA0iiwEKDVVwY29taW5nU3VpdGUSGQoIc3VpdGVfaWQYASABKAlCB/pCBHICGEASFgoEbmFtZRgCIAEoCUII+kIFcgMY/wESFgoEY3JvbhgDIAEoCUII+kIFcgMYgAESLwoLbmV4dF9ydW5fYXQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIocCCg9UZW5hbnREYXNoYm9hcmQSLgoKcnVuX2NvdW50cxgBIAEoCzIaLmNsb3VkLnYxLmFwaS5TdGF0dXNDb3VudHMSFAoMc3VjY2Vzc19yYXRlGAIgASgCEjMKC3JlY2VudF9ydW5zGAMgAygLMh4uY2xvdWQudjEubW9kZWxzLlRlc3RSdW5SZWNvcmQSLQoIdXBjb21pbmcYBSADKAsyGy5jbG91ZC52MS5hcGkuVXBjb21pbmdTdWl0ZRIxCg50b3BfYmVuY2htYXJrcxgGIAMoCzIZLmNsb3VkLnYxLmFwaS5SYXRpbmdFbnRyeUoECAQQBVIRcmVjZW50X3N1aXRlX3J1bnMiOQoZR2V0VGVuYW50RGFzaGJvYXJkUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQCJYChpHZXRUZW5hbnREYXNoYm9hcmRSZXNwb25zZRI6CglkYXNoYm9hcmQYASABKAsyHS5jbG91ZC52MS5hcGkuVGVuYW50RGFzaGJvYXJkQgj6QgWKAQIQATK4AgoWVGVuYW50RGFzaGJvYXJkU2VydmljZRLrAQoSR2V0VGVuYW50RGFzaGJvYXJkEicuY2xvdWQudjEuYXBpLkdldFRlbmFudERhc2hib2FyZFJlcXVlc3QaKC5jbG91ZC52MS5hcGkuR2V0VGVuYW50RGFzaGJvYXJkUmVzcG9uc2UigQGQAgGKtRgGEgQQBQgI8qcdcKIBAhABsgEHCMgBEgJPS7IBMRIRVW5leHBlY3RlZCBlcnJvci4qHAoaIy9jb21wb25lbnRzL3NjaGVtYXMvRXJyb3IQARoVL2dldC10ZW5hbnQtZGFzaGJvYXJkIhJnZXRUZW5hbnREYXNoYm9hcmQaMPKnHSwSGC9hcGkvdjEvdGVuYW50LWRhc2hib2FyZBoQdGVuYW50LWRhc2hib2FyZEJHWj9naXRodWIuY29tL3N0cm9wcHktaW8vc3Ryb3BweS1jbG91ZC9pbnRlcm5hbC9wcm90by9jbG91ZC92MS9hcGnypx0CCAFiBnByb3RvMw", [file_cloud_v1_api_rating, file_cloud_v1_iam_options, file_cloud_v1_iam_permission, file_cloud_v1_models_test_run, file_google_protobuf_timestamp, file_validate_validate, file_ogen_ogen]);
+  fileDesc("CiNjbG91ZC92MS9hcGkvdGVuYW50X2Rhc2hib2FyZC5wcm90bxIMY2xvdWQudjEuYXBpInUKDFN0YXR1c0NvdW50cxINCgV0b3RhbBgBIAEoDRIPCgdwZW5kaW5nGAIgASgNEg8KB3J1bm5pbmcYAyABKA0SEQoJY29tcGxldGVkGAQgASgNEg4KBmZhaWxlZBgFIAEoDRIRCgljYW5jZWxsZWQYBiABKA0iiwEKDVVwY29taW5nU3VpdGUSGQoIc3VpdGVfaWQYASABKAlCB/pCBHICGEASFgoEbmFtZRgCIAEoCUII+kIFcgMY/wESFgoEY3JvbhgDIAEoCUII+kIFcgMYgAESLwoLbmV4dF9ydW5fYXQYBCABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wIv0BCg9UZW5hbnREYXNoYm9hcmQSLgoKcnVuX2NvdW50cxgBIAEoCzIaLmNsb3VkLnYxLmFwaS5TdGF0dXNDb3VudHMSFAoMc3VjY2Vzc19yYXRlGAIgASgCEikKC3JlY2VudF9ydW5zGAMgAygLMhQuY2xvdWQudjEubW9kZWxzLlJ1bhItCgh1cGNvbWluZxgFIAMoCzIbLmNsb3VkLnYxLmFwaS5VcGNvbWluZ1N1aXRlEjEKDnRvcF9iZW5jaG1hcmtzGAYgAygLMhkuY2xvdWQudjEuYXBpLlJhdGluZ0VudHJ5SgQIBBAFUhFyZWNlbnRfc3VpdGVfcnVucyI5ChlHZXRUZW5hbnREYXNoYm9hcmRSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAIlgKGkdldFRlbmFudERhc2hib2FyZFJlc3BvbnNlEjoKCWRhc2hib2FyZBgBIAEoCzIdLmNsb3VkLnYxLmFwaS5UZW5hbnREYXNoYm9hcmRCCPpCBYoBAhABMrgCChZUZW5hbnREYXNoYm9hcmRTZXJ2aWNlEusBChJHZXRUZW5hbnREYXNoYm9hcmQSJy5jbG91ZC52MS5hcGkuR2V0VGVuYW50RGFzaGJvYXJkUmVxdWVzdBooLmNsb3VkLnYxLmFwaS5HZXRUZW5hbnREYXNoYm9hcmRSZXNwb25zZSKBAZACAYq1GAYSBAgIEAXypx1wEAEaFS9nZXQtdGVuYW50LWRhc2hib2FyZCISZ2V0VGVuYW50RGFzaGJvYXJkogECEAGyAQcSAk9LCMgBsgExKhwKGiMvY29tcG9uZW50cy9zY2hlbWFzL0Vycm9yEhFVbmV4cGVjdGVkIGVycm9yLhow8qcdLBIYL2FwaS92MS90ZW5hbnQtZGFzaGJvYXJkGhB0ZW5hbnQtZGFzaGJvYXJkQkdaP2dpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2FwafKnHQIIAWIGcHJvdG8z", [file_cloud_v1_api_rating, file_cloud_v1_iam_options, file_cloud_v1_iam_permission, file_cloud_v1_models_test_run, file_google_protobuf_timestamp, file_validate_validate, file_ogen_ogen]);
 
 /**
  *
@@ -259,9 +259,9 @@ export type TenantDashboard = Message<"cloud.v1.api.TenantDashboard"> & {
    *
    * recent_runs is the most recent test runs (limited).
    *
-   * @generated from field: repeated cloud.v1.models.TestRunRecord recent_runs = 3;
+   * @generated from field: repeated cloud.v1.models.Run recent_runs = 3;
    */
-  recentRuns: TestRunRecord[];
+  recentRuns: Run[];
 
   /**
    *
@@ -307,9 +307,9 @@ export type TenantDashboardJson = {
    *
    * recent_runs is the most recent test runs (limited).
    *
-   * @generated from field: repeated cloud.v1.models.TestRunRecord recent_runs = 3;
+   * @generated from field: repeated cloud.v1.models.Run recent_runs = 3;
    */
-  recentRuns?: TestRunRecordJson[];
+  recentRuns?: RunJson[];
 
   /**
    *

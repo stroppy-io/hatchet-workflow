@@ -198,7 +198,7 @@ type TenantDashboard struct {
 	// success_rate is completed / finished over a recent window, 0..1.
 	SuccessRate float32 `protobuf:"fixed32,2,opt,name=success_rate,json=successRate,proto3" json:"success_rate,omitempty"`
 	// recent_runs is the most recent test runs (limited).
-	RecentRuns []*models.TestRunRecord `protobuf:"bytes,3,rep,name=recent_runs,json=recentRuns,proto3" json:"recent_runs,omitempty"`
+	RecentRuns []*models.Run `protobuf:"bytes,3,rep,name=recent_runs,json=recentRuns,proto3" json:"recent_runs,omitempty"`
 	// upcoming is the scheduled suites with their next planned auto-run.
 	Upcoming []*UpcomingSuite `protobuf:"bytes,5,rep,name=upcoming,proto3" json:"upcoming,omitempty"`
 	// top_benchmarks is this tenant's top benchmarks (tenant rating top-N).
@@ -251,7 +251,7 @@ func (x *TenantDashboard) GetSuccessRate() float32 {
 	return 0
 }
 
-func (x *TenantDashboard) GetRecentRuns() []*models.TestRunRecord {
+func (x *TenantDashboard) GetRecentRuns() []*models.Run {
 	if x != nil {
 		return x.RecentRuns
 	}
@@ -380,12 +380,12 @@ const file_cloud_v1_api_tenant_dashboard_proto_rawDesc = "" +
 	"\bsuite_id\x18\x01 \x01(\tB\a\xfaB\x04r\x02\x18@R\asuiteId\x12\x1c\n" +
 	"\x04name\x18\x02 \x01(\tB\b\xfaB\x05r\x03\x18\xff\x01R\x04name\x12\x1c\n" +
 	"\x04cron\x18\x03 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\x04cron\x12:\n" +
-	"\vnext_run_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tnextRunAt\"\xc4\x02\n" +
+	"\vnext_run_at\x18\x04 \x01(\v2\x1a.google.protobuf.TimestampR\tnextRunAt\"\xba\x02\n" +
 	"\x0fTenantDashboard\x129\n" +
 	"\n" +
 	"run_counts\x18\x01 \x01(\v2\x1a.cloud.v1.api.StatusCountsR\trunCounts\x12!\n" +
-	"\fsuccess_rate\x18\x02 \x01(\x02R\vsuccessRate\x12?\n" +
-	"\vrecent_runs\x18\x03 \x03(\v2\x1e.cloud.v1.models.TestRunRecordR\n" +
+	"\fsuccess_rate\x18\x02 \x01(\x02R\vsuccessRate\x125\n" +
+	"\vrecent_runs\x18\x03 \x03(\v2\x14.cloud.v1.models.RunR\n" +
 	"recentRuns\x127\n" +
 	"\bupcoming\x18\x05 \x03(\v2\x1b.cloud.v1.api.UpcomingSuiteR\bupcoming\x12@\n" +
 	"\x0etop_benchmarks\x18\x06 \x03(\v2\x19.cloud.v1.api.RatingEntryR\rtopBenchmarksJ\x04\b\x04\x10\x05R\x11recent_suite_runs\"C\n" +
@@ -417,13 +417,13 @@ var file_cloud_v1_api_tenant_dashboard_proto_goTypes = []any{
 	(*GetTenantDashboardRequest)(nil),  // 3: cloud.v1.api.GetTenantDashboardRequest
 	(*GetTenantDashboardResponse)(nil), // 4: cloud.v1.api.GetTenantDashboardResponse
 	(*timestamppb.Timestamp)(nil),      // 5: google.protobuf.Timestamp
-	(*models.TestRunRecord)(nil),       // 6: cloud.v1.models.TestRunRecord
+	(*models.Run)(nil),                 // 6: cloud.v1.models.Run
 	(*RatingEntry)(nil),                // 7: cloud.v1.api.RatingEntry
 }
 var file_cloud_v1_api_tenant_dashboard_proto_depIdxs = []int32{
 	5, // 0: cloud.v1.api.UpcomingSuite.next_run_at:type_name -> google.protobuf.Timestamp
 	0, // 1: cloud.v1.api.TenantDashboard.run_counts:type_name -> cloud.v1.api.StatusCounts
-	6, // 2: cloud.v1.api.TenantDashboard.recent_runs:type_name -> cloud.v1.models.TestRunRecord
+	6, // 2: cloud.v1.api.TenantDashboard.recent_runs:type_name -> cloud.v1.models.Run
 	1, // 3: cloud.v1.api.TenantDashboard.upcoming:type_name -> cloud.v1.api.UpcomingSuite
 	7, // 4: cloud.v1.api.TenantDashboard.top_benchmarks:type_name -> cloud.v1.api.RatingEntry
 	2, // 5: cloud.v1.api.GetTenantDashboardResponse.dashboard:type_name -> cloud.v1.api.TenantDashboard

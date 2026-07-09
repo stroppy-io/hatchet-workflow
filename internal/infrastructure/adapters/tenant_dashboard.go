@@ -36,7 +36,7 @@ type ScheduledSuite struct {
 //   - ListScheduledSuites lists the tenant's suite DEFINITIONS that carry an
 //     enabled schedule (so the adapter can compute the next planned auto-run).
 type DashboardRunsReader interface {
-	ListTenantRuns(ctx context.Context, tenantID string) ([]*models.TestRunRecord, error)
+	ListTenantRuns(ctx context.Context, tenantID string) ([]*models.Run, error)
 	ListScheduledSuites(ctx context.Context, tenantID string) ([]ScheduledSuite, error)
 }
 
@@ -117,12 +117,12 @@ func NewRecentRunsReader(runs DashboardRunsReader) *RecentRunsReader {
 }
 
 // RecentRuns returns the most recent test runs, newest first, capped at limit.
-func (r *RecentRunsReader) RecentRuns(ctx context.Context, tenantID string, limit uint32) ([]*models.TestRunRecord, error) {
+func (r *RecentRunsReader) RecentRuns(ctx context.Context, tenantID string, limit uint32) ([]*models.Run, error) {
 	all, err := r.runs.ListTenantRuns(ctx, tenantID)
 	if err != nil {
 		return nil, err
 	}
-	sortByCreatedDesc(all, func(rec *models.TestRunRecord) time.Time { return createdAt(rec.GetEntity()) })
+	sortByCreatedDesc(all, func(rec *models.Run) time.Time { return createdAt(rec.GetEntity()) })
 	return capRuns(all, limit), nil
 }
 

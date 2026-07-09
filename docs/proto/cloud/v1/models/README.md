@@ -6,6 +6,7 @@
 ## Table of Contents
 - Messages
   - [cloud.v1.models.FavoriteRecord](#cloud-v1-models-favoriterecord)
+  - [cloud.v1.models.ObservabilityRefs](#cloud-v1-models-observabilityrefs)
   - [cloud.v1.models.PackageRecord](#cloud-v1-models-packagerecord)
   - [cloud.v1.models.PackageRecord.Format](#cloud-v1-models-packagerecord-format)
   - [cloud.v1.models.PackageRecord.Status](#cloud-v1-models-packagerecord-status)
@@ -13,10 +14,12 @@
   - [cloud.v1.models.RecipeBundle.FilesEntry](#cloud-v1-models-recipebundle-filesentry)
   - [cloud.v1.models.RecipeRecord](#cloud-v1-models-reciperecord)
   - [cloud.v1.models.RecipeRecord.Summary](#cloud-v1-models-reciperecord-summary)
-  - [cloud.v1.models.RecipeTopologySnapshot](#cloud-v1-models-recipetopologysnapshot)
-  - [cloud.v1.models.RecipeTopologySnapshot.MachineNode](#cloud-v1-models-recipetopologysnapshot-machinenode)
-  - [cloud.v1.models.RecipeTopologySnapshot.MachineNode.LabelsEntry](#cloud-v1-models-recipetopologysnapshot-machinenode-labelsentry)
-  - [cloud.v1.models.RecipeTopologySnapshot.ServiceNode](#cloud-v1-models-recipetopologysnapshot-servicenode)
+  - [cloud.v1.models.Run](#cloud-v1-models-run)
+  - [cloud.v1.models.Run.Summary](#cloud-v1-models-run-summary)
+  - [cloud.v1.models.RunTopology](#cloud-v1-models-runtopology)
+  - [cloud.v1.models.RunTopology.MachineNode](#cloud-v1-models-runtopology-machinenode)
+  - [cloud.v1.models.RunTopology.MachineNode.LabelsEntry](#cloud-v1-models-runtopology-machinenode-labelsentry)
+  - [cloud.v1.models.RunTopology.ServiceNode](#cloud-v1-models-runtopology-servicenode)
   - [cloud.v1.models.ShareRecord](#cloud-v1-models-sharerecord)
   - [cloud.v1.models.ShareRecord.Snapshot](#cloud-v1-models-sharerecord-snapshot)
   - [cloud.v1.models.ShareRecord.Target](#cloud-v1-models-sharerecord-target)
@@ -24,8 +27,6 @@
   - [cloud.v1.models.SharedSuiteRun](#cloud-v1-models-sharedsuiterun)
   - [cloud.v1.models.SharedTestRun](#cloud-v1-models-sharedtestrun)
   - [cloud.v1.models.TenantSettingsRecord](#cloud-v1-models-tenantsettingsrecord)
-  - [cloud.v1.models.TestRunRecord](#cloud-v1-models-testrunrecord)
-  - [cloud.v1.models.TestRunRecord.Summary](#cloud-v1-models-testrunrecord-summary)
 
 <a name="cloud-v1-models-messages"></a>
 ## Messages
@@ -80,6 +81,47 @@ go_name: Kind</pre></td>
 
 json_name: targetId
 go_name: TargetId</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-models-observabilityrefs"></a>
+### cloud.v1.models.ObservabilityRefs
+
+<pre>
+//ObservabilityRefs makes the "runtime observations keyed by run id"
+//convention (see logs.proto/metrics.proto doc comments) an explicit
+//contract on Run instead of an implicit one on TestRunRecord. v1: every
+//field is filled with entity.id (metrics/logs) or the relay's existing
+//hardcoded uid (grafana) at mint time (Task 3) — SP-F gives these real
+//per-provider variance.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>grafana_dashboard_uid</td>
+<td>string</td>
+<td><pre>
+json_name: grafanaDashboardUid
+go_name: GrafanaDashboardUid</pre></td>
+</tr><tr>
+<td>logs_query_key</td>
+<td>string</td>
+<td><pre>
+json_name: logsQueryKey
+go_name: LogsQueryKey</pre></td>
+</tr><tr>
+<td>metrics_query_key</td>
+<td>string</td>
+<td><pre>
+json_name: metricsQueryKey
+go_name: MetricsQueryKey</pre></td>
 </tr>
 </table>
 
@@ -428,17 +470,250 @@ go_name: ServiceCount</pre></td>
 
 
 
-<a name="cloud-v1-models-recipetopologysnapshot"></a>
-### cloud.v1.models.RecipeTopologySnapshot
+<a name="cloud-v1-models-run"></a>
+### cloud.v1.models.Run
 
 <pre>
-//RecipeTopologySnapshot is the compact, denormalized topology a recipe run
-//persists onto TestRunRecord.recipe_topology (see that field's doc) — one
-//entry per provisioned machine, carrying just enough to reconstruct an
-//equivalent runtime topology to a classic run's TopologySpec/
-//InfrastructureState/DeploymentPlan trio: which dsl.CompiledPlan
-//machine_groups group the machine belongs to, and which dsl.ServiceSpec
-//services are on_group-placed on that group.
+//Run is a persisted recipe run (RunRecipeWorkflow's only live path — see
+//package doc). Replaces TestRunRecord (above): every field here is
+//something RunRecipeWorkflow actually produces (compile -> CompiledPlan +
+//Baked identity; provision -> topology; execute -> per-job status via
+//workflow.RunState; always -> observability refs), unlike TestRunRecord
+//whose spec/infrastructure_state/deployment_plan fields a recipe run
+//always leaves empty (see TestRunRecord's doc and StartRun's own comment).
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>baked</td>
+<td><a href="../../../schemapb/README.md#schemapb-baked">schemapb.Baked</a></td>
+<td><pre>
+baked is the sealed launch-form snapshot (SP-A's schemapb.Bake
+output). nil until SP-D's generated-form launch path exists.<br>
+
+json_name: baked
+go_name: Baked</pre></td>
+</tr><tr>
+<td>compiled_plan</td>
+<td><a href="../dsl/README.md#cloud-v1-dsl-compiledplan">cloud.v1.dsl.CompiledPlan</a></td>
+<td><pre>
+compiled_plan is the compiled DSL plan RunRecipeWorkflow executed.
+NEW relative to TestRunRecord: today the plan lives only in workflow
+memory and is never persisted; see persistRunCompiledPlan (Task 3).<br>
+
+json_name: compiledPlan
+go_name: CompiledPlan</pre></td>
+</tr><tr>
+<td>entity</td>
+<td><a href="../common/README.md#cloud-v1-common-entity">cloud.v1.common.Entity</a></td>
+<td><pre>
+json_name: entity
+go_name: Entity</pre></td>
+</tr><tr>
+<td>in_global_rating</td>
+<td>bool</td>
+<td><pre>
+json_name: inGlobalRating
+go_name: InGlobalRating</pre></td>
+</tr><tr>
+<td>in_tenant_rating</td>
+<td>bool</td>
+<td><pre>
+json_name: inTenantRating
+go_name: InTenantRating</pre></td>
+</tr><tr>
+<td>observability</td>
+<td><a href="#cloud-v1-models-observabilityrefs">cloud.v1.models.ObservabilityRefs</a></td>
+<td><pre>
+json_name: observability
+go_name: Observability</pre></td>
+</tr><tr>
+<td>runtime_state</td>
+<td><a href="../workflow/README.md#cloud-v1-workflow-runstate">cloud.v1.workflow.RunState</a></td>
+<td><pre>
+runtime_state is the last workflow.RunState RunRecipeWorkflow
+persisted (unchanged type/semantics from TestRunRecord.runtime_state).<br>
+
+json_name: runtimeState
+go_name: RuntimeState</pre></td>
+</tr><tr>
+<td>status</td>
+<td><a href="../common/README.md#cloud-v1-common-status">cloud.v1.common.Status</a></td>
+<td><pre>
+json_name: status
+go_name: Status</pre></td>
+</tr><tr>
+<td>summary</td>
+<td><a href="#cloud-v1-models-run-summary">cloud.v1.models.Run.Summary</a></td>
+<td><pre>
+summary: same 15 fields as TestRunRecord.Summary (denormalized,
+queryable facets for the runs table). See Run.Summary below.<br>
+
+json_name: summary
+go_name: Summary</pre></td>
+</tr><tr>
+<td>topology</td>
+<td><a href="#cloud-v1-models-runtopology">cloud.v1.models.RunTopology</a></td>
+<td><pre>
+topology is the provisioned-machine snapshot (renamed
+RecipeTopologySnapshot -> RunTopology, see below).<br>
+
+json_name: topology
+go_name: Topology</pre></td>
+</tr><tr>
+<td>trigger</td>
+<td><a href="../common/README.md#cloud-v1-common-trigger">cloud.v1.common.Trigger</a></td>
+<td><pre>
+json_name: trigger
+go_name: Trigger</pre></td>
+</tr><tr>
+<td>workflow_id</td>
+<td>string</td>
+<td><pre>
+workflow_id is the originating models.RecipeRecord.entity.id (ex
+recipe_id) that StartRun launched this run from. Stamped once, never
+changed. Reserves the name for SP-B's catalog Workflow — until then,
+its value is exactly what recipe_id carries on TestRunRecord today.<br>
+
+json_name: workflowId
+go_name: WorkflowId</pre></td>
+</tr><tr>
+<td>workflow_version</td>
+<td>string</td>
+<td><pre>
+workflow_version identifies the bundle version at launch time:
+strconv.FormatUint(RecipeRecord.version, 10) (see recipe.go StartRun).<br>
+
+json_name: workflowVersion
+go_name: WorkflowVersion</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-models-run-summary"></a>
+### cloud.v1.models.Run.Summary
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>db_kind</td>
+<td><a href="../domain/README.md#cloud-v1-domain-database-kind">cloud.v1.domain.Database.Kind</a></td>
+<td><pre>
+json_name: dbKind
+go_name: DbKind</pre></td>
+</tr><tr>
+<td>db_preset_id</td>
+<td>string</td>
+<td><pre>
+json_name: dbPresetId
+go_name: DbPresetId</pre></td>
+</tr><tr>
+<td>db_preset_name</td>
+<td>string</td>
+<td><pre>
+json_name: dbPresetName
+go_name: DbPresetName</pre></td>
+</tr><tr>
+<td>duration</td>
+<td><a href="../../../google/protobuf/README.md#google-protobuf-duration">google.protobuf.Duration</a></td>
+<td><pre>
+json_name: duration
+go_name: Duration</pre></td>
+</tr><tr>
+<td>finished_at</td>
+<td><a href="../../../google/protobuf/README.md#google-protobuf-timestamp">google.protobuf.Timestamp</a></td>
+<td><pre>
+json_name: finishedAt
+go_name: FinishedAt</pre></td>
+</tr><tr>
+<td>node_count</td>
+<td>uint32</td>
+<td><pre>
+json_name: nodeCount
+go_name: NodeCount</pre></td>
+</tr><tr>
+<td>progress_pct</td>
+<td>uint32</td>
+<td><pre>
+json_name: progressPct
+go_name: ProgressPct</pre></td>
+</tr><tr>
+<td>provider</td>
+<td><a href="../deployment/README.md#cloud-v1-deployment-provider">cloud.v1.deployment.Provider</a></td>
+<td><pre>
+json_name: provider
+go_name: Provider</pre></td>
+</tr><tr>
+<td>started_at</td>
+<td><a href="../../../google/protobuf/README.md#google-protobuf-timestamp">google.protobuf.Timestamp</a></td>
+<td><pre>
+json_name: startedAt
+go_name: StartedAt</pre></td>
+</tr><tr>
+<td>stroppy_version</td>
+<td>string</td>
+<td><pre>
+json_name: stroppyVersion
+go_name: StroppyVersion</pre></td>
+</tr><tr>
+<td>test_preset_id</td>
+<td>string</td>
+<td><pre>
+json_name: testPresetId
+go_name: TestPresetId</pre></td>
+</tr><tr>
+<td>test_preset_name</td>
+<td>string</td>
+<td><pre>
+json_name: testPresetName
+go_name: TestPresetName</pre></td>
+</tr><tr>
+<td>topology_label</td>
+<td>string</td>
+<td><pre>
+json_name: topologyLabel
+go_name: TopologyLabel</pre></td>
+</tr><tr>
+<td>workload_name</td>
+<td>string</td>
+<td><pre>
+json_name: workloadName
+go_name: WorkloadName</pre></td>
+</tr><tr>
+<td>workload_preset_id</td>
+<td>string</td>
+<td><pre>
+json_name: workloadPresetId
+go_name: WorkloadPresetId</pre></td>
+</tr><tr>
+<td>workload_protocol</td>
+<td><a href="../domain/README.md#cloud-v1-domain-workload-protocol">cloud.v1.domain.Workload.Protocol</a></td>
+<td><pre>
+json_name: workloadProtocol
+go_name: WorkloadProtocol</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-models-runtopology"></a>
+### cloud.v1.models.RunTopology
+
+<pre>
+//RunTopology replaces RecipeTopologySnapshot (see that message's doc,
+//above) — same shape, generalized name: every live run is now a
+//recipe/workflow run, so the "Recipe" prefix no longer distinguishes
+//anything.
 </pre>
 
 <table>
@@ -449,20 +724,14 @@ go_name: ServiceCount</pre></td>
 </tr>
 <tr>
 <td>nodes</td>
-<td><a href="#cloud-v1-models-recipetopologysnapshot-machinenode">cloud.v1.models.RecipeTopologySnapshot.MachineNode</a></td>
+<td><a href="#cloud-v1-models-runtopology-machinenode">cloud.v1.models.RunTopology.MachineNode</a></td>
 <td><pre>
-nodes is every provisioned machine, sorted by (group, node_id) for a
-deterministic projection.<br>
-
 json_name: nodes
 go_name: Nodes</pre></td>
 </tr><tr>
 <td>provider</td>
 <td>string</td>
 <td><pre>
-provider is the dsl.ProviderRef.name the plan resolved (e.g. "docker",
-"yandex").<br>
-
 json_name: provider
 go_name: Provider</pre></td>
 </tr>
@@ -470,14 +739,8 @@ go_name: Provider</pre></td>
 
 
 
-<a name="cloud-v1-models-recipetopologysnapshot-machinenode"></a>
-### cloud.v1.models.RecipeTopologySnapshot.MachineNode
-
-<pre>
-//MachineNode is one machine deployment.MachineState ProvisionActivity
-//returned for the recipe's compiled plan, stamped with its owning
-//machine_groups group and the services placed there.
-</pre>
+<a name="cloud-v1-models-runtopology-machinenode"></a>
+### cloud.v1.models.RunTopology.MachineNode
 
 <table>
 <tr>
@@ -489,60 +752,36 @@ go_name: Provider</pre></td>
 <td>group</td>
 <td>string</td>
 <td><pre>
-group is the dsl.MachineGroup.name this machine was provisioned
-for (e.g. "db", "runner").<br>
-
 json_name: group
 go_name: Group</pre></td>
 </tr><tr>
 <td>ip</td>
 <td>string</td>
 <td><pre>
-ip is the machine's primary address (private endpoint preferred,
-else the first available — mirrors overview.go's machineHost).<br>
-
 json_name: ip
 go_name: Ip</pre></td>
 </tr><tr>
 <td>labels</td>
-<td><a href="#cloud-v1-models-recipetopologysnapshot-machinenode-labelsentry">cloud.v1.models.RecipeTopologySnapshot.MachineNode.LabelsEntry</a></td>
+<td><a href="#cloud-v1-models-runtopology-machinenode-labelsentry">cloud.v1.models.RunTopology.MachineNode.LabelsEntry</a></td>
 <td><pre>
-labels carries the machine's deployment.MachineState.labels
-verbatim (e.g. "node_id"/"group" from the provider), for any
-future consumer that wants the raw provider labels.<br>
-
 json_name: labels
 go_name: Labels</pre></td>
 </tr><tr>
 <td>node_id</td>
 <td>string</td>
 <td><pre>
-node_id is the deployment.MachineState.node_id (e.g. "db-0",
-"runner-0" — provider-assigned, group name + index).<br>
-
 json_name: nodeId
 go_name: NodeId</pre></td>
 </tr><tr>
 <td>services</td>
-<td><a href="#cloud-v1-models-recipetopologysnapshot-servicenode">cloud.v1.models.RecipeTopologySnapshot.ServiceNode</a></td>
+<td><a href="#cloud-v1-models-runtopology-servicenode">cloud.v1.models.RunTopology.ServiceNode</a></td>
 <td><pre>
-services are every ServiceSpec whose on_group equals group, in the
-compiled plan's declaration order.<br>
-
 json_name: services
 go_name: Services</pre></td>
 </tr><tr>
 <td>status</td>
 <td><a href="../common/README.md#cloud-v1-common-status">cloud.v1.common.Status</a></td>
 <td><pre>
-status is the deployment.MachineState.status ProvisionActivity
-returned (STATUS_DEPLOYED for every provider today — see
-provider.docker/terraform's own MachineState construction); this
-snapshot is filled once and never re-derives a live status from
-RunState, so a terminal run keeps reporting "deployed" here even
-after teardown destroys the machine (documented, matches a classic
-run's own InfrastructureState fallback behavior).<br>
-
 json_name: status
 go_name: Status</pre></td>
 </tr>
@@ -550,8 +789,8 @@ go_name: Status</pre></td>
 
 
 
-<a name="cloud-v1-models-recipetopologysnapshot-machinenode-labelsentry"></a>
-### cloud.v1.models.RecipeTopologySnapshot.MachineNode.LabelsEntry
+<a name="cloud-v1-models-runtopology-machinenode-labelsentry"></a>
+### cloud.v1.models.RunTopology.MachineNode.LabelsEntry
 
 <table>
 <tr>
@@ -576,12 +815,8 @@ go_name: Value</pre></td>
 
 
 
-<a name="cloud-v1-models-recipetopologysnapshot-servicenode"></a>
-### cloud.v1.models.RecipeTopologySnapshot.ServiceNode
-
-<pre>
-//ServiceNode is one dsl.ServiceSpec placed on a MachineNode's group.
-</pre>
+<a name="cloud-v1-models-runtopology-servicenode"></a>
+### cloud.v1.models.RunTopology.ServiceNode
 
 <table>
 <tr>
@@ -593,17 +828,12 @@ go_name: Value</pre></td>
 <td>image</td>
 <td>string</td>
 <td><pre>
-image is the ServiceSpec.image (Docker image ref), used for the
-runtime node's engine label.<br>
-
 json_name: image
 go_name: Image</pre></td>
 </tr><tr>
 <td>name</td>
 <td>string</td>
 <td><pre>
-name is the ServiceSpec.name (e.g. "patroni-postgres", "stroppy").<br>
-
 json_name: name
 go_name: Name</pre></td>
 </tr>
@@ -1134,334 +1364,6 @@ go_name: RunRetentionDays</pre></td>
 
 json_name: yandexSettings
 go_name: YandexSettings</pre></td>
-</tr>
-</table>
-
-
-
-<a name="cloud-v1-models-testrunrecord"></a>
-### cloud.v1.models.TestRunRecord
-
-<pre>
-//TestRunRecord is a persisted test execution. spec is the immutable workflow
-//input. infrastructure_state and deployment_plan are staged workflow artifacts
-//filled as the run progresses.
-
-//For the runs table (filter / sort / display of db, workload, preset,
-//topology, progress, duration, ...) the server DENORMALIZES queryable facets
-//into flat columns in `summary`, filled at Start and updated as the run
-//progresses.
-
-//Runtime observations (logs/metrics) are keyed by the run id directly (no dag
-//id) — see monitor/logs.proto, monitor/metrics.proto.
-</pre>
-
-<table>
-<tr>
-<th>Attribute</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-<tr>
-<td>deployment_plan</td>
-<td><a href="../deployment/README.md#cloud-v1-deployment-deploymentplan">cloud.v1.deployment.DeploymentPlan</a></td>
-<td><pre>
-//deployment_plan is the rendered agent execution plan, then updated with
-//execution statuses.<br>
-
-json_name: deploymentPlan
-go_name: DeploymentPlan</pre></td>
-</tr><tr>
-<td>entity</td>
-<td><a href="../common/README.md#cloud-v1-common-entity">cloud.v1.common.Entity</a></td>
-<td><pre>
-//entity is the storage envelope (id, tenant_id, name, timings).<br>
-
-json_name: entity
-go_name: Entity</pre></td>
-</tr><tr>
-<td>in_global_rating</td>
-<td>bool</td>
-<td><pre>
-//in_global_rating is the global-leaderboard membership, set at creation.
-//Defaults FALSE: publishing to the cross-system / public leaderboard is
-//explicit opt-in. Both global views (public + system-wide private) key off
-//this flag.<br>
-
-json_name: inGlobalRating
-go_name: InGlobalRating</pre></td>
-</tr><tr>
-<td>in_tenant_rating</td>
-<td>bool</td>
-<td><pre>
-//in_tenant_rating is the tenant-leaderboard membership, set at creation
-//(any path: manual/wizard/suite/cron). Defaults TRUE: the run counts in
-//this tenant's leaderboard.<br>
-
-json_name: inTenantRating
-go_name: InTenantRating</pre></td>
-</tr><tr>
-<td>infrastructure_state</td>
-<td><a href="../deployment/README.md#cloud-v1-deployment-infrastructurestate">cloud.v1.deployment.InfrastructureState</a></td>
-<td><pre>
-//infrastructure_state is provider output (resource ids, IPs/endpoints,
-//allocated quotas), filled after infrastructure deployment.<br>
-
-json_name: infrastructureState
-go_name: InfrastructureState</pre></td>
-</tr><tr>
-<td>recipe_id</td>
-<td>string</td>
-<td><pre>
-//recipe_id is the originating models.RecipeRecord.entity.id for a run
-//launched via RecipeService.StartRun; empty for a classic run launched
-//from a baked domain.TestRun spec (wizard/suite/cron). Stamped once at
-//StartRun and never changed afterwards. RecipeService.ListRuns filters
-//on this field when the caller supplies recipe_id; it also lets
-//RunDetail trace a recipe run back to the bundle that produced it.<br>
-
-json_name: recipeId
-go_name: RecipeId</pre></td>
-</tr><tr>
-<td>recipe_topology</td>
-<td><a href="#cloud-v1-models-recipetopologysnapshot">cloud.v1.models.RecipeTopologySnapshot</a></td>
-<td><pre>
-//recipe_topology is a compact topology snapshot for a recipe run: the
-//machines RunRecipeWorkflow's ProvisionActivity returned, each stamped
-//with its dsl.CompiledPlan machine_groups group name and the
-//dsl.ServiceSpec names on_group-placed on that group. A recipe run has
-//no domain.TestRun spec (so spec.topology_spec/infrastructure_plan are
-//always nil) and produces neither a deployment.InfrastructureState nor
-//a deployment.DeploymentPlan (see runrecipe.go's persist doc) — this is
-//the ONLY topology-shaped artifact a recipe run's execution ever
-//persists. Filled once, right after ProvisionActivity succeeds (see
-//RunRecipeWorkflow.run's infra-stage block), and never updated again
-//afterwards (unlike summary, which keeps accreting facets). overview.go
-//(topologyFromRecordWithRunState) and runtime_topology.go
-//(runtimeTopologyFromRecord) project this into the same
-//topology.RuntimeNode/RuntimeConnection shape a classic run's
-//TopologySpec/InfrastructureState/DeploymentPlan combination projects,
-//so both run kinds render through one topology.Topology envelope.<br>
-
-json_name: recipeTopology
-go_name: RecipeTopology</pre></td>
-</tr><tr>
-<td>runtime_state</td>
-<td><a href="../workflow/README.md#cloud-v1-workflow-runstate">cloud.v1.workflow.RunState</a></td>
-<td><pre>
-//runtime_state is the last TestWorkflow RunState persisted by the
-//workflow itself. Overview uses it as the durable projection when the
-//Temporal workflow is already closed and no longer queryable.<br>
-
-json_name: runtimeState
-go_name: RuntimeState</pre></td>
-</tr><tr>
-<td>spec</td>
-<td><a href="../domain/README.md#cloud-v1-domain-testrun">cloud.v1.domain.TestRun</a></td>
-<td><pre>
-//spec is the baked run spec — the TestWorkflow input (for details/relaunch,
-//NOT for queries).<br>
-
-json_name: spec
-go_name: Spec</pre></td>
-</tr><tr>
-<td>status</td>
-<td><a href="../common/README.md#cloud-v1-common-status">cloud.v1.common.Status</a></td>
-<td><pre>
-//status is the run lifecycle status
-//(PENDING/RUNNING/COMPLETED/FAILED/CANCELLING/CANCELLED/...).<br>
-
-json_name: status
-go_name: Status</pre></td>
-</tr><tr>
-<td>suite_cell_id</td>
-<td>string</td>
-<td><pre>
-//suite_cell_id is the originating SuiteCell.id inside suite_run_id. Empty
-//for standalone runs and ad-hoc suite children without a stable cell id.<br>
-
-json_name: suiteCellId
-go_name: SuiteCellId</pre></td>
-</tr><tr>
-<td>suite_run_id</td>
-<td>string</td>
-<td><pre>
-//suite_run_id is the owning suite run; empty for a standalone run.<br>
-
-json_name: suiteRunId
-go_name: SuiteRunId</pre></td>
-</tr><tr>
-<td>summary</td>
-<td><a href="#cloud-v1-models-testrunrecord-summary">cloud.v1.models.TestRunRecord.Summary</a></td>
-<td><pre>
-//summary holds denormalized, queryable facets for the runs table (incl.
-//progress_pct, which the backend derives from the live pipeline /
-//Temporal).<br>
-
-json_name: summary
-go_name: Summary</pre></td>
-</tr><tr>
-<td>trigger</td>
-<td><a href="../common/README.md#cloud-v1-common-trigger">cloud.v1.common.Trigger</a></td>
-<td><pre>
-//trigger is the root cause of the run: MANUAL / CRON / API. For a suite
-//child it carries the PARENT suite run's trigger (e.g. CRON), while suite
-//membership is shown by suite_run_id. So "cron + from suite" = trigger=CRON
-//&& suite_run_id set.<br>
-
-json_name: trigger
-go_name: Trigger</pre></td>
-</tr>
-</table>
-
-
-
-<a name="cloud-v1-models-testrunrecord-summary"></a>
-### cloud.v1.models.TestRunRecord.Summary
-
-<pre>
-//Summary is the flat, indexed projection of the run used by the table:
-//every field is filterable and sortable without touching the baked spec.
-</pre>
-
-<table>
-<tr>
-<th>Attribute</th>
-<th>Type</th>
-<th>Description</th>
-</tr>
-<tr>
-<td>db_kind</td>
-<td><a href="../domain/README.md#cloud-v1-domain-database-kind">cloud.v1.domain.Database.Kind</a></td>
-<td><pre>
-//db_kind is the database engine the run targets (database facet).<br>
-
-json_name: dbKind
-go_name: DbKind</pre></td>
-</tr><tr>
-<td>db_preset_id</td>
-<td>string</td>
-<td><pre>
-//db_preset_id is the id of the database preset used.<br>
-
-json_name: dbPresetId
-go_name: DbPresetId</pre></td>
-</tr><tr>
-<td>db_preset_name</td>
-<td>string</td>
-<td><pre>
-//db_preset_name is the display name of the database preset used.<br>
-
-json_name: dbPresetName
-go_name: DbPresetName</pre></td>
-</tr><tr>
-<td>duration</td>
-<td><a href="../../../google/protobuf/README.md#google-protobuf-duration">google.protobuf.Duration</a></td>
-<td><pre>
-//duration is finished_at - started_at, or the live elapsed time while
-//running.<br>
-
-json_name: duration
-go_name: Duration</pre></td>
-</tr><tr>
-<td>finished_at</td>
-<td><a href="../../../google/protobuf/README.md#google-protobuf-timestamp">google.protobuf.Timestamp</a></td>
-<td><pre>
-//finished_at is when the run finished (unset while running).<br>
-
-json_name: finishedAt
-go_name: FinishedAt</pre></td>
-</tr><tr>
-<td>node_count</td>
-<td>uint32</td>
-<td><pre>
-//node_count is the number of nodes in the topology.<br>
-
-json_name: nodeCount
-go_name: NodeCount</pre></td>
-</tr><tr>
-<td>progress_pct</td>
-<td>uint32</td>
-<td><pre>
-//progress_pct (0..100) is the run progress (runtime facet), derived on
-//the backend from the pipeline / Temporal.<br>
-
-json_name: progressPct
-go_name: ProgressPct</pre></td>
-</tr><tr>
-<td>provider</td>
-<td><a href="../deployment/README.md#cloud-v1-deployment-provider">cloud.v1.deployment.Provider</a></td>
-<td><pre>
-//provider is the deployment provider the run ran on (provider facet).<br>
-
-json_name: provider
-go_name: Provider</pre></td>
-</tr><tr>
-<td>started_at</td>
-<td><a href="../../../google/protobuf/README.md#google-protobuf-timestamp">google.protobuf.Timestamp</a></td>
-<td><pre>
-//started_at is when the run started.<br>
-
-json_name: startedAt
-go_name: StartedAt</pre></td>
-</tr><tr>
-<td>stroppy_version</td>
-<td>string</td>
-<td><pre>
-//stroppy_version is the stroppy build that ran the workload.<br>
-
-json_name: stroppyVersion
-go_name: StroppyVersion</pre></td>
-</tr><tr>
-<td>test_preset_id</td>
-<td>string</td>
-<td><pre>
-//test_preset_id is the complete test preset source, when one was used.<br>
-
-json_name: testPresetId
-go_name: TestPresetId</pre></td>
-</tr><tr>
-<td>test_preset_name</td>
-<td>string</td>
-<td><pre>
-//test_preset_name is the display name of the test preset source.<br>
-
-json_name: testPresetName
-go_name: TestPresetName</pre></td>
-</tr><tr>
-<td>topology_label</td>
-<td>string</td>
-<td><pre>
-//topology_label is the human-readable topology summary (topology
-//facet), e.g. "PG HA x3".<br>
-
-json_name: topologyLabel
-go_name: TopologyLabel</pre></td>
-</tr><tr>
-<td>workload_name</td>
-<td>string</td>
-<td><pre>
-//workload_name is the display name of the workload.<br>
-
-json_name: workloadName
-go_name: WorkloadName</pre></td>
-</tr><tr>
-<td>workload_preset_id</td>
-<td>string</td>
-<td><pre>
-//workload_preset_id is the id of the workload preset used (workload
-//facet).<br>
-
-json_name: workloadPresetId
-go_name: WorkloadPresetId</pre></td>
-</tr><tr>
-<td>workload_protocol</td>
-<td><a href="../domain/README.md#cloud-v1-domain-workload-protocol">cloud.v1.domain.Workload.Protocol</a></td>
-<td><pre>
-//workload_protocol is the wire protocol exercised by the workload.<br>
-
-json_name: workloadProtocol
-go_name: WorkloadProtocol</pre></td>
 </tr>
 </table>
 

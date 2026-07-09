@@ -4143,7 +4143,7 @@ go_name: Page</pre></td>
 <td>string</td>
 <td><pre>
 //recipe_id, when set, filters to runs launched from that recipe record
-//(matches models.TestRunRecord.recipe_id). Empty returns every recipe
+//(matches models.Run.recipe_id). Empty returns every recipe
 //run for the tenant.<br>
 
 json_name: recipeId
@@ -4191,7 +4191,7 @@ json_name: nextPageToken
 go_name: NextPageToken</pre></td>
 </tr><tr>
 <td>runs</td>
-<td><a href="../models/README.md#cloud-v1-models-testrunrecord">cloud.v1.models.TestRunRecord</a></td>
+<td><a href="../models/README.md#cloud-v1-models-run">cloud.v1.models.Run</a></td>
 <td><pre>
 //runs is the matching page of run records.<br>
 
@@ -6570,7 +6570,7 @@ go_name: TenantId</pre></td>
 
 <pre>
 //StartRunResponse returns the persisted, launched run record. The run
-//reuses models.TestRunRecord so overview/metrics/logs work unchanged for
+//reuses models.Run so overview/metrics/logs work unchanged for
 //a recipe run; its spec/topology fields are left empty (a recipe run has
 //no baked domain.TestRun — its input is the recipe bundle, carried by the
 //launched RunRecipeWorkflow instead).
@@ -6584,7 +6584,7 @@ go_name: TenantId</pre></td>
 </tr>
 <tr>
 <td>run</td>
-<td><a href="../models/README.md#cloud-v1-models-testrunrecord">cloud.v1.models.TestRunRecord</a></td>
+<td><a href="../models/README.md#cloud-v1-models-run">cloud.v1.models.Run</a></td>
 <td><pre>
 //run is the persisted, launched run record.<br>
 
@@ -6869,7 +6869,7 @@ go_name: Message</pre></td>
 </tr>
 <tr>
 <td>recent_runs</td>
-<td><a href="../models/README.md#cloud-v1-models-testrunrecord">cloud.v1.models.TestRunRecord</a></td>
+<td><a href="../models/README.md#cloud-v1-models-run">cloud.v1.models.Run</a></td>
 <td><pre>
 //recent_runs is the most recent test runs (limited).<br>
 
@@ -6936,7 +6936,7 @@ json_name: overview
 go_name: Overview</pre></td>
 </tr><tr>
 <td>run</td>
-<td><a href="../models/README.md#cloud-v1-models-testrunrecord">cloud.v1.models.TestRunRecord</a></td>
+<td><a href="../models/README.md#cloud-v1-models-run">cloud.v1.models.Run</a></td>
 <td><pre>
 //run is the persisted run record, including immutable spec and any stored
 //infrastructure/deployment artifacts.<br>

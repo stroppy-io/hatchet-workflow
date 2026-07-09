@@ -15,11 +15,11 @@ import (
 const sameThresholdPct = 1.0
 
 // RunRecordGetter is the minimal consumer interface the compare adapters need to
-// load a stored run by id. The gormstore TestRuns repo (Get(ctx, id)
-// (*models.TestRunRecord, error)) satisfies it directly. Get returns
+// load a stored run by id. The postgres RunRepo (Get(ctx, id)
+// (*models.Run, error)) satisfies it directly. Get returns
 // derrors.ErrNotFound for an unknown id.
 type RunRecordGetter interface {
-	Get(ctx context.Context, id string) (*models.TestRunRecord, error)
+	Get(ctx context.Context, id string) (*models.Run, error)
 }
 
 // RunMetricsGetter is the minimal consumer interface the comparator needs to read
@@ -39,7 +39,7 @@ var _ compare.TestRunReader = (*TestRunReader)(nil)
 func NewTestRunReader(runs RunRecordGetter) *TestRunReader { return &TestRunReader{runs: runs} }
 
 // Get loads a run by id.
-func (r *TestRunReader) Get(ctx context.Context, id string) (*models.TestRunRecord, error) {
+func (r *TestRunReader) Get(ctx context.Context, id string) (*models.Run, error) {
 	return r.runs.Get(ctx, id)
 }
 

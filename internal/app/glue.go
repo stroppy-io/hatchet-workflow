@@ -30,24 +30,10 @@ var unmarshalJSON = protojson.UnmarshalOptions{DiscardUnknown: true}
 	directly through the ambient-transaction executor, mirroring the repo's codec.
 */
 
-// byIDReader resolves test run records by id alone over db.TxDB.
+// byIDReader resolves run records by id alone over db.TxDB.
 type byIDReader struct{ db *postgres.DB }
 
-func (r byIDReader) testRun(ctx context.Context, id string) (*modelspb.TestRunRecord, error) {
-	var data []byte
-	err := r.db.TxDB.QueryRow(ctx,
-		`select data from test_run_records where id = $1`, id).Scan(&data)
-	if err != nil {
-		return nil, translate("test_run", err)
-	}
-	rec := &modelspb.TestRunRecord{}
-	if err := unmarshalJSON.Unmarshal(data, rec); err != nil {
-		return nil, err
-	}
-	return rec, nil
-}
-
-// run reads run_records by id alone, mirroring testRun above for the
+// run reads run_records by id alone, for the
 // models.Run write path SP-E Task 3 cut RunRecipeWorkflow over to. Used by
 // runtimePersistenceStore (workflow persist activities, which only know the
 // run id) and by snapshotRunReader's fallback (see that type's doc) for a
@@ -74,18 +60,21 @@ func translate(resource string, err error) error {
 }
 
 // runRecordGetter backs compare.RunRecordGetter / favorite TestRuns getter:
-// Get(ctx, id) -> *TestRunRecord.
+// Get(ctx, id) -> *models.Run. SP-E Task 5: retyped from
+// *modelspb.TestRunRecord/testRun to *modelspb.Run/run, mirroring the
+// run_records cutover.
 type runRecordGetter struct{ r byIDReader }
 
-func (g runRecordGetter) Get(ctx context.Context, id string) (*modelspb.TestRunRecord, error) {
-	return g.r.testRun(ctx, id)
+func (g runRecordGetter) Get(ctx context.Context, id string) (*modelspb.Run, error) {
+	return g.r.run(ctx, id)
 }
 
-// shareRunReader backs adapters.ShareRunReader (GetTestRun by id).
+// shareRunReader backs adapters.ShareRunReader (GetTestRun by id). SP-E Task 5:
+// retyped to *modelspb.Run/run_records.
 type shareRunReader struct{ r byIDReader }
 
-func (s shareRunReader) GetTestRun(ctx context.Context, id string) (*modelspb.TestRunRecord, error) {
-	return s.r.testRun(ctx, id)
+func (s shareRunReader) GetTestRun(ctx context.Context, id string) (*modelspb.Run, error) {
+	return s.r.run(ctx, id)
 }
 
 // snapshotRunReader backs execution.SnapshotRunReader: RunRecord by id.
@@ -150,14 +139,17 @@ func (s tenantSettingsSource) TenantSettings(ctx context.Context, tenantID strin
 	rating-flagged completed runs directly over db.TxDB.
 */
 
+// SP-E Task 5: retyped from *postgres.TestRunRepo/models.TestRunRecord to
+// *postgres.RunRepo/models.Run and run_records, mirroring the run-model
+// cutover.
 type ratingRunsLister struct {
 	db   *postgres.DB
-	runs *postgres.TestRunRepo
+	runs *postgres.RunRepo
 }
 
 var _ adapters.RatingRunsLister = ratingRunsLister{}
 
-func (l ratingRunsLister) ListRatingRuns(ctx context.Context, scope adapters.RatingRunsScope, tenantID string) ([]*modelspb.TestRunRecord, error) {
+func (l ratingRunsLister) ListRatingRuns(ctx context.Context, scope adapters.RatingRunsScope, tenantID string) ([]*modelspb.Run, error) {
 	switch scope {
 	case adapters.RatingScopeTenant:
 		all, _, err := l.runs.List(ctx, &apipb.ListTestRunsRequest{TenantId: tenantID}, "")
@@ -172,18 +164,18 @@ func (l ratingRunsLister) ListRatingRuns(ctx context.Context, scope adapters.Rat
 		}
 		return out, nil
 	default: // global, cross-tenant
-		rows, err := l.db.TxDB.Query(ctx, `select data from test_run_records where data->'entity'->'timings'->>'deletedAt' is null`)
+		rows, err := l.db.TxDB.Query(ctx, `select data from run_records where data->'entity'->'timings'->>'deletedAt' is null`)
 		if err != nil {
 			return nil, err
 		}
 		defer rows.Close()
-		out := make([]*modelspb.TestRunRecord, 0)
+		out := make([]*modelspb.Run, 0)
 		for rows.Next() {
 			var data []byte
 			if err := rows.Scan(&data); err != nil {
 				return nil, err
 			}
-			rec := &modelspb.TestRunRecord{}
+			rec := &modelspb.Run{}
 			if err := unmarshalJSON.Unmarshal(data, rec); err != nil {
 				return nil, err
 			}
@@ -264,13 +256,15 @@ func (allMachinesResolver) Lookup(context.Context, string, string, string) error
 	reports no rows rather than reading a (now absent) suite repo.
 */
 
+// SP-E Task 5: retyped from *postgres.TestRunRepo/models.TestRunRecord to
+// *postgres.RunRepo/models.Run, mirroring the run-model cutover.
 type dashboardRuns struct {
-	runs *postgres.TestRunRepo
+	runs *postgres.RunRepo
 }
 
 var _ adapters.DashboardRunsReader = dashboardRuns{}
 
-func (d dashboardRuns) ListTenantRuns(ctx context.Context, tenantID string) ([]*modelspb.TestRunRecord, error) {
+func (d dashboardRuns) ListTenantRuns(ctx context.Context, tenantID string) ([]*modelspb.Run, error) {
 	out, _, err := d.runs.List(ctx, &apipb.ListTestRunsRequest{TenantId: tenantID}, "")
 	return out, err
 }

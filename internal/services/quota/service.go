@@ -15,7 +15,7 @@ import (
 )
 
 type RunReader interface {
-	Get(ctx context.Context, tenantID, id string) (*models.TestRunRecord, error)
+	Get(ctx context.Context, tenantID, id string) (*models.Run, error)
 }
 
 type Manager interface {

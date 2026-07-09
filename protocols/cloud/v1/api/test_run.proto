@@ -21,7 +21,7 @@ option (ogen.file) = { generate_openapi: true };
 
 /*
     test_run.proto carries the filter/facet/sort/pagination query contract
-    over models.TestRunRecord that internal callers share when listing runs
+    over models.Run that internal callers share when listing runs
     against postgres: internal/services/recipe (RecipeService.ListRuns),
     internal/services/rating and internal/app's tenant-dashboard/rating glue
     all list through postgres.TestRunRepo.List(ctx, *ListTestRunsRequest, ...)
@@ -232,7 +232,7 @@ message ListTestRunsResponse {
     /*
         runs is the matching page of run records.
      */
-    repeated models.TestRunRecord runs = 1;
+    repeated models.Run runs = 1;
     /*
         next_page_token fetches the following page; empty when at the end.
      */

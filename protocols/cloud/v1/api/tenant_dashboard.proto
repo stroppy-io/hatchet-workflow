@@ -91,7 +91,7 @@ message TenantDashboard {
     /*
         recent_runs is the most recent test runs (limited).
      */
-    repeated models.TestRunRecord recent_runs = 3;
+    repeated models.Run recent_runs = 3;
     /*
         upcoming is the scheduled suites with their next planned auto-run.
      */

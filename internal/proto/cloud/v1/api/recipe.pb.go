@@ -604,14 +604,14 @@ func (x *StartRunRequest) GetRecipeId() string {
 }
 
 // StartRunResponse returns the persisted, launched run record. The run
-// reuses models.TestRunRecord so overview/metrics/logs work unchanged for
+// reuses models.Run so overview/metrics/logs work unchanged for
 // a recipe run; its spec/topology fields are left empty (a recipe run has
 // no baked domain.TestRun — its input is the recipe bundle, carried by the
 // launched RunRecipeWorkflow instead).
 type StartRunResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// run is the persisted, launched run record.
-	Run           *models.TestRunRecord `protobuf:"bytes,1,opt,name=run,proto3" json:"run,omitempty"`
+	Run           *models.Run `protobuf:"bytes,1,opt,name=run,proto3" json:"run,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -646,7 +646,7 @@ func (*StartRunResponse) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_api_recipe_proto_rawDescGZIP(), []int{11}
 }
 
-func (x *StartRunResponse) GetRun() *models.TestRunRecord {
+func (x *StartRunResponse) GetRun() *models.Run {
 	if x != nil {
 		return x.Run
 	}
@@ -660,7 +660,7 @@ type ListRunsRequest struct {
 	// tenant_id scopes the request to the owning tenant.
 	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
 	// recipe_id, when set, filters to runs launched from that recipe record
-	// (matches models.TestRunRecord.recipe_id). Empty returns every recipe
+	// (matches models.Run.recipe_id). Empty returns every recipe
 	// run for the tenant.
 	RecipeId string `protobuf:"bytes,2,opt,name=recipe_id,json=recipeId,proto3" json:"recipe_id,omitempty"`
 	// page carries pagination (page size + token). See ListRunsResponse.next_page_token
@@ -725,7 +725,7 @@ func (x *ListRunsRequest) GetPage() *common.Page {
 type ListRunsResponse struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
 	// runs is the matching page of run records.
-	Runs []*models.TestRunRecord `protobuf:"bytes,1,rep,name=runs,proto3" json:"runs,omitempty"`
+	Runs []*models.Run `protobuf:"bytes,1,rep,name=runs,proto3" json:"runs,omitempty"`
 	// next_page_token fetches the following page; empty when at the end.
 	//
 	// Caveat when ListRunsRequest.recipe_id is set: the recipe_id filter is
@@ -769,7 +769,7 @@ func (*ListRunsResponse) Descriptor() ([]byte, []int) {
 	return file_cloud_v1_api_recipe_proto_rawDescGZIP(), []int{13}
 }
 
-func (x *ListRunsResponse) GetRuns() []*models.TestRunRecord {
+func (x *ListRunsResponse) GetRuns() []*models.Run {
 	if x != nil {
 		return x.Runs
 	}
@@ -1001,15 +1001,15 @@ const file_cloud_v1_api_recipe_proto_rawDesc = "" +
 	"\vdiagnostics\x18\x01 \x03(\v2\x18.cloud.v1.dsl.DiagnosticR\vdiagnostics\"a\n" +
 	"\x0fStartRunRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12&\n" +
-	"\trecipe_id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\brecipeId\"N\n" +
-	"\x10StartRunResponse\x12:\n" +
-	"\x03run\x18\x01 \x01(\v2\x1e.cloud.v1.models.TestRunRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x03run\"\x8a\x01\n" +
+	"\trecipe_id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\brecipeId\"D\n" +
+	"\x10StartRunResponse\x120\n" +
+	"\x03run\x18\x01 \x01(\v2\x14.cloud.v1.models.RunB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x03run\"\x8a\x01\n" +
 	"\x0fListRunsRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12$\n" +
 	"\trecipe_id\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x18@R\brecipeId\x12)\n" +
-	"\x04page\x18\x03 \x01(\v2\x15.cloud.v1.common.PageR\x04page\"n\n" +
-	"\x10ListRunsResponse\x122\n" +
-	"\x04runs\x18\x01 \x03(\v2\x1e.cloud.v1.models.TestRunRecordR\x04runs\x12&\n" +
+	"\x04page\x18\x03 \x01(\v2\x15.cloud.v1.common.PageR\x04page\"d\n" +
+	"\x10ListRunsResponse\x12(\n" +
+	"\x04runs\x18\x01 \x03(\v2\x14.cloud.v1.models.RunR\x04runs\x12&\n" +
 	"\x0fnext_page_token\x18\x02 \x01(\tR\rnextPageToken\"\\\n" +
 	"\x10CancelRunRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12 \n" +
@@ -1077,7 +1077,7 @@ var file_cloud_v1_api_recipe_proto_goTypes = []any{
 	(*common.EntityFilter)(nil),  // 19: cloud.v1.common.EntityFilter
 	(*common.Page)(nil),          // 20: cloud.v1.common.Page
 	(*dsl.Diagnostic)(nil),       // 21: cloud.v1.dsl.Diagnostic
-	(*models.TestRunRecord)(nil), // 22: cloud.v1.models.TestRunRecord
+	(*models.Run)(nil),           // 22: cloud.v1.models.Run
 }
 var file_cloud_v1_api_recipe_proto_depIdxs = []int32{
 	18, // 0: cloud.v1.api.CreateRecipeRequest.recipe:type_name -> cloud.v1.models.RecipeRecord
@@ -1087,9 +1087,9 @@ var file_cloud_v1_api_recipe_proto_depIdxs = []int32{
 	20, // 4: cloud.v1.api.ListRecipesRequest.page:type_name -> cloud.v1.common.Page
 	18, // 5: cloud.v1.api.ListRecipesResponse.recipes:type_name -> cloud.v1.models.RecipeRecord
 	21, // 6: cloud.v1.api.CheckRecipeResponse.diagnostics:type_name -> cloud.v1.dsl.Diagnostic
-	22, // 7: cloud.v1.api.StartRunResponse.run:type_name -> cloud.v1.models.TestRunRecord
+	22, // 7: cloud.v1.api.StartRunResponse.run:type_name -> cloud.v1.models.Run
 	20, // 8: cloud.v1.api.ListRunsRequest.page:type_name -> cloud.v1.common.Page
-	22, // 9: cloud.v1.api.ListRunsResponse.runs:type_name -> cloud.v1.models.TestRunRecord
+	22, // 9: cloud.v1.api.ListRunsResponse.runs:type_name -> cloud.v1.models.Run
 	0,  // 10: cloud.v1.api.RecipeService.CreateRecipe:input_type -> cloud.v1.api.CreateRecipeRequest
 	2,  // 11: cloud.v1.api.RecipeService.GetRecipe:input_type -> cloud.v1.api.GetRecipeRequest
 	4,  // 12: cloud.v1.api.RecipeService.ListRecipes:input_type -> cloud.v1.api.ListRecipesRequest
