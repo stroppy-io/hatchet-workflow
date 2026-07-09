@@ -5,6 +5,7 @@ import {
   GitCompare,
   FileCode,
   Package,
+  Library,
   Activity,
   PanelLeftClose,
   PanelLeftOpen,
@@ -57,7 +58,10 @@ const navGroups: NavGroup[] = [
   },
   {
     label: "Library",
-    items: [{ to: "/packages", icon: Package, label: "Packages", minLevel: 1 }],
+    items: [
+      { to: "/packages", icon: Package, label: "Packages", minLevel: 1 },
+      { to: "/catalog", icon: Library, label: "Catalog", minLevel: 1 },
+    ],
   },
 ];
 

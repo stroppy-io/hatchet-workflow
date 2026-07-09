@@ -7,6 +7,7 @@ import {
   ShieldCheck,
   MailQuestion,
   ChevronDown,
+  Library,
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
@@ -36,6 +37,7 @@ const platformItems = [
     label: "Identity providers",
   },
   { to: "/admin/system", icon: SlidersHorizontal, label: "System settings" },
+  { to: "/admin/catalog", icon: Library, label: "Catalog" },
 ] as const;
 
 export function UserMenu() {

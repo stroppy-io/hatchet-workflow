@@ -29,8 +29,11 @@ import { AdminAccounts } from "@/pages/admin/AdminAccounts";
 import { AdminSystemSettings } from "@/pages/admin/AdminSystemSettings";
 import { AdminIdentityProviders } from "@/pages/admin/AdminIdentityProviders";
 import { AdminRegistrationRequests } from "@/pages/admin/AdminRegistrationRequests";
+import { AdminCatalog } from "@/pages/admin/AdminCatalog";
 import { Orgs } from "@/pages/orgs/Orgs";
 import { OrgDetail } from "@/pages/orgs/OrgDetail";
+import { OrgCatalog } from "@/pages/catalog/OrgCatalog";
+import { CatalogEntryEditor } from "@/pages/catalog/CatalogEntryEditor";
 
 // LaunchForm pulls in LaunchFormRenderer -> (lazily) SchemaFormBody, which
 // statically imports @stroppy-io/schemapb-react/@stroppy-io/schemapb — the
@@ -114,6 +117,15 @@ export default function App() {
                 element={<AdminRegistrationRequests />}
               />
               <Route path="/admin/system" element={<AdminSystemSettings />} />
+              <Route path="/admin/catalog" element={<AdminCatalog />} />
+              <Route
+                path="/admin/catalog/:kind/new"
+                element={<CatalogEntryEditor scope="instance" />}
+              />
+              <Route
+                path="/admin/catalog/:kind/:id/edit"
+                element={<CatalogEntryEditor scope="instance" />}
+              />
               <Route
                 path="/admin/identity-providers"
                 element={<AdminIdentityProviders />}
@@ -155,6 +167,15 @@ export default function App() {
               <Route path="packages" element={<Packages />} />
               <Route path="packages/new" element={<PackageUploadForm />} />
               <Route path="packages/:id" element={<PackageDetail />} />
+              <Route path="catalog" element={<OrgCatalog />} />
+              <Route
+                path="catalog/:kind/new"
+                element={<CatalogEntryEditor scope="org" />}
+              />
+              <Route
+                path="catalog/:kind/:id/edit"
+                element={<CatalogEntryEditor scope="org" />}
+              />
             </Route>
           </Route>
         </Route>

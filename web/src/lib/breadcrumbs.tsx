@@ -130,6 +130,12 @@ const CRUMB_REGISTRY: CrumbDef[] = [
     pattern: "/t/:slug/packages/:id",
     label: ({ params, overrides }) => overrides.id ?? params.id ?? "",
   },
+  { pattern: "/t/:slug/catalog", label: "Catalog" },
+  { pattern: "/t/:slug/catalog/:kind/new", label: "New entry" },
+  {
+    pattern: "/t/:slug/catalog/:kind/:id/edit",
+    label: ({ params, overrides }) => overrides.id ?? params.id ?? "",
+  },
 
   // Outside-tenant areas. The first crumb here is a plain label (no switcher).
   { pattern: "/profile", label: "Profile" },
@@ -145,6 +151,12 @@ const CRUMB_REGISTRY: CrumbDef[] = [
   { pattern: "/admin/registration-requests", label: "Registration requests" },
   { pattern: "/admin/identity-providers", label: "Identity providers" },
   { pattern: "/admin/system", label: "System settings" },
+  { pattern: "/admin/catalog", label: "Catalog" },
+  { pattern: "/admin/catalog/:kind/new", label: "New entry" },
+  {
+    pattern: "/admin/catalog/:kind/:id/edit",
+    label: ({ params, overrides }) => overrides.id ?? params.id ?? "",
+  },
 ];
 
 // --- dynamic-label override context ----------------------------------------

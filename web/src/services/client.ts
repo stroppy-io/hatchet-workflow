@@ -23,6 +23,7 @@ import { PublicRatingService } from "@/lib/proto/cloud/v1/api/public_rating_pb";
 import { AgentShellService } from "@/lib/proto/cloud/v1/api/agent_shell_pb";
 import { RecipeService } from "@/lib/proto/cloud/v1/api/recipe_pb";
 import { DslService } from "@/lib/proto/cloud/v1/dsl/service_pb";
+import { CatalogService } from "@/lib/proto/cloud/v1/catalog/service_pb";
 
 let accessToken: string | null = null;
 
@@ -137,3 +138,4 @@ export const publicRatingClient = createClient(PublicRatingService, transport);
 export const agentShellClient = createClient(AgentShellService, transport);
 export const recipeClient = createClient(RecipeService, transport);
 export const dslClient = createClient(DslService, transport);
+export const catalogClient = createClient(CatalogService, transport);
