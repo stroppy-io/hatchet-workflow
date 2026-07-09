@@ -62,7 +62,7 @@ export const DB_VERSIONS: Record<EngineKind, string[]> = {
   ydb: ["25.2", "24.4"],
   ydbManaged: ["managed"],
   cockroach: ["24.2", "23.2"],
-  orioledb: ["pg17", "pg16"],
+  orioledb: ["pg18", "pg17", "pg16"],
   noop: [],
   pgnoop: ["0.1.2"],
   external: [],
