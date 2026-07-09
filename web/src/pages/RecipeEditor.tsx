@@ -18,11 +18,14 @@
 // starting a run against `id` runs exactly that stored bundle — running while
 // dirty would silently launch a stale version.
 //
-// RUN NAVIGATION TARGET: startRun returns a global TestRun id (RunVM.id),
-// scoped by tenant, not nested under the recipe. App.tsx registers run detail
-// at "runs/:id" (no "recipes/:id/runs/:id" nesting exists). So Run navigates
-// to `/runs/${runId}` — router.tsx's tenant-prefixing turns this into
-// `/t/:slug/runs/${runId}`, landing on the existing RunDetail page.
+// RUN NAVIGATION TARGET: Run no longer calls startRun directly — it navigates
+// to the generated launch form at `/recipes/:id/launch` (LaunchForm.tsx),
+// which fetches the composed schemapb form schema (RecipeService.
+// LaunchFormSchema) and calls startRun itself once the form is submitted
+// (BakeForm seals a Baked snapshot even when the form composes to zero
+// required fields). LaunchForm then navigates to `/runs/${runId}` —
+// router.tsx's tenant-prefixing turns this into `/t/:slug/runs/${runId}`,
+// landing on the existing RunDetail page.
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import {
@@ -51,7 +54,6 @@ import {
   createRecipe,
   getRecipe,
   previewBundle,
-  startRun,
   type DiagnosticVM,
   type PreviewPlanVM,
 } from "@/services/recipe";
@@ -107,9 +109,6 @@ export function RecipeEditor() {
 
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
-
-  const [running, setRunning] = useState(false);
-  const [runError, setRunError] = useState<string | null>(null);
 
   const [diagnostics, setDiagnostics] = useState<DiagnosticVM[]>([]);
   const [checking, setChecking] = useState(false);
@@ -209,7 +208,7 @@ export function RecipeEditor() {
 
   const nameMissing = !name.trim();
   const canSave = !saving && !nameMissing && Object.keys(files).length > 0;
-  const canRun = !!id && !running && !dirty;
+  const canRun = !!id && !dirty;
 
   const updateFileContent = useCallback((path: string, value: string) => {
     setFiles((cur) => ({ ...cur, [path]: value }));
@@ -260,17 +259,9 @@ export function RecipeEditor() {
     }
   }, [slug, name, files, navigate]);
 
-  const onRun = useCallback(async () => {
+  const onRun = useCallback(() => {
     if (!slug || !id) return;
-    setRunning(true);
-    setRunError(null);
-    try {
-      const runId = await startRun(slug, id);
-      navigate(`/runs/${runId}`);
-    } catch (e) {
-      setRunError(e instanceof Error ? e.message : String(e));
-      setRunning(false);
-    }
+    navigate(`/recipes/${id}/launch`);
   }, [slug, id, navigate]);
 
   const paths = useMemo(() => Object.keys(files).sort(), [files]);
@@ -334,9 +325,9 @@ export function RecipeEditor() {
             size="sm"
             disabled={!canRun}
             title={!id ? "Save the recipe before running it" : dirty ? "Save changes before running" : undefined}
-            onClick={() => void onRun()}
+            onClick={onRun}
           >
-            {running ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Play className="h-3.5 w-3.5" />}
+            <Play className="h-3.5 w-3.5" />
             Run
           </Button>
           <Button size="sm" disabled={!canSave} onClick={() => void onSave()}>
@@ -357,12 +348,6 @@ export function RecipeEditor() {
           <AlertCircle className="h-4 w-4 shrink-0" /> {saveError}
         </div>
       )}
-      {runError && (
-        <div className="mx-5 mt-4 flex items-center gap-2 border border-red-900/50 bg-red-950/30 px-3 py-2 text-xs text-red-400">
-          <AlertCircle className="h-4 w-4 shrink-0" /> {runError}
-        </div>
-      )}
-
       <div className="min-h-0 flex-1 overflow-hidden px-5 py-5">
         <div className="grid h-full min-h-0 grid-cols-[14rem_minmax(0,1fr)_20rem] gap-4">
           {/* Left: file list */}

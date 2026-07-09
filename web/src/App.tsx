@@ -1,3 +1,4 @@
+import { lazy, Suspense } from "react";
 import { Routes, Route, Navigate } from "react-router-dom";
 import { useAuth } from "@/hooks/useAuth";
 import { AppLayout } from "@/components/AppLayout";
@@ -30,6 +31,14 @@ import { AdminIdentityProviders } from "@/pages/admin/AdminIdentityProviders";
 import { AdminRegistrationRequests } from "@/pages/admin/AdminRegistrationRequests";
 import { Orgs } from "@/pages/orgs/Orgs";
 import { OrgDetail } from "@/pages/orgs/OrgDetail";
+
+// LaunchForm pulls in LaunchFormRenderer -> (lazily) SchemaFormBody, which
+// statically imports @stroppy-io/schemapb-react/@stroppy-io/schemapb — the
+// ~22MB schemapb.wasm engine. lazy() here keeps LaunchForm's own module
+// (and therefore that whole dependency chain) out of the main entry chunk;
+// it's fetched as its own async chunk only when this route is visited. Do
+// NOT change this to a static top-level import.
+const LaunchForm = lazy(() => import("@/pages/LaunchForm"));
 
 function Loading() {
   return (
@@ -132,6 +141,14 @@ export default function App() {
               <Route path="recipes/new" element={<RecipeEditor />} />
               <Route path="recipes/runs" element={<RecipeRuns />} />
               <Route path="recipes/:id" element={<RecipeEditor />} />
+              <Route
+                path="recipes/:id/launch"
+                element={
+                  <Suspense fallback={<Loading />}>
+                    <LaunchForm />
+                  </Suspense>
+                }
+              />
               <Route path="runs/:id" element={<RunDetail />} />
               <Route path="compare" element={<Compare />} />
               <Route path="quotas" element={<Quotas />} />

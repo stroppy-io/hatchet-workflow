@@ -13,6 +13,7 @@
 // edge so the rest of the app never touches Uint8Array.
 
 import { create, toJson } from "@bufbuild/protobuf";
+import type { Schema } from "@stroppy-io/schemapb";
 import {
   RecipeRecordSchema,
   type RecipeRecord,
@@ -239,6 +240,21 @@ export async function checkBundle(
   const tenantId = tenantSlug ? await resolveTenantId(tenantSlug) : undefined;
   const { diagnostics } = await dslClient.check({ files: encodeFiles(files), tenantId });
   return diagnostics.map(diagnosticToVM);
+}
+
+/**
+ * RecipeService.LaunchFormSchema — the composed launch-form schemapb.Schema
+ * for an already-stored recipe bundle (workflow.yaml's declared inputs at
+ * the top level, plus the resolved provider's params nested under
+ * "provider", absent for docker/no-provider bundles). Unlike composedSchema
+ * (DslService, operates on in-memory files for the editor's own use), this
+ * reads the STORED bundle by id — the source LaunchForm.tsx renders from.
+ */
+export async function fetchLaunchFormSchema(tenantSlug: string, recipeId: string): Promise<Schema> {
+  const tenantId = await resolveTenantId(tenantSlug);
+  const { schema } = await recipeClient.launchFormSchema({ tenantId, recipeId });
+  if (!schema) throw new Error("launchFormSchema returned no schema");
+  return schema;
 }
 
 /** DslService.ComposedSchema — schemapb.Schema (protojson): the bundle's launch-form schema (workflow inputs + provider params), used to render/validate the launch form. */
