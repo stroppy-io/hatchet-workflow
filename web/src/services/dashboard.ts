@@ -30,7 +30,7 @@ export interface StatusCountsVM {
   cancelled: number;
 }
 
-/** A recent test run, flattened from TestRunRecord for the activity list. */
+/** A recent test run, flattened from Run for the activity list. */
 export interface RecentRunVM {
   id: string;
   name: string;
@@ -66,7 +66,7 @@ export interface BenchmarkVM {
  *
  * DERIVED — there is no time-series field in the tenant_dashboard proto. This
  * is computed from `TenantDashboard.recent_runs` by bucketing each run on its
- * real start timestamp (TestRunRecord.summary.started_at, falling back to
+ * real start timestamp (Run.summary.started_at, falling back to
  * entity.timings.created_at) and splitting by status (COMPLETED -> succeeded,
  * FAILED/CANCELLED -> failed). `succeeded` + `failed` == `total` per bucket.
  * See `bucketRunsByDay` for the single shared derivation.
@@ -83,7 +83,7 @@ export interface RunsTimePoint {
  * The whole landing payload, mapped 1:1 from cloud.v1.api.TenantDashboard:
  *   runCounts     <- run_counts (StatusCounts)
  *   successRate   <- success_rate (float, 0..1)
- *   recentRuns    <- recent_runs (TestRunRecord[])
+ *   recentRuns    <- recent_runs (Run[])
  *   upcoming      <- upcoming (UpcomingSuite[])
  *   topBenchmarks <- top_benchmarks (RatingEntry[])
  *
@@ -145,10 +145,7 @@ export interface DashboardProvider {
 }
 
 import { toJson } from "@bufbuild/protobuf";
-import {
-  TestRunRecordSchema,
-  type TestRunRecord,
-} from "@/lib/proto/cloud/v1/models/test_run_pb";
+import { RunSchema, type Run } from "@/lib/proto/cloud/v1/models/test_run_pb";
 import type {
   StatusCounts,
   UpcomingSuite,
@@ -183,9 +180,9 @@ export function statusToVM(s: string | undefined): RunStatus {
   }
 }
 
-/** Flatten a TestRunRecord onto the dashboard's RecentRunVM. */
-export function recentRunFromRecord(rec: TestRunRecord): RecentRunVM {
-  const j = toJson(TestRunRecordSchema, rec) as {
+/** Flatten a Run onto the dashboard's RecentRunVM. */
+export function recentRunFromRecord(rec: Run): RecentRunVM {
+  const j = toJson(RunSchema, rec) as {
     entity?: { id?: string; name?: string; timings?: { createdAt?: string } };
     status?: string;
     summary?: { dbKind?: string; workloadName?: string; startedAt?: string };

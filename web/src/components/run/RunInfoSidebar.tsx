@@ -10,7 +10,6 @@ import {
   Cpu,
   Database,
   FileCode,
-  Gauge,
   Hash,
   Layers,
   Network,
@@ -186,7 +185,6 @@ export function RunInfoSidebar({ overview, run }: { overview: OverviewVM; run?: 
           }
         />
         {run?.trigger && <Row icon={Tag} label="trigger" value={run.trigger} />}
-        {run?.suiteRunId && <Row icon={Layers} label="suite" value={<span title={run.suiteRunId}>{run.suiteRunId.slice(0, 12)}…</span>} />}
       </Group>
 
       {run && (run.dbKind || run.topologyLabel) && (
@@ -202,7 +200,7 @@ export function RunInfoSidebar({ overview, run }: { overview: OverviewVM; run?: 
         </Group>
       )}
 
-      {run && (run.workload || run.stroppyVersion || (run.workloadSegments?.length ?? 0) > 0) && (
+      {run && (run.workload || run.stroppyVersion) && (
         <Group label="Workload">
           <Row icon={FileCode} label="name" value={run.workload || "—"} />
           {run.protocol && <Row icon={Network} label="protocol" value={run.protocol} />}
@@ -210,26 +208,6 @@ export function RunInfoSidebar({ overview, run }: { overview: OverviewVM; run?: 
           {run.workloadPresetId && (
             <Row icon={Tag} label="preset" value={run.workloadPresetId.slice(0, 8)} />
           )}
-          {run.workloadSegments?.map((seg, i) => (
-            <Row
-              key={i}
-              icon={Gauge}
-              label={seg.name || `seg ${i + 1}`}
-              value={
-                <span className="break-words">
-                  {[
-                    seg.script,
-                    seg.vus !== undefined && `vus=${seg.vus}`,
-                    seg.duration ? `dur=${seg.duration}` : seg.iterations !== undefined && `iters=${seg.iterations}`,
-                    seg.poolSize !== undefined && `pool=${seg.poolSize}`,
-                    seg.scaleFactor !== undefined && `scale=${seg.scaleFactor}`,
-                  ]
-                    .filter(Boolean)
-                    .join(" · ")}
-                </span>
-              }
-            />
-          ))}
         </Group>
       )}
 

@@ -4,7 +4,7 @@
 
 import { fromJson, toJson } from "@bufbuild/protobuf";
 import { timestampFromDate } from "@bufbuild/protobuf/wkt";
-import { TestRunRecordSchema, type TestRunRecord } from "@/lib/proto/cloud/v1/models/test_run_pb";
+import { RunSchema, type Run } from "@/lib/proto/cloud/v1/models/test_run_pb";
 import {
   GetTestRunOverviewResponseSchema,
   GetRunMetricsResponseSchema,
@@ -19,7 +19,7 @@ import { testRunOverviewClient } from "@/services/client";
 import { resolveTenantId } from "@/services/tenant";
 import { statusToVM, type RunStatus } from "@/services/dashboard";
 import { dbKindLabelFromJson, providerLabelFromJson } from "@/services/enums";
-import { testRunRecordToVM, type RunVM } from "@/services/runs";
+import { runToVM, type RunVM } from "@/services/runs";
 
 /** Provenance of a snapshot field/object (monitor.ObservationSource). */
 export type ObservationSource =
@@ -153,8 +153,6 @@ export interface OverviewVM {
   timeline: TimelineEventVM[];
   /** The persisted run record (header), if present in the snapshot. */
   run?: RunVM;
-  /** Owning suite run id, when this run is a suite child. */
-  suiteRunId: string;
   /** Staged topology envelope (machines / components / connections), if present. */
   topology?: TopologyJson;
   /** Server clock time this snapshot was assembled (ISO). */
@@ -465,7 +463,7 @@ interface SnapshotJson {
 
 // Map a snapshot (JSON for overview/topology/suite + raw run record proto for
 // the header) onto OverviewVM. Shared by the one-shot fetch and the live stream.
-function snapshotToVM(snap: SnapshotJson, runRecord: TestRunRecord | undefined, runId: string): OverviewVM {
+function snapshotToVM(snap: SnapshotJson, runRecord: Run | undefined, runId: string): OverviewVM {
   const ov = snap.overview ?? {};
   return {
     runId: ov.runId ?? runId,
@@ -502,8 +500,7 @@ function snapshotToVM(snap: SnapshotJson, runRecord: TestRunRecord | undefined, 
       sequence: e.sequence ? Number(e.sequence) : 0,
       detail: e.detail ?? "",
     })),
-    run: runRecord ? testRunRecordToVM(runRecord) : undefined,
-    suiteRunId: runRecord?.suiteRunId ?? "",
+    run: runRecord ? runToVM(runRecord) : undefined,
     topology: snap.topology,
     observedAt: ov.observedAt,
     degradedReasons: ov.degradedReasons ?? [],
@@ -861,4 +858,4 @@ export async function streamRunOverview(
 }
 
 // Re-exported for callers that want the raw record schema/enums.
-export { TestRunRecordSchema, dbKindLabelFromJson, providerLabelFromJson };
+export { RunSchema, dbKindLabelFromJson, providerLabelFromJson };

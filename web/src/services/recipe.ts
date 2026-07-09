@@ -18,8 +18,8 @@ import {
   type RecipeRecord,
 } from "@/lib/proto/cloud/v1/models/recipe_pb";
 import {
-  TestRunRecordSchema,
-  type TestRunRecord,
+  RunSchema,
+  type Run,
 } from "@/lib/proto/cloud/v1/models/test_run_pb";
 import { Severity, type Diagnostic } from "@/lib/proto/cloud/v1/dsl/service_pb";
 import type { CompiledPlan } from "@/lib/proto/cloud/v1/dsl/compiled_pb";
@@ -90,7 +90,7 @@ export interface PreviewVM {
   diagnostics: DiagnosticVM[];
 }
 
-/** One run launched from a recipe bundle, flattened from models.TestRunRecord. */
+/** One run launched from a recipe bundle, flattened from models.Run. */
 export interface RunVM {
   /** entity.id */
   id: string;
@@ -98,8 +98,8 @@ export interface RunVM {
   name: string;
   /** record.status, mapped to the dashboard RunStatus union. */
   status: RunStatus;
-  /** record.recipe_id — the originating recipe bundle. */
-  recipeId: string;
+  /** record.workflow_id — the originating recipe bundle. */
+  workflowId: string;
   /** summary.started_at (ISO); absent until the run starts. */
   startedAt?: string;
 }
@@ -157,20 +157,20 @@ function recipeRecordToVM(rec: RecipeRecord): RecipeVM {
   };
 }
 
-// TestRunRecord.status/entity are proto enum/message fields — toJson gives us
-// the JSON-string enum form that statusToVM (services/dashboard.ts) expects.
-function runRecordToVM(rec: TestRunRecord): RunVM {
-  const j = toJson(TestRunRecordSchema, rec) as {
+// Run.status/entity are proto enum/message fields — toJson gives us the
+// JSON-string enum form that statusToVM (services/dashboard.ts) expects.
+function runToVM(rec: Run): RunVM {
+  const j = toJson(RunSchema, rec) as {
     entity?: { id?: string; name?: string };
     status?: string;
-    recipeId?: string;
+    workflowId?: string;
     summary?: { startedAt?: string };
   };
   return {
     id: j.entity?.id ?? "",
     name: j.entity?.name ?? "",
     status: statusToVM(j.status),
-    recipeId: j.recipeId ?? "",
+    workflowId: j.workflowId ?? "",
     startedAt: j.summary?.startedAt,
   };
 }
@@ -329,7 +329,7 @@ export async function listRuns(
       recipeId: recipeId ?? "",
       page: { size: 0, token },
     });
-    out.push(...runs.map(runRecordToVM));
+    out.push(...runs.map(runToVM));
     if (!nextPageToken) break;
     token = nextPageToken;
   }

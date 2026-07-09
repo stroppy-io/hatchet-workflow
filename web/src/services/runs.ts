@@ -2,15 +2,14 @@
 // the recipe-run views. The old test-run listing/mutation RPC surface
 // (list/cancel/rerun/extract/delete/favorite via a RunsProvider) was removed
 // here — runs are now driven through RecipeService (see services/recipe.ts).
-// What remains is the flat view-model (RunVM/WorkloadSegmentVM), the mapper
-// from cloud.v1.models.TestRunRecord (testRunRecordToVM — models/test_run.proto
-// only), and the row-action gating used by RunDetail (RunAction/actionsForStatus).
+// What remains is the flat view-model (RunVM), the mapper from
+// cloud.v1.models.Run (runToVM — models/test_run.proto only), and the
+// row-action gating used by RunDetail (RunAction/actionsForStatus).
 
 import { toJson } from "@bufbuild/protobuf";
-import {
-  TestRunRecordSchema,
-  type TestRunRecord,
-} from "@/lib/proto/cloud/v1/models/test_run_pb";
+import { RunSchema, type Run } from "@/lib/proto/cloud/v1/models/test_run_pb";
+import type { BakedJson } from "@/lib/proto/schemapb/schema_pb";
+import type { CompiledPlanJson } from "@/lib/proto/cloud/v1/dsl/compiled_pb";
 import { type RunStatus, statusToVM } from "@/services/dashboard";
 import {
   dbKindLabelFromJson,
@@ -67,9 +66,9 @@ export type RunTrigger = "" | "manual" | "cron" | "api";
 export type DeployProvider = "" | "docker" | "yandex";
 
 /**
- * A test run, flattened from cloud.v1.models.TestRunRecord. Every field maps to
- * a REAL record field — id/name/author/createdAt from entity; status/trigger
- * from the record; the rest from the denormalized summary projection. Optional
+ * A test run, flattened from cloud.v1.models.Run. Every field maps to a REAL
+ * record field — id/name/author/createdAt from entity; status/trigger from
+ * the record; the rest from the denormalized summary projection. Optional
  * fields are absent when the proto field is unset (e.g. finishedAt while
  * running).
  */
@@ -106,16 +105,13 @@ export interface RunVM {
   finishedAt?: string;
   /** summary.duration in seconds (derived from the proto Duration); absent when unset. */
   durationSec?: number;
-  /** record.suite_run_id ("" for standalone runs). */
-  suiteRunId: string;
   /**
-   * record.recipe_id — the originating models.RecipeRecord.entity.id for a run
-   * launched via RecipeService.StartRun; "" for a classic run launched from a
-   * baked domain.TestRun spec (wizard/suite/cron). Lets RunDetail's Rerun
-   * action re-launch through RecipeService.StartRun(recipeId) and gate itself
-   * off for non-recipe runs.
+   * record.workflow_id — the originating models.RecipeRecord.entity.id that
+   * RecipeService.StartRun launched this run from. Always set (every live run
+   * is a recipe run — see cloud.v1.models.Run's doc). Lets RunDetail's Rerun
+   * action re-launch through RecipeService.StartRun(workflowId).
    */
-  recipeId: string;
+  workflowId: string;
   /** summary.provider (deployment backend), lower-cased ("" when unspecified). */
   provider: DeployProvider;
   /** summary.db_preset_id ("" when the run did not use a saved db preset). */
@@ -129,49 +125,20 @@ export interface RunVM {
   /** entity.timings.deleted_at is set (soft-deleted); drives include_deleted. */
   deleted: boolean;
   /**
-   * spec.workload.segments — the exact stroppy launch settings per segment
-   * (script + k6 execution + stroppy parameters). Present only when the record
-   * carries the full spec (overview snapshot / GetTestRun); empty from the list
-   * summary. Surfaced in the run Overview so a run is reproducible at a glance.
+   * baked — the sealed launch-form snapshot (schemapb.Baked: schema + frozen
+   * values), when the run was launched through SP-D's generated-form path.
+   * nil until SP-D exists (see cloud.v1.models.Run.baked's doc). Rendered on
+   * the run Config tab as the primary "resolved parameters" view.
    */
-  workloadSegments: WorkloadSegmentVM[];
+  baked?: BakedJson;
   /**
-   * spec — the full decoded run spec (toJson of models.TestRunRecord.spec:
-   * workload + database + test-level config). Present only when the record
-   * carries the full spec (overview snapshot / GetTestRun); undefined from the
-   * list summary. Rendered verbatim on the run Overview (Config) tab so every
-   * launch parameter (insert method, bulk size, advanced DB options, …) is
-   * visible without "New from run". Loosely typed — the tab renders it
-   * generically.
+   * compiledPlan — the compiled DSL plan (machine groups, services, jobs)
+   * RunRecipeWorkflow actually executed. Rendered on the run Config tab
+   * alongside `baked` — this is what today's `RunConfigTab.tsx` had NO
+   * equivalent for (recipe runs never carried a `domain.TestRun` spec), so
+   * this is new, not preserved, data (spec §6.C "fixed" delta).
    */
-  spec?: Record<string, unknown>;
-}
-
-/** One stroppy workload segment's launch settings (from spec.workload.segments). */
-export interface WorkloadSegmentVM {
-  name: string;
-  script: string;
-  vus?: number;
-  duration?: string;
-  iterations?: number;
-  poolSize?: number;
-  scaleFactor?: number;
-  /** parameters.default_insert_method — "native" (default) / "plain_bulk" / … */
-  insertMethod?: string;
-  /** parameters.bulk_size — rows per bulk INSERT (only for plain_bulk). */
-  bulkSize?: number;
-  /** parameters.env — extra environment passed to stroppy. */
-  env?: Record<string, string>;
-  /** parameters.steps / no_steps — enabled step list, or "all steps" flag. */
-  steps?: string[];
-  noSteps?: boolean;
-  /** execution flags. */
-  quiet?: boolean;
-  noThresholds?: boolean;
-  extraArgs?: string[];
-  /** inline SQL + attached files, when set. */
-  sql?: string;
-  files?: string[];
+  compiledPlan?: CompiledPlanJson;
 }
 
 /**
@@ -233,9 +200,9 @@ export function actionsForStatus(status: RunStatus): Set<RunAction> {
   return set;
 }
 
-// One TestRunRecord -> flat RunVM (string enums + ISO timestamps via toJson).
-export function testRunRecordToVM(rec: TestRunRecord): RunVM {
-  const j = toJson(TestRunRecordSchema, rec) as {
+// One Run -> flat RunVM (string enums + ISO timestamps via toJson).
+export function runToVM(rec: Run): RunVM {
+  const j = toJson(RunSchema, rec) as {
     entity?: {
       id?: string;
       name?: string;
@@ -245,8 +212,9 @@ export function testRunRecordToVM(rec: TestRunRecord): RunVM {
     };
     status?: string;
     trigger?: string;
-    suiteRunId?: string;
-    recipeId?: string;
+    workflowId?: string;
+    baked?: BakedJson;
+    compiledPlan?: CompiledPlanJson;
     summary?: {
       dbKind?: string;
       workloadName?: string;
@@ -263,55 +231,9 @@ export function testRunRecordToVM(rec: TestRunRecord): RunVM {
       workloadPresetId?: string;
       testPresetId?: string;
     };
-    spec?: {
-      workload?: {
-        segments?: Array<{
-          name?: string;
-          script?: string;
-          sql?: string;
-          files?: string[];
-          execution?: {
-            vus?: number;
-            duration?: string;
-            iterations?: number;
-            quiet?: boolean;
-            noThresholds?: boolean;
-            extraArgs?: string[];
-          };
-          parameters?: {
-            poolSize?: number;
-            scaleFactor?: number;
-            defaultInsertMethod?: string;
-            bulkSize?: number;
-            env?: Record<string, string>;
-            steps?: string[];
-            noSteps?: boolean;
-          };
-        }>;
-      };
-    };
   };
   const e = j.entity ?? {};
   const s = j.summary ?? {};
-  const segments: WorkloadSegmentVM[] = (j.spec?.workload?.segments ?? []).map((seg) => ({
-    name: seg.name ?? "",
-    script: seg.script ?? "",
-    vus: seg.execution?.vus,
-    duration: seg.execution?.duration,
-    iterations: seg.execution?.iterations,
-    poolSize: seg.parameters?.poolSize,
-    scaleFactor: seg.parameters?.scaleFactor,
-    insertMethod: seg.parameters?.defaultInsertMethod,
-    bulkSize: seg.parameters?.bulkSize,
-    env: seg.parameters?.env,
-    steps: seg.parameters?.steps,
-    noSteps: seg.parameters?.noSteps,
-    quiet: seg.execution?.quiet,
-    noThresholds: seg.execution?.noThresholds,
-    extraArgs: seg.execution?.extraArgs,
-    sql: seg.sql,
-    files: seg.files,
-  }));
   return {
     id: e.id ?? "",
     name: e.name ?? "",
@@ -329,15 +251,14 @@ export function testRunRecordToVM(rec: TestRunRecord): RunVM {
     startedAt: s.startedAt,
     finishedAt: s.finishedAt,
     durationSec: s.duration ? parseFloat(s.duration) : undefined,
-    suiteRunId: j.suiteRunId ?? "",
-    recipeId: j.recipeId ?? "",
+    workflowId: j.workflowId ?? "",
     provider: providerLabelFromJson(s.provider),
     dbPresetId: s.dbPresetId ?? "",
     workloadPresetId: s.workloadPresetId ?? "",
     testPresetId: s.testPresetId ?? "",
     favorite: e.isFavorite ?? false,
     deleted: !!e.timings?.deletedAt,
-    workloadSegments: segments,
-    spec: (j.spec as Record<string, unknown>) ?? undefined,
+    baked: j.baked,
+    compiledPlan: j.compiledPlan,
   };
 }

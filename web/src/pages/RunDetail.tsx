@@ -317,16 +317,16 @@ export function RunDetail() {
 
   // Rerun re-launches the run's ORIGINATING RECIPE bundle (RecipeService.StartRun),
   // not the run itself — there is no recipe-side "restart this exact run" RPC.
-  // That only makes sense for a run that was itself launched from a recipe
-  // (run.recipeId set); classic runs (wizard/suite/cron) have no recipe to
-  // relaunch, so the button is hidden for those (see allowed.has("rerun") &&
-  // run?.recipeId below).
+  // Every live run is a recipe run (run.workflowId set — see
+  // cloud.v1.models.Run's doc), so the button only stays hidden while the run
+  // record hasn't loaded yet (see allowed.has("rerun") && run?.workflowId
+  // below).
   const onRerun = useCallback(async () => {
-    const recipeId = run?.recipeId;
-    if (!recipeId) return;
+    const workflowId = run?.workflowId;
+    if (!workflowId) return;
     setBusy(true);
     try {
-      const newRunId = await recipeStartRun(tenantSlug, recipeId);
+      const newRunId = await recipeStartRun(tenantSlug, workflowId);
       flash("Run re-launched");
       navigate(`/runs/${newRunId}`);
     } catch (err) {
@@ -334,7 +334,7 @@ export function RunDetail() {
     } finally {
       setBusy(false);
     }
-  }, [tenantSlug, run?.recipeId, flash, navigate]);
+  }, [tenantSlug, run?.workflowId, flash, navigate]);
 
   const onCancel = useCallback(async () => {
     const ok = await confirm({
@@ -443,7 +443,7 @@ export function RunDetail() {
           <Button variant="outline" size="sm" onClick={() => void load()} disabled={loading}>
             <RefreshCw className={cn("h-4 w-4", loading && "animate-spin")} /> Refresh
           </Button>
-          {allowed.has("rerun") && !!run?.recipeId && (
+          {allowed.has("rerun") && !!run?.workflowId && (
             <Button
               variant="outline"
               size="sm"

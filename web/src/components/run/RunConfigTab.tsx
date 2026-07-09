@@ -1,14 +1,20 @@
-// Run CONFIG (Overview) tab — the full, read-only effective launch spec of a
-// run: every workload segment's stroppy parameters (insert method, bulk size,
-// pool/scale, env, steps, execution flags, inline SQL/files) and the complete
-// database spec including free-form "advanced" option maps (postgresql.conf,
-// haproxy/pgbouncer/patroni/etcd, per-engine passthroughs). Rendered so a run is
-// fully reproducible / auditable without "New from run". The workload section is
-// curated; the database + anything else is rendered generically from the decoded
-// spec so new engines / fields show up without a UI change.
+// Run CONFIG (Overview) tab — the run's resolved launch parameters + compiled
+// plan, plus a read-only view of the originating recipe bundle.
+//
+// Recipe runs never carried a `domain.TestRun` spec (they're launched from a
+// DSL bundle, not a baked classic-TestWorkflow spec) — the classic
+// workload-segments/database-spec render this tab used to have was ALWAYS
+// empty for a recipe run (see cloud.v1.models.Run's doc / SP-E spec §5,§6.C).
+// SP-E fixes that hole: `run.baked` (the sealed launch-form snapshot, nil
+// until SP-D's generated-form path exists) and `run.compiledPlan` (the
+// compiled DSL plan — machine groups / services / jobs RunRecipeWorkflow
+// actually executed) are rendered here as the primary "resolved parameters"
+// view. `RecipeBundleView` (the underlying recipe source files) is kept as a
+// secondary/raw section — Baked/CompiledPlan don't replace it, they show
+// resolved VALUES, not the DSL source that produced them.
 import { useEffect, useState } from "react";
-import { ChevronRight, Code2, Database, ExternalLink, FileCode, Gauge, Settings2 } from "lucide-react";
-import type { RunVM, WorkloadSegmentVM } from "@/services/runs";
+import { ChevronRight, Code2, ExternalLink, FileCode, Layers, Settings2 } from "lucide-react";
+import type { RunVM } from "@/services/runs";
 import { getRecipe, type RecipeVM } from "@/services/recipe";
 import { DslEditor } from "@/components/ui/dsl-editor";
 import { Link, useTenantSlug } from "@/lib/router";
@@ -24,11 +30,6 @@ function humanizeKey(k: string): string {
 
 function isPlainObject(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
-}
-
-// True when every value is a primitive — render as a compact key→value table.
-function isFlatMap(o: Record<string, unknown>): boolean {
-  return Object.values(o).every((v) => v === null || typeof v !== "object");
 }
 
 function isEmptyValue(v: unknown): boolean {
@@ -104,76 +105,7 @@ function Card({ icon, title, children }: { icon: React.ReactNode; title: string;
   );
 }
 
-// Advanced-option maps (postgresql.conf etc.) rendered as their own key→value
-// tables, so a long options blob reads like a config file rather than a blob.
-function OptionsTable({ opts }: { opts: Record<string, unknown> }) {
-  const entries = Object.entries(opts).filter(([, v]) => !isEmptyValue(v));
-  if (entries.length === 0) return null;
-  return (
-    <div className="rounded border border-border/60 bg-black/20 p-2 font-mono text-[11px]">
-      {entries.map(([k, v]) => (
-        <div key={k} className="flex gap-2 py-px">
-          <span className="shrink-0 text-primary/80">{k}</span>
-          <span className="text-muted-foreground">=</span>
-          <span className="break-all text-foreground">{String(v)}</span>
-        </div>
-      ))}
-    </div>
-  );
-}
-
-function SegmentCard({ seg, index }: { seg: WorkloadSegmentVM; index: number }) {
-  const exec = [
-    seg.vus !== undefined && `vus=${seg.vus}`,
-    seg.duration ? `duration=${seg.duration}` : seg.iterations !== undefined && `iterations=${seg.iterations}`,
-    seg.quiet && "quiet",
-    seg.noThresholds && "no-thresholds",
-  ].filter(Boolean);
-  const bulk = seg.insertMethod === "plain_bulk" || (seg.bulkSize ?? 0) > 0;
-  return (
-    <div className="rounded border border-border/60 p-3">
-      <div className="mb-2 flex items-center gap-2">
-        <Gauge className="h-3.5 w-3.5 text-primary" />
-        <span className="font-mono text-xs font-semibold text-foreground">{seg.name || `segment ${index + 1}`}</span>
-      </div>
-      {seg.script && <KV label="Script"><Prim value={seg.script} /></KV>}
-      {exec.length > 0 && <KV label="Execution"><Prim value={exec.join(" · ")} /></KV>}
-      <KV label="Insert method"><Prim value={seg.insertMethod || "native"} /></KV>
-      {bulk && <KV label="Bulk size"><Prim value={seg.bulkSize ?? "(default)"} /></KV>}
-      {seg.poolSize !== undefined && <KV label="Pool size"><Prim value={seg.poolSize} /></KV>}
-      {seg.scaleFactor !== undefined && <KV label="Scale factor"><Prim value={seg.scaleFactor} /></KV>}
-      {seg.noSteps && <KV label="Steps"><Prim value="(all)" /></KV>}
-      {(seg.steps?.length ?? 0) > 0 && <KV label="Steps"><Prim value={seg.steps!.join(", ")} /></KV>}
-      {(seg.extraArgs?.length ?? 0) > 0 && <KV label="Extra args"><Prim value={seg.extraArgs!.join(" ")} /></KV>}
-      {seg.env && Object.keys(seg.env).length > 0 && (
-        <KV label="Env"><OptionsTable opts={seg.env} /></KV>
-      )}
-      {(seg.files?.length ?? 0) > 0 && <KV label="Files"><Prim value={seg.files!.join(", ")} /></KV>}
-      {seg.sql && (
-        <KV label="SQL">
-          <pre className="max-h-40 overflow-auto rounded border border-border/60 bg-black/30 p-2 font-mono text-[11px] text-foreground">{seg.sql}</pre>
-        </KV>
-      )}
-    </div>
-  );
-}
-
-// Pull the engine params object out of spec.database (proto oneof:
-// database.source.params.<engine> or database.params.<engine>). Returns the
-// engine name + its params object, or null.
-function extractDbParams(db: Record<string, unknown>): { engine: string; params: Record<string, unknown> } | null {
-  const paramsHolder =
-    (isPlainObject(db.source) && isPlainObject((db.source as Record<string, unknown>).params)
-      ? ((db.source as Record<string, unknown>).params as Record<string, unknown>)
-      : undefined) ?? (isPlainObject(db.params) ? (db.params as Record<string, unknown>) : undefined);
-  if (!paramsHolder) return null;
-  for (const [engine, v] of Object.entries(paramsHolder)) {
-    if (isPlainObject(v)) return { engine, params: v };
-  }
-  return null;
-}
-
-// Recipe runs persist no Spec by design (they're launched from a DSL bundle,
+// Recipe runs persist no classic spec by design (they're launched from a DSL bundle,
 // not a baked domain.TestRun). Instead of the generic "No spec available"
 // empty-state, fetch the recipe that produced the run and show its bundle
 // read-only, so the run stays auditable — you can see exactly which
@@ -278,104 +210,100 @@ function RecipeBundleView({ tenantSlug, recipeId }: { tenantSlug: string; recipe
   );
 }
 
+// Compiled-plan machine-groups/services/jobs, rendered as compact cards — the
+// generic ConfigValue renderer handles arbitrary nested shapes so new
+// dsl.CompiledPlan fields show up without a UI change.
+function PlanSection({ title, items }: { title: string; items: Record<string, unknown>[] }) {
+  if (items.length === 0) return null;
+  return (
+    <div>
+      <div className="mb-1.5 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
+        <Settings2 className="h-3 w-3" />
+        {title} ({items.length})
+      </div>
+      <div className="flex flex-col gap-2">
+        {items.map((item, i) => (
+          <div key={i} className="rounded border border-border/60 p-2">
+            <ConfigValue value={item} />
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export function RunConfigTab({ run }: { run: RunVM }) {
   const [rawOpen, setRawOpen] = useState(false);
   const tenantSlug = useTenantSlug() ?? "";
 
-  if (!run.spec || Object.keys(run.spec).length === 0) {
-    if (run.recipeId) {
-      return <RecipeBundleView tenantSlug={tenantSlug} recipeId={run.recipeId} />;
-    }
+  const baked = run.baked;
+  const bakedValues = isPlainObject(baked?.values) ? (baked.values as Record<string, unknown>) : undefined;
+  const plan = run.compiledPlan;
+  const hasBaked = !!bakedValues && Object.keys(bakedValues).length > 0;
+  const hasPlan =
+    !!plan &&
+    ((plan.machineGroups?.length ?? 0) > 0 || (plan.services?.length ?? 0) > 0 || (plan.jobs?.length ?? 0) > 0);
+
+  if (!hasBaked && !hasPlan && !run.workflowId) {
     return (
       <div className="p-6 text-sm text-muted-foreground">
-        No spec available for this run (list summary only — open the run detail to load the full spec).
+        No resolved parameters or compiled plan available for this run.
       </div>
     );
   }
 
-  const db = isPlainObject(run.spec.database) ? (run.spec.database as Record<string, unknown>) : undefined;
-  const dbParams = db ? extractDbParams(db) : null;
-  // Split the engine params into "advanced option maps" (*_options / *Options)
-  // and plain scalar settings, so the config-file-like blobs render distinctly.
-  const optionMaps: Array<[string, Record<string, unknown>]> = [];
-  const scalarParams: Record<string, unknown> = {};
-  if (dbParams) {
-    for (const [k, v] of Object.entries(dbParams.params)) {
-      if (isEmptyValue(v)) continue;
-      if (isPlainObject(v) && isFlatMap(v) && /options$/i.test(k)) optionMaps.push([k, v]);
-      else scalarParams[k] = v;
-    }
-  }
-
   return (
     <div className="flex flex-col gap-4 p-1">
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
-        {/* Workload */}
-        <Card icon={<FileCode className="h-3.5 w-3.5" />} title="Workload">
-          <div className="mb-3 flex flex-col">
-            {run.workload && <KV label="Name"><Prim value={run.workload} /></KV>}
-            {run.protocol && <KV label="Protocol"><Prim value={run.protocol} /></KV>}
-            {run.stroppyVersion && <KV label="Stroppy"><Prim value={run.stroppyVersion} /></KV>}
-            {run.workloadPresetId && <KV label="Preset"><Prim value={run.workloadPresetId} /></KV>}
-          </div>
-          <div className="flex flex-col gap-2">
-            {run.workloadSegments.length === 0 && <span className="text-[11px] text-muted-foreground">No segments.</span>}
-            {run.workloadSegments.map((seg, i) => (
-              <SegmentCard key={i} seg={seg} index={i} />
-            ))}
-          </div>
-        </Card>
+      {(hasBaked || hasPlan) && (
+        <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+          {/* Resolved parameters — the sealed launch-form snapshot (schemapb.Baked). */}
+          <Card icon={<FileCode className="h-3.5 w-3.5" />} title="Resolved parameters">
+            {hasBaked ? (
+              <ConfigValue value={bakedValues} />
+            ) : (
+              <span className="text-[11px] text-muted-foreground">
+                No baked launch-form values for this run (generated-form launch path not in use yet).
+              </span>
+            )}
+          </Card>
 
-        {/* Database */}
-        <Card icon={<Database className="h-3.5 w-3.5" />} title="Database">
-          <div className="mb-3 flex flex-col">
-            <KV label="Kind"><Prim value={run.dbKind || dbParams?.engine || "—"} /></KV>
-            {run.topologyLabel && <KV label="Topology"><Prim value={run.topologyLabel} /></KV>}
-            {run.dbPresetId && <KV label="Preset"><Prim value={run.dbPresetId} /></KV>}
-            {run.provider && <KV label="Provider"><Prim value={run.provider} /></KV>}
-            {run.nodeCount > 0 && <KV label="Nodes"><Prim value={run.nodeCount} /></KV>}
-          </div>
-          {Object.keys(scalarParams).length > 0 && (
-            <div className="mb-3 flex flex-col">
-              <ConfigValue value={scalarParams} />
-            </div>
-          )}
-          {optionMaps.length > 0 && (
-            <div className="flex flex-col gap-2">
-              {optionMaps.map(([k, v]) => (
-                <div key={k}>
-                  <div className="mb-1 flex items-center gap-1.5 text-[10px] font-medium uppercase tracking-wider text-muted-foreground">
-                    <Settings2 className="h-3 w-3" />
-                    {humanizeKey(k)}
-                  </div>
-                  <OptionsTable opts={v} />
-                </div>
-              ))}
-            </div>
-          )}
-          {!dbParams && (
-            <span className="text-[11px] text-muted-foreground">No detailed database params in spec.</span>
-          )}
-        </Card>
-      </div>
+          {/* Compiled plan — machine groups / services / jobs RunRecipeWorkflow executed. */}
+          <Card icon={<Layers className="h-3.5 w-3.5" />} title="Compiled plan">
+            {hasPlan ? (
+              <div className="flex flex-col gap-3">
+                {plan?.provider?.name && <KV label="Provider"><Prim value={plan.provider.name} /></KV>}
+                <PlanSection title="Machine groups" items={(plan?.machineGroups ?? []) as unknown as Record<string, unknown>[]} />
+                <PlanSection title="Services" items={(plan?.services ?? []) as unknown as Record<string, unknown>[]} />
+                <PlanSection title="Jobs" items={(plan?.jobs ?? []) as unknown as Record<string, unknown>[]} />
+              </div>
+            ) : (
+              <span className="text-[11px] text-muted-foreground">No compiled plan persisted for this run.</span>
+            )}
+          </Card>
+        </div>
+      )}
 
-      {/* Full raw spec — the ultimate "everything we know" fallback. */}
-      <div className="rounded-lg border border-border bg-card/40">
-        <button
-          type="button"
-          onClick={() => setRawOpen((v) => !v)}
-          className="flex w-full items-center gap-2 p-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground"
-        >
-          <ChevronRight className={cn("h-3.5 w-3.5 transition-transform", rawOpen && "rotate-90")} />
-          <Code2 className="h-3.5 w-3.5" />
-          Full spec (raw)
-        </button>
-        {rawOpen && (
-          <pre className="max-h-[32rem] overflow-auto border-t border-border bg-black/30 p-3 font-mono text-[11px] leading-relaxed text-foreground">
-            {JSON.stringify(run.spec, null, 2)}
-          </pre>
-        )}
-      </div>
+      {/* Recipe bundle — the DSL source that produced baked/compiledPlan above. */}
+      {run.workflowId && <RecipeBundleView tenantSlug={tenantSlug} recipeId={run.workflowId} />}
+
+      {(hasBaked || hasPlan) && (
+        <div className="rounded-lg border border-border bg-card/40">
+          <button
+            type="button"
+            onClick={() => setRawOpen((v) => !v)}
+            className="flex w-full items-center gap-2 p-3 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground hover:text-foreground"
+          >
+            <ChevronRight className={cn("h-3.5 w-3.5 transition-transform", rawOpen && "rotate-90")} />
+            <Code2 className="h-3.5 w-3.5" />
+            Full baked + compiled plan (raw)
+          </button>
+          {rawOpen && (
+            <pre className="max-h-[32rem] overflow-auto border-t border-border bg-black/30 p-3 font-mono text-[11px] leading-relaxed text-foreground">
+              {JSON.stringify({ baked, compiledPlan: plan }, null, 2)}
+            </pre>
+          )}
+        </div>
+      )}
     </div>
   );
 }
