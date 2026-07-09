@@ -164,6 +164,14 @@ func New(cfg Config) (*Gateway, error) {
 		g.ideProxy = ip
 		g.ideAuthorizer = cfg.IdeAuthorizer
 	}
+	// Fail closed. /ide/* proxies straight into a code-server holding a live
+	// worktree of a catalog repo; serving it without an authorizer would let
+	// any caller author any org's (or the instance's) bundles. A nil
+	// authorizer was a legitimate "feature disabled" seam only while no IDE
+	// backend existed at all.
+	if g.ideProxy != nil && g.ideAuthorizer == nil {
+		return nil, errors.New("gateway: ide backend configured without IdeAuthorizer — refusing to expose /ide/* unauthenticated")
+	}
 	g.http = &http.Server{Handler: http.HandlerFunc(g.serveHTTP), ReadHeaderTimeout: 30 * time.Second}
 	return g, nil
 }
@@ -217,7 +225,9 @@ func (g *Gateway) serveHTTP(w http.ResponseWriter, r *http.Request) {
 			http.NotFound(w, r)
 			return
 		}
-		if g.ideAuthorizer != nil && !g.ideAuthorizer.CanAuthor(r) {
+		// New() guarantees a non-nil authorizer whenever ideProxy is set, so
+		// this is a plain check, never a nil-skips-authz shortcut.
+		if !g.ideAuthorizer.CanAuthor(r) {
 			http.Error(w, "not authorized to author this repo", http.StatusForbidden)
 			return
 		}

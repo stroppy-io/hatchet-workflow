@@ -2,43 +2,36 @@ package ide
 
 import (
 	"context"
+	"encoding/base64"
 	"fmt"
 	"net/url"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"regexp"
+	"strings"
 )
 
 // credentialInURL matches "scheme://user:pass@" so redact can scrub a
 // leaked token out of a git error message before it is wrapped/returned.
 var credentialInURL = regexp.MustCompile(`(://[^:/@]*:)[^@/]*@`)
 
-// RemoteURL builds a git-smart-HTTP remote URL for owner/repo on a Gitea
-// instance at baseURL, embedding token as HTTP basic-auth so `git
-// clone`/`git pull` authenticate without an interactive prompt or a
-// separate credential-helper file on disk. Gitea accepts any non-empty
-// username with the API token as the password over basic auth for git
-// smart-HTTP (verified against the same gitea/gitea:1.23 image
-// docker-compose.yaml pins, alongside T1's live Gitea check) — "stroppy-bot"
-// here is a fixed placeholder username, never read by Gitea for anything
-// but the auth handshake.
+// RemoteURL builds a CREDENTIAL-FREE git-smart-HTTP remote URL for
+// owner/repo on a Gitea instance at baseURL.
 //
-// The token becomes part of the URL string, which os/exec.Command receives
-// as a process argument (visible in `ps`/‌/proc on the host running the
-// server, exactly like every other exec.Command invocation with a secret
-// argument in this codebase — e.g. terraform's provider credentials) and is
-// NEVER logged: worktree.go's callers must not fmt.Sprintf/log this return
-// value.
-func RemoteURL(baseURL, token, owner, repo string) (string, error) {
-	u, err := url.Parse(baseURL)
-	if err != nil {
-		return "", fmt.Errorf("ide: parse gitea base url: %w", err)
-	}
-	if token != "" {
-		u.User = url.UserPassword("stroppy-bot", token)
-	}
-	u.Path = fmt.Sprintf("%s/%s.git", owner, repo)
+// The token is deliberately NOT embedded. `git clone <url>` persists its
+// argument verbatim into the new repo's .git/config as remote.origin.url,
+// and EnsureWorktree's output is bind-mounted into a per-org code-server
+// container (see Manager.worktreeDir + the WorktreeVolume mount). An
+// embedded token would therefore be readable by any org author via
+// `cat .git/config` from the IDE terminal — and since the same Gitea
+// service account can write the INSTANCE repo, that is a cross-tenant
+// privilege escalation, not merely a credential leak.
+//
+// Authentication is instead supplied per-invocation via an HTTP header
+// (see gitAuthArgs), which git accepts on the command line and never
+// writes to disk.
+func RemoteURL(baseURL, owner, repo string) (string, error) {
 	if owner == "" {
 		// Gitea's own "create under self" convention has no git-clone
 		// equivalent — the content APIs resolve owner="" via a whoami call
@@ -47,7 +40,30 @@ func RemoteURL(baseURL, token, owner, repo string) (string, error) {
 		// not a runtime condition to route around silently.
 		return "", fmt.Errorf("ide: remote url: owner must not be empty (resolve gitrepo.Client's own username first)")
 	}
+	u, err := url.Parse(baseURL)
+	if err != nil {
+		return "", fmt.Errorf("ide: parse gitea base url: %w", err)
+	}
+	u.User = nil
+	u.Path = fmt.Sprintf("%s/%s.git", owner, repo)
 	return u.String(), nil
+}
+
+// gitAuthArgs returns the `-c http.extraHeader=...` prefix that authenticates
+// a single git invocation against Gitea without persisting anything. Gitea
+// accepts basic auth with any non-empty username and the API token as the
+// password; "stroppy-bot" is a fixed placeholder it never reads.
+//
+// The header value lands in the process argv (visible in `ps`/proc on the
+// server host — the same exposure terraform's provider credentials already
+// have in this codebase), but NOT in .git/config, NOT in the reflog, and
+// therefore NOT inside the container an org author can reach.
+func gitAuthArgs(token string) []string {
+	if token == "" {
+		return nil
+	}
+	basic := base64.StdEncoding.EncodeToString([]byte("stroppy-bot:" + token))
+	return []string{"-c", "http.extraHeader=Authorization: Basic " + basic}
 }
 
 // EnsureWorktree clones remoteURL into dest if dest has no .git directory
@@ -57,9 +73,15 @@ func RemoteURL(baseURL, token, owner, repo string) (string, error) {
 // doc); code-server itself also needs a real .git worktree for its built-in
 // git UI/terminal to function, which a REST-API-only content sync could
 // never provide.
-func EnsureWorktree(ctx context.Context, remoteURL, dest string) (string, error) {
+//
+// remoteURL must be credential-free (RemoteURL guarantees this): it is what
+// git writes into the worktree's .git/config, and the worktree is mounted
+// into a per-org code-server. token authenticates each invocation via a
+// command-line header instead, so nothing secret reaches the container.
+func EnsureWorktree(ctx context.Context, remoteURL, token, dest string) (string, error) {
+	auth := gitAuthArgs(token)
 	if _, err := os.Stat(filepath.Join(dest, ".git")); err == nil {
-		if err := runGit(ctx, dest, "pull", "--ff-only"); err != nil {
+		if err := runGit(ctx, dest, append(auth, "pull", "--ff-only")...); err != nil {
 			return "", fmt.Errorf("ide: pull worktree %q: %w", dest, err)
 		}
 		return dest, nil
@@ -67,7 +89,7 @@ func EnsureWorktree(ctx context.Context, remoteURL, dest string) (string, error)
 	if err := os.MkdirAll(filepath.Dir(dest), 0o700); err != nil {
 		return "", fmt.Errorf("ide: create worktree parent: %w", err)
 	}
-	if err := runGit(ctx, "", "clone", remoteURL, dest); err != nil {
+	if err := runGit(ctx, "", append(auth, "clone", remoteURL, dest)...); err != nil {
 		return "", fmt.Errorf("ide: clone worktree %q: %w", dest, err)
 	}
 	return dest, nil
@@ -90,12 +112,18 @@ func runGit(ctx context.Context, dir string, args ...string) error {
 	return nil
 }
 
-// redactArgs strips a credential-bearing URL argument (clone's second
-// argument) down to its path, for safe inclusion in an error message.
+// redactArgs scrubs every credential-bearing argument before an error
+// message quotes them: the `http.extraHeader=Authorization: Basic <b64>`
+// config arg gitAuthArgs injects, and (defensively) any URL that still
+// carries userinfo even though RemoteURL no longer produces one.
 func redactArgs(args []string) []string {
 	out := make([]string, len(args))
 	copy(out, args)
 	for i, a := range out {
+		if strings.HasPrefix(a, "http.extraHeader=") {
+			out[i] = "http.extraHeader=***"
+			continue
+		}
 		if u, err := url.Parse(a); err == nil && u.User != nil {
 			u.User = url.UserPassword("stroppy-bot", "***")
 			out[i] = u.String()

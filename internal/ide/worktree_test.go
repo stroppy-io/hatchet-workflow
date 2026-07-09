@@ -2,6 +2,7 @@ package ide
 
 import (
 	"context"
+	"encoding/base64"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -24,7 +25,7 @@ func TestEnsureWorktree_ClonesThenPulls(t *testing.T) {
 	run(t, remote, "-c", "user.email=t@t.io", "-c", "user.name=t", "commit", "-m", "init")
 
 	dest := filepath.Join(t.TempDir(), "acme")
-	path, err := EnsureWorktree(context.Background(), remote, dest)
+	path, err := EnsureWorktree(context.Background(), remote, "", dest)
 	if err != nil {
 		t.Fatalf("ensure worktree (clone): %v", err)
 	}
@@ -40,7 +41,7 @@ func TestEnsureWorktree_ClonesThenPulls(t *testing.T) {
 	run(t, remote, "add", ".")
 	run(t, remote, "-c", "user.email=t@t.io", "-c", "user.name=t", "commit", "-m", "add workflow")
 
-	path2, err := EnsureWorktree(context.Background(), remote, dest)
+	path2, err := EnsureWorktree(context.Background(), remote, "", dest)
 	if err != nil {
 		t.Fatalf("ensure worktree (pull): %v", err)
 	}
@@ -52,19 +53,11 @@ func TestEnsureWorktree_ClonesThenPulls(t *testing.T) {
 	}
 }
 
-func TestRemoteURL_EmbedsTokenAsBasicAuth(t *testing.T) {
-	u, err := RemoteURL("http://gitea:3000", "sekret-token", "acme", "org-catalog")
-	if err != nil {
-		t.Fatalf("remote url: %v", err)
-	}
-	want := "http://stroppy-bot:sekret-token@gitea:3000/acme/org-catalog.git"
-	if u != want {
-		t.Fatalf("remote url = %q, want %q", u, want)
-	}
-}
-
-func TestRemoteURL_NoTokenOmitsCredentials(t *testing.T) {
-	u, err := RemoteURL("http://gitea:3000", "", "acme", "org-catalog")
+func TestRemoteURL_NeverEmbedsCredentials(t *testing.T) {
+	// git clone persists its URL argument into .git/config, and that worktree
+	// is mounted into a per-org code-server: an embedded token would be
+	// readable by any org author and would grant instance-repo write.
+	u, err := RemoteURL("http://gitea:3000", "acme", "org-catalog")
 	if err != nil {
 		t.Fatalf("remote url: %v", err)
 	}
@@ -74,8 +67,29 @@ func TestRemoteURL_NoTokenOmitsCredentials(t *testing.T) {
 	}
 }
 
+func TestGitAuthArgs_CarriesTokenOffDisk(t *testing.T) {
+	args := gitAuthArgs("sekret-token")
+	if len(args) != 2 || args[0] != "-c" {
+		t.Fatalf("unexpected auth args: %v", args)
+	}
+	if !contains(args[1], base64.StdEncoding.EncodeToString([]byte("stroppy-bot:sekret-token"))) {
+		t.Fatalf("auth header missing encoded credential: %q", args[1])
+	}
+	if gitAuthArgs("") != nil {
+		t.Fatal("empty token must yield no auth args")
+	}
+}
+
+func TestRedactArgs_ScrubsAuthHeader(t *testing.T) {
+	for _, a := range redactArgs(gitAuthArgs("sekret-token")) {
+		if contains(a, "sekret-token") {
+			t.Fatalf("token leaked through redactArgs: %q", a)
+		}
+	}
+}
+
 func TestRemoteURL_RejectsEmptyOwner(t *testing.T) {
-	if _, err := RemoteURL("http://gitea:3000", "tok", "", "instance-catalog"); err == nil {
+	if _, err := RemoteURL("http://gitea:3000", "", "instance-catalog"); err == nil {
 		t.Fatal("expected error for empty owner")
 	}
 }
@@ -107,5 +121,34 @@ func run(t *testing.T, dir string, args ...string) {
 	cmd.Dir = dir
 	if out, err := cmd.CombinedOutput(); err != nil {
 		t.Fatalf("git %v: %v\n%s", args, err, out)
+	}
+}
+
+// TestEnsureWorktree_TokenNeverLandsInGitConfig is the regression guard for
+// the cross-tenant escalation: the worktree is bind-mounted into a per-org
+// code-server, so anything git persists under .git/ is readable by an org
+// author. A credentialed clone URL would hand them the Gitea service-account
+// token, which can write the INSTANCE repo.
+func TestEnsureWorktree_TokenNeverLandsInGitConfig(t *testing.T) {
+	remote := t.TempDir()
+	run(t, remote, "init", "-q", "--initial-branch=main", ".")
+	if err := os.WriteFile(filepath.Join(remote, "cluster.yaml"), []byte("provider:\n  use: docker\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	run(t, remote, "add", ".")
+	run(t, remote, "-c", "user.email=t@t.io", "-c", "user.name=t", "commit", "-m", "init")
+
+	dest := filepath.Join(t.TempDir(), "acme")
+	if _, err := EnsureWorktree(context.Background(), remote, "sekret-token", dest); err != nil {
+		t.Fatalf("ensure worktree: %v", err)
+	}
+	for _, p := range []string{".git/config", ".git/logs/HEAD", ".git/FETCH_HEAD"} {
+		b, err := os.ReadFile(filepath.Join(dest, p))
+		if err != nil {
+			continue // not every file exists after a local clone
+		}
+		if contains(string(b), "sekret-token") {
+			t.Fatalf("token persisted into %s", p)
+		}
 	}
 }

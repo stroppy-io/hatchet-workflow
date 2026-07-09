@@ -66,26 +66,23 @@ func TestGatewayIdeRouteNotFoundWhenBackendUnconfigured(t *testing.T) {
 	}
 }
 
-func TestGatewayRoutesIdeTrafficWhenAuthorizerNil(t *testing.T) {
-	var called bool
+func TestGatewayRefusesIdeBackendWithoutAuthorizer(t *testing.T) {
+	// /ide/* proxies into a code-server holding a live worktree of a catalog
+	// repo. Serving it with no authorizer would let any caller author any
+	// org's (or the instance's) bundles, so New must refuse to start rather
+	// than fall open. The previous test here asserted the opposite and
+	// enshrined the hole as a "dev/test convention".
 	backend := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		called = true
-		w.WriteHeader(http.StatusNoContent)
+		t.Fatal("backend must never be reached without an authorizer")
 	}))
 	defer backend.Close()
 
-	g, err := New(Config{TemporalHostPort: "127.0.0.1:0", IdeBackend: backend.URL})
-	if err != nil {
-		t.Fatalf("new gateway: %v", err)
+	_, err := New(Config{TemporalHostPort: "127.0.0.1:0", IdeBackend: backend.URL})
+	if err == nil {
+		t.Fatal("expected New to fail closed when IdeBackend is set without IdeAuthorizer")
 	}
-
-	rec := httptest.NewRecorder()
-	g.serveHTTP(rec, httptest.NewRequest(http.MethodGet, "/ide/org/acme/", nil))
-	if !called {
-		t.Fatal("expected backend to be called when IdeAuthorizer is nil (dev/test convention)")
-	}
-	if got, want := rec.Code, http.StatusNoContent; got != want {
-		t.Fatalf("status = %d, want %d", got, want)
+	if !strings.Contains(err.Error(), "without IdeAuthorizer") {
+		t.Fatalf("unexpected error: %v", err)
 	}
 }
 

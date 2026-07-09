@@ -184,12 +184,12 @@ func (m *Manager) EnsureRunning(ctx context.Context, scope Scope) (string, error
 	if err != nil {
 		return "", err
 	}
-	remote, err := RemoteURL(m.giteaBaseURL, m.giteaToken, owner, repo)
+	remote, err := RemoteURL(m.giteaBaseURL, owner, repo)
 	if err != nil {
 		return "", fmt.Errorf("ide: remote url: %w", err)
 	}
 	dest := m.worktreeDir(scope.Key())
-	if _, err := EnsureWorktree(ctx, remote, dest); err != nil {
+	if _, err := EnsureWorktree(ctx, remote, m.giteaToken, dest); err != nil {
 		return "", fmt.Errorf("ide: materialize worktree for %q: %w", scope.Key(), err)
 	}
 
