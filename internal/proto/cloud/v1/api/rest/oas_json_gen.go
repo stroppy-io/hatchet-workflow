@@ -2727,7 +2727,9 @@ func (s CompiledJobResolvedInputs) encodeFields(e *jx.Encoder) {
 	for k, elem := range s {
 		e.FieldStart(k)
 
-		e.Str(elem)
+		if len(elem) != 0 {
+			e.Raw(elem)
+		}
 	}
 }
 
@@ -2738,10 +2740,10 @@ func (s *CompiledJobResolvedInputs) Decode(d *jx.Decoder) error {
 	}
 	m := s.init()
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
-		var elem string
+		var elem jx.Raw
 		if err := func() error {
-			v, err := d.Str()
-			elem = string(v)
+			v, err := d.RawAppend(nil)
+			elem = jx.Raw(v)
 			if err != nil {
 				return err
 			}

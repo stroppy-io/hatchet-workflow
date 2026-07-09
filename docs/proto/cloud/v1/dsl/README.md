@@ -175,11 +175,10 @@ go_name: OnGroup</pre></td>
 <td>resolved_inputs</td>
 <td><a href="#cloud-v1-dsl-compiledjob-resolvedinputsentry">cloud.v1.dsl.CompiledJob.ResolvedInputsEntry</a></td>
 <td><pre>
-resolved_inputs are the component's scalar inputs (int/string/bool)
-resolved at compile time, bound as CEL `inputs.<name>` at runtime.
-Values are the stringified scalar; the runtime rebinds them typed via
-the component's InputSpec if needed (v1: string-typed dyn). Empty for
-a job that did not originate from an include component.<br>
+resolved_inputs are the component's scalar inputs (int/string/bool),
+typed, resolved at compile time, bound as CEL `inputs.<name>` at
+runtime via google.protobuf.Value.AsInterface(). Empty for a job that
+did not originate from an include component.<br>
 
 json_name: resolvedInputs
 go_name: ResolvedInputs</pre></td>
@@ -294,7 +293,7 @@ json_name: key
 go_name: Key</pre></td>
 </tr><tr>
 <td>value</td>
-<td>string</td>
+<td><a href="../../../google/protobuf/README.md#google-protobuf-value">google.protobuf.Value</a></td>
 <td><pre>
 json_name: value
 go_name: Value</pre></td>

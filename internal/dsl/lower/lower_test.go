@@ -317,10 +317,11 @@ func findJob(t *testing.T, plan *dslpb.CompiledPlan, id string) *dslpb.CompiledJ
 // job-name prefix, e.g. "ha/install" for a component instantiated as job
 // "ha" — see include.BoundComponent's godoc) gets its resolved_inputs/
 // input_groups/target_group filled from that BoundComponent — scalar inputs
-// (Type != "machine_group") stringified into resolved_inputs, the sole
-// machine_group input's bound group name into both input_groups and
-// target_group. A job with no matching BoundComponent (never produced by an
-// `include:` job) gets all three left zero.
+// (Type != "machine_group") typed into resolved_inputs as a
+// google.protobuf.Value, the sole machine_group input's bound group name
+// into both input_groups and target_group. A job with no matching
+// BoundComponent (never produced by an `include:` job) gets all three left
+// zero.
 func TestLowerFillsResolvedInputsAndTargetGroupFromBoundComponent(t *testing.T) {
 	jobs := map[string]ast.Job{
 		"ha/install": {On: "db", Steps: []ast.Step{{Cmd: "ha-install"}}},
@@ -352,8 +353,8 @@ func TestLowerFillsResolvedInputsAndTargetGroupFromBoundComponent(t *testing.T) 
 	if got := haJob.GetTargetGroup(); got != "db" {
 		t.Fatalf("target_group = %q, want %q", got, "db")
 	}
-	if got := haJob.GetResolvedInputs()["count"]; got != "3" {
-		t.Fatalf("resolved_inputs[count] = %q, want %q", got, "3")
+	if got := haJob.GetResolvedInputs()["count"].GetNumberValue(); got != 3 {
+		t.Fatalf("resolved_inputs[count] = %v, want %v", got, 3)
 	}
 
 	topJob := findJob(t, plan, "top")

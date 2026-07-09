@@ -959,12 +959,12 @@ func (s *CompiledJobMatrix) init() CompiledJobMatrix {
 	return m
 }
 
-type CompiledJobResolvedInputs map[string]string
+type CompiledJobResolvedInputs map[string]jx.Raw
 
 func (s *CompiledJobResolvedInputs) init() CompiledJobResolvedInputs {
 	m := *s
 	if m == nil {
-		m = map[string]string{}
+		m = map[string]jx.Raw{}
 		*s = m
 	}
 	return m

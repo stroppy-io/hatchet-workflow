@@ -345,8 +345,7 @@ components:
                 onGroup:
                     type: string
                 resolvedInputs:
-                    additionalProperties:
-                        type: string
+                    additionalProperties: {}
                     type: object
                 service:
                     type: string

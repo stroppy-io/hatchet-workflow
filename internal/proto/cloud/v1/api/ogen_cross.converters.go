@@ -613,22 +613,19 @@ func CompiledJobToOgen(src *dsl.CompiledJob) (*rest.CompiledJob, error) {
 		return string(v)
 	})
 	dst.With.SetTo(c3)
-	c4 := convert.Map(src.GetResolvedInputs(), func(v string) string {
+	// ResolvedInputs: unsupported type, skipped
+	c4 := convert.Map(src.GetInputGroups(), func(v string) string {
 		return string(v)
 	})
-	dst.ResolvedInputs.SetTo(c4)
-	c5 := convert.Map(src.GetInputGroups(), func(v string) string {
-		return string(v)
-	})
-	dst.InputGroups.SetTo(c5)
+	dst.InputGroups.SetTo(c4)
 	dst.TargetGroup.SetTo(string(src.GetTargetGroup()))
 	switch src.GetAction().(type) {
 	case *dsl.CompiledJob_Steps:
-		o6, err := StepListToOgen(src.GetSteps())
+		o5, err := StepListToOgen(src.GetSteps())
 		if err != nil {
 			return nil, err
 		}
-		dst.Steps.SetTo(*o6)
+		dst.Steps.SetTo(*o5)
 	case *dsl.CompiledJob_Service:
 		dst.Service.SetTo(string(src.GetService()))
 	}
@@ -666,30 +663,25 @@ func CompiledJobFromOgen(src *rest.CompiledJob) (*dsl.CompiledJob, error) {
 		})
 		dst.With = c8
 	}
-	if mv9, ok := src.ResolvedInputs.Get(); ok {
+	// ResolvedInputs: unsupported type, skipped
+	if mv9, ok := src.InputGroups.Get(); ok {
 		c10 := convert.Map(mv9, func(v string) string {
 			return string(v)
 		})
-		dst.ResolvedInputs = c10
+		dst.InputGroups = c10
 	}
-	if mv11, ok := src.InputGroups.Get(); ok {
-		c12 := convert.Map(mv11, func(v string) string {
-			return string(v)
-		})
-		dst.InputGroups = c12
+	if v11, ok := src.TargetGroup.Get(); ok {
+		dst.TargetGroup = string(v11)
 	}
-	if v13, ok := src.TargetGroup.Get(); ok {
-		dst.TargetGroup = string(v13)
-	}
-	if v14, ok := src.Steps.Get(); ok {
-		m15, err := StepListFromOgen(&v14)
+	if v12, ok := src.Steps.Get(); ok {
+		m13, err := StepListFromOgen(&v12)
 		if err != nil {
 			return nil, err
 		}
-		dst.Action = &dsl.CompiledJob_Steps{Steps: m15}
+		dst.Action = &dsl.CompiledJob_Steps{Steps: m13}
 	}
-	if v16, ok := src.Service.Get(); ok {
-		dst.Action = &dsl.CompiledJob_Service{Service: string(v16)}
+	if v14, ok := src.Service.Get(); ok {
+		dst.Action = &dsl.CompiledJob_Service{Service: string(v14)}
 	}
 	return dst, nil
 }

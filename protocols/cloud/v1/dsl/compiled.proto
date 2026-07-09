@@ -3,6 +3,7 @@ syntax = "proto3";
 package cloud.v1.dsl;
 
 import "cloud/v1/deployment/plan.proto";
+import "google/protobuf/struct.proto";
 
 option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dsl";
 
@@ -72,12 +73,11 @@ message CompiledJob {
         string service = 11;
     }
     map<string, string> with = 6;
-    // resolved_inputs are the component's scalar inputs (int/string/bool)
-    // resolved at compile time, bound as CEL `inputs.<name>` at runtime.
-    // Values are the stringified scalar; the runtime rebinds them typed via
-    // the component's InputSpec if needed (v1: string-typed dyn). Empty for
-    // a job that did not originate from an include component.
-    map<string, string> resolved_inputs = 7;
+    // resolved_inputs are the component's scalar inputs (int/string/bool),
+    // typed, resolved at compile time, bound as CEL `inputs.<name>` at
+    // runtime via google.protobuf.Value.AsInterface(). Empty for a job that
+    // did not originate from an include component.
+    map<string, google.protobuf.Value> resolved_inputs = 7;
     // input_groups maps a machine_group-typed input name → the cluster
     // machine group name it was bound to, so the runtime can bind
     // `inputs.<name>` to that group's MachineGroupView. Empty for a job that

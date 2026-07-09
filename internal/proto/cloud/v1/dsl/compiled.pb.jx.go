@@ -7,6 +7,7 @@ import (
 	jx "github.com/go-faster/jx"
 	jxpb "github.com/gopherex/protoc-gen-go-jx/jxpb"
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
+	structpb "google.golang.org/protobuf/types/known/structpb"
 )
 
 func (m *CompiledPlan) Encode(e *jx.Encoder) {
@@ -791,7 +792,7 @@ func (m *CompiledJob) Encode(e *jx.Encoder) {
 		e.ObjStart()
 		for k, v := range m.ResolvedInputs {
 			e.FieldStart(k)
-			e.Str(v)
+			jxpb.EncValue(e, v)
 		}
 		e.ObjEnd()
 	}
@@ -934,16 +935,15 @@ func (m *CompiledJob) Decode(d *jx.Decoder) error {
 				return d.Null()
 			}
 			if m.ResolvedInputs == nil {
-				m.ResolvedInputs = make(map[string]string)
+				m.ResolvedInputs = make(map[string]*structpb.Value)
 			}
 			return d.Obj(func(d *jx.Decoder, ks string) error {
 				mk := ks
-				var mv string
-				tv, err := d.Str()
-				if err != nil {
+				var mv *structpb.Value
+				mv = &structpb.Value{}
+				if err := jxpb.DecValue(d, mv); err != nil {
 					return err
 				}
-				mv = tv
 				m.ResolvedInputs[mk] = mv
 				return nil
 			})

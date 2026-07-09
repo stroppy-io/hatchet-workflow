@@ -25,6 +25,8 @@ import (
 	"strings"
 	"time"
 
+	"google.golang.org/protobuf/types/known/structpb"
+
 	"github.com/stroppy-io/stroppy-cloud/internal/dsl/ast"
 	"github.com/stroppy-io/stroppy-cloud/internal/dsl/graph"
 	"github.com/stroppy-io/stroppy-cloud/internal/dsl/include"
@@ -287,17 +289,19 @@ func lowerJob(name string, job ast.Job, components []include.BoundComponent) (*d
 // `include:`) yields all three zero values, matching the brief's "jobs not
 // from a component -> all three empty".
 //
-// resolvedInputs holds every scalar (non machine_group) input, stringified
-// via fmt.Sprint; inputGroups holds every machine_group input's bound group
-// name; targetGroup is that single group name when the component declares
-// exactly one machine_group input, else "" (0 or >1).
-func jobInputFields(jobID string, components []include.BoundComponent) (resolvedInputs, inputGroups map[string]string, targetGroup string) {
+// resolvedInputs holds every scalar (non machine_group) input as a typed
+// google.protobuf.Value (structpb.NewValue of the Go value include.Resolve
+// bound — int/string/bool per include.checkInputType); inputGroups holds
+// every machine_group input's bound group name; targetGroup is that single
+// group name when the component declares exactly one machine_group input,
+// else "" (0 or >1).
+func jobInputFields(jobID string, components []include.BoundComponent) (resolvedInputs map[string]*structpb.Value, inputGroups map[string]string, targetGroup string) {
 	bc := componentForJob(baseJobName(jobID), components)
 	if bc == nil {
 		return nil, nil, ""
 	}
 
-	resolvedInputs = map[string]string{}
+	resolvedInputs = map[string]*structpb.Value{}
 	inputGroups = map[string]string{}
 	for inputName, spec := range bc.Doc.Inputs {
 		val, has := bc.Inputs[inputName]
@@ -310,7 +314,15 @@ func jobInputFields(jobID string, components []include.BoundComponent) (resolved
 			}
 			continue
 		}
-		resolvedInputs[inputName] = fmt.Sprint(val)
+		v, err := structpb.NewValue(val)
+		if err != nil {
+			// Unrepresentable scalar (should not happen for the int/string/
+			// bool types checkInputType binds) — skip rather than fail the
+			// whole job, matching this function's existing permissive
+			// contract.
+			continue
+		}
+		resolvedInputs[inputName] = v
 	}
 
 	if len(inputGroups) == 1 {

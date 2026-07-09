@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/mock"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/testsuite"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	stroppyagent "github.com/stroppy-io/stroppy-cloud/internal/agent"
 	deploymentbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/deployment"
@@ -497,13 +498,9 @@ func TestExecuteCompiledPlanWorkflowInputsGroupBinding(t *testing.T) {
 }
 
 // TestExecuteCompiledPlanWorkflowScalarInputInterpolation locks the scalar
-// half of I1: CompiledJob.ResolvedInputs binds `inputs.<name>` as a string,
-// so `${{ inputs.count }}` interpolation resolves — but (documented
-// limitation, see baseJobVars) a `when:` comparing a scalar input against a
-// number is NOT exercised here because it does not work at runtime (CEL
-// compares the bound string to an int and errors); this test only asserts
-// the interpolation case that graph.Validate and the runtime actually agree
-// on.
+// half of I1: CompiledJob.ResolvedInputs binds `inputs.<name>` as a typed
+// google.protobuf.Value, so `${{ inputs.count }}` interpolation resolves to
+// the scalar's formatted value (see interpolateString/fmt.Sprintf("%v", ...)).
 func TestExecuteCompiledPlanWorkflowScalarInputInterpolation(t *testing.T) {
 	var suite testsuite.WorkflowTestSuite
 	env := suite.NewTestWorkflowEnvironment()
@@ -526,7 +523,7 @@ func TestExecuteCompiledPlanWorkflowScalarInputInterpolation(t *testing.T) {
 			{
 				Id:             "use-count",
 				OnGroup:        "app",
-				ResolvedInputs: map[string]string{"count": "3"},
+				ResolvedInputs: map[string]*structpb.Value{"count": structpb.NewNumberValue(3)},
 				Action: &dslpb.CompiledJob_Steps{Steps: &dslpb.StepList{Steps: []*dslpb.DslStep{
 					{Step: &dslpb.DslStep_Agent{Agent: deploymentbuilder.CallCmdStep(
 						"use-count/0", 0, "echo ${{ inputs.count }}",
@@ -565,6 +562,76 @@ func TestExecuteCompiledPlanWorkflowScalarInputInterpolation(t *testing.T) {
 
 	if !strings.Contains(capturedScript, "echo 3") {
 		t.Fatalf("resolved script = %q, want it to contain the interpolated scalar input %q", capturedScript, "echo 3")
+	}
+}
+
+// TestExecuteCompiledPlanWorkflowScalarInputWhenComparison exercises the I1
+// fix directly: a `when:` comparing a typed int-valued scalar input against
+// a number now evaluates instead of erroring (the old KNOWN LIMITATION —
+// see baseJobVars' pre-fix doc — was CEL comparing a stringified "3" to an
+// int 0). ResolvedInputs now carries a google.protobuf.Value NumberValue, so
+// `when: inputs.count > 0` is true and the job runs.
+func TestExecuteCompiledPlanWorkflowScalarInputWhenComparison(t *testing.T) {
+	var suite testsuite.WorkflowTestSuite
+	env := suite.NewTestWorkflowEnvironment()
+	RegisterWorkflows(env)
+	registerCompiledPlanActivityStubs(env)
+
+	var ran bool
+	env.OnActivity(workflowpb.CallCmdActivityActivityName, mock.Anything, mock.Anything).Return(
+		func(_ context.Context, _ *common.Cmd) (*common.Cmd_Result, error) {
+			ran = true
+			return &common.Cmd_Result{ExitCode: 0}, nil
+		},
+	)
+
+	plan := &dslpb.CompiledPlan{
+		MachineGroups: []*dslpb.MachineGroup{
+			{Name: "app", Count: 1, Cpu: 2, RamMb: 2048},
+		},
+		Jobs: []*dslpb.CompiledJob{
+			{
+				Id:             "use-count-when",
+				OnGroup:        "app",
+				When:           "inputs.count > 0",
+				ResolvedInputs: map[string]*structpb.Value{"count": structpb.NewNumberValue(3)},
+				Action: &dslpb.CompiledJob_Steps{Steps: &dslpb.StepList{Steps: []*dslpb.DslStep{
+					{Step: &dslpb.DslStep_Agent{Agent: deploymentbuilder.CallCmdStep(
+						"use-count-when/0", 0, "true",
+					)}},
+				}}},
+			},
+		},
+	}
+
+	input := &ExecuteCompiledPlanInput{
+		Plan: plan,
+		Machines: map[string][]*deploymentpb.MachineState{
+			"app": {machineState("app-1", "10.0.0.1")},
+		},
+		Bootstrap: &workflowpb.AgentBootstrap{
+			AgentTaskQueues: map[string]string{"app-1": "tq-app-1"},
+		},
+	}
+
+	env.ExecuteWorkflow(ExecuteCompiledPlanWorkflowName, input)
+
+	if !env.IsWorkflowCompleted() {
+		t.Fatal("workflow did not complete")
+	}
+	if err := env.GetWorkflowError(); err != nil {
+		t.Fatalf("workflow failed: %v", err)
+	}
+
+	var resp ExecuteCompiledPlanOutput
+	if err := env.GetWorkflowResult(&resp); err != nil {
+		t.Fatalf("get workflow result: %v", err)
+	}
+	if got := resp.JobStatuses["use-count-when"]; got != jobStatusOK {
+		t.Fatalf("job status = %q, want %q", got, jobStatusOK)
+	}
+	if !ran {
+		t.Fatal("job's when-gated step did not run; typed numeric comparison did not evaluate")
 	}
 }
 

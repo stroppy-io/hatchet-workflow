@@ -271,31 +271,31 @@ func executeCompiledJob(
 //     here.
 //   - `inputs`: the job's resolved component inputs (empty for a job that
 //     did not originate from an include component). Scalar inputs
-//     (CompiledJob.ResolvedInputs) bind as their compile-time-stringified
-//     value; machine_group-typed inputs (CompiledJob.InputGroups) bind as
+//     (CompiledJob.ResolvedInputs) bind as their compile-time-typed
+//     google.protobuf.Value, converted via Value.AsInterface() into the
+//     matching native Go type (float64/string/bool/nil/[]any/
+//     map[string]any) that cel-go's default type adapter recognizes;
+//     machine_group-typed inputs (CompiledJob.InputGroups) bind as
 //     the referenced group's expr.MachineGroupView, built by groupView from
 //     the SAME groupsBinding `machines` uses — so `inputs.nodes` and
 //     `machines.<group>` are identical views for the same group, and
 //     `inputs.nodes.machines[0].ip` resolves exactly as graph.Validate
 //     typechecked it (expr.ComponentEnv declares inputs as
-//     map[string]dyn, so a string next to a native MachineGroupView value in
-//     the same map is legal).
+//     map[string]dyn, so a native scalar next to a native MachineGroupView
+//     value in the same map is legal).
 //   - `target`: the target_group's expr.MachineGroupView, left UNBOUND when
 //     CompiledJob.TargetGroup is empty (a component with zero or multiple
 //     machine_group inputs — see its doc). An expression referencing
 //     `target` on such a job was never accepted by graph.Validate in the
 //     first place, so there is nothing to bind it to.
 //
-// Scalar inputs are string-typed at runtime (see ResolvedInputs' doc):
-// `${{ inputs.count }}` interpolates fine, but a `when: inputs.count > 0`
-// against an int-typed InputSpec is a KNOWN LIMITATION — CEL compares the
-// bound string "3" to the int 0 and errors at eval time (job fails, not a
-// workflow panic — see evaluateWhen), even though expr.ComponentEnv's dyn
-// typing let it pass Task 1's compile-time check. CompiledJob does not carry
-// per-input types, so v1 does not attempt to rebind scalars by their
-// InputSpec kind; recipes must treat scalar inputs as strings (interpolate
-// or compare as strings) until a future task threads input types through to
-// the runtime.
+// Scalar inputs are typed at runtime (see ResolvedInputs' doc): both
+// `${{ inputs.count }}` interpolation and a `when: inputs.count > 0` against
+// an int-typed InputSpec work — CompiledJob.ResolvedInputs carries a
+// google.protobuf.Value per scalar input, and AsInterface() converts it to
+// the native Go type (float64/string/bool/...) cel-go's default type
+// adapter binds correctly, matching what expr.ComponentEnv's dyn typing
+// already let Task 1's compile-time check assume.
 func baseJobVars(job *dslpb.CompiledJob, groupsBinding map[string]any) map[string]any {
 	matrixBinding := job.GetMatrix()
 	if matrixBinding == nil {
@@ -304,7 +304,7 @@ func baseJobVars(job *dslpb.CompiledJob, groupsBinding map[string]any) map[strin
 
 	inputs := make(map[string]any, len(job.GetResolvedInputs())+len(job.GetInputGroups()))
 	for name, val := range job.GetResolvedInputs() {
-		inputs[name] = val
+		inputs[name] = val.AsInterface()
 	}
 	for name, group := range job.GetInputGroups() {
 		inputs[name] = groupView(groupsBinding, group)

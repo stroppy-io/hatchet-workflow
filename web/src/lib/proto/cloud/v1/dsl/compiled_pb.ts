@@ -6,13 +6,15 @@ import type { GenFile, GenMessage } from "@bufbuild/protobuf/codegenv2";
 import { fileDesc, messageDesc } from "@bufbuild/protobuf/codegenv2";
 import type { AgentStep, AgentStepJson } from "../deployment/plan_pb.ts";
 import { file_cloud_v1_deployment_plan } from "../deployment/plan_pb.ts";
+import type { Value, ValueJson } from "@bufbuild/protobuf/wkt";
+import { file_google_protobuf_struct } from "@bufbuild/protobuf/wkt";
 import type { Message } from "@bufbuild/protobuf";
 
 /**
  * Describes the file cloud/v1/dsl/compiled.proto.
  */
 export const file_cloud_v1_dsl_compiled: GenFile = /*@__PURE__*/
-  fileDesc("ChtjbG91ZC92MS9kc2wvY29tcGlsZWQucHJvdG8SDGNsb3VkLnYxLmRzbCLFAQoMQ29tcGlsZWRQbGFuEisKCHByb3ZpZGVyGAEgASgLMhkuY2xvdWQudjEuZHNsLlByb3ZpZGVyUmVmEjIKDm1hY2hpbmVfZ3JvdXBzGAIgAygLMhouY2xvdWQudjEuZHNsLk1hY2hpbmVHcm91cBIrCghzZXJ2aWNlcxgDIAMoCzIZLmNsb3VkLnYxLmRzbC5TZXJ2aWNlU3BlYxInCgRqb2JzGAQgAygLMhkuY2xvdWQudjEuZHNsLkNvbXBpbGVkSm9iIjAKC1Byb3ZpZGVyUmVmEgwKBG5hbWUYASABKAkSEwoLcGFyYW1zX2pzb24YAiABKAkigQEKDE1hY2hpbmVHcm91cBIMCgRuYW1lGAEgASgJEg0KBWNvdW50GAIgASgNEgsKA2NwdRgDIAEoDRIOCgZyYW1fbWIYBCABKAQSJQoFZGlza3MYBSADKAsyFi5jbG91ZC52MS5kc2wuRGlza1NwZWMSEAoIZXh0X2pzb24YBiABKAkiKQoIRGlza1NwZWMSDwoHc2l6ZV9nYhgBIAEoBBIMCgR0eXBlGAIgASgJIpECCgtTZXJ2aWNlU3BlYxIMCgRuYW1lGAEgASgJEhAKCG9uX2dyb3VwGAIgASgJEg0KBWltYWdlGAMgASgJEg8KB25ldHdvcmsYBCABKAkSDwoHdm9sdW1lcxgFIAMoCRIvCgNlbnYYBiADKAsyIi5jbG91ZC52MS5kc2wuU2VydmljZVNwZWMuRW52RW50cnkSKQoHY29uZmlncxgHIAMoCzIYLmNsb3VkLnYxLmRzbC5Db25maWdGaWxlEikKBmhlYWx0aBgIIAEoCzIZLmNsb3VkLnYxLmRzbC5IZWFsdGhDaGVjaxoqCghFbnZFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIjEKCkNvbmZpZ0ZpbGUSFQoNdGVtcGxhdGVfcGF0aBgBIAEoCRIMCgRkZXN0GAIgASgJIiwKC0hlYWx0aENoZWNrEgwKBGh0dHAYASABKAkSDwoHdGltZW91dBgCIAEoCSLfBAoLQ29tcGlsZWRKb2ISCgoCaWQYASABKAkSDQoFbmVlZHMYAiADKAkSEAoIb25fZ3JvdXAYAyABKAkSNQoGbWF0cml4GAQgAygLMiUuY2xvdWQudjEuZHNsLkNvbXBpbGVkSm9iLk1hdHJpeEVudHJ5EgwKBHdoZW4YBSABKAkSJwoFc3RlcHMYCiABKAsyFi5jbG91ZC52MS5kc2wuU3RlcExpc3RIABIRCgdzZXJ2aWNlGAsgASgJSAASMQoEd2l0aBgGIAMoCzIjLmNsb3VkLnYxLmRzbC5Db21waWxlZEpvYi5XaXRoRW50cnkSRgoPcmVzb2x2ZWRfaW5wdXRzGAcgAygLMi0uY2xvdWQudjEuZHNsLkNvbXBpbGVkSm9iLlJlc29sdmVkSW5wdXRzRW50cnkSQAoMaW5wdXRfZ3JvdXBzGAggAygLMiouY2xvdWQudjEuZHNsLkNvbXBpbGVkSm9iLklucHV0R3JvdXBzRW50cnkSFAoMdGFyZ2V0X2dyb3VwGAkgASgJGi0KC01hdHJpeEVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEaKwoJV2l0aEVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEaNQoTUmVzb2x2ZWRJbnB1dHNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBGjIKEElucHV0R3JvdXBzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4AUIICgZhY3Rpb24iMAoIU3RlcExpc3QSJAoFc3RlcHMYASADKAsyFS5jbG91ZC52MS5kc2wuRHNsU3RlcCJqCgdEc2xTdGVwEi8KBWFnZW50GAEgASgLMh4uY2xvdWQudjEuZGVwbG95bWVudC5BZ2VudFN0ZXBIABImCgR3YWl0GAIgASgLMhYuY2xvdWQudjEuZHNsLldhaXRTdGVwSABCBgoEc3RlcCIpCghXYWl0U3RlcBIMCgRodHRwGAEgASgJEg8KB3RpbWVvdXQYAiABKAlCQVo/Z2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvZHNsYgZwcm90bzM", [file_cloud_v1_deployment_plan]);
+  fileDesc("ChtjbG91ZC92MS9kc2wvY29tcGlsZWQucHJvdG8SDGNsb3VkLnYxLmRzbCLFAQoMQ29tcGlsZWRQbGFuEisKCHByb3ZpZGVyGAEgASgLMhkuY2xvdWQudjEuZHNsLlByb3ZpZGVyUmVmEjIKDm1hY2hpbmVfZ3JvdXBzGAIgAygLMhouY2xvdWQudjEuZHNsLk1hY2hpbmVHcm91cBIrCghzZXJ2aWNlcxgDIAMoCzIZLmNsb3VkLnYxLmRzbC5TZXJ2aWNlU3BlYxInCgRqb2JzGAQgAygLMhkuY2xvdWQudjEuZHNsLkNvbXBpbGVkSm9iIjAKC1Byb3ZpZGVyUmVmEgwKBG5hbWUYASABKAkSEwoLcGFyYW1zX2pzb24YAiABKAkigQEKDE1hY2hpbmVHcm91cBIMCgRuYW1lGAEgASgJEg0KBWNvdW50GAIgASgNEgsKA2NwdRgDIAEoDRIOCgZyYW1fbWIYBCABKAQSJQoFZGlza3MYBSADKAsyFi5jbG91ZC52MS5kc2wuRGlza1NwZWMSEAoIZXh0X2pzb24YBiABKAkiKQoIRGlza1NwZWMSDwoHc2l6ZV9nYhgBIAEoBBIMCgR0eXBlGAIgASgJIpECCgtTZXJ2aWNlU3BlYxIMCgRuYW1lGAEgASgJEhAKCG9uX2dyb3VwGAIgASgJEg0KBWltYWdlGAMgASgJEg8KB25ldHdvcmsYBCABKAkSDwoHdm9sdW1lcxgFIAMoCRIvCgNlbnYYBiADKAsyIi5jbG91ZC52MS5kc2wuU2VydmljZVNwZWMuRW52RW50cnkSKQoHY29uZmlncxgHIAMoCzIYLmNsb3VkLnYxLmRzbC5Db25maWdGaWxlEikKBmhlYWx0aBgIIAEoCzIZLmNsb3VkLnYxLmRzbC5IZWFsdGhDaGVjaxoqCghFbnZFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAk6AjgBIjEKCkNvbmZpZ0ZpbGUSFQoNdGVtcGxhdGVfcGF0aBgBIAEoCRIMCgRkZXN0GAIgASgJIiwKC0hlYWx0aENoZWNrEgwKBGh0dHAYASABKAkSDwoHdGltZW91dBgCIAEoCSL3BAoLQ29tcGlsZWRKb2ISCgoCaWQYASABKAkSDQoFbmVlZHMYAiADKAkSEAoIb25fZ3JvdXAYAyABKAkSNQoGbWF0cml4GAQgAygLMiUuY2xvdWQudjEuZHNsLkNvbXBpbGVkSm9iLk1hdHJpeEVudHJ5EgwKBHdoZW4YBSABKAkSJwoFc3RlcHMYCiABKAsyFi5jbG91ZC52MS5kc2wuU3RlcExpc3RIABIRCgdzZXJ2aWNlGAsgASgJSAASMQoEd2l0aBgGIAMoCzIjLmNsb3VkLnYxLmRzbC5Db21waWxlZEpvYi5XaXRoRW50cnkSRgoPcmVzb2x2ZWRfaW5wdXRzGAcgAygLMi0uY2xvdWQudjEuZHNsLkNvbXBpbGVkSm9iLlJlc29sdmVkSW5wdXRzRW50cnkSQAoMaW5wdXRfZ3JvdXBzGAggAygLMiouY2xvdWQudjEuZHNsLkNvbXBpbGVkSm9iLklucHV0R3JvdXBzRW50cnkSFAoMdGFyZ2V0X2dyb3VwGAkgASgJGi0KC01hdHJpeEVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEaKwoJV2l0aEVudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoCToCOAEaTQoTUmVzb2x2ZWRJbnB1dHNFbnRyeRILCgNrZXkYASABKAkSJQoFdmFsdWUYAiABKAsyFi5nb29nbGUucHJvdG9idWYuVmFsdWU6AjgBGjIKEElucHV0R3JvdXBzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgJOgI4AUIICgZhY3Rpb24iMAoIU3RlcExpc3QSJAoFc3RlcHMYASADKAsyFS5jbG91ZC52MS5kc2wuRHNsU3RlcCJqCgdEc2xTdGVwEi8KBWFnZW50GAEgASgLMh4uY2xvdWQudjEuZGVwbG95bWVudC5BZ2VudFN0ZXBIABImCgR3YWl0GAIgASgLMhYuY2xvdWQudjEuZHNsLldhaXRTdGVwSABCBgoEc3RlcCIpCghXYWl0U3RlcBIMCgRodHRwGAEgASgJEg8KB3RpbWVvdXQYAiABKAlCQVo/Z2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvZHNsYgZwcm90bzM", [file_cloud_v1_deployment_plan, file_google_protobuf_struct]);
 
 /**
  * CompiledPlan — результат компиляции DSL-бандла: запрос машин провайдеру,
@@ -485,15 +487,14 @@ export type CompiledJob = Message<"cloud.v1.dsl.CompiledJob"> & {
   with: { [key: string]: string };
 
   /**
-   * resolved_inputs are the component's scalar inputs (int/string/bool)
-   * resolved at compile time, bound as CEL `inputs.<name>` at runtime.
-   * Values are the stringified scalar; the runtime rebinds them typed via
-   * the component's InputSpec if needed (v1: string-typed dyn). Empty for
-   * a job that did not originate from an include component.
+   * resolved_inputs are the component's scalar inputs (int/string/bool),
+   * typed, resolved at compile time, bound as CEL `inputs.<name>` at
+   * runtime via google.protobuf.Value.AsInterface(). Empty for a job that
+   * did not originate from an include component.
    *
-   * @generated from field: map<string, string> resolved_inputs = 7;
+   * @generated from field: map<string, google.protobuf.Value> resolved_inputs = 7;
    */
-  resolvedInputs: { [key: string]: string };
+  resolvedInputs: { [key: string]: Value };
 
   /**
    * input_groups maps a machine_group-typed input name → the cluster
@@ -567,15 +568,14 @@ export type CompiledJobJson = {
   with?: { [key: string]: string };
 
   /**
-   * resolved_inputs are the component's scalar inputs (int/string/bool)
-   * resolved at compile time, bound as CEL `inputs.<name>` at runtime.
-   * Values are the stringified scalar; the runtime rebinds them typed via
-   * the component's InputSpec if needed (v1: string-typed dyn). Empty for
-   * a job that did not originate from an include component.
+   * resolved_inputs are the component's scalar inputs (int/string/bool),
+   * typed, resolved at compile time, bound as CEL `inputs.<name>` at
+   * runtime via google.protobuf.Value.AsInterface(). Empty for a job that
+   * did not originate from an include component.
    *
-   * @generated from field: map<string, string> resolved_inputs = 7;
+   * @generated from field: map<string, google.protobuf.Value> resolved_inputs = 7;
    */
-  resolvedInputs?: { [key: string]: string };
+  resolvedInputs?: { [key: string]: ValueJson };
 
   /**
    * input_groups maps a machine_group-typed input name → the cluster

@@ -10,6 +10,7 @@ import (
 	deployment "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	protoreflect "google.golang.org/protobuf/reflect/protoreflect"
 	protoimpl "google.golang.org/protobuf/runtime/protoimpl"
+	structpb "google.golang.org/protobuf/types/known/structpb"
 	reflect "reflect"
 	sync "sync"
 	unsafe "unsafe"
@@ -502,12 +503,11 @@ type CompiledJob struct {
 	//	*CompiledJob_Service
 	Action isCompiledJob_Action `protobuf_oneof:"action"`
 	With   map[string]string    `protobuf:"bytes,6,rep,name=with,proto3" json:"with,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
-	// resolved_inputs are the component's scalar inputs (int/string/bool)
-	// resolved at compile time, bound as CEL `inputs.<name>` at runtime.
-	// Values are the stringified scalar; the runtime rebinds them typed via
-	// the component's InputSpec if needed (v1: string-typed dyn). Empty for
-	// a job that did not originate from an include component.
-	ResolvedInputs map[string]string `protobuf:"bytes,7,rep,name=resolved_inputs,json=resolvedInputs,proto3" json:"resolved_inputs,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	// resolved_inputs are the component's scalar inputs (int/string/bool),
+	// typed, resolved at compile time, bound as CEL `inputs.<name>` at
+	// runtime via google.protobuf.Value.AsInterface(). Empty for a job that
+	// did not originate from an include component.
+	ResolvedInputs map[string]*structpb.Value `protobuf:"bytes,7,rep,name=resolved_inputs,json=resolvedInputs,proto3" json:"resolved_inputs,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
 	// input_groups maps a machine_group-typed input name → the cluster
 	// machine group name it was bound to, so the runtime can bind
 	// `inputs.<name>` to that group's MachineGroupView. Empty for a job that
@@ -619,7 +619,7 @@ func (x *CompiledJob) GetWith() map[string]string {
 	return nil
 }
 
-func (x *CompiledJob) GetResolvedInputs() map[string]string {
+func (x *CompiledJob) GetResolvedInputs() map[string]*structpb.Value {
 	if x != nil {
 		return x.ResolvedInputs
 	}
@@ -839,7 +839,7 @@ var File_cloud_v1_dsl_compiled_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_dsl_compiled_proto_rawDesc = "" +
 	"\n" +
-	"\x1bcloud/v1/dsl/compiled.proto\x12\fcloud.v1.dsl\x1a\x1ecloud/v1/deployment/plan.proto\"\xee\x01\n" +
+	"\x1bcloud/v1/dsl/compiled.proto\x12\fcloud.v1.dsl\x1a\x1ecloud/v1/deployment/plan.proto\x1a\x1cgoogle/protobuf/struct.proto\"\xee\x01\n" +
 	"\fCompiledPlan\x125\n" +
 	"\bprovider\x18\x01 \x01(\v2\x19.cloud.v1.dsl.ProviderRefR\bprovider\x12A\n" +
 	"\x0emachine_groups\x18\x02 \x03(\v2\x1a.cloud.v1.dsl.MachineGroupR\rmachineGroups\x125\n" +
@@ -877,7 +877,7 @@ const file_cloud_v1_dsl_compiled_proto_rawDesc = "" +
 	"\x04dest\x18\x02 \x01(\tR\x04dest\";\n" +
 	"\vHealthCheck\x12\x12\n" +
 	"\x04http\x18\x01 \x01(\tR\x04http\x12\x18\n" +
-	"\atimeout\x18\x02 \x01(\tR\atimeout\"\xf1\x05\n" +
+	"\atimeout\x18\x02 \x01(\tR\atimeout\"\x89\x06\n" +
 	"\vCompiledJob\x12\x0e\n" +
 	"\x02id\x18\x01 \x01(\tR\x02id\x12\x14\n" +
 	"\x05needs\x18\x02 \x03(\tR\x05needs\x12\x19\n" +
@@ -896,10 +896,10 @@ const file_cloud_v1_dsl_compiled_proto_rawDesc = "" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a7\n" +
 	"\tWithEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1aA\n" +
+	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1aY\n" +
 	"\x13ResolvedInputsEntry\x12\x10\n" +
-	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
-	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01\x1a>\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12,\n" +
+	"\x05value\x18\x02 \x01(\v2\x16.google.protobuf.ValueR\x05value:\x028\x01\x1a>\n" +
 	"\x10InputGroupsEntry\x12\x10\n" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\tR\x05value:\x028\x01B\b\n" +
@@ -945,6 +945,7 @@ var file_cloud_v1_dsl_compiled_proto_goTypes = []any{
 	nil,                          // 14: cloud.v1.dsl.CompiledJob.ResolvedInputsEntry
 	nil,                          // 15: cloud.v1.dsl.CompiledJob.InputGroupsEntry
 	(*deployment.AgentStep)(nil), // 16: cloud.v1.deployment.AgentStep
+	(*structpb.Value)(nil),       // 17: google.protobuf.Value
 }
 var file_cloud_v1_dsl_compiled_proto_depIdxs = []int32{
 	1,  // 0: cloud.v1.dsl.CompiledPlan.provider:type_name -> cloud.v1.dsl.ProviderRef
@@ -963,11 +964,12 @@ var file_cloud_v1_dsl_compiled_proto_depIdxs = []int32{
 	9,  // 13: cloud.v1.dsl.StepList.steps:type_name -> cloud.v1.dsl.DslStep
 	16, // 14: cloud.v1.dsl.DslStep.agent:type_name -> cloud.v1.deployment.AgentStep
 	10, // 15: cloud.v1.dsl.DslStep.wait:type_name -> cloud.v1.dsl.WaitStep
-	16, // [16:16] is the sub-list for method output_type
-	16, // [16:16] is the sub-list for method input_type
-	16, // [16:16] is the sub-list for extension type_name
-	16, // [16:16] is the sub-list for extension extendee
-	0,  // [0:16] is the sub-list for field type_name
+	17, // 16: cloud.v1.dsl.CompiledJob.ResolvedInputsEntry.value:type_name -> google.protobuf.Value
+	17, // [17:17] is the sub-list for method output_type
+	17, // [17:17] is the sub-list for method input_type
+	17, // [17:17] is the sub-list for extension type_name
+	17, // [17:17] is the sub-list for extension extendee
+	0,  // [0:17] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_dsl_compiled_proto_init() }
