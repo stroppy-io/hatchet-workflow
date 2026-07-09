@@ -18,6 +18,11 @@ import (
 type dockerRunner interface {
 	Up(ctx context.Context, input *deploymentpb.Docker_Input) (*deploymentpb.Docker_Output, error)
 	Down(ctx context.Context, input *deploymentpb.Docker_Input) (*deploymentpb.Docker_Output, error)
+	// ContainersByNetwork lists containers currently attached to networkName
+	// (F5): RemoveContainers' fallback when this process' in-memory byNet
+	// tracker has nothing for networkName, e.g. after a control-plane
+	// restart lost the EnsureContainer-populated tracking.
+	ContainersByNetwork(ctx context.Context, networkName string) ([]string, error)
 }
 
 // dockerExecutorExec adapts a dockerRunner (batch Up/Down over Docker_Input)
@@ -90,10 +95,27 @@ func (a *dockerExecutorExec) EnsureContainer(ctx context.Context, spec Container
 // the snapshot read below and this method's post-Down update, and that name
 // must survive — otherwise it would be dropped by this Down call *and*
 // erased from byNet, so no future RemoveContainers would ever remove it.
+//
+// F5: if byNet has nothing tracked for networkName — most commonly because
+// this process restarted since EnsureContainer last ran, losing the
+// in-memory tracker entirely — RemoveContainers falls back to asking Docker
+// itself which containers are attached to networkName
+// (dockerRunner.ContainersByNetwork). Docker's own network-membership
+// bookkeeping survives this process' restarts even though byNet does not,
+// so this closes the pre-F5 gap where a post-restart TeardownActivity
+// silently removed zero containers.
 func (a *dockerExecutorExec) RemoveContainers(ctx context.Context, networkName string) error {
 	a.mu.Lock()
 	names := a.byNet[networkName]
 	a.mu.Unlock()
+
+	if len(names) == 0 {
+		discovered, err := a.exec.ContainersByNetwork(ctx, networkName)
+		if err != nil {
+			return fmt.Errorf("discover containers on network %q: %w", networkName, err)
+		}
+		names = discovered
+	}
 
 	containers := make(map[string]*deploymentpb.Docker_Container, len(names))
 	for _, name := range names {

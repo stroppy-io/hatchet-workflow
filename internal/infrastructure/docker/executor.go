@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/filters"
 	"github.com/docker/docker/api/types/image"
 	"github.com/docker/docker/api/types/mount"
 	"github.com/docker/docker/api/types/network"
@@ -158,6 +159,29 @@ func (e *Executor) Down(ctx context.Context, input *deployment.Docker_Input) (*d
 		_ = e.cli.NetworkRemove(ctx, networkName)
 	}
 	return &deployment.Docker_Output{}, nil
+}
+
+// ContainersByNetwork lists the names of every container currently attached
+// to networkName, per Docker's own network-membership tracking — used as
+// RemoveContainers' fallback (F5) when the in-process byNet map has nothing
+// for this network (e.g. after a control-plane restart), since Docker's
+// network membership survives this process' own restarts even though the
+// in-memory tracker does not.
+func (e *Executor) ContainersByNetwork(ctx context.Context, networkName string) ([]string, error) {
+	containers, err := e.cli.ContainerList(ctx, container.ListOptions{
+		All:     true,
+		Filters: filters.NewArgs(filters.Arg("network", networkName)),
+	})
+	if err != nil {
+		return nil, fmt.Errorf("list containers on network %q: %w", networkName, err)
+	}
+	names := make([]string, 0, len(containers))
+	for _, c := range containers {
+		for _, name := range c.Names {
+			names = append(names, strings.TrimPrefix(name, "/")) // docker prefixes names with "/"
+		}
+	}
+	return names, nil
 }
 
 func (e *Executor) ensureNetwork(ctx context.Context, name string) (string, error) {

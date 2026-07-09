@@ -24,6 +24,12 @@ type fakeDockerRunner struct {
 	// letting tests simulate a concurrent tracker mutating adapter state
 	// between RemoveContainers' snapshot-read and its post-Down clear.
 	downFn func()
+
+	// containersByNetworkResult/-Err let tests configure ContainersByNetwork's
+	// canned response; containersByNetworkCalledWith records the argument.
+	containersByNetworkResult     []string
+	containersByNetworkErr        error
+	containersByNetworkCalledWith string
 }
 
 func (f *fakeDockerRunner) Up(_ context.Context, input *deploymentpb.Docker_Input) (*deploymentpb.Docker_Output, error) {
@@ -37,6 +43,11 @@ func (f *fakeDockerRunner) Down(_ context.Context, input *deploymentpb.Docker_In
 		f.downFn()
 	}
 	return f.downOut, f.downErr
+}
+
+func (f *fakeDockerRunner) ContainersByNetwork(_ context.Context, networkName string) ([]string, error) {
+	f.containersByNetworkCalledWith = networkName
+	return f.containersByNetworkResult, f.containersByNetworkErr
 }
 
 func TestDockerExecutorExec_EnsureContainer_BuildsInputAndReturnsState(t *testing.T) {
@@ -253,6 +264,45 @@ func TestDockerExecutorExec_RemoveContainers_PropagatesRunnerError(t *testing.T)
 
 	err := adapter.RemoveContainers(context.Background(), "net")
 	require.ErrorIs(t, err, assertErr)
+}
+
+func TestDockerExecutorExec_RemoveContainers_FallsBackToNetworkDiscovery_WhenByNetIsEmpty(t *testing.T) {
+	fake := &fakeDockerRunner{
+		containersByNetworkResult: []string{"stroppy-run1-node-0", "stroppy-run1-node-1"},
+	}
+	// A fresh adapter (as after a control-plane restart) has never tracked
+	// anything for "stroppy-run1" via EnsureContainer.
+	adapter := NewDockerExecutorExec(fake)
+
+	err := adapter.RemoveContainers(context.Background(), "stroppy-run1")
+	require.NoError(t, err)
+
+	require.Equal(t, "stroppy-run1", fake.containersByNetworkCalledWith,
+		"empty in-memory byNet must fall back to asking Docker which containers are on this network")
+	require.NotNil(t, fake.downInput)
+	require.Len(t, fake.downInput.GetContainers(), 2)
+	require.Contains(t, fake.downInput.GetContainers(), "stroppy-run1-node-0")
+	require.Contains(t, fake.downInput.GetContainers(), "stroppy-run1-node-1")
+}
+
+func TestDockerExecutorExec_RemoveContainers_UsesTrackedNames_WithoutCallingNetworkDiscovery(t *testing.T) {
+	fake := &fakeDockerRunner{
+		upOut: &deploymentpb.Docker_Output{
+			Containers: map[string]*deploymentpb.Docker_ContainerOutput{
+				"stroppy-run1-node-0": {Id: "c1"},
+			},
+		},
+	}
+	adapter := NewDockerExecutorExec(fake)
+	_, err := adapter.EnsureContainer(context.Background(), ContainerSpec{Name: "stroppy-run1-node-0", Network: "stroppy-run1"})
+	require.NoError(t, err)
+
+	err = adapter.RemoveContainers(context.Background(), "stroppy-run1")
+	require.NoError(t, err)
+
+	require.Empty(t, fake.containersByNetworkCalledWith,
+		"a live-tracked byNet entry must not trigger the discovery fallback")
+	require.Contains(t, fake.downInput.GetContainers(), "stroppy-run1-node-0")
 }
 
 var _ dockerExec = (*dockerExecutorExec)(nil)
