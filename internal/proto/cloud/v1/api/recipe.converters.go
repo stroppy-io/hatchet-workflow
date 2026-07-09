@@ -321,6 +321,64 @@ func GetRecipeResponseFromOgen(src *rest.GetRecipeResponse) (*GetRecipeResponse,
 	return dst, nil
 }
 
+// ToOgen converts LaunchFormSchemaRequest to its ogen representation.
+func (src *LaunchFormSchemaRequest) ToOgen() (*rest.LaunchFormSchemaRequest, error) {
+	var dst rest.LaunchFormSchemaRequest
+	if src == nil {
+		return &dst, nil
+	}
+	dst.TenantId.SetTo(string(src.GetTenantId()))
+	dst.RecipeId.SetTo(string(src.GetRecipeId()))
+	return &dst, nil
+}
+
+// LaunchFormSchemaRequestFromOgen converts the ogen representation back to LaunchFormSchemaRequest.
+func LaunchFormSchemaRequestFromOgen(src *rest.LaunchFormSchemaRequest) (*LaunchFormSchemaRequest, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &LaunchFormSchemaRequest{}
+	if v1, ok := src.TenantId.Get(); ok {
+		dst.TenantId = string(v1)
+	}
+	if v2, ok := src.RecipeId.Get(); ok {
+		dst.RecipeId = string(v2)
+	}
+	return dst, nil
+}
+
+// ToOgen converts LaunchFormSchemaResponse to its ogen representation.
+func (src *LaunchFormSchemaResponse) ToOgen() (*rest.LaunchFormSchemaResponse, error) {
+	var dst rest.LaunchFormSchemaResponse
+	if src == nil {
+		return &dst, nil
+	}
+	if src.Schema != nil {
+		o1, err := SchemaToOgen(src.GetSchema())
+		if err != nil {
+			return nil, err
+		}
+		dst.Schema.SetTo(*o1)
+	}
+	return &dst, nil
+}
+
+// LaunchFormSchemaResponseFromOgen converts the ogen representation back to LaunchFormSchemaResponse.
+func LaunchFormSchemaResponseFromOgen(src *rest.LaunchFormSchemaResponse) (*LaunchFormSchemaResponse, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &LaunchFormSchemaResponse{}
+	if v1, ok := src.Schema.Get(); ok {
+		m2, err := SchemaFromOgen(&v1)
+		if err != nil {
+			return nil, err
+		}
+		dst.Schema = m2
+	}
+	return dst, nil
+}
+
 // ToOgen converts ListRecipesRequest to its ogen representation.
 func (src *ListRecipesRequest) ToOgen() (*rest.ListRecipesRequest, error) {
 	var dst rest.ListRecipesRequest

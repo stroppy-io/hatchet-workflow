@@ -16,6 +16,7 @@ import (
 	"github.com/gopherex/protoc-gen-go-graphql/graphqlrt"
 	graphqlhandler "github.com/graphql-go/handler"
 	"github.com/ogen-go/ogen/middleware"
+	"github.com/stroppy-io/schemapb/schemapb"
 	"go.temporal.io/sdk/client"
 	"go.temporal.io/sdk/worker"
 	"golang.org/x/net/http2"
@@ -28,6 +29,7 @@ import (
 	yandextf "github.com/stroppy-io/stroppy-cloud/deployments/terraform/yandex"
 	agentdomain "github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
 	domsettings "github.com/stroppy-io/stroppy-cloud/internal/domain/settings"
+	"github.com/stroppy-io/stroppy-cloud/internal/dsl/diag"
 	"github.com/stroppy-io/stroppy-cloud/internal/gateway"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/adapters"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/docker"
@@ -513,7 +515,16 @@ func Run(ctx context.Context, cfg Config) error {
 		// VersionSource dslService was constructed with above) that
 		// DslService.Check already gives the live editor, so a stored recipe's
 		// Create/CheckRecipe path warns on a bogus stroppy version too.
-		Checker:   dslService.CheckBundle,
+		Checker: dslService.CheckBundle,
+		// FormSchema composes the launch-form schemapb.Schema for a stored
+		// bundle's files (workflow.inputs ⊕ provider.params). Wrapped in a
+		// closure (rather than passed as a bare method/func value) because
+		// dslsvc.ComposeLaunchFormSchema's package-level signature — files
+		// only, no ctx — doesn't match Deps.FormSchema's ctx-carrying shape
+		// (kept for consistency with Checker/every other Deps func).
+		FormSchema: func(_ context.Context, files map[string][]byte) (*schemapb.Schema, diag.List, error) {
+			return dslsvc.ComposeLaunchFormSchema(files)
+		},
 		Runs:      store.Runs(),
 		Workflows: recipeWorkflows,
 	})

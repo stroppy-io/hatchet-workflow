@@ -2538,6 +2538,24 @@ components:
                 tags:
                     $ref: '#/components/schemas/Tags'
             type: object
+        LaunchFormSchemaRequest:
+            additionalProperties: false
+            properties:
+                recipeId:
+                    maxLength: 64
+                    minLength: 1
+                    type: string
+                tenantId:
+                    maxLength: 64
+                    minLength: 1
+                    type: string
+            type: object
+        LaunchFormSchemaResponse:
+            additionalProperties: false
+            properties:
+                schema:
+                    $ref: '#/components/schemas/Schema'
+            type: object
         LeaveTenantRequest:
             additionalProperties: false
             properties:
@@ -8988,6 +9006,36 @@ paths:
                                 $ref: '#/components/schemas/Error'
                     description: Unexpected error.
             summary: GetRecipe fetches a single recipe record by id. Read-only.
+            tags:
+                - recipe
+            x-idempotency-level: NO_SIDE_EFFECTS
+            x-ogen-operation-group: Recipe
+    /api/v1/recipe/launch-form-schema:
+        get:
+            description: |-
+                LaunchFormSchema composes and returns the launch-form schemapb.Schema
+                for the stored bundle (workflow.inputs + provider.params). Read-only.
+            operationId: launchFormSchema
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/LaunchFormSchemaRequest'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/LaunchFormSchemaResponse'
+                    description: OK
+                default:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Unexpected error.
+            summary: LaunchFormSchema composes and returns the launch-form schemapb.Schema
             tags:
                 - recipe
             x-idempotency-level: NO_SIDE_EFFECTS

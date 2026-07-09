@@ -104,6 +104,8 @@
   - [cloud.v1.api.GetTenantSettingsResponse](#cloud-v1-api-gettenantsettingsresponse)
   - [cloud.v1.api.GetTestRunOverviewRequest](#cloud-v1-api-gettestrunoverviewrequest)
   - [cloud.v1.api.GetTestRunOverviewResponse](#cloud-v1-api-gettestrunoverviewresponse)
+  - [cloud.v1.api.LaunchFormSchemaRequest](#cloud-v1-api-launchformschemarequest)
+  - [cloud.v1.api.LaunchFormSchemaResponse](#cloud-v1-api-launchformschemaresponse)
   - [cloud.v1.api.LeaveTenantRequest](#cloud-v1-api-leavetenantrequest)
   - [cloud.v1.api.LeaveTenantResponse](#cloud-v1-api-leavetenantresponse)
   - [cloud.v1.api.LinkExternalIdentityRequest](#cloud-v1-api-linkexternalidentityrequest)
@@ -3224,6 +3226,71 @@ go_name: TenantId</pre></td>
 
 json_name: snapshot
 go_name: Snapshot</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-launchformschemarequest"></a>
+### cloud.v1.api.LaunchFormSchemaRequest
+
+<pre>
+//LaunchFormSchemaRequest composes the launch-form schemapb.Schema for an
+//already-stored recipe bundle: workflow.yaml's declared inputs hoisted to
+//the top level, plus the resolved provider's params nested under
+//"provider".
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>recipe_id</td>
+<td>string</td>
+<td><pre>
+//recipe_id is the recipe record whose stored bundle's launch-form
+//schema is composed.<br>
+
+json_name: recipeId
+go_name: RecipeId</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+//tenant_id scopes the request to the owning tenant.<br>
+
+json_name: tenantId
+go_name: TenantId</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-launchformschemaresponse"></a>
+### cloud.v1.api.LaunchFormSchemaResponse
+
+<pre>
+//LaunchFormSchemaResponse returns the composed launch-form schema.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>schema</td>
+<td><a href="../../../schemapb/README.md#schemapb-schema">schemapb.Schema</a></td>
+<td><pre>
+//schema is the composed launch-form schemapb.Schema (workflow inputs
+//at the top level, provider params nested under "provider").<br>
+
+json_name: schema
+go_name: Schema</pre></td>
 </tr>
 </table>
 

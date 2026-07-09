@@ -586,6 +586,13 @@ type RecipeInvoker interface {
 	//
 	// GET /api/v1/recipe/get-recipe
 	GetRecipe(ctx context.Context, request *GetRecipeRequest) (*GetRecipeResponse, error)
+	// LaunchFormSchema invokes launchFormSchema operation.
+	//
+	// LaunchFormSchema composes and returns the launch-form schemapb.Schema
+	// for the stored bundle (workflow.inputs + provider.params). Read-only.
+	//
+	// GET /api/v1/recipe/launch-form-schema
+	LaunchFormSchema(ctx context.Context, request *LaunchFormSchemaRequest) (*LaunchFormSchemaResponse, error)
 	// ListRecipes invokes listRecipes operation.
 	//
 	// ListRecipes lists recipe records with filtering and pagination.
@@ -4709,6 +4716,84 @@ func (c *Client) sendGetTestRunOverview(ctx context.Context, request *GetTestRun
 
 	stage = "DecodeResponse"
 	result, err := decodeGetTestRunOverviewResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// LaunchFormSchema invokes launchFormSchema operation.
+//
+// LaunchFormSchema composes and returns the launch-form schemapb.Schema
+// for the stored bundle (workflow.inputs + provider.params). Read-only.
+//
+// GET /api/v1/recipe/launch-form-schema
+func (c *Client) LaunchFormSchema(ctx context.Context, request *LaunchFormSchemaRequest) (*LaunchFormSchemaResponse, error) {
+	res, err := c.sendLaunchFormSchema(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendLaunchFormSchema(ctx context.Context, request *LaunchFormSchemaRequest) (res *LaunchFormSchemaResponse, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("launchFormSchema"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/api/v1/recipe/launch-form-schema"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, LaunchFormSchemaOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/api/v1/recipe/launch-form-schema"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeLaunchFormSchemaRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeLaunchFormSchemaResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

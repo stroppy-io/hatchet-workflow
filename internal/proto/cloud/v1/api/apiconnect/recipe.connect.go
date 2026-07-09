@@ -47,6 +47,9 @@ const (
 	// RecipeServiceCheckRecipeProcedure is the fully-qualified name of the RecipeService's CheckRecipe
 	// RPC.
 	RecipeServiceCheckRecipeProcedure = "/cloud.v1.api.RecipeService/CheckRecipe"
+	// RecipeServiceLaunchFormSchemaProcedure is the fully-qualified name of the RecipeService's
+	// LaunchFormSchema RPC.
+	RecipeServiceLaunchFormSchemaProcedure = "/cloud.v1.api.RecipeService/LaunchFormSchema"
 	// RecipeServiceStartRunProcedure is the fully-qualified name of the RecipeService's StartRun RPC.
 	RecipeServiceStartRunProcedure = "/cloud.v1.api.RecipeService/StartRun"
 	// RecipeServiceListRunsProcedure is the fully-qualified name of the RecipeService's ListRuns RPC.
@@ -72,6 +75,9 @@ type RecipeServiceClient interface {
 	// CheckRecipe compiles the stored bundle in check-mode. Read-only: it
 	// never mutates the stored record.
 	CheckRecipe(context.Context, *api.CheckRecipeRequest) (*api.CheckRecipeResponse, error)
+	// LaunchFormSchema composes and returns the launch-form schemapb.Schema
+	// for the stored bundle (workflow.inputs + provider.params). Read-only.
+	LaunchFormSchema(context.Context, *api.LaunchFormSchemaRequest) (*api.LaunchFormSchemaResponse, error)
 	// StartRun launches a new run of an already-stored recipe bundle: it
 	// persists a run record and starts RunRecipeWorkflow for it. Not
 	// idempotent — each call mints a new run.
@@ -132,6 +138,13 @@ func NewRecipeServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 			connect.WithClientOptions(opts...),
 		),
+		launchFormSchema: connect.NewClient[api.LaunchFormSchemaRequest, api.LaunchFormSchemaResponse](
+			httpClient,
+			baseURL+RecipeServiceLaunchFormSchemaProcedure,
+			connect.WithSchema(recipeServiceMethods.ByName("LaunchFormSchema")),
+			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+			connect.WithClientOptions(opts...),
+		),
 		startRun: connect.NewClient[api.StartRunRequest, api.StartRunResponse](
 			httpClient,
 			baseURL+RecipeServiceStartRunProcedure,
@@ -163,15 +176,16 @@ func NewRecipeServiceClient(httpClient connect.HTTPClient, baseURL string, opts 
 
 // recipeServiceClient implements RecipeServiceClient.
 type recipeServiceClient struct {
-	createRecipe *connect.Client[api.CreateRecipeRequest, api.CreateRecipeResponse]
-	getRecipe    *connect.Client[api.GetRecipeRequest, api.GetRecipeResponse]
-	listRecipes  *connect.Client[api.ListRecipesRequest, api.ListRecipesResponse]
-	deleteRecipe *connect.Client[api.DeleteRecipeRequest, api.DeleteRecipeResponse]
-	checkRecipe  *connect.Client[api.CheckRecipeRequest, api.CheckRecipeResponse]
-	startRun     *connect.Client[api.StartRunRequest, api.StartRunResponse]
-	listRuns     *connect.Client[api.ListRunsRequest, api.ListRunsResponse]
-	cancelRun    *connect.Client[api.CancelRunRequest, api.CancelRunResponse]
-	deleteRun    *connect.Client[api.DeleteRunRequest, api.DeleteRunResponse]
+	createRecipe     *connect.Client[api.CreateRecipeRequest, api.CreateRecipeResponse]
+	getRecipe        *connect.Client[api.GetRecipeRequest, api.GetRecipeResponse]
+	listRecipes      *connect.Client[api.ListRecipesRequest, api.ListRecipesResponse]
+	deleteRecipe     *connect.Client[api.DeleteRecipeRequest, api.DeleteRecipeResponse]
+	checkRecipe      *connect.Client[api.CheckRecipeRequest, api.CheckRecipeResponse]
+	launchFormSchema *connect.Client[api.LaunchFormSchemaRequest, api.LaunchFormSchemaResponse]
+	startRun         *connect.Client[api.StartRunRequest, api.StartRunResponse]
+	listRuns         *connect.Client[api.ListRunsRequest, api.ListRunsResponse]
+	cancelRun        *connect.Client[api.CancelRunRequest, api.CancelRunResponse]
+	deleteRun        *connect.Client[api.DeleteRunRequest, api.DeleteRunResponse]
 }
 
 // CreateRecipe calls cloud.v1.api.RecipeService.CreateRecipe.
@@ -213,6 +227,15 @@ func (c *recipeServiceClient) DeleteRecipe(ctx context.Context, req *api.DeleteR
 // CheckRecipe calls cloud.v1.api.RecipeService.CheckRecipe.
 func (c *recipeServiceClient) CheckRecipe(ctx context.Context, req *api.CheckRecipeRequest) (*api.CheckRecipeResponse, error) {
 	response, err := c.checkRecipe.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// LaunchFormSchema calls cloud.v1.api.RecipeService.LaunchFormSchema.
+func (c *recipeServiceClient) LaunchFormSchema(ctx context.Context, req *api.LaunchFormSchemaRequest) (*api.LaunchFormSchemaResponse, error) {
+	response, err := c.launchFormSchema.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
 	}
@@ -270,6 +293,9 @@ type RecipeServiceHandler interface {
 	// CheckRecipe compiles the stored bundle in check-mode. Read-only: it
 	// never mutates the stored record.
 	CheckRecipe(context.Context, *api.CheckRecipeRequest) (*api.CheckRecipeResponse, error)
+	// LaunchFormSchema composes and returns the launch-form schemapb.Schema
+	// for the stored bundle (workflow.inputs + provider.params). Read-only.
+	LaunchFormSchema(context.Context, *api.LaunchFormSchemaRequest) (*api.LaunchFormSchemaResponse, error)
 	// StartRun launches a new run of an already-stored recipe bundle: it
 	// persists a run record and starts RunRecipeWorkflow for it. Not
 	// idempotent — each call mints a new run.
@@ -326,6 +352,13 @@ func NewRecipeServiceHandler(svc RecipeServiceHandler, opts ...connect.HandlerOp
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
+	recipeServiceLaunchFormSchemaHandler := connect.NewUnaryHandlerSimple(
+		RecipeServiceLaunchFormSchemaProcedure,
+		svc.LaunchFormSchema,
+		connect.WithSchema(recipeServiceMethods.ByName("LaunchFormSchema")),
+		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+		connect.WithHandlerOptions(opts...),
+	)
 	recipeServiceStartRunHandler := connect.NewUnaryHandlerSimple(
 		RecipeServiceStartRunProcedure,
 		svc.StartRun,
@@ -364,6 +397,8 @@ func NewRecipeServiceHandler(svc RecipeServiceHandler, opts ...connect.HandlerOp
 			recipeServiceDeleteRecipeHandler.ServeHTTP(w, r)
 		case RecipeServiceCheckRecipeProcedure:
 			recipeServiceCheckRecipeHandler.ServeHTTP(w, r)
+		case RecipeServiceLaunchFormSchemaProcedure:
+			recipeServiceLaunchFormSchemaHandler.ServeHTTP(w, r)
 		case RecipeServiceStartRunProcedure:
 			recipeServiceStartRunHandler.ServeHTTP(w, r)
 		case RecipeServiceListRunsProcedure:
@@ -399,6 +434,10 @@ func (UnimplementedRecipeServiceHandler) DeleteRecipe(context.Context, *api.Dele
 
 func (UnimplementedRecipeServiceHandler) CheckRecipe(context.Context, *api.CheckRecipeRequest) (*api.CheckRecipeResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.RecipeService.CheckRecipe is not implemented"))
+}
+
+func (UnimplementedRecipeServiceHandler) LaunchFormSchema(context.Context, *api.LaunchFormSchemaRequest) (*api.LaunchFormSchemaResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.RecipeService.LaunchFormSchema is not implemented"))
 }
 
 func (UnimplementedRecipeServiceHandler) StartRun(context.Context, *api.StartRunRequest) (*api.StartRunResponse, error) {

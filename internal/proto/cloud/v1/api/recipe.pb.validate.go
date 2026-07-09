@@ -1389,6 +1389,261 @@ var _ interface {
 	ErrorName() string
 } = CheckRecipeResponseValidationError{}
 
+// Validate checks the field values on LaunchFormSchemaRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *LaunchFormSchemaRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on LaunchFormSchemaRequest with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// LaunchFormSchemaRequestMultiError, or nil if none found.
+func (m *LaunchFormSchemaRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *LaunchFormSchemaRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetTenantId()); l < 1 || l > 64 {
+		err := LaunchFormSchemaRequestValidationError{
+			field:  "TenantId",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetRecipeId()); l < 1 || l > 64 {
+		err := LaunchFormSchemaRequestValidationError{
+			field:  "RecipeId",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return LaunchFormSchemaRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// LaunchFormSchemaRequestMultiError is an error wrapping multiple validation
+// errors returned by LaunchFormSchemaRequest.ValidateAll() if the designated
+// constraints aren't met.
+type LaunchFormSchemaRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m LaunchFormSchemaRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m LaunchFormSchemaRequestMultiError) AllErrors() []error { return m }
+
+// LaunchFormSchemaRequestValidationError is the validation error returned by
+// LaunchFormSchemaRequest.Validate if the designated constraints aren't met.
+type LaunchFormSchemaRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e LaunchFormSchemaRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e LaunchFormSchemaRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e LaunchFormSchemaRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e LaunchFormSchemaRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e LaunchFormSchemaRequestValidationError) ErrorName() string {
+	return "LaunchFormSchemaRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e LaunchFormSchemaRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sLaunchFormSchemaRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = LaunchFormSchemaRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = LaunchFormSchemaRequestValidationError{}
+
+// Validate checks the field values on LaunchFormSchemaResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *LaunchFormSchemaResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on LaunchFormSchemaResponse with the
+// rules defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// LaunchFormSchemaResponseMultiError, or nil if none found.
+func (m *LaunchFormSchemaResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *LaunchFormSchemaResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if all {
+		switch v := interface{}(m.GetSchema()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, LaunchFormSchemaResponseValidationError{
+					field:  "Schema",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, LaunchFormSchemaResponseValidationError{
+					field:  "Schema",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetSchema()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return LaunchFormSchemaResponseValidationError{
+				field:  "Schema",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
+	if len(errors) > 0 {
+		return LaunchFormSchemaResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// LaunchFormSchemaResponseMultiError is an error wrapping multiple validation
+// errors returned by LaunchFormSchemaResponse.ValidateAll() if the designated
+// constraints aren't met.
+type LaunchFormSchemaResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m LaunchFormSchemaResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m LaunchFormSchemaResponseMultiError) AllErrors() []error { return m }
+
+// LaunchFormSchemaResponseValidationError is the validation error returned by
+// LaunchFormSchemaResponse.Validate if the designated constraints aren't met.
+type LaunchFormSchemaResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e LaunchFormSchemaResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e LaunchFormSchemaResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e LaunchFormSchemaResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e LaunchFormSchemaResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e LaunchFormSchemaResponseValidationError) ErrorName() string {
+	return "LaunchFormSchemaResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e LaunchFormSchemaResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sLaunchFormSchemaResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = LaunchFormSchemaResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = LaunchFormSchemaResponseValidationError{}
+
 // Validate checks the field values on StartRunRequest with the rules defined
 // in the proto definition for this message. If any rules are violated, the
 // first error encountered is returned, or nil if there are no violations.

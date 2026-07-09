@@ -7,15 +7,18 @@ import (
 	"strconv"
 	"testing"
 
+	"github.com/stroppy-io/schemapb/schemapb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 
 	derrors "github.com/stroppy-io/stroppy-cloud/internal/domain/errors"
+	"github.com/stroppy-io/stroppy-cloud/internal/dsl/diag"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	dslpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dsl"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
+	dslservice "github.com/stroppy-io/stroppy-cloud/internal/services/dsl"
 )
 
 const clusterYAML = `version: 1
@@ -260,6 +263,67 @@ func TestCheckRecipeMissingTenantIsInvalidArgument(t *testing.T) {
 	svc := NewService(Deps{Repo: repo, Authn: fakeAuthn{}, Checker: stubChecker(nil)})
 
 	_, err := svc.CheckRecipe(context.Background(), &api.CheckRecipeRequest{Id: "some-id"})
+	if status.Code(err) != codes.InvalidArgument {
+		t.Fatalf("status = %s, want %s; err=%v", status.Code(err), codes.InvalidArgument, err)
+	}
+}
+
+// dockerBundleFilesWithInputs is a minimal, self-contained docker-builtin
+// recipe bundle (mirrors internal/services/dsl's own dockerBundleFiles test
+// fixture) with a top-level workflow.yaml `inputs:` block, so
+// ComposeLaunchFormSchema has a non-empty top-level field to hoist.
+func dockerBundleFilesWithInputs() map[string][]byte {
+	return map[string][]byte{
+		"cluster.yaml": []byte("version: 1\n" +
+			"provider:\n  use: docker\n" +
+			"machines:\n  db:\n    count: 1\n    resources: { cpu: 2, ram: 2g, disk: { size: 10g, type: ssd } }\n" +
+			"services:\n  postgres:\n    on: db\n    image: postgres:17\n    network: host\n"),
+		"workflow.yaml": []byte("inputs:\n  db_version: { type: string, default: \"16\" }\n" +
+			"jobs:\n  postgres:\n    service: postgres\n"),
+	}
+}
+
+func TestLaunchFormSchema_ComposesFormSchema(t *testing.T) {
+	repo := newFakeRecipeRepo()
+	svc := NewService(Deps{
+		Repo: repo, Authn: fakeAuthn{}, Checker: stubChecker(nil),
+		Runs: newFakeRunRepo(), Workflows: newFakeRecipeWorkflows(nil),
+		FormSchema: func(_ context.Context, files map[string][]byte) (*schemapb.Schema, diag.List, error) {
+			return dslservice.ComposeLaunchFormSchema(files)
+		},
+	})
+
+	created, err := svc.CreateRecipe(context.Background(), &api.CreateRecipeRequest{
+		TenantId: "t1",
+		Recipe: &models.RecipeRecord{
+			Entity: &common.Entity{Name: "pg-docker"},
+			Bundle: &models.RecipeBundle{Files: dockerBundleFilesWithInputs()},
+		},
+	})
+	if err != nil {
+		t.Fatalf("create recipe: %v", err)
+	}
+
+	resp, err := svc.LaunchFormSchema(context.Background(), &api.LaunchFormSchemaRequest{
+		TenantId: "t1",
+		RecipeId: created.GetRecipe().GetEntity().GetId(),
+	})
+	if err != nil {
+		t.Fatalf("LaunchFormSchema: %v", err)
+	}
+	if resp.GetSchema() == nil {
+		t.Fatal("expected a non-nil schema")
+	}
+	if len(resp.GetSchema().GetFields()) == 0 {
+		t.Fatal("expected at least one field on the composed form schema")
+	}
+}
+
+func TestLaunchFormSchemaMissingTenantIsInvalidArgument(t *testing.T) {
+	repo := newFakeRecipeRepo()
+	svc := NewService(Deps{Repo: repo, Authn: fakeAuthn{}, Checker: stubChecker(nil)})
+
+	_, err := svc.LaunchFormSchema(context.Background(), &api.LaunchFormSchemaRequest{RecipeId: "some-id"})
 	if status.Code(err) != codes.InvalidArgument {
 		t.Fatalf("status = %s, want %s; err=%v", status.Code(err), codes.InvalidArgument, err)
 	}

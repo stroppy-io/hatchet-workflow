@@ -879,6 +879,24 @@ func (a *OgenAdapter) GetTestRunOverview(ctx context.Context, req *rest.GetTestR
 	return out, nil
 }
 
+func (a *OgenAdapter) LaunchFormSchema(ctx context.Context, req *rest.LaunchFormSchemaRequest) (*rest.LaunchFormSchemaResponse, error) {
+	in := &LaunchFormSchemaRequest{}
+	b, err := LaunchFormSchemaRequestFromOgen(req)
+	if err != nil {
+		return nil, err
+	}
+	in = b
+	resp, err := a.recipeService.LaunchFormSchema(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+	out, err := resp.ToOgen()
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (a *OgenAdapter) LeaveTenant(ctx context.Context, req *rest.LeaveTenantRequest, params rest.LeaveTenantParams) error {
 	in := &LeaveTenantRequest{}
 	b, err := LeaveTenantRequestFromOgen(req)

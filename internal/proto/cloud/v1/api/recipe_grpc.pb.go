@@ -19,15 +19,16 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	RecipeService_CreateRecipe_FullMethodName = "/cloud.v1.api.RecipeService/CreateRecipe"
-	RecipeService_GetRecipe_FullMethodName    = "/cloud.v1.api.RecipeService/GetRecipe"
-	RecipeService_ListRecipes_FullMethodName  = "/cloud.v1.api.RecipeService/ListRecipes"
-	RecipeService_DeleteRecipe_FullMethodName = "/cloud.v1.api.RecipeService/DeleteRecipe"
-	RecipeService_CheckRecipe_FullMethodName  = "/cloud.v1.api.RecipeService/CheckRecipe"
-	RecipeService_StartRun_FullMethodName     = "/cloud.v1.api.RecipeService/StartRun"
-	RecipeService_ListRuns_FullMethodName     = "/cloud.v1.api.RecipeService/ListRuns"
-	RecipeService_CancelRun_FullMethodName    = "/cloud.v1.api.RecipeService/CancelRun"
-	RecipeService_DeleteRun_FullMethodName    = "/cloud.v1.api.RecipeService/DeleteRun"
+	RecipeService_CreateRecipe_FullMethodName     = "/cloud.v1.api.RecipeService/CreateRecipe"
+	RecipeService_GetRecipe_FullMethodName        = "/cloud.v1.api.RecipeService/GetRecipe"
+	RecipeService_ListRecipes_FullMethodName      = "/cloud.v1.api.RecipeService/ListRecipes"
+	RecipeService_DeleteRecipe_FullMethodName     = "/cloud.v1.api.RecipeService/DeleteRecipe"
+	RecipeService_CheckRecipe_FullMethodName      = "/cloud.v1.api.RecipeService/CheckRecipe"
+	RecipeService_LaunchFormSchema_FullMethodName = "/cloud.v1.api.RecipeService/LaunchFormSchema"
+	RecipeService_StartRun_FullMethodName         = "/cloud.v1.api.RecipeService/StartRun"
+	RecipeService_ListRuns_FullMethodName         = "/cloud.v1.api.RecipeService/ListRuns"
+	RecipeService_CancelRun_FullMethodName        = "/cloud.v1.api.RecipeService/CancelRun"
+	RecipeService_DeleteRun_FullMethodName        = "/cloud.v1.api.RecipeService/DeleteRun"
 )
 
 // RecipeServiceClient is the client API for RecipeService service.
@@ -50,6 +51,9 @@ type RecipeServiceClient interface {
 	// CheckRecipe compiles the stored bundle in check-mode. Read-only: it
 	// never mutates the stored record.
 	CheckRecipe(ctx context.Context, in *CheckRecipeRequest, opts ...grpc.CallOption) (*CheckRecipeResponse, error)
+	// LaunchFormSchema composes and returns the launch-form schemapb.Schema
+	// for the stored bundle (workflow.inputs + provider.params). Read-only.
+	LaunchFormSchema(ctx context.Context, in *LaunchFormSchemaRequest, opts ...grpc.CallOption) (*LaunchFormSchemaResponse, error)
 	// StartRun launches a new run of an already-stored recipe bundle: it
 	// persists a run record and starts RunRecipeWorkflow for it. Not
 	// idempotent — each call mints a new run.
@@ -123,6 +127,16 @@ func (c *recipeServiceClient) CheckRecipe(ctx context.Context, in *CheckRecipeRe
 	return out, nil
 }
 
+func (c *recipeServiceClient) LaunchFormSchema(ctx context.Context, in *LaunchFormSchemaRequest, opts ...grpc.CallOption) (*LaunchFormSchemaResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(LaunchFormSchemaResponse)
+	err := c.cc.Invoke(ctx, RecipeService_LaunchFormSchema_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *recipeServiceClient) StartRun(ctx context.Context, in *StartRunRequest, opts ...grpc.CallOption) (*StartRunResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(StartRunResponse)
@@ -183,6 +197,9 @@ type RecipeServiceServer interface {
 	// CheckRecipe compiles the stored bundle in check-mode. Read-only: it
 	// never mutates the stored record.
 	CheckRecipe(context.Context, *CheckRecipeRequest) (*CheckRecipeResponse, error)
+	// LaunchFormSchema composes and returns the launch-form schemapb.Schema
+	// for the stored bundle (workflow.inputs + provider.params). Read-only.
+	LaunchFormSchema(context.Context, *LaunchFormSchemaRequest) (*LaunchFormSchemaResponse, error)
 	// StartRun launches a new run of an already-stored recipe bundle: it
 	// persists a run record and starts RunRecipeWorkflow for it. Not
 	// idempotent — each call mints a new run.
@@ -220,6 +237,9 @@ func (UnimplementedRecipeServiceServer) DeleteRecipe(context.Context, *DeleteRec
 }
 func (UnimplementedRecipeServiceServer) CheckRecipe(context.Context, *CheckRecipeRequest) (*CheckRecipeResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CheckRecipe not implemented")
+}
+func (UnimplementedRecipeServiceServer) LaunchFormSchema(context.Context, *LaunchFormSchemaRequest) (*LaunchFormSchemaResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method LaunchFormSchema not implemented")
 }
 func (UnimplementedRecipeServiceServer) StartRun(context.Context, *StartRunRequest) (*StartRunResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method StartRun not implemented")
@@ -344,6 +364,24 @@ func _RecipeService_CheckRecipe_Handler(srv interface{}, ctx context.Context, de
 	return interceptor(ctx, in, info, handler)
 }
 
+func _RecipeService_LaunchFormSchema_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(LaunchFormSchemaRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(RecipeServiceServer).LaunchFormSchema(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: RecipeService_LaunchFormSchema_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(RecipeServiceServer).LaunchFormSchema(ctx, req.(*LaunchFormSchemaRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _RecipeService_StartRun_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(StartRunRequest)
 	if err := dec(in); err != nil {
@@ -442,6 +480,10 @@ var RecipeService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CheckRecipe",
 			Handler:    _RecipeService_CheckRecipe_Handler,
+		},
+		{
+			MethodName: "LaunchFormSchema",
+			Handler:    _RecipeService_LaunchFormSchema_Handler,
 		},
 		{
 			MethodName: "StartRun",

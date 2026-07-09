@@ -560,6 +560,59 @@ func TestCompileBundleWithCatalog_UnpinnedWarnsAndResolvesLatest(t *testing.T) {
 	}
 }
 
+// dockerBundleFilesWithWorkflowInputs extends the package's existing
+// dockerBundleFiles() test fixture (used by TestComposedSchema_*) with a
+// top-level `inputs:` block in workflow.yaml.
+func dockerBundleFilesWithWorkflowInputs(t *testing.T) map[string][]byte {
+	t.Helper()
+	files := dockerBundleFiles()
+	wf := files["workflow.yaml"]
+	files["workflow.yaml"] = append([]byte("inputs:\n  db_version: { type: string, default: \"16\" }\n"), wf...)
+	return files
+}
+
+// TestComposeLaunchFormSchema_InputsAndProviderParams exercises the
+// positive path: a bundle with both a workflow.yaml `inputs:` block and a
+// resolvable provider (postgresHADir's yandex module) must compose a form
+// with the workflow input hoisted to the top level AND the provider's
+// params nested under "provider" (schema.ComposeFormSchema).
+func TestComposeLaunchFormSchema_InputsAndProviderParams(t *testing.T) {
+	files := loadBundle(t, postgresHADir)
+	wf := files["workflow.yaml"]
+	files["workflow.yaml"] = append([]byte("inputs:\n  db_version: { type: string, default: \"16\" }\n"), wf...)
+
+	s, diags, err := ComposeLaunchFormSchema(files)
+	require.NoError(t, err)
+	require.False(t, diags.HasErrors(), diags.String())
+	require.NotNil(t, s)
+
+	byName := map[string]*schemapb.Schema_Filed{}
+	for _, f := range s.GetFields() {
+		byName[f.GetName()] = f
+	}
+	require.Contains(t, byName, "db_version", "workflow.inputs hoisted to top level")
+	require.Contains(t, byName, "provider", "provider.params nested under provider")
+}
+
+// TestComposeLaunchFormSchema_DockerBuiltinNoProviderField exercises the
+// nil-params degrade path (mirrors TestComposedSchemaDockerBuiltinNoProviderField):
+// a bundle with no resolvable provider (docker builtin, no providers/
+// directory) composes inputs-only, no "provider" object field.
+func TestComposeLaunchFormSchema_DockerBuiltinNoProviderField(t *testing.T) {
+	files := dockerBundleFilesWithWorkflowInputs(t)
+	s, diags, err := ComposeLaunchFormSchema(files)
+	require.NoError(t, err)
+	require.False(t, diags.HasErrors(), diags.String())
+	require.NotNil(t, s)
+
+	byName := map[string]*schemapb.Schema_Filed{}
+	for _, f := range s.GetFields() {
+		byName[f.GetName()] = f
+	}
+	require.Contains(t, byName, "db_version", "workflow.inputs hoisted to top level")
+	require.NotContains(t, byName, "provider", "docker builtin has no tf module: form must carry no provider field")
+}
+
 func TestCompileBundle_LegacySignatureUnaffected(t *testing.T) {
 	// Zero-arg CompileBundle must keep working exactly as before this task —
 	// no resolver, no tenant, same-bundle providers/<name>/ lookup.

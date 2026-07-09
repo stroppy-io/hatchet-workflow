@@ -6777,6 +6777,47 @@ func (InfrastructureStateProvider) AllValues() []InfrastructureStateProvider {
 	}
 }
 
+// Ref: #/components/schemas/LaunchFormSchemaRequest
+type LaunchFormSchemaRequest struct {
+	RecipeId OptString `json:"recipeId"`
+	TenantId OptString `json:"tenantId"`
+}
+
+// GetRecipeId returns the value of RecipeId.
+func (s *LaunchFormSchemaRequest) GetRecipeId() OptString {
+	return s.RecipeId
+}
+
+// GetTenantId returns the value of TenantId.
+func (s *LaunchFormSchemaRequest) GetTenantId() OptString {
+	return s.TenantId
+}
+
+// SetRecipeId sets the value of RecipeId.
+func (s *LaunchFormSchemaRequest) SetRecipeId(val OptString) {
+	s.RecipeId = val
+}
+
+// SetTenantId sets the value of TenantId.
+func (s *LaunchFormSchemaRequest) SetTenantId(val OptString) {
+	s.TenantId = val
+}
+
+// Ref: #/components/schemas/LaunchFormSchemaResponse
+type LaunchFormSchemaResponse struct {
+	Schema OptSchema `json:"schema"`
+}
+
+// GetSchema returns the value of Schema.
+func (s *LaunchFormSchemaResponse) GetSchema() OptSchema {
+	return s.Schema
+}
+
+// SetSchema sets the value of Schema.
+func (s *LaunchFormSchemaResponse) SetSchema(val OptSchema) {
+	s.Schema = val
+}
+
 // Ref: #/components/schemas/LeaveTenantRequest
 type LeaveTenantRequest struct {
 	TenantId OptString `json:"tenantId"`

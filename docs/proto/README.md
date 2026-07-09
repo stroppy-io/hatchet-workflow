@@ -140,6 +140,8 @@
     - [cloud.v1.api.GetTenantSettingsResponse](cloud/v1/api/README.md#cloud-v1-api-gettenantsettingsresponse)
     - [cloud.v1.api.GetTestRunOverviewRequest](cloud/v1/api/README.md#cloud-v1-api-gettestrunoverviewrequest)
     - [cloud.v1.api.GetTestRunOverviewResponse](cloud/v1/api/README.md#cloud-v1-api-gettestrunoverviewresponse)
+    - [cloud.v1.api.LaunchFormSchemaRequest](cloud/v1/api/README.md#cloud-v1-api-launchformschemarequest)
+    - [cloud.v1.api.LaunchFormSchemaResponse](cloud/v1/api/README.md#cloud-v1-api-launchformschemaresponse)
     - [cloud.v1.api.LeaveTenantRequest](cloud/v1/api/README.md#cloud-v1-api-leavetenantrequest)
     - [cloud.v1.api.LeaveTenantResponse](cloud/v1/api/README.md#cloud-v1-api-leavetenantresponse)
     - [cloud.v1.api.LinkExternalIdentityRequest](cloud/v1/api/README.md#cloud-v1-api-linkexternalidentityrequest)

@@ -1160,6 +1160,16 @@ func decode_CheckRecipeRequest(m map[string]interface{}) *pb.CheckRecipeRequest 
 	return out
 }
 
+func decode_LaunchFormSchemaRequest(m map[string]interface{}) *pb.LaunchFormSchemaRequest {
+	out := &pb.LaunchFormSchemaRequest{}
+	if m == nil {
+		return out
+	}
+	out.TenantId = graphqlrt.AsString(m["tenantId"])
+	out.RecipeId = graphqlrt.AsString(m["recipeId"])
+	return out
+}
+
 func decode_StartRunRequest(m map[string]interface{}) *pb.StartRunRequest {
 	out := &pb.StartRunRequest{}
 	if m == nil {
@@ -1686,11 +1696,11 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 	var e_QuotaRefreshPolicy *graphql.Enum
 	var e_Quota_ReservationStatus *graphql.Enum
 	var e_Severity *graphql.Enum
-	var e_Workload_Protocol *graphql.Enum
-	var e_Trigger *graphql.Enum
 	var e_Schema_Filed_ResultType *graphql.Enum
 	var e_Schema_Filed_Severity *graphql.Enum
 	var e_Schema_Filed_String_StringFormat *graphql.Enum
+	var e_Workload_Protocol *graphql.Enum
+	var e_Trigger *graphql.Enum
 	var e_Cmd_Streams_Mode *graphql.Enum
 	var e_Worker_Kind *graphql.Enum
 	var e_OperationKind *graphql.Enum
@@ -1826,10 +1836,7 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 	var o_DeleteRecipeResponse *graphql.Object
 	var o_CheckRecipeResponse *graphql.Object
 	var o_Diagnostic *graphql.Object
-	var o_StartRunResponse *graphql.Object
-	var o_Run *graphql.Object
-	var o_Run_Summary *graphql.Object
-	var o_Baked *graphql.Object
+	var o_LaunchFormSchemaResponse *graphql.Object
 	var o_Schema *graphql.Object
 	var o_Schema_Filed *graphql.Object
 	var o_Schema_Filed_Float *graphql.Object
@@ -1850,6 +1857,10 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 	var o_Schema_Filed_OneOf *graphql.Object
 	var o_Schema_Filed_Ref *graphql.Object
 	var o_SchemaIdentity *graphql.Object
+	var o_StartRunResponse *graphql.Object
+	var o_Run *graphql.Object
+	var o_Run_Summary *graphql.Object
+	var o_Baked *graphql.Object
 	var o_CompiledPlan *graphql.Object
 	var o_ProviderRef *graphql.Object
 	var o_MachineGroup *graphql.Object
@@ -2053,6 +2064,7 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 	var i_ListRecipesRequest *graphql.InputObject
 	var i_DeleteRecipeRequest *graphql.InputObject
 	var i_CheckRecipeRequest *graphql.InputObject
+	var i_LaunchFormSchemaRequest *graphql.InputObject
 	var i_StartRunRequest *graphql.InputObject
 	var i_ListRunsRequest *graphql.InputObject
 	var i_CancelRunRequest *graphql.InputObject
@@ -2218,22 +2230,6 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 		"SEVERITY_ERROR":       &graphql.EnumValueConfig{Value: pb7.Severity_SEVERITY_ERROR},
 		"SEVERITY_WARNING":     &graphql.EnumValueConfig{Value: pb7.Severity_SEVERITY_WARNING},
 	}})
-	e_Workload_Protocol = graphql.NewEnum(graphql.EnumConfig{Name: "Workload_Protocol", Values: graphql.EnumValueConfigMap{
-		"PROTOCOL_UNSPECIFIED": &graphql.EnumValueConfig{Value: pb2.Workload_PROTOCOL_UNSPECIFIED},
-		"PROTOCOL_PG":          &graphql.EnumValueConfig{Value: pb2.Workload_PROTOCOL_PG},
-		"PROTOCOL_MYSQL":       &graphql.EnumValueConfig{Value: pb2.Workload_PROTOCOL_MYSQL},
-		"PROTOCOL_PICODATA":    &graphql.EnumValueConfig{Value: pb2.Workload_PROTOCOL_PICODATA},
-		"PROTOCOL_YDB_GRPC":    &graphql.EnumValueConfig{Value: pb2.Workload_PROTOCOL_YDB_GRPC},
-		"PROTOCOL_YDB_GRPCS":   &graphql.EnumValueConfig{Value: pb2.Workload_PROTOCOL_YDB_GRPCS},
-		"PROTOCOL_COCKROACH":   &graphql.EnumValueConfig{Value: pb2.Workload_PROTOCOL_COCKROACH},
-		"PROTOCOL_NOOP":        &graphql.EnumValueConfig{Value: pb2.Workload_PROTOCOL_NOOP},
-	}})
-	e_Trigger = graphql.NewEnum(graphql.EnumConfig{Name: "Trigger", Values: graphql.EnumValueConfigMap{
-		"TRIGGER_UNSPECIFIED": &graphql.EnumValueConfig{Value: pb1.Trigger_TRIGGER_UNSPECIFIED},
-		"TRIGGER_MANUAL":      &graphql.EnumValueConfig{Value: pb1.Trigger_TRIGGER_MANUAL},
-		"TRIGGER_CRON":        &graphql.EnumValueConfig{Value: pb1.Trigger_TRIGGER_CRON},
-		"TRIGGER_API":         &graphql.EnumValueConfig{Value: pb1.Trigger_TRIGGER_API},
-	}})
 	e_Schema_Filed_ResultType = graphql.NewEnum(graphql.EnumConfig{Name: "Schema_Filed_ResultType", Values: graphql.EnumValueConfigMap{
 		"RESULT_TYPE_UNSPECIFIED": &graphql.EnumValueConfig{Value: pb8.Schema_Filed_RESULT_TYPE_UNSPECIFIED},
 		"RESULT_TYPE_DOUBLE":      &graphql.EnumValueConfig{Value: pb8.Schema_Filed_RESULT_TYPE_DOUBLE},
@@ -2260,6 +2256,22 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 		"STRING_FORMAT_DATE":        &graphql.EnumValueConfig{Value: pb8.Schema_Filed_String_STRING_FORMAT_DATE},
 		"STRING_FORMAT_TIME":        &graphql.EnumValueConfig{Value: pb8.Schema_Filed_String_STRING_FORMAT_TIME},
 		"STRING_FORMAT_DATETIME":    &graphql.EnumValueConfig{Value: pb8.Schema_Filed_String_STRING_FORMAT_DATETIME},
+	}})
+	e_Workload_Protocol = graphql.NewEnum(graphql.EnumConfig{Name: "Workload_Protocol", Values: graphql.EnumValueConfigMap{
+		"PROTOCOL_UNSPECIFIED": &graphql.EnumValueConfig{Value: pb2.Workload_PROTOCOL_UNSPECIFIED},
+		"PROTOCOL_PG":          &graphql.EnumValueConfig{Value: pb2.Workload_PROTOCOL_PG},
+		"PROTOCOL_MYSQL":       &graphql.EnumValueConfig{Value: pb2.Workload_PROTOCOL_MYSQL},
+		"PROTOCOL_PICODATA":    &graphql.EnumValueConfig{Value: pb2.Workload_PROTOCOL_PICODATA},
+		"PROTOCOL_YDB_GRPC":    &graphql.EnumValueConfig{Value: pb2.Workload_PROTOCOL_YDB_GRPC},
+		"PROTOCOL_YDB_GRPCS":   &graphql.EnumValueConfig{Value: pb2.Workload_PROTOCOL_YDB_GRPCS},
+		"PROTOCOL_COCKROACH":   &graphql.EnumValueConfig{Value: pb2.Workload_PROTOCOL_COCKROACH},
+		"PROTOCOL_NOOP":        &graphql.EnumValueConfig{Value: pb2.Workload_PROTOCOL_NOOP},
+	}})
+	e_Trigger = graphql.NewEnum(graphql.EnumConfig{Name: "Trigger", Values: graphql.EnumValueConfigMap{
+		"TRIGGER_UNSPECIFIED": &graphql.EnumValueConfig{Value: pb1.Trigger_TRIGGER_UNSPECIFIED},
+		"TRIGGER_MANUAL":      &graphql.EnumValueConfig{Value: pb1.Trigger_TRIGGER_MANUAL},
+		"TRIGGER_CRON":        &graphql.EnumValueConfig{Value: pb1.Trigger_TRIGGER_CRON},
+		"TRIGGER_API":         &graphql.EnumValueConfig{Value: pb1.Trigger_TRIGGER_API},
 	}})
 	e_Cmd_Streams_Mode = graphql.NewEnum(graphql.EnumConfig{Name: "Cmd_Streams_Mode", Values: graphql.EnumValueConfigMap{
 		"MODE_UNSPECIFIED":      &graphql.EnumValueConfig{Value: pb1.Cmd_Streams_MODE_UNSPECIFIED},
@@ -5109,243 +5121,14 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 			}},
 		}
 	})})
-	o_StartRunResponse = graphql.NewObject(graphql.ObjectConfig{Name: "StartRunResponse", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"run": &graphql.Field{Type: o_Run, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb.StartRunResponse)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetRun(), nil
-			}},
-		}
-	})})
-	o_Run = graphql.NewObject(graphql.ObjectConfig{Name: "Run", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"entity": &graphql.Field{Type: o_Entity, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.Run)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetEntity(), nil
-			}},
-			"status": &graphql.Field{Type: graphql.NewNonNull(e_Status), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.Run)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetStatus(), nil
-			}},
-			"trigger": &graphql.Field{Type: graphql.NewNonNull(e_Trigger), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.Run)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetTrigger(), nil
-			}},
-			"workflowId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.Run)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetWorkflowId(), nil
-			}},
-			"workflowVersion": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.Run)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetWorkflowVersion(), nil
-			}},
-			"baked": &graphql.Field{Type: o_Baked, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.Run)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetBaked(), nil
-			}},
-			"compiledPlan": &graphql.Field{Type: o_CompiledPlan, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.Run)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetCompiledPlan(), nil
-			}},
-			"topology": &graphql.Field{Type: o_RunTopology, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.Run)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetTopology(), nil
-			}},
-			"runtimeState": &graphql.Field{Type: o_RunState, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.Run)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetRuntimeState(), nil
-			}},
-			"observability": &graphql.Field{Type: o_ObservabilityRefs, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.Run)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetObservability(), nil
-			}},
-			"inTenantRating": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.Run)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetInTenantRating(), nil
-			}},
-			"inGlobalRating": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.Run)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetInGlobalRating(), nil
-			}},
-			"summary": &graphql.Field{Type: o_Run_Summary, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.Run)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetSummary(), nil
-			}},
-		}
-	})})
-	o_Run_Summary = graphql.NewObject(graphql.ObjectConfig{Name: "Run_Summary", Fields: graphql.FieldsThunk(func() graphql.Fields {
-		return graphql.Fields{
-			"dbKind": &graphql.Field{Type: graphql.NewNonNull(e_Database_Kind), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.Run_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetDbKind(), nil
-			}},
-			"dbPresetId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.Run_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetDbPresetId(), nil
-			}},
-			"dbPresetName": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.Run_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetDbPresetName(), nil
-			}},
-			"workloadPresetId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.Run_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetWorkloadPresetId(), nil
-			}},
-			"workloadName": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.Run_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetWorkloadName(), nil
-			}},
-			"stroppyVersion": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.Run_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetStroppyVersion(), nil
-			}},
-			"workloadProtocol": &graphql.Field{Type: graphql.NewNonNull(e_Workload_Protocol), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.Run_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetWorkloadProtocol(), nil
-			}},
-			"testPresetId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.Run_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetTestPresetId(), nil
-			}},
-			"testPresetName": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.Run_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetTestPresetName(), nil
-			}},
-			"topologyLabel": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.Run_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetTopologyLabel(), nil
-			}},
-			"nodeCount": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.Run_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetNodeCount(), nil
-			}},
-			"provider": &graphql.Field{Type: graphql.NewNonNull(e_Provider), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.Run_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetProvider(), nil
-			}},
-			"progressPct": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.Run_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetProgressPct(), nil
-			}},
-			"startedAt": &graphql.Field{Type: graphqlrt.Timestamp, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.Run_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetStartedAt(), nil
-			}},
-			"finishedAt": &graphql.Field{Type: graphqlrt.Timestamp, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.Run_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetFinishedAt(), nil
-			}},
-			"duration": &graphql.Field{Type: graphqlrt.Duration, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb6.Run_Summary)
-				if obj == nil {
-					return nil, nil
-				}
-				return obj.GetDuration(), nil
-			}},
-		}
-	})})
-	o_Baked = graphql.NewObject(graphql.ObjectConfig{Name: "Baked", Fields: graphql.FieldsThunk(func() graphql.Fields {
+	o_LaunchFormSchemaResponse = graphql.NewObject(graphql.ObjectConfig{Name: "LaunchFormSchemaResponse", Fields: graphql.FieldsThunk(func() graphql.Fields {
 		return graphql.Fields{
 			"schema": &graphql.Field{Type: o_Schema, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb8.Baked)
+				obj, _ := p.Source.(*pb.LaunchFormSchemaResponse)
 				if obj == nil {
 					return nil, nil
 				}
 				return obj.GetSchema(), nil
-			}},
-			"values": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
-				obj, _ := p.Source.(*pb8.Baked)
-				if obj == nil {
-					return nil, nil
-				}
-				return graphqlrt.ToJSON(obj.GetValues()), nil
 			}},
 		}
 	})})
@@ -6327,6 +6110,246 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 					return nil, nil
 				}
 				return obj.GetVersion(), nil
+			}},
+		}
+	})})
+	o_StartRunResponse = graphql.NewObject(graphql.ObjectConfig{Name: "StartRunResponse", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"run": &graphql.Field{Type: o_Run, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb.StartRunResponse)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetRun(), nil
+			}},
+		}
+	})})
+	o_Run = graphql.NewObject(graphql.ObjectConfig{Name: "Run", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"entity": &graphql.Field{Type: o_Entity, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.Run)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetEntity(), nil
+			}},
+			"status": &graphql.Field{Type: graphql.NewNonNull(e_Status), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.Run)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetStatus(), nil
+			}},
+			"trigger": &graphql.Field{Type: graphql.NewNonNull(e_Trigger), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.Run)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetTrigger(), nil
+			}},
+			"workflowId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.Run)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetWorkflowId(), nil
+			}},
+			"workflowVersion": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.Run)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetWorkflowVersion(), nil
+			}},
+			"baked": &graphql.Field{Type: o_Baked, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.Run)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetBaked(), nil
+			}},
+			"compiledPlan": &graphql.Field{Type: o_CompiledPlan, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.Run)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetCompiledPlan(), nil
+			}},
+			"topology": &graphql.Field{Type: o_RunTopology, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.Run)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetTopology(), nil
+			}},
+			"runtimeState": &graphql.Field{Type: o_RunState, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.Run)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetRuntimeState(), nil
+			}},
+			"observability": &graphql.Field{Type: o_ObservabilityRefs, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.Run)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetObservability(), nil
+			}},
+			"inTenantRating": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.Run)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetInTenantRating(), nil
+			}},
+			"inGlobalRating": &graphql.Field{Type: graphql.NewNonNull(graphql.Boolean), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.Run)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetInGlobalRating(), nil
+			}},
+			"summary": &graphql.Field{Type: o_Run_Summary, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.Run)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetSummary(), nil
+			}},
+		}
+	})})
+	o_Run_Summary = graphql.NewObject(graphql.ObjectConfig{Name: "Run_Summary", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"dbKind": &graphql.Field{Type: graphql.NewNonNull(e_Database_Kind), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.Run_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetDbKind(), nil
+			}},
+			"dbPresetId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.Run_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetDbPresetId(), nil
+			}},
+			"dbPresetName": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.Run_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetDbPresetName(), nil
+			}},
+			"workloadPresetId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.Run_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetWorkloadPresetId(), nil
+			}},
+			"workloadName": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.Run_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetWorkloadName(), nil
+			}},
+			"stroppyVersion": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.Run_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetStroppyVersion(), nil
+			}},
+			"workloadProtocol": &graphql.Field{Type: graphql.NewNonNull(e_Workload_Protocol), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.Run_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetWorkloadProtocol(), nil
+			}},
+			"testPresetId": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.Run_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetTestPresetId(), nil
+			}},
+			"testPresetName": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.Run_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetTestPresetName(), nil
+			}},
+			"topologyLabel": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.Run_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetTopologyLabel(), nil
+			}},
+			"nodeCount": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.Run_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetNodeCount(), nil
+			}},
+			"provider": &graphql.Field{Type: graphql.NewNonNull(e_Provider), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.Run_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetProvider(), nil
+			}},
+			"progressPct": &graphql.Field{Type: graphql.NewNonNull(graphql.Int), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.Run_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetProgressPct(), nil
+			}},
+			"startedAt": &graphql.Field{Type: graphqlrt.Timestamp, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.Run_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetStartedAt(), nil
+			}},
+			"finishedAt": &graphql.Field{Type: graphqlrt.Timestamp, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.Run_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetFinishedAt(), nil
+			}},
+			"duration": &graphql.Field{Type: graphqlrt.Duration, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.Run_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetDuration(), nil
+			}},
+		}
+	})})
+	o_Baked = graphql.NewObject(graphql.ObjectConfig{Name: "Baked", Fields: graphql.FieldsThunk(func() graphql.Fields {
+		return graphql.Fields{
+			"schema": &graphql.Field{Type: o_Schema, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.Baked)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetSchema(), nil
+			}},
+			"values": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.Baked)
+				if obj == nil {
+					return nil, nil
+				}
+				return graphqlrt.ToJSON(obj.GetValues()), nil
 			}},
 		}
 	})})
@@ -10971,6 +10994,12 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 			"id":       &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
 		}
 	})})
+	i_LaunchFormSchemaRequest = graphql.NewInputObject(graphql.InputObjectConfig{Name: "LaunchFormSchemaRequest", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
+		return graphql.InputObjectConfigFieldMap{
+			"tenantId": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+			"recipeId": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
+		}
+	})})
 	i_StartRunRequest = graphql.NewInputObject(graphql.InputObjectConfig{Name: "StartRunRequest", Fields: graphql.InputObjectConfigFieldMapThunk(func() graphql.InputObjectConfigFieldMap {
 		return graphql.InputObjectConfigFieldMap{
 			"tenantId": &graphql.InputObjectFieldConfig{Type: graphql.NewNonNull(graphql.String)},
@@ -11773,6 +11802,25 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 				}
 			}
 			resp, err := srv.RecipeService.CheckRecipe(ctx, req)
+			if err != nil {
+				return nil, graphqlrt.GraphQLError(ctx, err)
+			}
+			return resp, nil
+		}},
+		"launchFormSchema": &graphql.Field{Type: o_LaunchFormSchemaResponse, Args: graphql.FieldConfigArgument{
+			"tenantId": &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.String)},
+			"recipeId": &graphql.ArgumentConfig{Type: graphql.NewNonNull(graphql.String)},
+		}, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+			req := decode_LaunchFormSchemaRequest(p.Args)
+			ctx := p.Context
+			if srv.Authorize != nil {
+				var aerr error
+				ctx, aerr = srv.Authorize(ctx, "/cloud.v1.api.RecipeService/LaunchFormSchema", req)
+				if aerr != nil {
+					return nil, graphqlrt.GraphQLError(ctx, aerr)
+				}
+			}
+			resp, err := srv.RecipeService.LaunchFormSchema(ctx, req)
 			if err != nil {
 				return nil, graphqlrt.GraphQLError(ctx, err)
 			}
@@ -13100,6 +13148,6 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 	cfg.Query = queryRoot
 	cfg.Mutation = mutationRoot
 	cfg.Subscription = subscriptionRoot
-	cfg.Types = []graphql.Type{e_Status, e_Database_Kind, e_Provider, e_Verdict, e_FavoriteKind, e_RegistrationRequestStatus, e_Scope, e_Resource, e_Action, e_ApiTokenType, e_PackageRecord_Format, e_PackageRecord_Status, e_EntitySortField, e_QuotaRefreshPolicy, e_Quota_ReservationStatus, e_Severity, e_Workload_Protocol, e_Trigger, e_Schema_Filed_ResultType, e_Schema_Filed_Severity, e_Schema_Filed_String_StringFormat, e_Cmd_Streams_Mode, e_Worker_Kind, e_OperationKind, e_OutputKind, e_ShareRecord_Target_Kind, e_Yandex_Settings_PlatformId, e_Yandex_Settings_Zone, e_ListTestRunsRequest_Sort_Kind, e_LogScrollDirection, e_Source, e_Stream, e_Topology_State, e_Component_Kind, e_Connection_Kind, e_Connection_Protocol, e_Connection_Mode, e_Docker_Protocol, e_Docker_RestartPolicy, e_RuntimeNode_Kind, e_ObservationSource, e_WorkerPresence, e_Event_Kind, e_EventSeverity, o_PlatformSettings, o_RunColumn, o_CompareView, o_Comparison, o_Comparison_RunSummary, o_TimeRange, o_MetricRow, o_MetricCell, o_CompareRunsResponse, o_AddFavoriteResponse, o_FavoriteRecord, o_Entity, o_Timings, o_RemoveFavoriteResponse, o_ListFavoritesResponse, o_TokenPair, o_RegisterResponse, o_LoginResponse, o_RefreshResponse, o_LogoutResponse, o_CreateAccountResponse, o_Account, o_GetAccountResponse, o_LookupAccountByEmailResponse, o_GetMyAccountResponse, o_ListAccountsResponse, o_UpdateAccountResponse, o_DeleteAccountResponse, o_ChangePasswordResponse, o_ResetPasswordResponse, o_RequestPasswordResetResponse, o_ConfirmPasswordResetResponse, o_VerifyEmailResponse, o_ResendVerificationResponse, o_CreateTenantResponse, o_Tenant, o_Tags, o_GetTenantResponse, o_ListMyTenantsResponse, o_UpdateTenantResponse, o_DeleteTenantResponse, o_TransferTenantOwnershipResponse, o_LeaveTenantResponse, o_Permission, o_CreateRoleResponse, o_Role, o_GetRoleResponse, o_ListRolesResponse, o_UpdateRoleResponse, o_DeleteRoleResponse, o_CreateMembershipResponse, o_Membership, o_GetMembershipResponse, o_ListMembershipsResponse, o_UpdateMembershipResponse, o_DeleteMembershipResponse, o_GetMyPermissionsResponse, o_CatalogEntry, o_ListPermissionsResponse, o_CreateIdentityProviderResponse, o_IdentityProvider, o_GetIdentityProviderResponse, o_UpdateIdentityProviderResponse, o_DeleteIdentityProviderResponse, o_SsoButton, o_ListIdentityProvidersResponse, o_StartSSOResponse, o_CompleteSSOResponse, o_LinkExternalIdentityResponse, o_ExternalIdentity, o_UnlinkExternalIdentityResponse, o_ListExternalIdentitiesResponse, o_CreateApiTokenResponse, o_ApiToken, o_ListApiTokensResponse, o_RevokeApiTokenResponse, o_RegistrationRequest, o_SubmitRegistrationRequestResponse, o_ListRegistrationRequestsResponse, o_MarkRegistrationRequestHandledResponse, o_CreatePackageUploadResponse, o_PackageRecord, o_CompleteUploadResponse, o_GetPackageResponse, o_ListPackagesResponse, o_DeletePackageResponse, o_RatingEntry, o_GetSystemRatingResponse, o_GetTenantRatingResponse, o_PublicRatingEntry, o_GetPublicRatingResponse, o_GetSharedRunResponse, o_ShareRecord_Snapshot, o_SharedTestRun, o_RunMetrics, o_MetricSummary, o_SharedSuiteRun, o_QuotaView, o_Quota_Info, o_QuotaReservationView, o_ListQuotasResponse, o_RefreshQuotasResponse, o_GetRunQuotaUsageResponse, o_RecipeRecord, o_RecipeRecord_Summary, o_RecipeBundle, o_CreateRecipeResponse, o_GetRecipeResponse, o_ListRecipesResponse, o_DeleteRecipeResponse, o_CheckRecipeResponse, o_Diagnostic, o_StartRunResponse, o_Run, o_Run_Summary, o_Baked, o_Schema, o_Schema_Filed, o_Schema_Filed_Float, o_Schema_Filed_Double, o_Schema_Filed_Int32, o_Schema_Filed_Int64, o_Schema_Filed_UInt32, o_Schema_Filed_UInt64, o_Schema_Filed_Bool, o_Schema_Filed_String, o_Schema_Filed_Enum, o_Schema_Filed_Duration, o_Schema_Filed_Timestamp, o_Schema_Filed_List, o_Schema_Filed_Object, o_Schema_Filed_Computed, o_Schema_Filed_Rule, o_Schema_Filed_OneOf, o_Schema_Filed_Ref, o_SchemaIdentity, o_CompiledPlan, o_ProviderRef, o_MachineGroup, o_DiskSpec, o_ServiceSpec, o_ConfigFile, o_HealthCheck, o_CompiledJob, o_StepList, o_DslStep, o_AgentStep, o_Dir, o_Dir_Info, o_File, o_File_Info, o_File_AsRef, o_Cmd, o_Cmd_Spec, o_Cmd_Argv, o_Cmd_Script, o_Cmd_Streams, o_Cmd_Result, o_WaitStep, o_RunTopology, o_RunTopology_ServiceNode, o_RunTopology_MachineNode, o_RunState, o_Stage, o_Worker, o_PipelineOperation, o_PipelineOutput, o_ObservabilityRefs, o_ListRunsResponse, o_CancelRunResponse, o_DeleteRunResponse, o_ShareRecord_Target, o_CreateShareResponse, o_ShareRecord, o_GetShareResponse, o_ListSharesResponse, o_RevokeShareResponse, o_SetShareExpiryResponse, o_DeleteShareResponse, o_ListStroppyVersionsResponse, o_GetSystemSettingsResponse, o_UpdateSystemSettingsResponse, o_GetPublicConfigResponse, o_StatusCounts, o_UpcomingSuite, o_TenantDashboard, o_GetTenantDashboardResponse, o_GetTenantSettingsResponse, o_TenantSettingsRecord, o_Yandex_Settings, o_UpdateTenantSettingsResponse, o_ProviderSettings, o_Docker_Settings, o_LogFilter, o_TestRunOverviewSnapshot, o_Topology, o_TopologySpec, o_Node, o_Component, o_Connection, o_InfrastructurePlan, o_MachinePlan, o_Docker_Container, o_Docker_VolumeMount, o_Docker_PortBinding, o_Docker_File, o_Docker_Healthcheck, o_Docker_Resources, o_Yandex_Vm, o_Yandex_Disk, o_Quota_Request, o_InfrastructureState, o_MachineState, o_Endpoint, o_Docker_ContainerOutput, o_Yandex_VmOutput, o_Quota_Allocation, o_DeploymentPlan, o_ComponentDeployment, o_RuntimeNode, o_RuntimeConnection, o_Overview, o_PipelineView, o_PipelineNode, o_LogRef, o_LogCursor, o_WorkerInfo, o_Event, o_GetTestRunOverviewResponse, o_QueryLogsResponse, o_LogLine, o_ResolveLogRefResponse, o_GetRunMetricsResponse, o_LogFacetValue, o_LogFacetField, o_GetLogFacetsResponse, o_Empty, o_Schema_Filed_RefTargetName, o_CompiledJobActionService, o_FileContentText, o_FileContentBytes, u_ShareRecord_SnapshotView, u_Schema_FiledKind, u_Schema_Filed_RefTarget, u_CompiledJobAction, u_DslStepStep, u_AgentStepAction, u_FileContent, u_Cmd_SpecCommand, u_ProviderSettingsSettings, u_MachinePlanProviderParams, u_MachineStateProviderOutput, i_PlatformSettingsInput, i_TimeRangeInput, i_CompareRunsRequest, i_AddFavoriteRequest, i_EntityInput, i_TimingsInput, i_RemoveFavoriteRequest, i_ListFavoritesRequest, i_PageInput, i_RegisterRequest, i_LoginRequest, i_RefreshRequest, i_LogoutRequest, i_CreateAccountRequest, i_ExternalIdentityLinkInput, i_GetAccountRequest, i_LookupAccountByEmailRequest, i_GetMyAccountRequest, i_ListAccountsRequest, i_UpdateAccountRequest, i_DeleteAccountRequest, i_ChangePasswordRequest, i_ResetPasswordRequest, i_RequestPasswordResetRequest, i_ConfirmPasswordResetRequest, i_VerifyEmailRequest, i_ResendVerificationRequest, i_CreateTenantRequest, i_GetTenantRequest, i_GetTenantRequestRef, i_ListMyTenantsRequest, i_UpdateTenantRequest, i_DeleteTenantRequest, i_TransferTenantOwnershipRequest, i_LeaveTenantRequest, i_CreateRoleRequest, i_PermissionInput, i_GetRoleRequest, i_ListRolesRequest, i_UpdateRoleRequest, i_DeleteRoleRequest, i_CreateMembershipRequest, i_GetMembershipRequest, i_ListMembershipsRequest, i_UpdateMembershipRequest, i_DeleteMembershipRequest, i_GetMyPermissionsRequest, i_ListPermissionsRequest, i_CreateIdentityProviderRequest, i_GetIdentityProviderRequest, i_UpdateIdentityProviderRequest, i_DeleteIdentityProviderRequest, i_ListIdentityProvidersRequest, i_StartSSORequest, i_CompleteSSORequest, i_LinkExternalIdentityRequest, i_UnlinkExternalIdentityRequest, i_ListExternalIdentitiesRequest, i_CreateApiTokenRequest, i_ListApiTokensRequest, i_RevokeApiTokenRequest, i_SubmitRegistrationRequestRequest, i_ListRegistrationRequestsRequest, i_MarkRegistrationRequestHandledRequest, i_CreatePackageUploadRequest, i_CompleteUploadRequest, i_GetPackageRequest, i_ListPackagesRequest, i_EntityFilterInput, i_EntitySortInput, i_DeletePackageRequest, i_RatingFilterInput, i_GetSystemRatingRequest, i_GetTenantRatingRequest, i_GetPublicRatingRequest, i_GetSharedRunRequest, i_ListQuotasRequest, i_RefreshQuotasRequest, i_GetRunQuotaUsageRequest, i_CreateRecipeRequest, i_RecipeRecordInput, i_RecipeRecord_SummaryInput, i_RecipeBundleInput, i_GetRecipeRequest, i_ListRecipesRequest, i_DeleteRecipeRequest, i_CheckRecipeRequest, i_StartRunRequest, i_ListRunsRequest, i_CancelRunRequest, i_DeleteRunRequest, i_CreateShareRequest, i_ShareRecord_TargetInput, i_GetShareRequest, i_ListSharesRequest, i_RevokeShareRequest, i_SetShareExpiryRequest, i_DeleteShareRequest, i_ListStroppyVersionsRequest, i_GetSystemSettingsRequest, i_UpdateSystemSettingsRequest, i_GetPublicConfigRequest, i_GetTenantDashboardRequest, i_GetTenantSettingsRequest, i_TenantSettingsRecordInput, i_Yandex_SettingsInput, i_UpdateTenantSettingsRequest, i_SetTenantProviderSettingsRequest, i_ProviderSettingsInput, i_ProviderSettingsSettingsInput, i_Docker_SettingsInput, i_LogFilterInput, i_LogRefInput, i_LogCursorInput, i_GetTestRunOverviewRequest, i_StreamTestRunOverviewRequest, i_QueryLogsRequest, i_StreamLogsRequest, i_ResolveLogRefRequest, i_GetRunMetricsRequest, i_GetLogFacetsRequest}
+	cfg.Types = []graphql.Type{e_Status, e_Database_Kind, e_Provider, e_Verdict, e_FavoriteKind, e_RegistrationRequestStatus, e_Scope, e_Resource, e_Action, e_ApiTokenType, e_PackageRecord_Format, e_PackageRecord_Status, e_EntitySortField, e_QuotaRefreshPolicy, e_Quota_ReservationStatus, e_Severity, e_Schema_Filed_ResultType, e_Schema_Filed_Severity, e_Schema_Filed_String_StringFormat, e_Workload_Protocol, e_Trigger, e_Cmd_Streams_Mode, e_Worker_Kind, e_OperationKind, e_OutputKind, e_ShareRecord_Target_Kind, e_Yandex_Settings_PlatformId, e_Yandex_Settings_Zone, e_ListTestRunsRequest_Sort_Kind, e_LogScrollDirection, e_Source, e_Stream, e_Topology_State, e_Component_Kind, e_Connection_Kind, e_Connection_Protocol, e_Connection_Mode, e_Docker_Protocol, e_Docker_RestartPolicy, e_RuntimeNode_Kind, e_ObservationSource, e_WorkerPresence, e_Event_Kind, e_EventSeverity, o_PlatformSettings, o_RunColumn, o_CompareView, o_Comparison, o_Comparison_RunSummary, o_TimeRange, o_MetricRow, o_MetricCell, o_CompareRunsResponse, o_AddFavoriteResponse, o_FavoriteRecord, o_Entity, o_Timings, o_RemoveFavoriteResponse, o_ListFavoritesResponse, o_TokenPair, o_RegisterResponse, o_LoginResponse, o_RefreshResponse, o_LogoutResponse, o_CreateAccountResponse, o_Account, o_GetAccountResponse, o_LookupAccountByEmailResponse, o_GetMyAccountResponse, o_ListAccountsResponse, o_UpdateAccountResponse, o_DeleteAccountResponse, o_ChangePasswordResponse, o_ResetPasswordResponse, o_RequestPasswordResetResponse, o_ConfirmPasswordResetResponse, o_VerifyEmailResponse, o_ResendVerificationResponse, o_CreateTenantResponse, o_Tenant, o_Tags, o_GetTenantResponse, o_ListMyTenantsResponse, o_UpdateTenantResponse, o_DeleteTenantResponse, o_TransferTenantOwnershipResponse, o_LeaveTenantResponse, o_Permission, o_CreateRoleResponse, o_Role, o_GetRoleResponse, o_ListRolesResponse, o_UpdateRoleResponse, o_DeleteRoleResponse, o_CreateMembershipResponse, o_Membership, o_GetMembershipResponse, o_ListMembershipsResponse, o_UpdateMembershipResponse, o_DeleteMembershipResponse, o_GetMyPermissionsResponse, o_CatalogEntry, o_ListPermissionsResponse, o_CreateIdentityProviderResponse, o_IdentityProvider, o_GetIdentityProviderResponse, o_UpdateIdentityProviderResponse, o_DeleteIdentityProviderResponse, o_SsoButton, o_ListIdentityProvidersResponse, o_StartSSOResponse, o_CompleteSSOResponse, o_LinkExternalIdentityResponse, o_ExternalIdentity, o_UnlinkExternalIdentityResponse, o_ListExternalIdentitiesResponse, o_CreateApiTokenResponse, o_ApiToken, o_ListApiTokensResponse, o_RevokeApiTokenResponse, o_RegistrationRequest, o_SubmitRegistrationRequestResponse, o_ListRegistrationRequestsResponse, o_MarkRegistrationRequestHandledResponse, o_CreatePackageUploadResponse, o_PackageRecord, o_CompleteUploadResponse, o_GetPackageResponse, o_ListPackagesResponse, o_DeletePackageResponse, o_RatingEntry, o_GetSystemRatingResponse, o_GetTenantRatingResponse, o_PublicRatingEntry, o_GetPublicRatingResponse, o_GetSharedRunResponse, o_ShareRecord_Snapshot, o_SharedTestRun, o_RunMetrics, o_MetricSummary, o_SharedSuiteRun, o_QuotaView, o_Quota_Info, o_QuotaReservationView, o_ListQuotasResponse, o_RefreshQuotasResponse, o_GetRunQuotaUsageResponse, o_RecipeRecord, o_RecipeRecord_Summary, o_RecipeBundle, o_CreateRecipeResponse, o_GetRecipeResponse, o_ListRecipesResponse, o_DeleteRecipeResponse, o_CheckRecipeResponse, o_Diagnostic, o_LaunchFormSchemaResponse, o_Schema, o_Schema_Filed, o_Schema_Filed_Float, o_Schema_Filed_Double, o_Schema_Filed_Int32, o_Schema_Filed_Int64, o_Schema_Filed_UInt32, o_Schema_Filed_UInt64, o_Schema_Filed_Bool, o_Schema_Filed_String, o_Schema_Filed_Enum, o_Schema_Filed_Duration, o_Schema_Filed_Timestamp, o_Schema_Filed_List, o_Schema_Filed_Object, o_Schema_Filed_Computed, o_Schema_Filed_Rule, o_Schema_Filed_OneOf, o_Schema_Filed_Ref, o_SchemaIdentity, o_StartRunResponse, o_Run, o_Run_Summary, o_Baked, o_CompiledPlan, o_ProviderRef, o_MachineGroup, o_DiskSpec, o_ServiceSpec, o_ConfigFile, o_HealthCheck, o_CompiledJob, o_StepList, o_DslStep, o_AgentStep, o_Dir, o_Dir_Info, o_File, o_File_Info, o_File_AsRef, o_Cmd, o_Cmd_Spec, o_Cmd_Argv, o_Cmd_Script, o_Cmd_Streams, o_Cmd_Result, o_WaitStep, o_RunTopology, o_RunTopology_ServiceNode, o_RunTopology_MachineNode, o_RunState, o_Stage, o_Worker, o_PipelineOperation, o_PipelineOutput, o_ObservabilityRefs, o_ListRunsResponse, o_CancelRunResponse, o_DeleteRunResponse, o_ShareRecord_Target, o_CreateShareResponse, o_ShareRecord, o_GetShareResponse, o_ListSharesResponse, o_RevokeShareResponse, o_SetShareExpiryResponse, o_DeleteShareResponse, o_ListStroppyVersionsResponse, o_GetSystemSettingsResponse, o_UpdateSystemSettingsResponse, o_GetPublicConfigResponse, o_StatusCounts, o_UpcomingSuite, o_TenantDashboard, o_GetTenantDashboardResponse, o_GetTenantSettingsResponse, o_TenantSettingsRecord, o_Yandex_Settings, o_UpdateTenantSettingsResponse, o_ProviderSettings, o_Docker_Settings, o_LogFilter, o_TestRunOverviewSnapshot, o_Topology, o_TopologySpec, o_Node, o_Component, o_Connection, o_InfrastructurePlan, o_MachinePlan, o_Docker_Container, o_Docker_VolumeMount, o_Docker_PortBinding, o_Docker_File, o_Docker_Healthcheck, o_Docker_Resources, o_Yandex_Vm, o_Yandex_Disk, o_Quota_Request, o_InfrastructureState, o_MachineState, o_Endpoint, o_Docker_ContainerOutput, o_Yandex_VmOutput, o_Quota_Allocation, o_DeploymentPlan, o_ComponentDeployment, o_RuntimeNode, o_RuntimeConnection, o_Overview, o_PipelineView, o_PipelineNode, o_LogRef, o_LogCursor, o_WorkerInfo, o_Event, o_GetTestRunOverviewResponse, o_QueryLogsResponse, o_LogLine, o_ResolveLogRefResponse, o_GetRunMetricsResponse, o_LogFacetValue, o_LogFacetField, o_GetLogFacetsResponse, o_Empty, o_Schema_Filed_RefTargetName, o_CompiledJobActionService, o_FileContentText, o_FileContentBytes, u_ShareRecord_SnapshotView, u_Schema_FiledKind, u_Schema_Filed_RefTarget, u_CompiledJobAction, u_DslStepStep, u_AgentStepAction, u_FileContent, u_Cmd_SpecCommand, u_ProviderSettingsSettings, u_MachinePlanProviderParams, u_MachineStateProviderOutput, i_PlatformSettingsInput, i_TimeRangeInput, i_CompareRunsRequest, i_AddFavoriteRequest, i_EntityInput, i_TimingsInput, i_RemoveFavoriteRequest, i_ListFavoritesRequest, i_PageInput, i_RegisterRequest, i_LoginRequest, i_RefreshRequest, i_LogoutRequest, i_CreateAccountRequest, i_ExternalIdentityLinkInput, i_GetAccountRequest, i_LookupAccountByEmailRequest, i_GetMyAccountRequest, i_ListAccountsRequest, i_UpdateAccountRequest, i_DeleteAccountRequest, i_ChangePasswordRequest, i_ResetPasswordRequest, i_RequestPasswordResetRequest, i_ConfirmPasswordResetRequest, i_VerifyEmailRequest, i_ResendVerificationRequest, i_CreateTenantRequest, i_GetTenantRequest, i_GetTenantRequestRef, i_ListMyTenantsRequest, i_UpdateTenantRequest, i_DeleteTenantRequest, i_TransferTenantOwnershipRequest, i_LeaveTenantRequest, i_CreateRoleRequest, i_PermissionInput, i_GetRoleRequest, i_ListRolesRequest, i_UpdateRoleRequest, i_DeleteRoleRequest, i_CreateMembershipRequest, i_GetMembershipRequest, i_ListMembershipsRequest, i_UpdateMembershipRequest, i_DeleteMembershipRequest, i_GetMyPermissionsRequest, i_ListPermissionsRequest, i_CreateIdentityProviderRequest, i_GetIdentityProviderRequest, i_UpdateIdentityProviderRequest, i_DeleteIdentityProviderRequest, i_ListIdentityProvidersRequest, i_StartSSORequest, i_CompleteSSORequest, i_LinkExternalIdentityRequest, i_UnlinkExternalIdentityRequest, i_ListExternalIdentitiesRequest, i_CreateApiTokenRequest, i_ListApiTokensRequest, i_RevokeApiTokenRequest, i_SubmitRegistrationRequestRequest, i_ListRegistrationRequestsRequest, i_MarkRegistrationRequestHandledRequest, i_CreatePackageUploadRequest, i_CompleteUploadRequest, i_GetPackageRequest, i_ListPackagesRequest, i_EntityFilterInput, i_EntitySortInput, i_DeletePackageRequest, i_RatingFilterInput, i_GetSystemRatingRequest, i_GetTenantRatingRequest, i_GetPublicRatingRequest, i_GetSharedRunRequest, i_ListQuotasRequest, i_RefreshQuotasRequest, i_GetRunQuotaUsageRequest, i_CreateRecipeRequest, i_RecipeRecordInput, i_RecipeRecord_SummaryInput, i_RecipeBundleInput, i_GetRecipeRequest, i_ListRecipesRequest, i_DeleteRecipeRequest, i_CheckRecipeRequest, i_LaunchFormSchemaRequest, i_StartRunRequest, i_ListRunsRequest, i_CancelRunRequest, i_DeleteRunRequest, i_CreateShareRequest, i_ShareRecord_TargetInput, i_GetShareRequest, i_ListSharesRequest, i_RevokeShareRequest, i_SetShareExpiryRequest, i_DeleteShareRequest, i_ListStroppyVersionsRequest, i_GetSystemSettingsRequest, i_UpdateSystemSettingsRequest, i_GetPublicConfigRequest, i_GetTenantDashboardRequest, i_GetTenantSettingsRequest, i_TenantSettingsRecordInput, i_Yandex_SettingsInput, i_UpdateTenantSettingsRequest, i_SetTenantProviderSettingsRequest, i_ProviderSettingsInput, i_ProviderSettingsSettingsInput, i_Docker_SettingsInput, i_LogFilterInput, i_LogRefInput, i_LogCursorInput, i_GetTestRunOverviewRequest, i_StreamTestRunOverviewRequest, i_QueryLogsRequest, i_StreamLogsRequest, i_ResolveLogRefRequest, i_GetRunMetricsRequest, i_GetLogFacetsRequest}
 	return graphql.NewSchema(cfg)
 }

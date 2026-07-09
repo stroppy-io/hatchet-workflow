@@ -154,6 +154,30 @@ func (s *Service) CheckRecipe(ctx context.Context, req *api.CheckRecipeRequest) 
 	return &api.CheckRecipeResponse{Diagnostics: diags}, nil
 }
 
+// LaunchFormSchema composes and returns the launch-form schemapb.Schema for
+// the tenant's stored recipe bundle. Read-only. Unlike CheckRecipe/Preview,
+// a schema-composition failure (unresolvable provider, unparseable
+// workflow.yaml) IS an RPC error (InvalidArgument): LaunchFormSchemaResponse
+// carries no diagnostics channel, mirroring DslService.ComposedSchema's own
+// contract for the same reason.
+func (s *Service) LaunchFormSchema(ctx context.Context, req *api.LaunchFormSchemaRequest) (*api.LaunchFormSchemaResponse, error) {
+	if err := requireTenant(req.GetTenantId()); err != nil {
+		return nil, err
+	}
+	rec, err := s.d.Repo.Get(ctx, req.GetTenantId(), req.GetRecipeId())
+	if err != nil {
+		return nil, utils.MapErr(err)
+	}
+	form, diags, err := s.d.FormSchema(ctx, rec.GetBundle().GetFiles())
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, "compose launch form schema: %v", err)
+	}
+	if diags.HasErrors() {
+		return nil, status.Errorf(codes.InvalidArgument, "compose launch form schema: %s", diags.String())
+	}
+	return &api.LaunchFormSchemaResponse{Schema: form}, nil
+}
+
 /*
 StartRun launches a new run of an already-stored recipe bundle: it persists a
 run record (models.Run — see the package doc's RunRepo/RecipeWorkflows

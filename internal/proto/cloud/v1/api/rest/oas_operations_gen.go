@@ -54,6 +54,7 @@ const (
 	GetTenantRatingOperation                OperationName = "GetTenantRating"
 	GetTenantSettingsOperation              OperationName = "GetTenantSettings"
 	GetTestRunOverviewOperation             OperationName = "GetTestRunOverview"
+	LaunchFormSchemaOperation               OperationName = "LaunchFormSchema"
 	LeaveTenantOperation                    OperationName = "LeaveTenant"
 	LinkExternalIdentityOperation           OperationName = "LinkExternalIdentity"
 	ListAccountsOperation                   OperationName = "ListAccounts"

@@ -9,6 +9,7 @@ import "cloud/v1/iam/permission.proto";
 import "cloud/v1/models/recipe.proto";
 import "cloud/v1/models/test_run.proto";
 import "validate/validate.proto";
+import "schemapb/schema.proto";
 
 import "ogen/ogen.proto";
 
@@ -149,6 +150,34 @@ message CheckRecipeResponse {
         cloud.v1.dsl.DslService.Check for the same diagnostic model).
      */
     repeated dsl.Diagnostic diagnostics = 1;
+}
+
+/*
+    LaunchFormSchemaRequest composes the launch-form schemapb.Schema for an
+    already-stored recipe bundle: workflow.yaml's declared inputs hoisted to
+    the top level, plus the resolved provider's params nested under
+    "provider".
+ */
+message LaunchFormSchemaRequest {
+    /*
+        tenant_id scopes the request to the owning tenant.
+     */
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    /*
+        recipe_id is the recipe record whose stored bundle's launch-form
+        schema is composed.
+     */
+    string recipe_id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+/*
+    LaunchFormSchemaResponse returns the composed launch-form schema.
+ */
+message LaunchFormSchemaResponse {
+    /*
+        schema is the composed launch-form schemapb.Schema (workflow inputs
+        at the top level, provider params nested under "provider").
+     */
+    schemapb.Schema schema = 1;
 }
 
 /*
@@ -396,6 +425,22 @@ service RecipeService {
             }
         };
 
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_RECIPE, action: ACTION_READ}]};
+    }
+    /*
+        LaunchFormSchema composes and returns the launch-form schemapb.Schema
+        for the stored bundle (workflow.inputs + provider.params). Read-only.
+     */
+    rpc LaunchFormSchema (LaunchFormSchemaRequest) returns (LaunchFormSchemaResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/launch-form-schema"
+            operation_id: "launchFormSchema"
+            request_body: { required: true }
+            responses: { status: 200 description: "OK" }
+            responses: { description: "Unexpected error." schema: { ref: "#/components/schemas/Error" } }
+        };
         option idempotency_level = NO_SIDE_EFFECTS;
         option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_RECIPE, action: ACTION_READ}]};
     }

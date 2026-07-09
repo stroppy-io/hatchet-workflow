@@ -11,6 +11,9 @@ package recipe
 import (
 	"context"
 
+	"github.com/stroppy-io/schemapb/schemapb"
+
+	"github.com/stroppy-io/stroppy-cloud/internal/dsl/diag"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	dslpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dsl"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
@@ -110,6 +113,13 @@ type Deps struct {
 	// Workflows launches RunRecipeWorkflow for a StartRun call. Required for
 	// StartRun; every other handler works without it.
 	Workflows RecipeWorkflows
+	// FormSchema composes the launch-form schemapb.Schema for a bundle's
+	// files (workflow.inputs ⊕ provider.params). In production this is
+	// internal/services/dsl.ComposeLaunchFormSchema, injected for the same
+	// reason Checker is: reuse the path-traversal-safe provider-module
+	// derivation living in internal/services/dsl instead of duplicating it.
+	// Required for LaunchFormSchema; every other handler works without it.
+	FormSchema func(ctx context.Context, files map[string][]byte) (*schemapb.Schema, diag.List, error)
 }
 
 // Service implements api.RecipeServiceServer.

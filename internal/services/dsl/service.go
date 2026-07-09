@@ -220,6 +220,69 @@ func (s *DslService) ComposedSchema(_ context.Context, req *dslpb.ComposedSchema
 	return &dslpb.ComposedSchemaResponse{SchemaJson: string(raw)}, nil
 }
 
+// launchFormNamespace is the schemapb namespace prefix ComposeLaunchFormSchema
+// builds its composed form schema under, mirroring composedSchemaFormNamespace's
+// "stroppy.form.<...>" convention (see its doc comment) but suffixed with the
+// resolved provider name (or left bare when there is none) since
+// ComposeLaunchFormSchema, unlike ComposedSchema, already knows which single
+// provider (if any) it resolved.
+const launchFormNamespace = "stroppy.form."
+
+// ComposeLaunchFormSchema derives and composes the launch-form schemapb.Schema
+// for a bundle: workflow.yaml's top-level `inputs:` (SP-A DeriveInputsSchema)
+// hoisted to the top level, plus the resolved provider's params.tf-derived
+// schema (SP-A DeriveProviderParamsSchemapb) nested under "provider" (SP-A
+// ComposeFormSchema). It reuses resolveProviderName/deriveProviderSchema's
+// exact path-traversal-safe module materialization (see
+// materializeProviderModule's doc comment) rather than a second
+// implementation — RecipeService.LaunchFormSchema (internal/services/recipe)
+// calls this via Deps.FormSchema rather than importing this package
+// directly, matching Deps.Checker's existing injection precedent.
+//
+// A bundle with no resolvable provider composes inputs-only (params nil);
+// this mirrors ComposedSchema's own "no provider -> permissive" contract. A
+// bundle whose workflow.yaml fails to decode, or whose provider.use is
+// ambiguous, returns an error (unlike ComposedSchema's diagnostics-only
+// contract) because a launch form has no partial-success rendering: either
+// there is a usable Schema or there is not.
+func ComposeLaunchFormSchema(files map[string][]byte) (*schemapb.Schema, diag.List, error) {
+	var diags diag.List
+
+	var wfInputs map[string]ast.InputSpec
+	if wfSrc, ok := files[workflowFile]; ok {
+		wf, wfDiags := ast.DecodeWorkflow(workflowFile, wfSrc)
+		diags = append(diags, wfDiags...)
+		if wfDiags.HasErrors() {
+			return nil, diags, fmt.Errorf("decode %s: %s", workflowFile, joinDiagMessages(wfDiags))
+		}
+		wfInputs = wf.Inputs
+	}
+
+	inputsSchema, inputDiags := schema.DeriveInputsSchema(launchFormNamespace+"inputs", wfInputs)
+	diags = append(diags, inputDiags...)
+
+	name, err := resolveProviderName(files)
+	if err != nil {
+		return nil, diags, fmt.Errorf("resolve provider: %w", err)
+	}
+
+	var paramsSchema *schemapb.Schema
+	if name != "" {
+		p, _, deriveDiags, derr := deriveProviderParamsSchemapb(files, name)
+		diags = append(diags, deriveDiags...)
+		if derr != nil {
+			return nil, diags, fmt.Errorf("derive provider %q params: %w", name, derr)
+		}
+		paramsSchema = p
+	}
+
+	form, err := schema.ComposeFormSchema(launchFormNamespace+name, inputsSchema, paramsSchema)
+	if err != nil {
+		return nil, diags, fmt.Errorf("compose form schema: %w", err)
+	}
+	return form, diags, nil
+}
+
 // Check compiles req's bundle in check-mode and returns every diagnostic the
 // full dsl.Compile pipeline finds (schema, decode, contract, graph,
 // lowering), plus this handler's own provider-resolution diagnostics

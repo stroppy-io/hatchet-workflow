@@ -15,6 +15,8 @@ import { file_cloud_v1_models_recipe } from "../models/recipe_pb.ts";
 import type { Run, RunJson } from "../models/test_run_pb.ts";
 import { file_cloud_v1_models_test_run } from "../models/test_run_pb.ts";
 import { file_validate_validate } from "../../../validate/validate_pb.ts";
+import type { Schema, SchemaJson } from "../../../schemapb/schema_pb.ts";
+import { file_schemapb_schema } from "../../../schemapb/schema_pb.ts";
 import { file_ogen_ogen } from "../../../ogen/ogen_pb.ts";
 import type { Message } from "@bufbuild/protobuf";
 
@@ -22,7 +24,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/api/recipe.proto.
  */
 export const file_cloud_v1_api_recipe: GenFile = /*@__PURE__*/
-  fileDesc("ChljbG91ZC92MS9hcGkvcmVjaXBlLnByb3RvEgxjbG91ZC52MS5hcGkibAoTQ3JlYXRlUmVjaXBlUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBI3CgZyZWNpcGUYAiABKAsyHS5jbG91ZC52MS5tb2RlbHMuUmVjaXBlUmVjb3JkQgj6QgWKAQIQASJPChRDcmVhdGVSZWNpcGVSZXNwb25zZRI3CgZyZWNpcGUYASABKAsyHS5jbG91ZC52MS5tb2RlbHMuUmVjaXBlUmVjb3JkQgj6QgWKAQIQASJHChBHZXRSZWNpcGVSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQYQBABEhUKAmlkGAIgASgJQgn6QgZyBBABGEAiTAoRR2V0UmVjaXBlUmVzcG9uc2USNwoGcmVjaXBlGAEgASgLMh0uY2xvdWQudjEubW9kZWxzLlJlY2lwZVJlY29yZEII+kIFigECEAEihgEKEkxpc3RSZWNpcGVzUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBItCgZmaWx0ZXIYAiABKAsyHS5jbG91ZC52MS5jb21tb24uRW50aXR5RmlsdGVyEiMKBHBhZ2UYAyABKAsyFS5jbG91ZC52MS5jb21tb24uUGFnZSJeChNMaXN0UmVjaXBlc1Jlc3BvbnNlEi4KB3JlY2lwZXMYASADKAsyHS5jbG91ZC52MS5tb2RlbHMuUmVjaXBlUmVjb3JkEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSJKChNEZWxldGVSZWNpcGVSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQYQBABEhUKAmlkGAIgASgJQgn6QgZyBBABGEAiFgoURGVsZXRlUmVjaXBlUmVzcG9uc2UiSQoSQ2hlY2tSZWNpcGVSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhUKAmlkGAIgASgJQgn6QgZyBBABGEAiRAoTQ2hlY2tSZWNpcGVSZXNwb25zZRItCgtkaWFnbm9zdGljcxgBIAMoCzIYLmNsb3VkLnYxLmRzbC5EaWFnbm9zdGljIk0KD1N0YXJ0UnVuUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIcCglyZWNpcGVfaWQYAiABKAlCCfpCBnIEEAEYQCI/ChBTdGFydFJ1blJlc3BvbnNlEisKA3J1bhgBIAEoCzIULmNsb3VkLnYxLm1vZGVscy5SdW5CCPpCBYoBAhABInAKD0xpc3RSdW5zUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIaCglyZWNpcGVfaWQYAiABKAlCB/pCBHICGEASIwoEcGFnZRgDIAEoCzIVLmNsb3VkLnYxLmNvbW1vbi5QYWdlIk8KEExpc3RSdW5zUmVzcG9uc2USIgoEcnVucxgBIAMoCzIULmNsb3VkLnYxLm1vZGVscy5SdW4SFwoPbmV4dF9wYWdlX3Rva2VuGAIgASgJIksKEENhbmNlbFJ1blJlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASGQoGcnVuX2lkGAIgASgJQgn6QgZyBBABGEAiEwoRQ2FuY2VsUnVuUmVzcG9uc2UiSwoQRGVsZXRlUnVuUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIZCgZydW5faWQYAiABKAlCCfpCBnIEEAEYQCITChFEZWxldGVSdW5SZXNwb25zZTKJDgoNUmVjaXBlU2VydmljZRLIAQoMQ3JlYXRlUmVjaXBlEiEuY2xvdWQudjEuYXBpLkNyZWF0ZVJlY2lwZVJlcXVlc3QaIi5jbG91ZC52MS5hcGkuQ3JlYXRlUmVjaXBlUmVzcG9uc2UicYq1GAYSBAgPEAHypx1jEAIaDi9jcmVhdGUtcmVjaXBlIgxjcmVhdGVSZWNpcGWiAQIQAbIBBwjIARICT0uyATESEVVuZXhwZWN0ZWQgZXJyb3IuKhwKGiMvY29tcG9uZW50cy9zY2hlbWFzL0Vycm9yErwBCglHZXRSZWNpcGUSHi5jbG91ZC52MS5hcGkuR2V0UmVjaXBlUmVxdWVzdBofLmNsb3VkLnYxLmFwaS5HZXRSZWNpcGVSZXNwb25zZSJukAIBirUYBhIECA8QAvKnHV0QARoLL2dldC1yZWNpcGUiCWdldFJlY2lwZaIBAhABsgEHCMgBEgJPS7IBMRIRVW5leHBlY3RlZCBlcnJvci4qHAoaIy9jb21wb25lbnRzL3NjaGVtYXMvRXJyb3ISxgEKC0xpc3RSZWNpcGVzEiAuY2xvdWQudjEuYXBpLkxpc3RSZWNpcGVzUmVxdWVzdBohLmNsb3VkLnYxLmFwaS5MaXN0UmVjaXBlc1Jlc3BvbnNlInKQAgGKtRgGEgQIDxAF8qcdYaIBAhABsgEHCMgBEgJPS7IBMSocChojL2NvbXBvbmVudHMvc2NoZW1hcy9FcnJvchIRVW5leHBlY3RlZCBlcnJvci4QARoNL2xpc3QtcmVjaXBlcyILbGlzdFJlY2lwZXMSywEKDERlbGV0ZVJlY2lwZRIhLmNsb3VkLnYxLmFwaS5EZWxldGVSZWNpcGVSZXF1ZXN0GiIuY2xvdWQudjEuYXBpLkRlbGV0ZVJlY2lwZVJlc3BvbnNlInSQAgKKtRgGEgQQBAgP8qcdYxoOL2RlbGV0ZS1yZWNpcGUiDGRlbGV0ZVJlY2lwZaIBAhABsgEHCMgBEgJPS7IBMRIRVW5leHBlY3RlZCBlcnJvci4qHAoaIy9jb21wb25lbnRzL3NjaGVtYXMvRXJyb3IQAhLGAQoLQ2hlY2tSZWNpcGUSIC5jbG91ZC52MS5hcGkuQ2hlY2tSZWNpcGVSZXF1ZXN0GiEuY2xvdWQudjEuYXBpLkNoZWNrUmVjaXBlUmVzcG9uc2UicpACAYq1GAYSBAgPEALypx1hIgtjaGVja1JlY2lwZaIBAhABsgEHCMgBEgJPS7IBMRIRVW5leHBlY3RlZCBlcnJvci4qHAoaIy9jb21wb25lbnRzL3NjaGVtYXMvRXJyb3IQARoNL2NoZWNrLXJlY2lwZRK6AQoIU3RhcnRSdW4SHS5jbG91ZC52MS5hcGkuU3RhcnRSdW5SZXF1ZXN0Gh4uY2xvdWQudjEuYXBpLlN0YXJ0UnVuUmVzcG9uc2Uib4q1GAwSBBABCAgSBAgPEALypx1bEAIaCi9zdGFydC1ydW4iCHN0YXJ0UnVuogECEAGyAQcIyAESAk9LsgExEhFVbmV4cGVjdGVkIGVycm9yLiocChojL2NvbXBvbmVudHMvc2NoZW1hcy9FcnJvchK3AQoITGlzdFJ1bnMSHS5jbG91ZC52MS5hcGkuTGlzdFJ1bnNSZXF1ZXN0Gh4uY2xvdWQudjEuYXBpLkxpc3RSdW5zUmVzcG9uc2UibJACAYq1GAYSBBAFCAjypx1bogECEAGyAQcIyAESAk9LsgExEhFVbmV4cGVjdGVkIGVycm9yLiocChojL2NvbXBvbmVudHMvc2NoZW1hcy9FcnJvchABGgovbGlzdC1ydW5zIghsaXN0UnVucxK5AQoJQ2FuY2VsUnVuEh4uY2xvdWQudjEuYXBpLkNhbmNlbFJ1blJlcXVlc3QaHy5jbG91ZC52MS5hcGkuQ2FuY2VsUnVuUmVzcG9uc2Uia4q1GAYSBBADCAjypx1dEAIaCy9jYW5jZWwtcnVuIgljYW5jZWxSdW6iAQIQAbIBBwjIARICT0uyATESEVVuZXhwZWN0ZWQgZXJyb3IuKhwKGiMvY29tcG9uZW50cy9zY2hlbWFzL0Vycm9yErwBCglEZWxldGVSdW4SHi5jbG91ZC52MS5hcGkuRGVsZXRlUnVuUmVxdWVzdBofLmNsb3VkLnYxLmFwaS5EZWxldGVSdW5SZXNwb25zZSJukAICirUYBhIECAgQBPKnHV0QAhoLL2RlbGV0ZS1ydW4iCWRlbGV0ZVJ1bqIBAhABsgEHCMgBEgJPS7IBMRIRVW5leHBlY3RlZCBlcnJvci4qHAoaIy9jb21wb25lbnRzL3NjaGVtYXMvRXJyb3IaHPKnHRgSDi9hcGkvdjEvcmVjaXBlGgZyZWNpcGVCR1o/Z2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvYXBp8qcdAggBYgZwcm90bzM", [file_cloud_v1_common_entity, file_cloud_v1_dsl_service, file_cloud_v1_iam_options, file_cloud_v1_iam_permission, file_cloud_v1_models_recipe, file_cloud_v1_models_test_run, file_validate_validate, file_ogen_ogen]);
+  fileDesc("ChljbG91ZC92MS9hcGkvcmVjaXBlLnByb3RvEgxjbG91ZC52MS5hcGkibAoTQ3JlYXRlUmVjaXBlUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBI3CgZyZWNpcGUYAiABKAsyHS5jbG91ZC52MS5tb2RlbHMuUmVjaXBlUmVjb3JkQgj6QgWKAQIQASJPChRDcmVhdGVSZWNpcGVSZXNwb25zZRI3CgZyZWNpcGUYASABKAsyHS5jbG91ZC52MS5tb2RlbHMuUmVjaXBlUmVjb3JkQgj6QgWKAQIQASJHChBHZXRSZWNpcGVSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQYQBABEhUKAmlkGAIgASgJQgn6QgZyBBABGEAiTAoRR2V0UmVjaXBlUmVzcG9uc2USNwoGcmVjaXBlGAEgASgLMh0uY2xvdWQudjEubW9kZWxzLlJlY2lwZVJlY29yZEII+kIFigECEAEihgEKEkxpc3RSZWNpcGVzUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBItCgZmaWx0ZXIYAiABKAsyHS5jbG91ZC52MS5jb21tb24uRW50aXR5RmlsdGVyEiMKBHBhZ2UYAyABKAsyFS5jbG91ZC52MS5jb21tb24uUGFnZSJeChNMaXN0UmVjaXBlc1Jlc3BvbnNlEi4KB3JlY2lwZXMYASADKAsyHS5jbG91ZC52MS5tb2RlbHMuUmVjaXBlUmVjb3JkEhcKD25leHRfcGFnZV90b2tlbhgCIAEoCSJKChNEZWxldGVSZWNpcGVSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhUKAmlkGAIgASgJQgn6QgZyBBABGEAiFgoURGVsZXRlUmVjaXBlUmVzcG9uc2UiSQoSQ2hlY2tSZWNpcGVSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhUKAmlkGAIgASgJQgn6QgZyBBABGEAiRAoTQ2hlY2tSZWNpcGVSZXNwb25zZRItCgtkaWFnbm9zdGljcxgBIAMoCzIYLmNsb3VkLnYxLmRzbC5EaWFnbm9zdGljIlUKF0xhdW5jaEZvcm1TY2hlbWFSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQYQBABEhwKCXJlY2lwZV9pZBgCIAEoCUIJ+kIGcgQYQBABIjwKGExhdW5jaEZvcm1TY2hlbWFSZXNwb25zZRIgCgZzY2hlbWEYASABKAsyEC5zY2hlbWFwYi5TY2hlbWEiTQoPU3RhcnRSdW5SZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhwKCXJlY2lwZV9pZBgCIAEoCUIJ+kIGcgQQARhAIj8KEFN0YXJ0UnVuUmVzcG9uc2USKwoDcnVuGAEgASgLMhQuY2xvdWQudjEubW9kZWxzLlJ1bkII+kIFigECEAEicAoPTGlzdFJ1bnNSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhoKCXJlY2lwZV9pZBgCIAEoCUIH+kIEcgIYQBIjCgRwYWdlGAMgASgLMhUuY2xvdWQudjEuY29tbW9uLlBhZ2UiTwoQTGlzdFJ1bnNSZXNwb25zZRIiCgRydW5zGAEgAygLMhQuY2xvdWQudjEubW9kZWxzLlJ1bhIXCg9uZXh0X3BhZ2VfdG9rZW4YAiABKAkiSwoQQ2FuY2VsUnVuUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIZCgZydW5faWQYAiABKAlCCfpCBnIEEAEYQCITChFDYW5jZWxSdW5SZXNwb25zZSJLChBEZWxldGVSdW5SZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhkKBnJ1bl9pZBgCIAEoCUIJ+kIGcgQQARhAIhMKEURlbGV0ZVJ1blJlc3BvbnNlMuwPCg1SZWNpcGVTZXJ2aWNlEsgBCgxDcmVhdGVSZWNpcGUSIS5jbG91ZC52MS5hcGkuQ3JlYXRlUmVjaXBlUmVxdWVzdBoiLmNsb3VkLnYxLmFwaS5DcmVhdGVSZWNpcGVSZXNwb25zZSJxirUYBhIECA8QAfKnHWOyAQcIyAESAk9LsgExEhFVbmV4cGVjdGVkIGVycm9yLiocChojL2NvbXBvbmVudHMvc2NoZW1hcy9FcnJvchACGg4vY3JlYXRlLXJlY2lwZSIMY3JlYXRlUmVjaXBlogECEAESvAEKCUdldFJlY2lwZRIeLmNsb3VkLnYxLmFwaS5HZXRSZWNpcGVSZXF1ZXN0Gh8uY2xvdWQudjEuYXBpLkdldFJlY2lwZVJlc3BvbnNlIm6QAgGKtRgGEgQIDxAC8qcdXRoLL2dldC1yZWNpcGUiCWdldFJlY2lwZaIBAhABsgEHCMgBEgJPS7IBMRIRVW5leHBlY3RlZCBlcnJvci4qHAoaIy9jb21wb25lbnRzL3NjaGVtYXMvRXJyb3IQARLGAQoLTGlzdFJlY2lwZXMSIC5jbG91ZC52MS5hcGkuTGlzdFJlY2lwZXNSZXF1ZXN0GiEuY2xvdWQudjEuYXBpLkxpc3RSZWNpcGVzUmVzcG9uc2UicpACAYq1GAYSBAgPEAXypx1hogECEAGyAQcIyAESAk9LsgExEhFVbmV4cGVjdGVkIGVycm9yLiocChojL2NvbXBvbmVudHMvc2NoZW1hcy9FcnJvchABGg0vbGlzdC1yZWNpcGVzIgtsaXN0UmVjaXBlcxLLAQoMRGVsZXRlUmVjaXBlEiEuY2xvdWQudjEuYXBpLkRlbGV0ZVJlY2lwZVJlcXVlc3QaIi5jbG91ZC52MS5hcGkuRGVsZXRlUmVjaXBlUmVzcG9uc2UidJACAoq1GAYSBAgPEATypx1jIgxkZWxldGVSZWNpcGWiAQIQAbIBBwjIARICT0uyATESEVVuZXhwZWN0ZWQgZXJyb3IuKhwKGiMvY29tcG9uZW50cy9zY2hlbWFzL0Vycm9yEAIaDi9kZWxldGUtcmVjaXBlEsYBCgtDaGVja1JlY2lwZRIgLmNsb3VkLnYxLmFwaS5DaGVja1JlY2lwZVJlcXVlc3QaIS5jbG91ZC52MS5hcGkuQ2hlY2tSZWNpcGVSZXNwb25zZSJykAIBirUYBhIECA8QAvKnHWEQARoNL2NoZWNrLXJlY2lwZSILY2hlY2tSZWNpcGWiAQIQAbIBBwjIARICT0uyATESEVVuZXhwZWN0ZWQgZXJyb3IuKhwKGiMvY29tcG9uZW50cy9zY2hlbWFzL0Vycm9yEuABChBMYXVuY2hGb3JtU2NoZW1hEiUuY2xvdWQudjEuYXBpLkxhdW5jaEZvcm1TY2hlbWFSZXF1ZXN0GiYuY2xvdWQudjEuYXBpLkxhdW5jaEZvcm1TY2hlbWFSZXNwb25zZSJ9kAIBirUYBhIECA8QAvKnHWyyAQcSAk9LCMgBsgExEhFVbmV4cGVjdGVkIGVycm9yLiocChojL2NvbXBvbmVudHMvc2NoZW1hcy9FcnJvchABGhMvbGF1bmNoLWZvcm0tc2NoZW1hIhBsYXVuY2hGb3JtU2NoZW1hogECEAESugEKCFN0YXJ0UnVuEh0uY2xvdWQudjEuYXBpLlN0YXJ0UnVuUmVxdWVzdBoeLmNsb3VkLnYxLmFwaS5TdGFydFJ1blJlc3BvbnNlIm+KtRgMEgQQAQgIEgQQAggP8qcdW6IBAhABsgEHCMgBEgJPS7IBMRIRVW5leHBlY3RlZCBlcnJvci4qHAoaIy9jb21wb25lbnRzL3NjaGVtYXMvRXJyb3IQAhoKL3N0YXJ0LXJ1biIIc3RhcnRSdW4StwEKCExpc3RSdW5zEh0uY2xvdWQudjEuYXBpLkxpc3RSdW5zUmVxdWVzdBoeLmNsb3VkLnYxLmFwaS5MaXN0UnVuc1Jlc3BvbnNlImyQAgGKtRgGEgQICBAF8qcdW7IBBwjIARICT0uyATESEVVuZXhwZWN0ZWQgZXJyb3IuKhwKGiMvY29tcG9uZW50cy9zY2hlbWFzL0Vycm9yEAEaCi9saXN0LXJ1bnMiCGxpc3RSdW5zogECEAESuQEKCUNhbmNlbFJ1bhIeLmNsb3VkLnYxLmFwaS5DYW5jZWxSdW5SZXF1ZXN0Gh8uY2xvdWQudjEuYXBpLkNhbmNlbFJ1blJlc3BvbnNlImuKtRgGEgQICBAD8qcdXSIJY2FuY2VsUnVuogECEAGyAQcIyAESAk9LsgExEhFVbmV4cGVjdGVkIGVycm9yLiocChojL2NvbXBvbmVudHMvc2NoZW1hcy9FcnJvchACGgsvY2FuY2VsLXJ1bhK8AQoJRGVsZXRlUnVuEh4uY2xvdWQudjEuYXBpLkRlbGV0ZVJ1blJlcXVlc3QaHy5jbG91ZC52MS5hcGkuRGVsZXRlUnVuUmVzcG9uc2UibpACAoq1GAYSBBAECAjypx1dEAIaCy9kZWxldGUtcnVuIglkZWxldGVSdW6iAQIQAbIBBxICT0sIyAGyATESEVVuZXhwZWN0ZWQgZXJyb3IuKhwKGiMvY29tcG9uZW50cy9zY2hlbWFzL0Vycm9yGhzypx0YEg4vYXBpL3YxL3JlY2lwZRoGcmVjaXBlQkdaP2dpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2FwafKnHQIIAWIGcHJvdG8z", [file_cloud_v1_common_entity, file_cloud_v1_dsl_service, file_cloud_v1_iam_options, file_cloud_v1_iam_permission, file_cloud_v1_models_recipe, file_cloud_v1_models_test_run, file_validate_validate, file_schemapb_schema, file_ogen_ogen]);
 
 /**
  *
@@ -548,6 +550,114 @@ export const CheckRecipeResponseSchema: GenMessage<CheckRecipeResponse, {jsonTyp
 
 /**
  *
+ * LaunchFormSchemaRequest composes the launch-form schemapb.Schema for an
+ * already-stored recipe bundle: workflow.yaml's declared inputs hoisted to
+ * the top level, plus the resolved provider's params nested under
+ * "provider".
+ *
+ * @generated from message cloud.v1.api.LaunchFormSchemaRequest
+ */
+export type LaunchFormSchemaRequest = Message<"cloud.v1.api.LaunchFormSchemaRequest"> & {
+  /**
+   *
+   * tenant_id scopes the request to the owning tenant.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   *
+   * recipe_id is the recipe record whose stored bundle's launch-form
+   * schema is composed.
+   *
+   * @generated from field: string recipe_id = 2;
+   */
+  recipeId: string;
+};
+
+/**
+ *
+ * LaunchFormSchemaRequest composes the launch-form schemapb.Schema for an
+ * already-stored recipe bundle: workflow.yaml's declared inputs hoisted to
+ * the top level, plus the resolved provider's params nested under
+ * "provider".
+ *
+ * @generated from message cloud.v1.api.LaunchFormSchemaRequest
+ */
+export type LaunchFormSchemaRequestJson = {
+  /**
+   *
+   * tenant_id scopes the request to the owning tenant.
+   *
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId?: string;
+
+  /**
+   *
+   * recipe_id is the recipe record whose stored bundle's launch-form
+   * schema is composed.
+   *
+   * @generated from field: string recipe_id = 2;
+   */
+  recipeId?: string;
+};
+
+export type LaunchFormSchemaRequestValid = LaunchFormSchemaRequest;
+
+/**
+ * Describes the message cloud.v1.api.LaunchFormSchemaRequest.
+ * Use `create(LaunchFormSchemaRequestSchema)` to create a new message.
+ */
+export const LaunchFormSchemaRequestSchema: GenMessage<LaunchFormSchemaRequest, {jsonType: LaunchFormSchemaRequestJson, validType: LaunchFormSchemaRequestValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_recipe, 10);
+
+/**
+ *
+ * LaunchFormSchemaResponse returns the composed launch-form schema.
+ *
+ * @generated from message cloud.v1.api.LaunchFormSchemaResponse
+ */
+export type LaunchFormSchemaResponse = Message<"cloud.v1.api.LaunchFormSchemaResponse"> & {
+  /**
+   *
+   * schema is the composed launch-form schemapb.Schema (workflow inputs
+   * at the top level, provider params nested under "provider").
+   *
+   * @generated from field: schemapb.Schema schema = 1;
+   */
+  schema?: Schema;
+};
+
+/**
+ *
+ * LaunchFormSchemaResponse returns the composed launch-form schema.
+ *
+ * @generated from message cloud.v1.api.LaunchFormSchemaResponse
+ */
+export type LaunchFormSchemaResponseJson = {
+  /**
+   *
+   * schema is the composed launch-form schemapb.Schema (workflow inputs
+   * at the top level, provider params nested under "provider").
+   *
+   * @generated from field: schemapb.Schema schema = 1;
+   */
+  schema?: SchemaJson;
+};
+
+export type LaunchFormSchemaResponseValid = LaunchFormSchemaResponse;
+
+/**
+ * Describes the message cloud.v1.api.LaunchFormSchemaResponse.
+ * Use `create(LaunchFormSchemaResponseSchema)` to create a new message.
+ */
+export const LaunchFormSchemaResponseSchema: GenMessage<LaunchFormSchemaResponse, {jsonType: LaunchFormSchemaResponseJson, validType: LaunchFormSchemaResponseValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_api_recipe, 11);
+
+/**
+ *
  * StartRunRequest launches a new run of an already-stored recipe bundle.
  *
  * @generated from message cloud.v1.api.StartRunRequest
@@ -601,7 +711,7 @@ export type StartRunRequestValid = StartRunRequest;
  * Use `create(StartRunRequestSchema)` to create a new message.
  */
 export const StartRunRequestSchema: GenMessage<StartRunRequest, {jsonType: StartRunRequestJson, validType: StartRunRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_recipe, 10);
+  messageDesc(file_cloud_v1_api_recipe, 12);
 
 /**
  *
@@ -650,7 +760,7 @@ export type StartRunResponseValid = StartRunResponse;
  * Use `create(StartRunResponseSchema)` to create a new message.
  */
 export const StartRunResponseSchema: GenMessage<StartRunResponse, {jsonType: StartRunResponseJson, validType: StartRunResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_recipe, 11);
+  messageDesc(file_cloud_v1_api_recipe, 13);
 
 /**
  *
@@ -731,7 +841,7 @@ export type ListRunsRequestValid = ListRunsRequest;
  * Use `create(ListRunsRequestSchema)` to create a new message.
  */
 export const ListRunsRequestSchema: GenMessage<ListRunsRequest, {jsonType: ListRunsRequestJson, validType: ListRunsRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_recipe, 12);
+  messageDesc(file_cloud_v1_api_recipe, 14);
 
 /**
  *
@@ -802,7 +912,7 @@ export type ListRunsResponseValid = ListRunsResponse;
  * Use `create(ListRunsResponseSchema)` to create a new message.
  */
 export const ListRunsResponseSchema: GenMessage<ListRunsResponse, {jsonType: ListRunsResponseJson, validType: ListRunsResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_recipe, 13);
+  messageDesc(file_cloud_v1_api_recipe, 15);
 
 /**
  *
@@ -859,7 +969,7 @@ export type CancelRunRequestValid = CancelRunRequest;
  * Use `create(CancelRunRequestSchema)` to create a new message.
  */
 export const CancelRunRequestSchema: GenMessage<CancelRunRequest, {jsonType: CancelRunRequestJson, validType: CancelRunRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_recipe, 14);
+  messageDesc(file_cloud_v1_api_recipe, 16);
 
 /**
  *
@@ -888,7 +998,7 @@ export type CancelRunResponseValid = CancelRunResponse;
  * Use `create(CancelRunResponseSchema)` to create a new message.
  */
 export const CancelRunResponseSchema: GenMessage<CancelRunResponse, {jsonType: CancelRunResponseJson, validType: CancelRunResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_recipe, 15);
+  messageDesc(file_cloud_v1_api_recipe, 17);
 
 /**
  *
@@ -945,7 +1055,7 @@ export type DeleteRunRequestValid = DeleteRunRequest;
  * Use `create(DeleteRunRequestSchema)` to create a new message.
  */
 export const DeleteRunRequestSchema: GenMessage<DeleteRunRequest, {jsonType: DeleteRunRequestJson, validType: DeleteRunRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_recipe, 16);
+  messageDesc(file_cloud_v1_api_recipe, 18);
 
 /**
  *
@@ -972,7 +1082,7 @@ export type DeleteRunResponseValid = DeleteRunResponse;
  * Use `create(DeleteRunResponseSchema)` to create a new message.
  */
 export const DeleteRunResponseSchema: GenMessage<DeleteRunResponse, {jsonType: DeleteRunResponseJson, validType: DeleteRunResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_api_recipe, 17);
+  messageDesc(file_cloud_v1_api_recipe, 19);
 
 /**
  *
@@ -1039,6 +1149,18 @@ export const RecipeService: GenService<{
     methodKind: "unary";
     input: typeof CheckRecipeRequestSchema;
     output: typeof CheckRecipeResponseSchema;
+  },
+  /**
+   *
+   * LaunchFormSchema composes and returns the launch-form schemapb.Schema
+   * for the stored bundle (workflow.inputs + provider.params). Read-only.
+   *
+   * @generated from rpc cloud.v1.api.RecipeService.LaunchFormSchema
+   */
+  launchFormSchema: {
+    methodKind: "unary";
+    input: typeof LaunchFormSchemaRequestSchema;
+    output: typeof LaunchFormSchemaResponseSchema;
   },
   /**
    *

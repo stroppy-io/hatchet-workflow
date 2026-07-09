@@ -571,6 +571,13 @@ type RecipeHandler interface {
 	//
 	// GET /api/v1/recipe/get-recipe
 	GetRecipe(ctx context.Context, req *GetRecipeRequest) (*GetRecipeResponse, error)
+	// LaunchFormSchema implements launchFormSchema operation.
+	//
+	// LaunchFormSchema composes and returns the launch-form schemapb.Schema
+	// for the stored bundle (workflow.inputs + provider.params). Read-only.
+	//
+	// GET /api/v1/recipe/launch-form-schema
+	LaunchFormSchema(ctx context.Context, req *LaunchFormSchemaRequest) (*LaunchFormSchemaResponse, error)
 	// ListRecipes implements listRecipes operation.
 	//
 	// ListRecipes lists recipe records with filtering and pagination.

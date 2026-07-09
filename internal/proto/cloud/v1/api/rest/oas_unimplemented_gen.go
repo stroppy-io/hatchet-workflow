@@ -470,6 +470,16 @@ func (UnimplementedHandler) GetTestRunOverview(ctx context.Context, req *GetTest
 	return r, ht.ErrNotImplemented
 }
 
+// LaunchFormSchema implements launchFormSchema operation.
+//
+// LaunchFormSchema composes and returns the launch-form schemapb.Schema
+// for the stored bundle (workflow.inputs + provider.params). Read-only.
+//
+// GET /api/v1/recipe/launch-form-schema
+func (UnimplementedHandler) LaunchFormSchema(ctx context.Context, req *LaunchFormSchemaRequest) (r *LaunchFormSchemaResponse, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // LeaveTenant implements leaveTenant operation.
 //
 // LeaveTenant drops the caller's own membership — authenticated, no

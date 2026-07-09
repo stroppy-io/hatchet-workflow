@@ -9,6 +9,7 @@ package api
 import (
 	_ "github.com/envoyproxy/protoc-gen-validate/validate"
 	_ "github.com/gopherex/protoc-gen-go-ogen/ogen"
+	schemapb "github.com/stroppy-io/schemapb/schemapb"
 	common "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	dsl "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dsl"
 	_ "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
@@ -548,6 +549,112 @@ func (x *CheckRecipeResponse) GetDiagnostics() []*dsl.Diagnostic {
 	return nil
 }
 
+// LaunchFormSchemaRequest composes the launch-form schemapb.Schema for an
+// already-stored recipe bundle: workflow.yaml's declared inputs hoisted to
+// the top level, plus the resolved provider's params nested under
+// "provider".
+type LaunchFormSchemaRequest struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// tenant_id scopes the request to the owning tenant.
+	TenantId string `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	// recipe_id is the recipe record whose stored bundle's launch-form
+	// schema is composed.
+	RecipeId      string `protobuf:"bytes,2,opt,name=recipe_id,json=recipeId,proto3" json:"recipe_id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LaunchFormSchemaRequest) Reset() {
+	*x = LaunchFormSchemaRequest{}
+	mi := &file_cloud_v1_api_recipe_proto_msgTypes[10]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LaunchFormSchemaRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LaunchFormSchemaRequest) ProtoMessage() {}
+
+func (x *LaunchFormSchemaRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_recipe_proto_msgTypes[10]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LaunchFormSchemaRequest.ProtoReflect.Descriptor instead.
+func (*LaunchFormSchemaRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_recipe_proto_rawDescGZIP(), []int{10}
+}
+
+func (x *LaunchFormSchemaRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *LaunchFormSchemaRequest) GetRecipeId() string {
+	if x != nil {
+		return x.RecipeId
+	}
+	return ""
+}
+
+// LaunchFormSchemaResponse returns the composed launch-form schema.
+type LaunchFormSchemaResponse struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// schema is the composed launch-form schemapb.Schema (workflow inputs
+	// at the top level, provider params nested under "provider").
+	Schema        *schemapb.Schema `protobuf:"bytes,1,opt,name=schema,proto3" json:"schema,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *LaunchFormSchemaResponse) Reset() {
+	*x = LaunchFormSchemaResponse{}
+	mi := &file_cloud_v1_api_recipe_proto_msgTypes[11]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *LaunchFormSchemaResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*LaunchFormSchemaResponse) ProtoMessage() {}
+
+func (x *LaunchFormSchemaResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_api_recipe_proto_msgTypes[11]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use LaunchFormSchemaResponse.ProtoReflect.Descriptor instead.
+func (*LaunchFormSchemaResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_api_recipe_proto_rawDescGZIP(), []int{11}
+}
+
+func (x *LaunchFormSchemaResponse) GetSchema() *schemapb.Schema {
+	if x != nil {
+		return x.Schema
+	}
+	return nil
+}
+
 // StartRunRequest launches a new run of an already-stored recipe bundle.
 type StartRunRequest struct {
 	state protoimpl.MessageState `protogen:"open.v1"`
@@ -561,7 +668,7 @@ type StartRunRequest struct {
 
 func (x *StartRunRequest) Reset() {
 	*x = StartRunRequest{}
-	mi := &file_cloud_v1_api_recipe_proto_msgTypes[10]
+	mi := &file_cloud_v1_api_recipe_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -573,7 +680,7 @@ func (x *StartRunRequest) String() string {
 func (*StartRunRequest) ProtoMessage() {}
 
 func (x *StartRunRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_recipe_proto_msgTypes[10]
+	mi := &file_cloud_v1_api_recipe_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -586,7 +693,7 @@ func (x *StartRunRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartRunRequest.ProtoReflect.Descriptor instead.
 func (*StartRunRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_recipe_proto_rawDescGZIP(), []int{10}
+	return file_cloud_v1_api_recipe_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *StartRunRequest) GetTenantId() string {
@@ -618,7 +725,7 @@ type StartRunResponse struct {
 
 func (x *StartRunResponse) Reset() {
 	*x = StartRunResponse{}
-	mi := &file_cloud_v1_api_recipe_proto_msgTypes[11]
+	mi := &file_cloud_v1_api_recipe_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -630,7 +737,7 @@ func (x *StartRunResponse) String() string {
 func (*StartRunResponse) ProtoMessage() {}
 
 func (x *StartRunResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_recipe_proto_msgTypes[11]
+	mi := &file_cloud_v1_api_recipe_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -643,7 +750,7 @@ func (x *StartRunResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use StartRunResponse.ProtoReflect.Descriptor instead.
 func (*StartRunResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_recipe_proto_rawDescGZIP(), []int{11}
+	return file_cloud_v1_api_recipe_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *StartRunResponse) GetRun() *models.Run {
@@ -672,7 +779,7 @@ type ListRunsRequest struct {
 
 func (x *ListRunsRequest) Reset() {
 	*x = ListRunsRequest{}
-	mi := &file_cloud_v1_api_recipe_proto_msgTypes[12]
+	mi := &file_cloud_v1_api_recipe_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -684,7 +791,7 @@ func (x *ListRunsRequest) String() string {
 func (*ListRunsRequest) ProtoMessage() {}
 
 func (x *ListRunsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_recipe_proto_msgTypes[12]
+	mi := &file_cloud_v1_api_recipe_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -697,7 +804,7 @@ func (x *ListRunsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRunsRequest.ProtoReflect.Descriptor instead.
 func (*ListRunsRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_recipe_proto_rawDescGZIP(), []int{12}
+	return file_cloud_v1_api_recipe_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *ListRunsRequest) GetTenantId() string {
@@ -741,7 +848,7 @@ type ListRunsResponse struct {
 
 func (x *ListRunsResponse) Reset() {
 	*x = ListRunsResponse{}
-	mi := &file_cloud_v1_api_recipe_proto_msgTypes[13]
+	mi := &file_cloud_v1_api_recipe_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -753,7 +860,7 @@ func (x *ListRunsResponse) String() string {
 func (*ListRunsResponse) ProtoMessage() {}
 
 func (x *ListRunsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_recipe_proto_msgTypes[13]
+	mi := &file_cloud_v1_api_recipe_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -766,7 +873,7 @@ func (x *ListRunsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListRunsResponse.ProtoReflect.Descriptor instead.
 func (*ListRunsResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_recipe_proto_rawDescGZIP(), []int{13}
+	return file_cloud_v1_api_recipe_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *ListRunsResponse) GetRuns() []*models.Run {
@@ -796,7 +903,7 @@ type CancelRunRequest struct {
 
 func (x *CancelRunRequest) Reset() {
 	*x = CancelRunRequest{}
-	mi := &file_cloud_v1_api_recipe_proto_msgTypes[14]
+	mi := &file_cloud_v1_api_recipe_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -808,7 +915,7 @@ func (x *CancelRunRequest) String() string {
 func (*CancelRunRequest) ProtoMessage() {}
 
 func (x *CancelRunRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_recipe_proto_msgTypes[14]
+	mi := &file_cloud_v1_api_recipe_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -821,7 +928,7 @@ func (x *CancelRunRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelRunRequest.ProtoReflect.Descriptor instead.
 func (*CancelRunRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_recipe_proto_rawDescGZIP(), []int{14}
+	return file_cloud_v1_api_recipe_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *CancelRunRequest) GetTenantId() string {
@@ -848,7 +955,7 @@ type CancelRunResponse struct {
 
 func (x *CancelRunResponse) Reset() {
 	*x = CancelRunResponse{}
-	mi := &file_cloud_v1_api_recipe_proto_msgTypes[15]
+	mi := &file_cloud_v1_api_recipe_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -860,7 +967,7 @@ func (x *CancelRunResponse) String() string {
 func (*CancelRunResponse) ProtoMessage() {}
 
 func (x *CancelRunResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_recipe_proto_msgTypes[15]
+	mi := &file_cloud_v1_api_recipe_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -873,7 +980,7 @@ func (x *CancelRunResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CancelRunResponse.ProtoReflect.Descriptor instead.
 func (*CancelRunResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_recipe_proto_rawDescGZIP(), []int{15}
+	return file_cloud_v1_api_recipe_proto_rawDescGZIP(), []int{17}
 }
 
 // DeleteRunRequest deletes a run record by id.
@@ -889,7 +996,7 @@ type DeleteRunRequest struct {
 
 func (x *DeleteRunRequest) Reset() {
 	*x = DeleteRunRequest{}
-	mi := &file_cloud_v1_api_recipe_proto_msgTypes[16]
+	mi := &file_cloud_v1_api_recipe_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -901,7 +1008,7 @@ func (x *DeleteRunRequest) String() string {
 func (*DeleteRunRequest) ProtoMessage() {}
 
 func (x *DeleteRunRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_recipe_proto_msgTypes[16]
+	mi := &file_cloud_v1_api_recipe_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -914,7 +1021,7 @@ func (x *DeleteRunRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteRunRequest.ProtoReflect.Descriptor instead.
 func (*DeleteRunRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_recipe_proto_rawDescGZIP(), []int{16}
+	return file_cloud_v1_api_recipe_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *DeleteRunRequest) GetTenantId() string {
@@ -940,7 +1047,7 @@ type DeleteRunResponse struct {
 
 func (x *DeleteRunResponse) Reset() {
 	*x = DeleteRunResponse{}
-	mi := &file_cloud_v1_api_recipe_proto_msgTypes[17]
+	mi := &file_cloud_v1_api_recipe_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -952,7 +1059,7 @@ func (x *DeleteRunResponse) String() string {
 func (*DeleteRunResponse) ProtoMessage() {}
 
 func (x *DeleteRunResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_api_recipe_proto_msgTypes[17]
+	mi := &file_cloud_v1_api_recipe_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -965,14 +1072,14 @@ func (x *DeleteRunResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteRunResponse.ProtoReflect.Descriptor instead.
 func (*DeleteRunResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_api_recipe_proto_rawDescGZIP(), []int{17}
+	return file_cloud_v1_api_recipe_proto_rawDescGZIP(), []int{19}
 }
 
 var File_cloud_v1_api_recipe_proto protoreflect.FileDescriptor
 
 const file_cloud_v1_api_recipe_proto_rawDesc = "" +
 	"\n" +
-	"\x19cloud/v1/api/recipe.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a\x1acloud/v1/dsl/service.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1ccloud/v1/models/recipe.proto\x1a\x1ecloud/v1/models/test_run.proto\x1a\x17validate/validate.proto\x1a\x0fogen/ogen.proto\"~\n" +
+	"\x19cloud/v1/api/recipe.proto\x12\fcloud.v1.api\x1a\x1ccloud/v1/common/entity.proto\x1a\x1acloud/v1/dsl/service.proto\x1a\x1acloud/v1/iam/options.proto\x1a\x1dcloud/v1/iam/permission.proto\x1a\x1ccloud/v1/models/recipe.proto\x1a\x1ecloud/v1/models/test_run.proto\x1a\x17validate/validate.proto\x1a\x15schemapb/schema.proto\x1a\x0fogen/ogen.proto\"~\n" +
 	"\x13CreateRecipeRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12?\n" +
 	"\x06recipe\x18\x02 \x01(\v2\x1d.cloud.v1.models.RecipeRecordB\b\xfaB\x05\x8a\x01\x02\x10\x01R\x06recipe\"W\n" +
@@ -998,7 +1105,12 @@ const file_cloud_v1_api_recipe_proto_rawDesc = "" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x19\n" +
 	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"Q\n" +
 	"\x13CheckRecipeResponse\x12:\n" +
-	"\vdiagnostics\x18\x01 \x03(\v2\x18.cloud.v1.dsl.DiagnosticR\vdiagnostics\"a\n" +
+	"\vdiagnostics\x18\x01 \x03(\v2\x18.cloud.v1.dsl.DiagnosticR\vdiagnostics\"i\n" +
+	"\x17LaunchFormSchemaRequest\x12&\n" +
+	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12&\n" +
+	"\trecipe_id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\brecipeId\"D\n" +
+	"\x18LaunchFormSchemaResponse\x12(\n" +
+	"\x06schema\x18\x01 \x01(\v2\x10.schemapb.SchemaR\x06schema\"a\n" +
 	"\x0fStartRunRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12&\n" +
 	"\trecipe_id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\brecipeId\"D\n" +
@@ -1018,7 +1130,7 @@ const file_cloud_v1_api_recipe_proto_rawDesc = "" +
 	"\x10DeleteRunRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12 \n" +
 	"\x06run_id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x05runId\"\x13\n" +
-	"\x11DeleteRunResponse2\x89\x0e\n" +
+	"\x11DeleteRunResponse2\xec\x0f\n" +
 	"\rRecipeService\x12\xc8\x01\n" +
 	"\fCreateRecipe\x12!.cloud.v1.api.CreateRecipeRequest\x1a\".cloud.v1.api.CreateRecipeResponse\"q\x8a\xb5\x18\x06\x12\x04\b\x0f\x10\x01\xf2\xa7\x1dc\x10\x02\x1a\x0e/create-recipe\"\fcreateRecipe\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
 	"\x1a#/components/schemas/Error\x12\xbc\x01\n" +
@@ -1029,6 +1141,8 @@ const file_cloud_v1_api_recipe_proto_rawDesc = "" +
 	"\fDeleteRecipe\x12!.cloud.v1.api.DeleteRecipeRequest\x1a\".cloud.v1.api.DeleteRecipeResponse\"t\x8a\xb5\x18\x06\x12\x04\b\x0f\x10\x04\xf2\xa7\x1dc\x10\x02\x1a\x0e/delete-recipe\"\fdeleteRecipe\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
 	"\x1a#/components/schemas/Error\x90\x02\x02\x12\xc6\x01\n" +
 	"\vCheckRecipe\x12 .cloud.v1.api.CheckRecipeRequest\x1a!.cloud.v1.api.CheckRecipeResponse\"r\x8a\xb5\x18\x06\x12\x04\b\x0f\x10\x02\xf2\xa7\x1da\x10\x01\x1a\r/check-recipe\"\vcheckRecipe\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
+	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xe0\x01\n" +
+	"\x10LaunchFormSchema\x12%.cloud.v1.api.LaunchFormSchemaRequest\x1a&.cloud.v1.api.LaunchFormSchemaResponse\"}\x8a\xb5\x18\x06\x12\x04\b\x0f\x10\x02\xf2\xa7\x1dl\x10\x01\x1a\x13/launch-form-schema\"\x10launchFormSchema\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
 	"\x1a#/components/schemas/Error\x90\x02\x01\x12\xba\x01\n" +
 	"\bStartRun\x12\x1d.cloud.v1.api.StartRunRequest\x1a\x1e.cloud.v1.api.StartRunResponse\"o\x8a\xb5\x18\f\x12\x04\b\b\x10\x01\x12\x04\b\x0f\x10\x02\xf2\xa7\x1d[\x10\x02\x1a\n" +
 	"/start-run\"\bstartRun\xa2\x01\x02\x10\x01\xb2\x01\a\b\xc8\x01\x12\x02OK\xb2\x011\x12\x11Unexpected error.*\x1c\n" +
@@ -1053,66 +1167,72 @@ func file_cloud_v1_api_recipe_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_api_recipe_proto_rawDescData
 }
 
-var file_cloud_v1_api_recipe_proto_msgTypes = make([]protoimpl.MessageInfo, 18)
+var file_cloud_v1_api_recipe_proto_msgTypes = make([]protoimpl.MessageInfo, 20)
 var file_cloud_v1_api_recipe_proto_goTypes = []any{
-	(*CreateRecipeRequest)(nil),  // 0: cloud.v1.api.CreateRecipeRequest
-	(*CreateRecipeResponse)(nil), // 1: cloud.v1.api.CreateRecipeResponse
-	(*GetRecipeRequest)(nil),     // 2: cloud.v1.api.GetRecipeRequest
-	(*GetRecipeResponse)(nil),    // 3: cloud.v1.api.GetRecipeResponse
-	(*ListRecipesRequest)(nil),   // 4: cloud.v1.api.ListRecipesRequest
-	(*ListRecipesResponse)(nil),  // 5: cloud.v1.api.ListRecipesResponse
-	(*DeleteRecipeRequest)(nil),  // 6: cloud.v1.api.DeleteRecipeRequest
-	(*DeleteRecipeResponse)(nil), // 7: cloud.v1.api.DeleteRecipeResponse
-	(*CheckRecipeRequest)(nil),   // 8: cloud.v1.api.CheckRecipeRequest
-	(*CheckRecipeResponse)(nil),  // 9: cloud.v1.api.CheckRecipeResponse
-	(*StartRunRequest)(nil),      // 10: cloud.v1.api.StartRunRequest
-	(*StartRunResponse)(nil),     // 11: cloud.v1.api.StartRunResponse
-	(*ListRunsRequest)(nil),      // 12: cloud.v1.api.ListRunsRequest
-	(*ListRunsResponse)(nil),     // 13: cloud.v1.api.ListRunsResponse
-	(*CancelRunRequest)(nil),     // 14: cloud.v1.api.CancelRunRequest
-	(*CancelRunResponse)(nil),    // 15: cloud.v1.api.CancelRunResponse
-	(*DeleteRunRequest)(nil),     // 16: cloud.v1.api.DeleteRunRequest
-	(*DeleteRunResponse)(nil),    // 17: cloud.v1.api.DeleteRunResponse
-	(*models.RecipeRecord)(nil),  // 18: cloud.v1.models.RecipeRecord
-	(*common.EntityFilter)(nil),  // 19: cloud.v1.common.EntityFilter
-	(*common.Page)(nil),          // 20: cloud.v1.common.Page
-	(*dsl.Diagnostic)(nil),       // 21: cloud.v1.dsl.Diagnostic
-	(*models.Run)(nil),           // 22: cloud.v1.models.Run
+	(*CreateRecipeRequest)(nil),      // 0: cloud.v1.api.CreateRecipeRequest
+	(*CreateRecipeResponse)(nil),     // 1: cloud.v1.api.CreateRecipeResponse
+	(*GetRecipeRequest)(nil),         // 2: cloud.v1.api.GetRecipeRequest
+	(*GetRecipeResponse)(nil),        // 3: cloud.v1.api.GetRecipeResponse
+	(*ListRecipesRequest)(nil),       // 4: cloud.v1.api.ListRecipesRequest
+	(*ListRecipesResponse)(nil),      // 5: cloud.v1.api.ListRecipesResponse
+	(*DeleteRecipeRequest)(nil),      // 6: cloud.v1.api.DeleteRecipeRequest
+	(*DeleteRecipeResponse)(nil),     // 7: cloud.v1.api.DeleteRecipeResponse
+	(*CheckRecipeRequest)(nil),       // 8: cloud.v1.api.CheckRecipeRequest
+	(*CheckRecipeResponse)(nil),      // 9: cloud.v1.api.CheckRecipeResponse
+	(*LaunchFormSchemaRequest)(nil),  // 10: cloud.v1.api.LaunchFormSchemaRequest
+	(*LaunchFormSchemaResponse)(nil), // 11: cloud.v1.api.LaunchFormSchemaResponse
+	(*StartRunRequest)(nil),          // 12: cloud.v1.api.StartRunRequest
+	(*StartRunResponse)(nil),         // 13: cloud.v1.api.StartRunResponse
+	(*ListRunsRequest)(nil),          // 14: cloud.v1.api.ListRunsRequest
+	(*ListRunsResponse)(nil),         // 15: cloud.v1.api.ListRunsResponse
+	(*CancelRunRequest)(nil),         // 16: cloud.v1.api.CancelRunRequest
+	(*CancelRunResponse)(nil),        // 17: cloud.v1.api.CancelRunResponse
+	(*DeleteRunRequest)(nil),         // 18: cloud.v1.api.DeleteRunRequest
+	(*DeleteRunResponse)(nil),        // 19: cloud.v1.api.DeleteRunResponse
+	(*models.RecipeRecord)(nil),      // 20: cloud.v1.models.RecipeRecord
+	(*common.EntityFilter)(nil),      // 21: cloud.v1.common.EntityFilter
+	(*common.Page)(nil),              // 22: cloud.v1.common.Page
+	(*dsl.Diagnostic)(nil),           // 23: cloud.v1.dsl.Diagnostic
+	(*schemapb.Schema)(nil),          // 24: schemapb.Schema
+	(*models.Run)(nil),               // 25: cloud.v1.models.Run
 }
 var file_cloud_v1_api_recipe_proto_depIdxs = []int32{
-	18, // 0: cloud.v1.api.CreateRecipeRequest.recipe:type_name -> cloud.v1.models.RecipeRecord
-	18, // 1: cloud.v1.api.CreateRecipeResponse.recipe:type_name -> cloud.v1.models.RecipeRecord
-	18, // 2: cloud.v1.api.GetRecipeResponse.recipe:type_name -> cloud.v1.models.RecipeRecord
-	19, // 3: cloud.v1.api.ListRecipesRequest.filter:type_name -> cloud.v1.common.EntityFilter
-	20, // 4: cloud.v1.api.ListRecipesRequest.page:type_name -> cloud.v1.common.Page
-	18, // 5: cloud.v1.api.ListRecipesResponse.recipes:type_name -> cloud.v1.models.RecipeRecord
-	21, // 6: cloud.v1.api.CheckRecipeResponse.diagnostics:type_name -> cloud.v1.dsl.Diagnostic
-	22, // 7: cloud.v1.api.StartRunResponse.run:type_name -> cloud.v1.models.Run
-	20, // 8: cloud.v1.api.ListRunsRequest.page:type_name -> cloud.v1.common.Page
-	22, // 9: cloud.v1.api.ListRunsResponse.runs:type_name -> cloud.v1.models.Run
-	0,  // 10: cloud.v1.api.RecipeService.CreateRecipe:input_type -> cloud.v1.api.CreateRecipeRequest
-	2,  // 11: cloud.v1.api.RecipeService.GetRecipe:input_type -> cloud.v1.api.GetRecipeRequest
-	4,  // 12: cloud.v1.api.RecipeService.ListRecipes:input_type -> cloud.v1.api.ListRecipesRequest
-	6,  // 13: cloud.v1.api.RecipeService.DeleteRecipe:input_type -> cloud.v1.api.DeleteRecipeRequest
-	8,  // 14: cloud.v1.api.RecipeService.CheckRecipe:input_type -> cloud.v1.api.CheckRecipeRequest
-	10, // 15: cloud.v1.api.RecipeService.StartRun:input_type -> cloud.v1.api.StartRunRequest
-	12, // 16: cloud.v1.api.RecipeService.ListRuns:input_type -> cloud.v1.api.ListRunsRequest
-	14, // 17: cloud.v1.api.RecipeService.CancelRun:input_type -> cloud.v1.api.CancelRunRequest
-	16, // 18: cloud.v1.api.RecipeService.DeleteRun:input_type -> cloud.v1.api.DeleteRunRequest
-	1,  // 19: cloud.v1.api.RecipeService.CreateRecipe:output_type -> cloud.v1.api.CreateRecipeResponse
-	3,  // 20: cloud.v1.api.RecipeService.GetRecipe:output_type -> cloud.v1.api.GetRecipeResponse
-	5,  // 21: cloud.v1.api.RecipeService.ListRecipes:output_type -> cloud.v1.api.ListRecipesResponse
-	7,  // 22: cloud.v1.api.RecipeService.DeleteRecipe:output_type -> cloud.v1.api.DeleteRecipeResponse
-	9,  // 23: cloud.v1.api.RecipeService.CheckRecipe:output_type -> cloud.v1.api.CheckRecipeResponse
-	11, // 24: cloud.v1.api.RecipeService.StartRun:output_type -> cloud.v1.api.StartRunResponse
-	13, // 25: cloud.v1.api.RecipeService.ListRuns:output_type -> cloud.v1.api.ListRunsResponse
-	15, // 26: cloud.v1.api.RecipeService.CancelRun:output_type -> cloud.v1.api.CancelRunResponse
-	17, // 27: cloud.v1.api.RecipeService.DeleteRun:output_type -> cloud.v1.api.DeleteRunResponse
-	19, // [19:28] is the sub-list for method output_type
-	10, // [10:19] is the sub-list for method input_type
-	10, // [10:10] is the sub-list for extension type_name
-	10, // [10:10] is the sub-list for extension extendee
-	0,  // [0:10] is the sub-list for field type_name
+	20, // 0: cloud.v1.api.CreateRecipeRequest.recipe:type_name -> cloud.v1.models.RecipeRecord
+	20, // 1: cloud.v1.api.CreateRecipeResponse.recipe:type_name -> cloud.v1.models.RecipeRecord
+	20, // 2: cloud.v1.api.GetRecipeResponse.recipe:type_name -> cloud.v1.models.RecipeRecord
+	21, // 3: cloud.v1.api.ListRecipesRequest.filter:type_name -> cloud.v1.common.EntityFilter
+	22, // 4: cloud.v1.api.ListRecipesRequest.page:type_name -> cloud.v1.common.Page
+	20, // 5: cloud.v1.api.ListRecipesResponse.recipes:type_name -> cloud.v1.models.RecipeRecord
+	23, // 6: cloud.v1.api.CheckRecipeResponse.diagnostics:type_name -> cloud.v1.dsl.Diagnostic
+	24, // 7: cloud.v1.api.LaunchFormSchemaResponse.schema:type_name -> schemapb.Schema
+	25, // 8: cloud.v1.api.StartRunResponse.run:type_name -> cloud.v1.models.Run
+	22, // 9: cloud.v1.api.ListRunsRequest.page:type_name -> cloud.v1.common.Page
+	25, // 10: cloud.v1.api.ListRunsResponse.runs:type_name -> cloud.v1.models.Run
+	0,  // 11: cloud.v1.api.RecipeService.CreateRecipe:input_type -> cloud.v1.api.CreateRecipeRequest
+	2,  // 12: cloud.v1.api.RecipeService.GetRecipe:input_type -> cloud.v1.api.GetRecipeRequest
+	4,  // 13: cloud.v1.api.RecipeService.ListRecipes:input_type -> cloud.v1.api.ListRecipesRequest
+	6,  // 14: cloud.v1.api.RecipeService.DeleteRecipe:input_type -> cloud.v1.api.DeleteRecipeRequest
+	8,  // 15: cloud.v1.api.RecipeService.CheckRecipe:input_type -> cloud.v1.api.CheckRecipeRequest
+	10, // 16: cloud.v1.api.RecipeService.LaunchFormSchema:input_type -> cloud.v1.api.LaunchFormSchemaRequest
+	12, // 17: cloud.v1.api.RecipeService.StartRun:input_type -> cloud.v1.api.StartRunRequest
+	14, // 18: cloud.v1.api.RecipeService.ListRuns:input_type -> cloud.v1.api.ListRunsRequest
+	16, // 19: cloud.v1.api.RecipeService.CancelRun:input_type -> cloud.v1.api.CancelRunRequest
+	18, // 20: cloud.v1.api.RecipeService.DeleteRun:input_type -> cloud.v1.api.DeleteRunRequest
+	1,  // 21: cloud.v1.api.RecipeService.CreateRecipe:output_type -> cloud.v1.api.CreateRecipeResponse
+	3,  // 22: cloud.v1.api.RecipeService.GetRecipe:output_type -> cloud.v1.api.GetRecipeResponse
+	5,  // 23: cloud.v1.api.RecipeService.ListRecipes:output_type -> cloud.v1.api.ListRecipesResponse
+	7,  // 24: cloud.v1.api.RecipeService.DeleteRecipe:output_type -> cloud.v1.api.DeleteRecipeResponse
+	9,  // 25: cloud.v1.api.RecipeService.CheckRecipe:output_type -> cloud.v1.api.CheckRecipeResponse
+	11, // 26: cloud.v1.api.RecipeService.LaunchFormSchema:output_type -> cloud.v1.api.LaunchFormSchemaResponse
+	13, // 27: cloud.v1.api.RecipeService.StartRun:output_type -> cloud.v1.api.StartRunResponse
+	15, // 28: cloud.v1.api.RecipeService.ListRuns:output_type -> cloud.v1.api.ListRunsResponse
+	17, // 29: cloud.v1.api.RecipeService.CancelRun:output_type -> cloud.v1.api.CancelRunResponse
+	19, // 30: cloud.v1.api.RecipeService.DeleteRun:output_type -> cloud.v1.api.DeleteRunResponse
+	21, // [21:31] is the sub-list for method output_type
+	11, // [11:21] is the sub-list for method input_type
+	11, // [11:11] is the sub-list for extension type_name
+	11, // [11:11] is the sub-list for extension extendee
+	0,  // [0:11] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_api_recipe_proto_init() }
@@ -1126,7 +1246,7 @@ func file_cloud_v1_api_recipe_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_api_recipe_proto_rawDesc), len(file_cloud_v1_api_recipe_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   18,
+			NumMessages:   20,
 			NumExtensions: 0,
 			NumServices:   1,
 		},
