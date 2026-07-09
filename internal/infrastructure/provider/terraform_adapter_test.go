@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"bytes"
 	"context"
 	"errors"
 	"testing"
@@ -14,9 +15,10 @@ var assertErr = errors.New("boom")
 
 // fakeTfActor is a test double for tfActor: it records the *WorkdirWithParams
 // each call was built with (all we can observe about it are the fields
-// exposed by exported accessors — WorkdirPath and StateFilePresent — since
-// tfFiles/varFile/env are unexported and the terraform package intentionally
-// exposes no accessor for them) and returns canned results.
+// exposed by exported accessors — WorkdirPath, StateFilePresent, and (F2)
+// Stdout/Stderr — since tfFiles/varFile/env are unexported and the terraform
+// package intentionally exposes no accessor for them) and returns canned
+// results.
 type fakeTfActor struct {
 	applyWorkdir *terraform.WorkdirWithParams
 	applyOutput  terraform.TfOutput
@@ -44,7 +46,7 @@ func TestTerraformActorExec_Apply_BuildsWorkdirAndReturnsOutputs(t *testing.T) {
 	}
 	tfFiles := []terraform.TfFile{terraform.NewTfFile([]byte("module {}"), "main.tf")}
 	env := map[string]string{"YC_TOKEN": "secret"}
-	adapter := NewTerraformActorExec(fake, tfFiles, env)
+	adapter := NewTerraformActorExec(fake, tfFiles, env, nil, nil)
 
 	varsJSON := []byte(`{"stroppy_nodes":[]}`)
 	out, err := adapter.Apply(context.Background(), "run-1", varsJSON)
@@ -63,7 +65,7 @@ func TestTerraformActorExec_Apply_BuildsWorkdirAndReturnsOutputs(t *testing.T) {
 
 func TestTerraformActorExec_Apply_PropagatesActorError(t *testing.T) {
 	fake := &fakeTfActor{applyErr: assertErr}
-	adapter := NewTerraformActorExec(fake, nil, nil)
+	adapter := NewTerraformActorExec(fake, nil, nil, nil, nil)
 
 	out, err := adapter.Apply(context.Background(), "run-1", []byte(`{}`))
 	require.ErrorIs(t, err, assertErr)
@@ -74,7 +76,7 @@ func TestTerraformActorExec_Destroy_CallsDestroyExistingWithDerivedWdId(t *testi
 	fake := &fakeTfActor{}
 	tfFiles := []terraform.TfFile{terraform.NewTfFile([]byte("module {}"), "main.tf")}
 	env := map[string]string{"YC_TOKEN": "secret"}
-	adapter := NewTerraformActorExec(fake, tfFiles, env)
+	adapter := NewTerraformActorExec(fake, tfFiles, env, nil, nil)
 
 	err := adapter.Destroy(context.Background(), "run-1", []byte(`{"stroppy_nodes":[]}`))
 	require.NoError(t, err)
@@ -91,10 +93,22 @@ func TestTerraformActorExec_Destroy_CallsDestroyExistingWithDerivedWdId(t *testi
 
 func TestTerraformActorExec_Destroy_PropagatesActorError(t *testing.T) {
 	fake := &fakeTfActor{destroyErr: assertErr}
-	adapter := NewTerraformActorExec(fake, nil, nil)
+	adapter := NewTerraformActorExec(fake, nil, nil, nil, nil)
 
 	err := adapter.Destroy(context.Background(), "run-1", []byte(`{}`))
 	require.ErrorIs(t, err, assertErr)
+}
+
+func TestTerraformActorExec_Apply_ThreadsStdoutStderrIntoWorkdir(t *testing.T) {
+	fake := &fakeTfActor{applyOutput: terraform.TfOutput{"stroppy_machines": []byte(`[]`)}}
+	var stdout, stderr bytes.Buffer
+	adapter := NewTerraformActorExec(fake, nil, nil, &stdout, &stderr)
+
+	_, err := adapter.Apply(context.Background(), "run-1", []byte(`{}`))
+	require.NoError(t, err)
+	require.NotNil(t, fake.applyWorkdir)
+	require.Same(t, &stdout, fake.applyWorkdir.Stdout())
+	require.Same(t, &stderr, fake.applyWorkdir.Stderr())
 }
 
 var _ terraformExec = (*terraformActorExec)(nil)

@@ -80,6 +80,8 @@ type WorkdirWithParams struct {
 	parallelism           int
 	preserveExistingState bool
 	destroyOnApplyError   bool
+	stdout                io.Writer
+	stderr                io.Writer
 }
 
 type Option func(*WorkdirWithParams)
@@ -154,6 +156,23 @@ func WithPreserveExistingState(preserve bool) Option {
 func WithDestroyOnApplyError(destroy bool) Option {
 	return func(w *WorkdirWithParams) { w.destroyOnApplyError = destroy }
 }
+
+// WithWorkdirStdout/WithWorkdirStderr set this apply/destroy call's per-run
+// log sink (F2). Named distinctly from executor.go's WithStdout/WithStderr
+// (ExecutorOption, a different option type for a different construction —
+// Executor, not WorkdirWithParams) to avoid a name collision. nil (the
+// default) means "no per-run sink" — newTerraform then writes only to the
+// Actor's own default stdout/stderr (WithActorStdout/WithActorStderr),
+// exactly as before this option existed.
+func WithWorkdirStdout(w io.Writer) Option { return func(wd *WorkdirWithParams) { wd.stdout = w } }
+func WithWorkdirStderr(w io.Writer) Option { return func(wd *WorkdirWithParams) { wd.stderr = w } }
+
+// Stdout/Stderr expose the per-call writer set via WithStdout/WithStderr —
+// needed by internal/infrastructure/provider's terraform_adapter_test.go,
+// which (like WorkdirPath/StateFilePresent already did) can only observe
+// WorkdirWithParams state through an exported accessor.
+func (w *WorkdirWithParams) Stdout() io.Writer { return w.stdout }
+func (w *WorkdirWithParams) Stderr() io.Writer { return w.stderr }
 
 func (w *WorkdirWithParams) WorkdirPath() string {
 	return filepath.Join(w.workdirRoot, string(w.wd))
@@ -342,13 +361,26 @@ func (a *Actor) prepare(ctx context.Context, w *WorkdirWithParams) (*tfexec.Terr
 	return a.newTerraform(ctx, w)
 }
 
+// mergeWriter combines the Actor-level default (actorDefault, always
+// non-nil — NewActor defaults it to os.Stdout/os.Stderr or io.Discard) with
+// a per-run writer (perRun, nil unless WithStdout/WithStderr was used for
+// this call). Both keep receiving output when perRun is set — the actor
+// default remains a live dev/debug channel even once every run also gets
+// its own per-run sink (F2).
+func mergeWriter(actorDefault, perRun io.Writer) io.Writer {
+	if perRun == nil {
+		return actorDefault
+	}
+	return io.MultiWriter(actorDefault, perRun)
+}
+
 func (a *Actor) newTerraform(ctx context.Context, w *WorkdirWithParams) (*tfexec.Terraform, error) {
 	tf, err := tfexec.NewTerraform(w.WorkdirPath(), w.terraformExecPath)
 	if err != nil {
 		return nil, fmt.Errorf("create terraform: %w", err)
 	}
-	tf.SetStdout(a.stdout)
-	tf.SetStderr(a.stderr)
+	tf.SetStdout(mergeWriter(a.stdout, w.stdout))
+	tf.SetStderr(mergeWriter(a.stderr, w.stderr))
 	if err := tf.SetEnv(mergeEnv(os.Environ(), w.env, map[string]string{
 		tfCliConfigFileEnvKey: filepath.Join(w.workdirRoot, DefaultConfigFileName),
 	})); err != nil {

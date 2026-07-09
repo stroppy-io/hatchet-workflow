@@ -2,6 +2,7 @@ package provider
 
 import (
 	"context"
+	"io"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/terraform"
 )
@@ -17,25 +18,31 @@ type tfActor interface {
 
 // terraformActorExec adapts terraform.Actor (via the tfActor surface) to the
 // terraformExec interface terraformProvider depends on. tfFiles is the
-// module's embedded HCL (constant per module) and env carries provider
-// credentials (e.g. YC_TOKEN); both are supplied once at construction and
-// reused for every Apply/Destroy call, matching how renderTerraformInput
-// (internal/workflows/provider_render.go) builds one Terraform_Input per
-// module with a fixed file set and env.
+// module's embedded HCL (constant per module), env carries provider
+// credentials (F1, resolved once per NewProviderForRef call), and
+// stdout/stderr are this run's per-run log sink (F2, nil when no LogSinkFn is
+// configured — every apply/destroy then falls back to the Actor's own
+// default writer, unchanged pre-F2 behavior). All are supplied once at
+// construction and reused for every Apply/Destroy call, matching how
+// renderTerraformInput (internal/workflows/provider_render.go) builds one
+// Terraform_Input per module with a fixed file set and env.
 type terraformActorExec struct {
-	actor   tfActor
-	tfFiles []terraform.TfFile
-	env     map[string]string
+	actor          tfActor
+	tfFiles        []terraform.TfFile
+	env            map[string]string
+	stdout, stderr io.Writer
 }
 
 // NewTerraformActorExec builds a terraformExec backed by actor, applying
-// tfFiles and env to every workdir it constructs.
-func NewTerraformActorExec(actor tfActor, tfFiles []terraform.TfFile, env map[string]string) *terraformActorExec {
-	return &terraformActorExec{actor: actor, tfFiles: tfFiles, env: env}
+// tfFiles, env and the per-run stdout/stderr log sink to every workdir it
+// constructs. stdout/stderr may be nil (no per-run sink; Apply/Destroy then
+// use the terraform.Actor's own default writer).
+func NewTerraformActorExec(actor tfActor, tfFiles []terraform.TfFile, env map[string]string, stdout, stderr io.Writer) *terraformActorExec {
+	return &terraformActorExec{actor: actor, tfFiles: tfFiles, env: env, stdout: stdout, stderr: stderr}
 }
 
-// options returns the file/var-file-name/env/parallelism/state-preservation
-// option set shared by Apply and Destroy, mirroring the values
+// options returns the file/var-file-name/env/parallelism/state-preservation/
+// log-sink option set shared by Apply and Destroy, mirroring the values
 // renderTerraformInput uses for a real deploy (DefaultVarFileName,
 // parallelism 10, preserve existing state) plus dir/varsJSON as the only
 // per-call knobs.
@@ -47,6 +54,8 @@ func (a *terraformActorExec) options(varsJSON []byte) []terraform.Option {
 		terraform.WithEnv(a.env),
 		terraform.WithParallelism(10),
 		terraform.WithPreserveExistingState(true),
+		terraform.WithWorkdirStdout(a.stdout),
+		terraform.WithWorkdirStderr(a.stderr),
 	}
 }
 
