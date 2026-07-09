@@ -7,10 +7,13 @@ import (
 	"time"
 
 	"github.com/stretchr/testify/mock"
+	"github.com/stroppy-io/schemapb/schemapb"
 	"go.temporal.io/sdk/activity"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/testsuite"
 	"go.temporal.io/sdk/workflow"
+	"google.golang.org/protobuf/proto"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	deploymentbuilder "github.com/stroppy-io/stroppy-cloud/internal/domain/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/dsl/diag"
@@ -187,6 +190,72 @@ func TestRunRecipeWorkflowHappyPath(t *testing.T) {
 		if stage.GetStatus() != common.Status_STATUS_COMPLETED {
 			t.Fatalf("stage %q status = %s, want COMPLETED", stage.GetName(), stage.GetStatus())
 		}
+	}
+}
+
+// TestRunRecipeWorkflowThreadsBakedIntoCompileActivity is SP-D Task 8's
+// workflow-level TDD case: RunRecipeInput.Baked must reach
+// CompileRecipeActivityInput.Baked unchanged — this is the actual hop the
+// task closes (RunRecipeInput -> CompileRecipeActivityInput -> dsl.Compile,
+// with the dsl.Compile leg itself covered by internal/services/dsl's own
+// CompileBundle tests). A nil Baked (the pre-existing default,
+// runRecipeTestInput() itself) is exercised by every other test in this
+// file, so this test only needs to prove a NON-nil Baked survives the hop.
+func TestRunRecipeWorkflowThreadsBakedIntoCompileActivity(t *testing.T) {
+	var suite testsuite.WorkflowTestSuite
+	env := suite.NewTestWorkflowEnvironment()
+	RegisterWorkflows(env)
+	registerRunRecipeActivityStubs(env)
+	runtime := &fakeRuntimeActivities{}
+	registerFakeRuntimeActivities(env, runtime)
+
+	plan := runRecipeTestPlan()
+	machines := map[string][]*deploymentpb.MachineState{
+		"app": {machineState("app-1", "10.0.0.1")},
+	}
+
+	values, err := structpb.NewStruct(map[string]any{"provider": map[string]any{"zone": "ru-central1-b"}})
+	if err != nil {
+		t.Fatalf("build baked values: %v", err)
+	}
+	baked := &schemapb.Baked{Values: values}
+	in := runRecipeTestInput()
+	in.Baked = baked
+
+	var gotBaked *schemapb.Baked
+	env.OnActivity(CompileRecipeActivityName, mock.Anything, mock.Anything).Return(
+		func(_ context.Context, in *CompileRecipeActivityInput) (*CompileRecipeActivityOutput, error) {
+			gotBaked = in.Baked
+			return &CompileRecipeActivityOutput{Plan: plan}, nil
+		},
+	)
+	env.OnActivity(ProvisionActivityName, mock.Anything, mock.Anything).Return(
+		func(_ context.Context, _ *ProvisionActivityInput) (*ProvisionActivityOutput, error) {
+			return &ProvisionActivityOutput{Machines: machines}, nil
+		},
+	)
+	env.OnWorkflow(ExecuteCompiledPlanWorkflowName, mock.Anything, mock.Anything).Return(
+		func(_ workflow.Context, _ *ExecuteCompiledPlanInput) (*ExecuteCompiledPlanOutput, error) {
+			return &ExecuteCompiledPlanOutput{JobStatuses: map[string]string{"a": jobStatusOK}}, nil
+		},
+	)
+	env.OnActivity(TeardownActivityName, mock.Anything, mock.Anything).Return(
+		func(_ context.Context, _ *TeardownActivityInput) error { return nil },
+	)
+
+	env.ExecuteWorkflow(RunRecipeWorkflowName, in)
+
+	if !env.IsWorkflowCompleted() {
+		t.Fatal("workflow did not complete")
+	}
+	if err := env.GetWorkflowError(); err != nil {
+		t.Fatalf("workflow failed: %v", err)
+	}
+	// Temporal's test environment round-trips activity input through the data
+	// converter (marshal/unmarshal), so gotBaked is a distinct pointer to an
+	// equal message rather than the same pointer — compare by proto content.
+	if !proto.Equal(gotBaked, baked) {
+		t.Fatalf("CompileRecipeActivityInput.Baked = %+v, want an equal copy of RunRecipeInput.Baked (%+v)", gotBaked, baked)
 	}
 }
 

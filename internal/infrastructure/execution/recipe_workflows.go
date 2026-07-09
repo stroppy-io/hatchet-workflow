@@ -65,15 +65,14 @@ func NewRecipeWorkflows(c client.Client, bootstrap settings.AgentBootstrapSource
 // documented follow-up for the provisioning activities (Task 4+), not this
 // launch path.
 func (w *RecipeWorkflows) LaunchRecipeRun(ctx context.Context, run *models.Run, bundle map[string][]byte, baked *schemapb.Baked) error {
-	// baked is accepted here for recipe.RecipeWorkflows conformance but not
-	// yet threaded into RunRecipeInput: RunRecipeWorkflow/
-	// CompileRecipeActivity don't consume a Baked snapshot yet (see
-	// internal/dsl/schema.ApplyBakedInputs) — that wiring is a follow-up
-	// task. StartRun already produces and validates it (server-side
-	// BakeForm); this adapter will start passing it through once the
-	// consuming side exists.
-	_ = baked
-	in, err := w.runRecipeInput(ctx, run, bundle)
+	// baked is the sealed launch-form snapshot StartRun already produced and
+	// validated (server-side BakeForm) — threaded straight into
+	// RunRecipeInput.Baked (SP-D Task 8). It is NOT applied here: the DSL
+	// compiler runs asynchronously inside CompileRecipeActivity on a
+	// Temporal worker (see runrecipe.go's package doc, "Global
+	// Constraints"), not in this connect-rpc-adjacent adapter, so this
+	// method's only job is to carry baked into the workflow input unchanged.
+	in, err := w.runRecipeInput(ctx, run, bundle, baked)
 	if err != nil {
 		return err
 	}
@@ -100,7 +99,7 @@ func (w *RecipeWorkflows) CancelRecipeRun(ctx context.Context, runID string) err
 	return w.client.CancelWorkflow(ctx, runRecipeWorkflowID(runID), "")
 }
 
-func (w *RecipeWorkflows) runRecipeInput(ctx context.Context, run *models.Run, bundle map[string][]byte) (*workflows.RunRecipeInput, error) {
+func (w *RecipeWorkflows) runRecipeInput(ctx context.Context, run *models.Run, bundle map[string][]byte, baked *schemapb.Baked) (*workflows.RunRecipeInput, error) {
 	runID := run.GetEntity().GetId()
 	if runID == "" {
 		return nil, errRecipeRunMissingID
@@ -109,6 +108,7 @@ func (w *RecipeWorkflows) runRecipeInput(ctx context.Context, run *models.Run, b
 		RunID:    runID,
 		TenantID: run.GetEntity().GetTenantId(),
 		Bundle:   bundle,
+		Baked:    baked,
 	}
 	if w.bootstrap != nil {
 		boot, err := w.bootstrap.AgentBootstrap(ctx)

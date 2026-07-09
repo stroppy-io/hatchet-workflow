@@ -305,7 +305,9 @@ func (s *DslService) Check(ctx context.Context, req *dslpb.CheckRequest) (*dslpb
 	if s.providers != nil && req.GetTenantId() != "" {
 		plan, diags = CompileBundleWithCatalog(ctx, req.GetTenantId(), req.GetFiles(), s.providers)
 	} else {
-		plan, diags = CompileBundle(req.GetFiles())
+		// Check never launches a run, so there is no launch-form Baked to
+		// apply here — nil preserves this method's exact pre-Task-8 behavior.
+		plan, diags = CompileBundle(req.GetFiles(), nil)
 	}
 	validateStroppyVersion(ctx, plan, s.versions, &diags)
 	return &dslpb.CheckResponse{Diagnostics: toProtoDiagnostics(diags)}, nil
@@ -326,7 +328,8 @@ func (s *DslService) Preview(ctx context.Context, req *dslpb.PreviewRequest) (*d
 	if s.providers != nil && req.GetTenantId() != "" {
 		plan, diags = CompileBundleWithCatalog(ctx, req.GetTenantId(), req.GetFiles(), s.providers)
 	} else {
-		plan, diags = CompileBundle(req.GetFiles())
+		// Preview never launches a run either — see Check's identical nil note.
+		plan, diags = CompileBundle(req.GetFiles(), nil)
 	}
 	validateStroppyVersion(ctx, plan, s.versions, &diags)
 	if diags.HasErrors() {
@@ -359,7 +362,9 @@ func (s *DslService) Preview(ctx context.Context, req *dslpb.PreviewRequest) (*d
 // CheckBundle method instead (see below) wherever that warning should also
 // cover the stored-recipe Create/CheckRecipe path.
 func CheckBundle(_ context.Context, files map[string][]byte) ([]*dslpb.Diagnostic, error) {
-	_, diags := CompileBundle(files)
+	// CheckBundle is a check-mode-only helper (no run is ever launched from
+	// it), so there is no launch-form Baked to apply here — nil.
+	_, diags := CompileBundle(files, nil)
 	return toProtoDiagnostics(diags), nil
 }
 
@@ -373,7 +378,9 @@ func CheckBundle(_ context.Context, files map[string][]byte) ([]*dslpb.Diagnosti
 // DslService.Check already gives the live editor, instead of two check paths
 // silently disagreeing on what they validate.
 func (s *DslService) CheckBundle(ctx context.Context, files map[string][]byte) ([]*dslpb.Diagnostic, error) {
-	plan, diags := CompileBundle(files)
+	// Same as the package-level CheckBundle above: no run is launched here,
+	// so no Baked to apply.
+	plan, diags := CompileBundle(files, nil)
 	validateStroppyVersion(ctx, plan, s.versions, &diags)
 	return toProtoDiagnostics(diags), nil
 }
@@ -381,17 +388,38 @@ func (s *DslService) CheckBundle(ctx context.Context, files map[string][]byte) (
 // CompileBundle runs the check-mode compile pipeline (provider resolution +
 // dsl.Compile) over a bundle's raw files, resolving provider.use against the
 // bundle's own providers/<name>/ directory (the legacy, pre-SP-B lookup).
-// Every pre-SP-B caller keeps using this exact zero-arg signature unchanged
-// — it delegates to compileBundle with a nil resolver, which is defined to
-// behave identically to this function's pre-Task-7 body.
+//
+// baked is the sealed launch-form snapshot (SP-D) a recipe run was launched
+// with — nil for every non-launch caller (Check/Preview/CheckBundle all pass
+// nil; see their own call sites) and for a non-form launch. When non-nil and
+// its "provider" object carries any value, compileBundle derives that
+// provider's launch-form params schema (deriveProviderParamsSchemapb, the
+// same derivation ComposeLaunchFormSchema already uses to build the form
+// baked was sealed against) and threads it into dsl.Input.ProviderParamsSchema
+// so dsl.Compile's schema.ApplyBakedInputs can validate baked's provider
+// params against it — never trusting baked's provider keys unchecked. A
+// bundle whose provider cannot be re-resolved, or whose schema fails to
+// derive, reports an Error diagnostic and leaves ProviderParamsSchema nil;
+// ApplyBakedInputs itself then fails closed (rejects every provider param)
+// rather than silently accepting an unvalidated one — see its own doc
+// comment.
+//
+// This derivation deliberately happens HERE, inside CompileBundle, rather
+// than being pre-computed by a caller and threaded in as a second field
+// alongside Baked (e.g. on CompileRecipeActivityInput): CompileBundle
+// already has the raw bundle files needed to re-derive it, and re-deriving
+// keeps every caller that only ever needs to serialize Baked (notably
+// RunRecipeInput/CompileRecipeActivityInput crossing Temporal's workflow
+// history) from also having to carry a second, larger *schemapb.Schema
+// value through workflow/activity inputs.
 //
 // The returned plan may be non-nil even when diags.HasErrors() is true (see
 // resolveProvider's own doc comment: a schema-derivation failure still hands
 // the decoded manifest to dsl.Compile so contract checking keeps running) —
 // callers must gate on diags.HasErrors(), never on a nil plan check alone,
 // mirroring dsl.Compile's own contract.
-func CompileBundle(files map[string][]byte) (*dslpb.CompiledPlan, diag.List) {
-	return compileBundle(context.Background(), "", files, nil)
+func CompileBundle(files map[string][]byte, baked *schemapb.Baked) (*dslpb.CompiledPlan, diag.List) {
+	return compileBundle(context.Background(), "", files, nil, baked)
 }
 
 // CompileBundleWithCatalog compiles files exactly like CompileBundle, except
@@ -401,8 +429,14 @@ func CompileBundle(files map[string][]byte) (*dslpb.CompiledPlan, diag.List) {
 // Warning diagnostic advising the caller to pin it for reproducible runs; a
 // pinned "slug@N" resolves that exact CatalogEntry.version. resolver == nil
 // falls back to the legacy same-bundle lookup exactly like CompileBundle.
+//
+// CompileBundleWithCatalog has no launch-form Baked of its own — both its
+// callers (Check/Preview) are check-mode-only and always pass nil through to
+// compileBundle; a catalog-resolved provider's launch form is not part of
+// this task's scope (see CompileBundle's doc comment for where Baked/
+// ProviderParamsSchema derivation actually happens today).
 func CompileBundleWithCatalog(ctx context.Context, tenantID string, files map[string][]byte, resolver ProviderResolver) (*dslpb.CompiledPlan, diag.List) {
-	return compileBundle(ctx, tenantID, files, resolver)
+	return compileBundle(ctx, tenantID, files, resolver, nil)
 }
 
 // compileBundle is the shared implementation behind CompileBundle and
@@ -411,15 +445,90 @@ func CompileBundleWithCatalog(ctx context.Context, tenantID string, files map[st
 // deriveProviderSchema pair; CheckBundle and RecipeActivities.
 // CompileRecipeActivity (internal/infrastructure/execution, Task 4) both
 // call CompileBundle rather than duplicating that resolution logic.
-func compileBundle(ctx context.Context, tenantID string, files map[string][]byte, resolver ProviderResolver) (*dslpb.CompiledPlan, diag.List) {
+func compileBundle(ctx context.Context, tenantID string, files map[string][]byte, resolver ProviderResolver, baked *schemapb.Baked) (*dslpb.CompiledPlan, diag.List) {
 	sources := include.Sources{Files: files}
 
 	provider, composed, diags := resolveProvider(ctx, tenantID, files, resolver)
 
-	plan, compileDiags := dsl.Compile(dsl.Input{Sources: sources, Provider: provider, Composed: composed})
+	paramsSchema, schemaDiags := bakedProviderParamsSchema(files, baked)
+	diags = append(diags, schemaDiags...)
+
+	plan, compileDiags := dsl.Compile(dsl.Input{
+		Sources:              sources,
+		Provider:             provider,
+		Composed:             composed,
+		Baked:                baked,
+		ProviderParamsSchema: paramsSchema,
+	})
 	diags = append(diags, compileDiags...)
 
 	return plan, diags
+}
+
+// bakedProviderParamsSchema derives the provider params schema
+// dsl.Compile's schema.ApplyBakedInputs needs to validate baked's "provider"
+// object against, mirroring ComposeLaunchFormSchema's own
+// resolveProviderName + deriveProviderParamsSchemapb pair exactly (see its
+// doc comment) so a Baked's provider params are validated against the same
+// schema shape the launch form that sealed it (or, for a directly
+// constructed Baked bypassing BakeForm entirely, the schema a legitimate
+// form WOULD have been composed against) declares.
+//
+// Skips derivation entirely — returning (nil, nil) — whenever there is
+// nothing to validate: baked is nil, or its "provider" object is empty/
+// absent (SplitBakedValues' own "no provider key at all" case). This keeps
+// every non-form launch and every launch-form submission with only
+// workflow-level inputs exactly as fast and diagnostic-free as before this
+// task, and specifically avoids requiring the docker builtin provider (which
+// has no Terraform module, hence nothing deriveProviderParamsSchemapb could
+// derive) to have one just because SOME recipe elsewhere in the bundle
+// happens to declare provider params.
+//
+// A provider that cannot be resolved, or whose schema fails to derive, is
+// reported as an Error diagnostic here; the caller still hands the (nil)
+// schema to dsl.Compile, whose schema.ApplyBakedInputs then fails closed on
+// baked's provider params (see its own doc comment) rather than silently
+// accepting them unvalidated.
+func bakedProviderParamsSchema(files map[string][]byte, baked *schemapb.Baked) (*schemapb.Schema, diag.List) {
+	var diags diag.List
+	if baked == nil {
+		return nil, diags
+	}
+	_, providerParams := schema.SplitBakedValues(baked)
+	if len(providerParams) == 0 {
+		return nil, diags
+	}
+
+	name, err := resolveProviderName(files)
+	if err != nil {
+		diags.Add(diag.Diagnostic{
+			Severity: diag.Error,
+			Path:     clusterFile,
+			Message:  fmt.Sprintf("resolve provider for baked launch-form params: %v", err),
+		})
+		return nil, diags
+	}
+	if name == "" {
+		diags.Add(diag.Diagnostic{
+			Severity: diag.Error,
+			Path:     clusterFile,
+			Message:  "baked launch form carries provider params, but the bundle has no resolvable provider to validate them against",
+		})
+		return nil, diags
+	}
+
+	params, _, deriveDiags, derr := deriveProviderParamsSchemapb(files, name)
+	diags = append(diags, deriveDiags...)
+	if derr != nil {
+		diags.Add(diag.Diagnostic{
+			Severity: diag.Error,
+			Path:     manifestPath(name),
+			Message:  fmt.Sprintf("derive provider %q launch-form params schema: %v", name, derr),
+			Module:   name,
+		})
+		return nil, diags
+	}
+	return params, diags
 }
 
 // resolveProvider finds and decodes the provider cluster.yaml's provider.use

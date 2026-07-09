@@ -11,6 +11,7 @@ import (
 	"github.com/stretchr/testify/require"
 	"github.com/stroppy-io/schemapb/schemapb"
 	"google.golang.org/protobuf/encoding/protojson"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/dsl/diag"
 	dslpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dsl"
@@ -614,11 +615,64 @@ func TestComposeLaunchFormSchema_DockerBuiltinNoProviderField(t *testing.T) {
 }
 
 func TestCompileBundle_LegacySignatureUnaffected(t *testing.T) {
-	// Zero-arg CompileBundle must keep working exactly as before this task —
-	// no resolver, no tenant, same-bundle providers/<name>/ lookup.
+	// nil-Baked CompileBundle must keep working exactly as before Task 8 —
+	// no resolver, no tenant, same-bundle providers/<name>/ lookup, no
+	// launch-form overlay at all.
 	files := dockerBundleFiles()
-	_, diags := CompileBundle(files)
+	_, diags := CompileBundle(files, nil)
 	if diags.HasErrors() {
 		t.Fatalf("unexpected errors: %s", diags.String())
 	}
+}
+
+// TestCompileBundle_AppliesBakedProviderParams is Task 8's core TDD case
+// (SP-D Task 8, D4 part 2): a Baked launch-form snapshot carrying a real
+// provider param (postgres-ha's yandex module declares "zone" in
+// variables.tf) must overlay onto the compiled plan's ProviderRef — the
+// launch form actually controlling the run's parameters, not just being
+// accepted and silently discarded.
+func TestCompileBundle_AppliesBakedProviderParams(t *testing.T) {
+	files := loadBundle(t, postgresHADir)
+	values, err := structpb.NewStruct(map[string]any{
+		"provider": map[string]any{"zone": "ru-central1-b"},
+	})
+	require.NoError(t, err)
+	baked := &schemapb.Baked{Values: values}
+
+	plan, diags := CompileBundle(files, baked)
+	require.False(t, diags.HasErrors(), diags.String())
+	require.Contains(t, plan.GetProvider().GetParamsJson(), `"zone":"ru-central1-b"`,
+		"baked provider param must reach the lowered ProviderRef")
+}
+
+// TestCompileBundle_UndeclaredBakedProviderParamFailsClosed exercises a
+// Baked constructed directly (bypassing BakeForm/its Strict() validation
+// entirely — e.g. a hand-crafted models.Run.Baked, per
+// schema.ApplyBakedInputs' own threat model) that carries a provider param
+// key the resolved provider's module never declares. Compile must fail
+// closed: an error diagnostic, no plan — never a partial/silent overlay of
+// an unvalidated key into Provider.Params/tfvars.
+func TestCompileBundle_UndeclaredBakedProviderParamFailsClosed(t *testing.T) {
+	files := loadBundle(t, postgresHADir)
+	values, err := structpb.NewStruct(map[string]any{
+		"provider": map[string]any{"totally_undeclared_key": "evil"},
+	})
+	require.NoError(t, err)
+	baked := &schemapb.Baked{Values: values}
+
+	plan, diags := CompileBundle(files, baked)
+	require.True(t, diags.HasErrors(), "undeclared provider param must fail closed")
+	require.Nil(t, plan)
+}
+
+// TestCompileBundle_NilBakedRegressionGuard is the explicit nil-Baked
+// regression guard the task's TDD plan calls for: a run started with no
+// form (baked == nil) must compile exactly as it did before this task —
+// zero Baked-related diagnostics, same clean compile.
+func TestCompileBundle_NilBakedRegressionGuard(t *testing.T) {
+	files := loadBundle(t, postgresHADir)
+
+	plan, diags := CompileBundle(files, nil)
+	require.False(t, diags.HasErrors(), diags.String())
+	require.NotNil(t, plan)
 }

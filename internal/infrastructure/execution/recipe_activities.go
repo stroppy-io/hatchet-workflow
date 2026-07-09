@@ -68,6 +68,17 @@ func NewRecipeActivities(deps provider.Deps, quotas QuotaManager) *RecipeActivit
 // alone, mirroring dsl.Compile's own contract (see CompileBundle's doc
 // comment on why a non-nil plan can otherwise coexist with an error
 // diagnostic).
+//
+// in.Baked is forwarded straight through to CompileBundle — this is where
+// SP-D Task 8's launch-form values actually reach the compiler: the DSL
+// compiler (include.Resolve/schema.ApplyBakedInputs) runs here, on the
+// Temporal WORKER, never inside the connect-rpc StartRun handler (see
+// runrecipe.go's package doc, "Global Constraints"). CompileBundle itself
+// derives whatever provider params schema it needs to validate in.Baked's
+// provider params from in.Bundle — this activity does not (and must not)
+// pre-compute or separately carry that schema; see CompileBundle's own doc
+// comment for why re-deriving it here, from the bundle already present,
+// beats threading a second value through CompileRecipeActivityInput.
 func (a *RecipeActivities) CompileRecipeActivity(
 	_ context.Context,
 	in *workflows.CompileRecipeActivityInput,
@@ -76,7 +87,7 @@ func (a *RecipeActivities) CompileRecipeActivity(
 		return nil, errors.New("compile recipe activity: input is required")
 	}
 
-	plan, diags := dslservice.CompileBundle(in.Bundle)
+	plan, diags := dslservice.CompileBundle(in.Bundle, in.Baked)
 	if diags.HasErrors() {
 		plan = nil
 	}

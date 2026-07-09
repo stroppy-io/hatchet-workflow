@@ -69,6 +69,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/stroppy-io/schemapb/schemapb"
 	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 	"google.golang.org/protobuf/proto"
@@ -130,6 +131,23 @@ type RunRecipeInput struct {
 	TenantID  string
 	Bundle    map[string][]byte
 	Bootstrap *workflowpb.AgentBootstrap
+	// Baked is the sealed launch-form snapshot (SP-D) this run was launched
+	// with — nil for a non-form launch. It is forwarded verbatim into
+	// CompileRecipeActivityInput.Baked (see compileRecipe below); the
+	// compiler runs on the Temporal WORKER inside CompileRecipeActivity, not
+	// here in workflow code (see the package doc's Global Constraints), so
+	// this workflow never itself touches Baked's contents — it is pure
+	// data threaded through, exactly like Bootstrap above.
+	//
+	// Baked is a proto message and is serialized through Temporal's default
+	// data converter exactly like Bootstrap — no new (de)serialization
+	// plumbing needed. It is set once, here, at workflow-start time and
+	// never mutated afterward, so it is recorded exactly once in workflow
+	// history (the initial WorkflowExecutionStarted event's input), not
+	// re-sent on every heartbeat/attempt — see the project's own
+	// history-bloat precedent (persistRunCompiledPlan's doc comment) for why
+	// that distinction matters here.
+	Baked *schemapb.Baked
 }
 
 // RunRecipeOutput is RunRecipeWorkflow's terminal result: Status is the
@@ -146,6 +164,15 @@ type RunRecipeOutput struct {
 // bundle's raw files.
 type CompileRecipeActivityInput struct {
 	Bundle map[string][]byte
+	// Baked mirrors RunRecipeInput.Baked (see its doc comment) — forwarded
+	// unchanged so CompileRecipeActivity can pass it straight to
+	// dslservice.CompileBundle, which derives the provider params schema it
+	// needs to validate Baked's provider params directly from Bundle itself
+	// (see CompileBundle's own doc comment). This input deliberately does
+	// NOT also carry a separately-derived *schemapb.Schema: that would be a
+	// second, larger value recorded in this activity's own history entry for
+	// no benefit, since Bundle is already present to re-derive it from.
+	Baked *schemapb.Baked
 }
 
 // CompileRecipeActivityOutput is CompileRecipeActivity's output: the
@@ -493,6 +520,7 @@ func (w *runRecipeWorkflow) compileRecipe(ctx workflow.Context) (*dslpb.Compiled
 	var out CompileRecipeActivityOutput
 	if err := workflow.ExecuteActivity(actx, CompileRecipeActivityName, &CompileRecipeActivityInput{
 		Bundle: w.in.Bundle,
+		Baked:  w.in.Baked,
 	}).Get(actx, &out); err != nil {
 		return nil, err
 	}

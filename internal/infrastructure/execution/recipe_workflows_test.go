@@ -5,7 +5,9 @@ import (
 	"errors"
 	"testing"
 
+	"github.com/stroppy-io/schemapb/schemapb"
 	"go.temporal.io/sdk/client"
+	"google.golang.org/protobuf/types/known/structpb"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
 	models "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
@@ -58,6 +60,31 @@ func TestLaunchRecipeRunStartsWorkflowWithExpectedIDAndInput(t *testing.T) {
 	}
 	if got, want := in.Bootstrap.GetServerAddr(), "https://control.example"; got != want {
 		t.Fatalf("input.Bootstrap.ServerAddr = %q, want %q", got, want)
+	}
+}
+
+// TestLaunchRecipeRunThreadsBakedIntoWorkflowInput is SP-D Task 8's
+// LaunchRecipeRun-level regression guard: baked must reach
+// RunRecipeInput.Baked unchanged (never dropped, never applied in-process
+// here — see LaunchRecipeRun's own doc comment on why the compiler runs
+// inside CompileRecipeActivity on a worker, not this adapter).
+func TestLaunchRecipeRunThreadsBakedIntoWorkflowInput(t *testing.T) {
+	starter := &fakeWorkflowStarter{}
+	rw := &RecipeWorkflows{client: starter}
+	run := &models.Run{Entity: &common.Entity{Id: "run-1", TenantId: "tenant-1"}}
+	bundle := map[string][]byte{"cluster.yaml": []byte("version: 1\n")}
+	values, err := structpb.NewStruct(map[string]any{"provider": map[string]any{"zone": "ru-central1-b"}})
+	if err != nil {
+		t.Fatalf("build baked values: %v", err)
+	}
+	baked := &schemapb.Baked{Values: values}
+
+	if err := rw.LaunchRecipeRun(context.Background(), run, bundle, baked); err != nil {
+		t.Fatalf("launch recipe run: %v", err)
+	}
+	in := starter.calls[0].args[0].(*workflows.RunRecipeInput) //nolint:forcetypeassert // test-only
+	if in.Baked != baked {
+		t.Fatalf("input.Baked = %+v, want the exact baked value passed in", in.Baked)
 	}
 }
 
