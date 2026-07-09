@@ -106,10 +106,7 @@ func orioledbDBComponent(
 	isMaster bool,
 ) (deploymentbuilder.EngineComponent, error) {
 	params := database.GetParams().GetOrioledb()
-	image := params.GetImage()
-	if image == "" {
-		image = defaultImage
-	}
+	image := imageForVersion(database.GetParams().GetVersion())
 	locale := params.GetInitdbLocale()
 	if locale == "" {
 		locale = "C"

@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	topologypb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/topology"
 )
 
@@ -69,6 +70,50 @@ func TestHealthScriptUsesRecoveryCheck(t *testing.T) {
 		if !strings.Contains(s, want) {
 			t.Fatalf("health script missing %q:\n%s", want, s)
 		}
+	}
+}
+
+func TestImageForVersion(t *testing.T) {
+	cases := map[string]string{
+		"pg16": "orioledb/orioledb:latest-pg16",
+		"pg17": "orioledb/orioledb:latest-pg17",
+		"pg18": "orioledb/orioledb:latest-pg18",
+		"":     "orioledb/orioledb:latest-pg17", // empty -> defaultVersion
+	}
+	for in, want := range cases {
+		if got := imageForVersion(in); got != want {
+			t.Fatalf("imageForVersion(%q) = %q, want %q", in, got, want)
+		}
+	}
+}
+
+// TestDBComponentImageFollowsVersion verifies the deployed image is derived
+// solely from DatabaseParams.version, and that an empty version falls back to
+// defaultVersion. There is no per-run image override.
+func TestDBComponentImageFollowsVersion(t *testing.T) {
+	unitFor := func(version string) string {
+		db := &domain.Database{
+			Source: &domain.Database_Params{Params: &domain.DatabaseParams{
+				Version: version,
+				Engine:  &domain.DatabaseParams_Orioledb{Orioledb: &domain.OrioledbParams{}},
+			}},
+		}
+		comp := &topologypb.Component{Id: masterID, Engine: orioledbEngine, Role: orioledbRoleMaster}
+		ec, err := orioledbDBComponent(comp, db, nil, nil, orioledbWiring{}, true)
+		if err != nil {
+			t.Fatalf("orioledbDBComponent(version=%q): %v", version, err)
+		}
+		return ec.ServiceFile.GetText()
+	}
+
+	if unit := unitFor("pg16"); !strings.Contains(unit, "orioledb/orioledb:latest-pg16") {
+		t.Fatalf("pg16 version did not select latest-pg16 image:\n%s", unit)
+	}
+	if unit := unitFor("pg18"); !strings.Contains(unit, "orioledb/orioledb:latest-pg18") {
+		t.Fatalf("pg18 version did not select latest-pg18 image:\n%s", unit)
+	}
+	if unit := unitFor(""); !strings.Contains(unit, "orioledb/orioledb:latest-pg17") {
+		t.Fatalf("empty version did not fall back to latest-pg17:\n%s", unit)
 	}
 }
 

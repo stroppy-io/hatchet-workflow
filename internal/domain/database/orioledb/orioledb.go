@@ -24,12 +24,25 @@ const (
 	// healthPort serves the per-node primary/replica check HAProxy probes.
 	healthPort = 8008
 
-	// defaultImage is used when OrioledbParams.image is empty.
-	defaultImage = "orioledb/orioledb:latest-pg17"
+	// defaultVersion is the pg image tag used when DatabaseParams.version is
+	// empty (e.g. "pg17" -> orioledb/orioledb:latest-pg17).
+	defaultVersion = "pg17"
+	// imageRepoPrefix is the official OrioleDB image stem; imageForVersion
+	// appends the pg version tag (pg16/pg17/pg18).
+	imageRepoPrefix = "orioledb/orioledb:latest-"
 
 	masterID  = "orioledb-master-1"
 	haproxyID = "orioledb-haproxy-1"
 )
+
+// imageForVersion builds the official OrioleDB docker image ref for a pg version
+// tag (e.g. "pg16" -> "orioledb/orioledb:latest-pg16").
+func imageForVersion(version string) string {
+	if version == "" {
+		version = defaultVersion
+	}
+	return imageRepoPrefix + version
+}
 
 type Database struct{}
 
