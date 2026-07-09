@@ -72,7 +72,7 @@ proto-tools: ## Install the proto codegen toolchain (easyp + plugins) into ./bin
 	GOFLAGS=-mod=mod GOBIN=$(PROTO_BIN) go install github.com/envoyproxy/protoc-gen-validate@v1.3.3
 	# go-graphql: single-pass graphql-go backend (emits one schema.go building a
 	# *graphql.Schema that delegates to the existing pb.*ServiceServer impls).
-	GOFLAGS=-mod=mod GOBIN=$(PROTO_BIN) go install github.com/gopherex/protoc-gen-go-graphql@v1.0.5
+	GOFLAGS=-mod=mod GOBIN=$(PROTO_BIN) go install github.com/gopherex/protoc-gen-go-graphql@v1.0.6
 	# go-ogen: single-pass REST/OpenAPI surface over the existing pb.*ServiceServer
 	# impls (emits ogen HTTP server + pb<->ogen converters + an OgenAdapter).
 	GOFLAGS=-mod=mod GOBIN=$(PROTO_BIN) go install github.com/gopherex/protoc-gen-go-ogen@v1.1.5

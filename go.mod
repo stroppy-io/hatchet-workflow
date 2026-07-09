@@ -13,7 +13,7 @@ require (
 	github.com/google/cel-go v0.29.0
 	github.com/google/uuid v1.6.0
 	github.com/gopherex/pgtx v1.1.0
-	github.com/gopherex/protoc-gen-go-graphql v1.0.5
+	github.com/gopherex/protoc-gen-go-graphql v1.0.6
 	github.com/gopherex/protoc-gen-go-jx v1.0.1
 	github.com/gopherex/protoc-gen-go-ogen v1.1.5
 	github.com/gopherex/sqld v1.0.0
