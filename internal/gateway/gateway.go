@@ -56,8 +56,14 @@ type Config struct {
 	// gateway reverse-proxies /ide/* to, so the embedded IDE is served from
 	// the SAME server origin as the rest of the product — no separate public
 	// IDE URL needed, same pattern as GrafanaBackend/RegistryBackend. Empty
-	// disables the route (404).
+	// disables the route (404) UNLESS IdeBackends is set. Ignored when
+	// IdeBackends is set (Task 4's per-org multiplexing takes priority).
 	IdeBackend string
+	// IdeBackends resolves the code-server backend per request (Task 4: one
+	// shared code-server process per org/instance, not a single global
+	// backend). When set, it takes priority over IdeBackend. nil (the T1-T3
+	// default) keeps the single-backend behavior IdeBackend describes.
+	IdeBackends IdeBackendResolver
 	// IdeAuthorizer gates /ide/* before code-server ever sees the request
 	// (spec SP-C §3 C4: RBAC-проверка на границе гейтвея, не внутри
 	// code-server). nil disables the check — dev/test only. SP-B supplies the
@@ -143,7 +149,14 @@ func New(cfg Config) (*Gateway, error) {
 		}
 		g.registryProxy = rp
 	}
-	if cfg.IdeBackend != "" {
+	switch {
+	case cfg.IdeBackends != nil:
+		// Task 4's per-org multiplexing: a fresh backend is resolved per
+		// request (see ide_backend.go), so no single upstream URL is parsed
+		// up front the way newMonitorProxy's other callers do.
+		g.ideProxy = newDynamicIdeProxy(cfg.IdeBackends)
+		g.ideAuthorizer = cfg.IdeAuthorizer
+	case cfg.IdeBackend != "":
 		ip, err := newMonitorProxy(cfg.IdeBackend, "", nil) // single-host reverse proxy, no bearer
 		if err != nil {
 			return nil, fmt.Errorf("gateway: ide backend %q: %w", cfg.IdeBackend, err)

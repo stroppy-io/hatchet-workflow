@@ -99,8 +99,40 @@ type Config struct {
 	// never crosses a Temporal workflow-history boundary — the same posture
 	// MonitoringToken already has in this Config.
 	GiteaToken string
-	// IdeBackend is the internal code-server base URL the gateway
-	// reverse-proxies /ide/* to (spec SP-C §3 C2). Empty disables the route
-	// (404). Unset until Task 4 (per-org code-server lifecycle) ships.
+	// IdeBackend is a manual override: a single fixed code-server base URL
+	// the gateway reverse-proxies every /ide/* request to, bypassing Task
+	// 4's per-org manager entirely. Used only when IdeManagerEnabled is
+	// false (e.g. pointing at an externally-run code-server during local
+	// development); ignored otherwise (gateway.Config.IdeBackends takes
+	// priority — see gateway.go).
 	IdeBackend string
+	// IdeManagerEnabled turns on Task 4's per-org code-server lifecycle
+	// manager (internal/ide.Manager) — real docker containers, real
+	// per-org/instance git worktrees, and the RBAC-backed IdeAuthorizer.
+	// Requires GiteaToken (the manager clones/pulls from Gitea) and a
+	// reachable docker daemon; both are checked at boot when this is true.
+	// Defaults OFF: an operator opts in explicitly (IDE_MANAGER_ENABLED=1),
+	// distinct from GiteaToken alone, because unlike GitBundleStore
+	// (transparent storage swap) this spins up real containers.
+	IdeManagerEnabled bool
+	// IdeWorktreeRoot is the directory (inside the server's own container)
+	// under which each org's (and the instance's) git worktree is
+	// materialized, one subdirectory per scope.
+	IdeWorktreeRoot string
+	// IdeWorktreeVolume is the name of the Docker volume that backs
+	// IdeWorktreeRoot in the server's own container (docker-compose.yaml's
+	// `ide-worktrees`) — required so Manager can mount a scope's own
+	// subdirectory (not the whole volume) into that scope's code-server
+	// container via a volume-subpath mount rather than a host-path bind
+	// mount that would resolve incorrectly under docker-outside-of-docker
+	// (see internal/ide.Manager.Config.WorktreeVolume's doc). Empty is only
+	// correct for bare/local (non-compose) usage.
+	IdeWorktreeVolume string
+	// IdeImage is the code-server image reference Manager starts per scope.
+	IdeImage string
+	// IdeDockerNetwork is the docker network code-server containers join so
+	// the gateway's own container can reach them by name. Defaults to
+	// AttachNetwork (the same network agent containers already join) when
+	// empty.
+	IdeDockerNetwork string
 }

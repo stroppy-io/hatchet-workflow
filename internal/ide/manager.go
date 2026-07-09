@@ -1,0 +1,281 @@
+package ide
+
+import (
+	"context"
+	"fmt"
+	"regexp"
+	"strings"
+
+	"github.com/docker/docker/api/types/container"
+	"github.com/docker/docker/api/types/mount"
+	"github.com/docker/docker/api/types/network"
+	"github.com/docker/docker/client"
+
+	"github.com/stroppy-io/stroppy-cloud/internal/gitrepo"
+)
+
+// RepoEnsurer is the subset of *internal/gitrepo.Client Manager needs to
+// guarantee an org's repo exists before cloning it — a narrow interface for
+// the same reason catalog.GitClient is (testable with a fake; *gitrepo.
+// Client already satisfies it structurally).
+type RepoEnsurer interface {
+	EnsureOrg(ctx context.Context, org string) error
+	EnsureRepo(ctx context.Context, owner, name string, private bool) error
+}
+
+// OrgRepoName is the fixed repo name inside each org's own Gitea org — one
+// physical Gitea org per tenant (spec §3 C1: "Org-репо — один на каждый
+// tenant"), one fixed-named repo inside it, mirroring
+// internal/gitrepo.InstanceRepoName's role for the singleton instance repo.
+const OrgRepoName = "org-catalog"
+
+// containerNameRe matches the characters Docker allows in a container name;
+// scope keys are turned into container names by substituting anything else,
+// so a hostile org slug can never inject shell/path metacharacters into a
+// container name string.
+var containerNameRe = regexp.MustCompile(`[^a-zA-Z0-9_.-]`)
+
+// Manager ensures exactly one running code-server container per scope
+// (spec §9.2's decided "shared per-tenant code-server", not per-user) and
+// keeps its bind-mounted workspace synced to the scope's git repo via
+// EnsureWorktree. One Manager serves every scope — isolation between orgs
+// is NOT "one Manager per org" but two narrower guarantees this type
+// enforces on every call:
+//   - the container name and the worktree directory are both derived from
+//     scope.Key() alone (containerName/worktreeDir below), so two different
+//     scopes can never collide onto the same container or the same
+//     directory;
+//   - EnsureRunning never bind-mounts anything but worktreeRoot/<scope.Key()>
+//     into the container it starts for that scope, so a code-server
+//     container started for org "acme" has no filesystem path into any
+//     other org's or the instance's worktree.
+type Manager struct {
+	docker         *client.Client
+	gitea          RepoEnsurer
+	giteaBaseURL   string
+	giteaToken     string
+	worktreeRoot   string
+	worktreeVolume string
+	image          string
+	network        string
+	instanceOwner  string
+}
+
+// Config configures a Manager.
+type Config struct {
+	Docker *client.Client
+	// Gitea ensures an org's repo exists before Manager clones it (nil is
+	// valid only when every scope Manager will ever see is ScopeInstance,
+	// whose repo Bootstrap already guarantees — see internal/gitrepo).
+	Gitea RepoEnsurer
+	// GiteaBaseURL/GiteaToken build the git-smart-HTTP remote (RemoteURL) for
+	// clone/pull.
+	GiteaBaseURL string
+	GiteaToken   string
+	// WorktreeRoot is the directory (as seen from wherever THIS process's
+	// EnsureWorktree/git clone-pull runs — see the WorktreeVolume doc for why
+	// that is not necessarily the same filesystem view the code-server
+	// container gets) under which each scope gets its own subdirectory
+	// (WorktreeRoot/<scope.Key()>).
+	WorktreeRoot string
+	// WorktreeVolume, when set, is the name of a Docker VOLUME (not a host
+	// path) that already backs WorktreeRoot in THIS process's own container
+	// (docker-compose.yaml's `ide-worktrees:/var/lib/stroppy-ide`, for the
+	// deployed case where the server itself runs inside a container talking
+	// to the host's dockerd over a mounted docker.sock — the classic
+	// "docker-outside-of-docker" setup this codebase already uses for agent
+	// containers). When set, EnsureRunning mounts a scope's container onto
+	// that SAME named volume with mount.VolumeOptions.Subpath scoped to the
+	// scope's own subdirectory, rather than a bind mount of WorktreeRoot as
+	// a literal host path — a bind mount naming a path inside the server
+	// container's OWN filesystem would resolve on the HOST's filesystem when
+	// dockerd creates the sibling code-server container, which is never the
+	// same path and would silently mount the wrong (usually nonexistent)
+	// directory. Empty (bare/local, non-compose usage — e.g. `go run`
+	// against a local docker daemon where WorktreeRoot genuinely IS a host
+	// path) falls back to a plain bind mount.
+	WorktreeVolume string
+	// Image is the code-server image reference (e.g.
+	// "codercom/code-server:4.96.4").
+	Image string
+	// Network is the docker network code-server containers join, so the
+	// gateway's server container can reach them by container name — same
+	// network agent containers attach to (AGENT_ATTACH_NETWORK).
+	Network string
+	// InstanceOwner is the real Gitea username gitrepo.InstanceRepoOwner's
+	// owner="" convention resolves to (via gitrepo.Client.Whoami), resolved
+	// once by the caller at boot — RemoteURL (unlike the Gitea contents API)
+	// has no owner="" shorthand, so a real username is required to clone the
+	// instance repo. Required whenever Manager will ever see a ScopeInstance
+	// request.
+	InstanceOwner string
+}
+
+// NewManager builds a Manager from cfg.
+func NewManager(cfg Config) *Manager {
+	return &Manager{
+		docker:         cfg.Docker,
+		gitea:          cfg.Gitea,
+		giteaBaseURL:   cfg.GiteaBaseURL,
+		giteaToken:     cfg.GiteaToken,
+		worktreeRoot:   cfg.WorktreeRoot,
+		worktreeVolume: cfg.WorktreeVolume,
+		image:          cfg.Image,
+		network:        cfg.Network,
+		instanceOwner:  cfg.InstanceOwner,
+	}
+}
+
+func containerName(key string) string {
+	return "stroppy-ide-" + containerNameRe.ReplaceAllString(key, "-")
+}
+
+// worktreeSubpath is the scope-specific directory name, relative to
+// worktreeRoot — used both to build worktreeDir (this process's own git
+// clone/pull target) and, when worktreeVolume is set, as
+// mount.VolumeOptions.Subpath for the sibling container (see the
+// WorktreeVolume config doc for why those two are not the same path).
+func worktreeSubpath(key string) string {
+	return containerNameRe.ReplaceAllString(key, "-")
+}
+
+func (m *Manager) worktreeDir(key string) string {
+	return m.worktreeRoot + "/" + worktreeSubpath(key)
+}
+
+// giteaOwnerRepo returns the (owner, repo) EnsureRunning materializes for
+// scope, and ensures the org repo exists first (instance repo existence is
+// Bootstrap's job, already run at server startup — see internal/app/run.go).
+func (m *Manager) giteaOwnerRepo(ctx context.Context, scope Scope) (owner, repo string, err error) {
+	switch scope.Kind {
+	case ScopeInstance:
+		if m.instanceOwner == "" {
+			return "", "", fmt.Errorf("ide: manager has no InstanceOwner configured, cannot materialize the instance worktree")
+		}
+		return m.instanceOwner, gitrepo.InstanceRepoName, nil
+	case ScopeOrg:
+		if m.gitea == nil {
+			return "", "", fmt.Errorf("ide: manager has no RepoEnsurer, cannot materialize an org worktree")
+		}
+		// scope.OrgSlug here is whatever the caller (the IdeAuthorizer's
+		// resolved tenant id, NOT the raw URL slug — see backend.go) passed
+		// through as the scope; EnsureRunning's caller is responsible for
+		// having already turned an untrusted URL slug into a real tenant id
+		// before it ever reaches Manager.
+		owner = scope.OrgSlug
+		if err := m.gitea.EnsureOrg(ctx, owner); err != nil {
+			return "", "", fmt.Errorf("ide: ensure org %q: %w", owner, err)
+		}
+		if err := m.gitea.EnsureRepo(ctx, owner, OrgRepoName, true); err != nil {
+			return "", "", fmt.Errorf("ide: ensure org repo %q/%q: %w", owner, OrgRepoName, err)
+		}
+		return owner, OrgRepoName, nil
+	default:
+		return "", "", fmt.Errorf("ide: unrecognized scope kind %v", scope.Kind)
+	}
+}
+
+// EnsureRunning materializes scope's worktree (clone-or-pull) and starts (or
+// confirms already-running) its code-server container, returning the
+// container's internal HTTP base URL for gateway.IdeBackendResolver to
+// reverse-proxy to.
+func (m *Manager) EnsureRunning(ctx context.Context, scope Scope) (string, error) {
+	owner, repo, err := m.giteaOwnerRepo(ctx, scope)
+	if err != nil {
+		return "", err
+	}
+	remote, err := RemoteURL(m.giteaBaseURL, m.giteaToken, owner, repo)
+	if err != nil {
+		return "", fmt.Errorf("ide: remote url: %w", err)
+	}
+	dest := m.worktreeDir(scope.Key())
+	if _, err := EnsureWorktree(ctx, remote, dest); err != nil {
+		return "", fmt.Errorf("ide: materialize worktree for %q: %w", scope.Key(), err)
+	}
+
+	name := containerName(scope.Key())
+	if insp, err := m.docker.ContainerInspect(ctx, name); err == nil {
+		if insp.State != nil && insp.State.Running {
+			return containerBaseURL(name), nil
+		}
+		// Exists but stopped: start it rather than re-create (the bind mount
+		// spec is unchanged since the container still exists).
+		if err := m.docker.ContainerStart(ctx, insp.ID, container.StartOptions{}); err != nil {
+			return "", fmt.Errorf("ide: restart container %q: %w", name, err)
+		}
+		return containerBaseURL(name), nil
+	}
+
+	hostCfg := &container.HostConfig{
+		Mounts: []mount.Mount{m.workspaceMount(scope.Key(), dest)},
+	}
+	if m.network != "" {
+		hostCfg.NetworkMode = container.NetworkMode(m.network)
+	}
+	cfg := &container.Config{
+		Image: m.image,
+		Env: []string{
+			// Auth is enforced at the gateway boundary by IdeAuthorizer BEFORE
+			// a request ever reaches this container (spec §3 C4) — code-server's
+			// own password prompt would be redundant defense-in-depth at best
+			// and an extra credential to provision at worst, so it is disabled.
+			// This container is reachable ONLY on the internal docker network
+			// (no published port — see hostCfg above), never directly from the
+			// public internet.
+			"PASSWORD=",
+		},
+	}
+	var netCfg *network.NetworkingConfig
+	if m.network != "" {
+		netCfg = &network.NetworkingConfig{EndpointsConfig: map[string]*network.EndpointSettings{
+			m.network: {},
+		}}
+	}
+	resp, err := m.docker.ContainerCreate(ctx, cfg, hostCfg, netCfg, nil, name)
+	if err != nil {
+		return "", fmt.Errorf("ide: create container %q: %w", name, err)
+	}
+	if err := m.docker.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
+		return "", fmt.Errorf("ide: start container %q: %w", name, err)
+	}
+	return containerBaseURL(name), nil
+}
+
+// Stop removes scope's code-server container. Idempotent: removing an
+// absent container is not an error (mirrors deleteEntry's idempotency
+// convention elsewhere in this codebase). The worktree directory on disk is
+// left in place — Stop is a container-lifecycle op, not a data-deletion op.
+func (m *Manager) Stop(ctx context.Context, scope Scope) error {
+	name := containerName(scope.Key())
+	err := m.docker.ContainerRemove(ctx, name, container.RemoveOptions{Force: true})
+	if err != nil && !strings.Contains(err.Error(), "No such container") {
+		return fmt.Errorf("ide: remove container %q: %w", name, err)
+	}
+	return nil
+}
+
+func containerBaseURL(name string) string {
+	return "http://" + name + ":8443"
+}
+
+// workspaceMount builds the mount.Mount for scope's code-server container's
+// /home/coder/project — a docker-volume subpath mount when worktreeVolume
+// is configured (the deployed/compose case, see WorktreeVolume's doc),
+// otherwise a plain bind mount of dest (the bare/local-docker case).
+func (m *Manager) workspaceMount(scopeKey, dest string) mount.Mount {
+	if m.worktreeVolume != "" {
+		return mount.Mount{
+			Type:   mount.TypeVolume,
+			Source: m.worktreeVolume,
+			Target: "/home/coder/project",
+			VolumeOptions: &mount.VolumeOptions{
+				Subpath: worktreeSubpath(scopeKey),
+			},
+		}
+	}
+	return mount.Mount{
+		Type:   mount.TypeBind,
+		Source: dest,
+		Target: "/home/coder/project",
+	}
+}

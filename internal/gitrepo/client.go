@@ -130,6 +130,17 @@ type selfUser struct {
 	Login string `json:"login"`
 }
 
+// Whoami returns the Gitea username the configured Token belongs to — the
+// same resolution EnsureRepo/CommitFiles/GetFile/ListTree perform internally
+// for owner="" ("create/read under the token's own user"), exported for
+// callers that need the real username up front rather than per-call (e.g.
+// internal/ide.Manager, which builds a git-clone remote URL that has no
+// owner="" shorthand the way the contents API does — see resolveOwner's
+// doc).
+func (c *Client) Whoami(ctx context.Context) (string, error) {
+	return c.resolveOwner(ctx, "")
+}
+
 // resolveOwner turns the EnsureRepo owner="" convention ("create under the
 // token's own user") into a real username for the content endpoints
 // (CommitFiles/GetFile/ListTree/blobSHA), which — unlike the repo-lifecycle

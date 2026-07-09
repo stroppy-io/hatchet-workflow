@@ -6,7 +6,7 @@
 // own org catalog (OrgCatalog.tsx).
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Boxes, Pencil, Plus, RefreshCw, Trash2, Workflow } from "lucide-react";
+import { Boxes, Code2, Pencil, Plus, RefreshCw, Trash2, Workflow } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "@/lib/router";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -52,6 +52,18 @@ const KIND_PARAM: Record<"providers" | "workflows", CatalogKind> = {
   providers: "KIND_PROVIDER",
   workflows: "KIND_WORKFLOW",
 };
+
+// instanceIdeUrl builds the gateway /ide/instance/* URL for an entry's
+// on-disk location in the instance repo (spec §3 C1's fixed layout:
+// providers/<slug>/... or workflows/<slug>/...), opened as a code-server
+// "folder" deep link so the IDE lands on the entry's own files rather than
+// the whole repo root. Requires the instance-admin IdeAuthorizer grant
+// (internal/ide.Authorizer.CanAuthor) — a non-admin's click 403s at the
+// gateway, same as every other LEVEL_INSTANCE write path.
+function instanceIdeUrl(tab: "providers" | "workflows", slug: string): string {
+  const folder = encodeURIComponent(`/home/coder/project/${tab}/${slug}`);
+  return `/ide/instance/${tab}/${slug}?folder=${folder}`;
+}
 
 export function AdminCatalog() {
   const navigate = useNavigate();
@@ -206,6 +218,11 @@ export function AdminCatalog() {
                   <TableCell className="text-xs text-muted-foreground">{fmtDate(entry.updatedAt)}</TableCell>
                   <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex justify-end gap-1">
+                      <Button size="icon" variant="ghost" asChild aria-label="Open in IDE">
+                        <a href={instanceIdeUrl(tabParam, entry.slug)} target="_blank" rel="noreferrer">
+                          <Code2 className="h-3.5 w-3.5" />
+                        </a>
+                      </Button>
                       <Button
                         size="icon"
                         variant="ghost"

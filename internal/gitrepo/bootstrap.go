@@ -15,10 +15,12 @@ const (
 	// catalog spec §3 C1 describes ("providers/<name>/...",
 	// "workflows/<name>/...").
 	InstanceRepoName = "instance-catalog"
-	// instanceRepoBranch is the branch Bootstrap seeds the on-disk layout on.
+	// InstanceRepoBranch is the branch Bootstrap seeds the on-disk layout on.
 	// Gitea's auto_init:true (EnsureRepo's body) creates this as the repo's
-	// default branch.
-	instanceRepoBranch = "main"
+	// default branch. Exported so other packages that read/write the
+	// instance repo (catalog.GitBundleStore, internal/ide) target the same
+	// branch without re-declaring the literal.
+	InstanceRepoBranch = "main"
 	// bootstrapAuthorName/Email stamp the layout-seed commit's author — a
 	// service identity distinct from any real end-user, so this commit reads
 	// as infrastructure bootstrap in `git log`, not an authored edit.
@@ -65,7 +67,7 @@ func Bootstrap(ctx context.Context, c *Client) error {
 	if err := c.EnsureRepo(ctx, InstanceRepoOwner, InstanceRepoName, true); err != nil {
 		return fmt.Errorf("gitrepo: ensure instance repo: %w", err)
 	}
-	if err := c.CommitFiles(ctx, InstanceRepoOwner, InstanceRepoName, instanceRepoBranch, instanceLayout, bootstrapAuthorName, bootstrapAuthorEmail, "chore: seed catalog layout"); err != nil {
+	if err := c.CommitFiles(ctx, InstanceRepoOwner, InstanceRepoName, InstanceRepoBranch, instanceLayout, bootstrapAuthorName, bootstrapAuthorEmail, "chore: seed catalog layout"); err != nil {
 		return fmt.Errorf("gitrepo: seed instance repo layout: %w", err)
 	}
 	return nil

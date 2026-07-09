@@ -199,6 +199,7 @@ services:
       - /var/run/docker.sock:/var/run/docker.sock
       - tfstate:/tmp/stroppy-terraform
       - binaries:/var/lib/stroppy-cache
+      - ide-worktrees:/var/lib/stroppy-ide
     extra_hosts:
       - "host.docker.internal:host-gateway"
     ports:
@@ -239,6 +240,23 @@ services:
       # still succeeds before the operator provisions the token.
       GITEA_BACKEND: http://gitea:3000
       GITEA_TOKEN: ${GITEA_TOKEN:-}
+      # SP-C Task 4: per-org code-server lifecycle. Defaults OFF (empty ->
+      # false in cmd/cli/serve_cmd.go) even when GITEA_TOKEN is set — this
+      # spins up real docker containers via the mounted docker.sock above,
+      # a bigger step than GitBundleStore's transparent storage swap, so an
+      # operator opts in explicitly once Gitea + code-server image pulls are
+      # both provisioned.
+      IDE_MANAGER_ENABLED: ${IDE_MANAGER_ENABLED:-}
+      IDE_WORKTREE_ROOT: /var/lib/stroppy-ide
+      # Must name the SAME volume the `ide-worktrees:` mount below uses, so
+      # Manager can mount each scope's subdirectory (not the whole volume)
+      # into that scope's own code-server container.
+      IDE_WORKTREE_VOLUME: stroppy-cloud_ide-worktrees
+      IDE_IMAGE: ${IDE_IMAGE:-codercom/code-server:4.96.4}
+      # Same network agent containers attach to (AGENT_ATTACH_NETWORK) — the
+      # per-org code-server containers Manager starts need to be reachable
+      # from THIS container by name, exactly like agent containers do.
+      IDE_DOCKER_NETWORK: stroppy-cloud_default
       STROPPY_UPSTREAM: https://github.com/stroppy-io/stroppy/releases/download/v5.1.2/stroppy_linux_amd64.tar.gz
       QUOTA_REFRESH_INTERVAL: 0
       YC_TOKEN: ${YC_TOKEN:-}
@@ -297,3 +315,4 @@ volumes:
   caddy_config:
   registry-data:
   giteadata:
+  ide-worktrees:

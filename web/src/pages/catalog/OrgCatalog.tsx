@@ -8,7 +8,7 @@
 // gates its own actions with) rather than inventing a parallel mechanism.
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Boxes, GitFork, Link2, Pencil, Plus, RefreshCw, Sparkles, Trash2, Workflow } from "lucide-react";
+import { Boxes, Code2, GitFork, Link2, Pencil, Plus, RefreshCw, Sparkles, Trash2, Workflow } from "lucide-react";
 import { Link, useNavigate, useSearchParams, useTenantSlug } from "@/lib/router";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -58,6 +58,17 @@ function StatusLine({ value, tone = "default" }: { value: string | null; tone?: 
 function fmtDate(iso?: string): string {
   if (!iso) return "—";
   return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
+}
+
+// orgIdeUrl builds the gateway /ide/org/<slug>/* URL for an entry's on-disk
+// location in this org's own repo. Only meaningful for a NATIVE/FORKED
+// entry — a LINKED entry has no files of its own yet (org repos start
+// empty, spec's read-through model; see internal/services/catalog.
+// GitBundleStore's package doc) until it is forked, so the caller must gate
+// this behind origin !== "ORIGIN_LINKED".
+function orgIdeUrl(orgSlug: string, tab: "providers" | "workflows", slug: string): string {
+  const folder = encodeURIComponent(`/home/coder/project/${tab}/${slug}`);
+  return `/ide/org/${orgSlug}/${tab}/${slug}?folder=${folder}`;
 }
 
 function OriginBadge({ origin }: { origin: CatalogEntryVM["origin"] }) {
@@ -320,6 +331,28 @@ export function OrgCatalog() {
                   <TableCell className="text-xs text-muted-foreground">{fmtDate(entry.updatedAt)}</TableCell>
                   <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex justify-end gap-1">
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        disabled={!canUpdate || entry.origin === "ORIGIN_LINKED"}
+                        title={
+                          entry.origin === "ORIGIN_LINKED"
+                            ? "Fork this entry before opening it in the IDE"
+                            : !canUpdate
+                              ? "Requires update permission on this resource"
+                              : "Open in IDE"
+                        }
+                        asChild={canUpdate && entry.origin !== "ORIGIN_LINKED"}
+                        aria-label="Open in IDE"
+                      >
+                        {canUpdate && entry.origin !== "ORIGIN_LINKED" ? (
+                          <a href={orgIdeUrl(slug, tabParam, entry.slug)} target="_blank" rel="noreferrer">
+                            <Code2 className="h-3.5 w-3.5" />
+                          </a>
+                        ) : (
+                          <Code2 className="h-3.5 w-3.5" />
+                        )}
+                      </Button>
                       <Button
                         size="icon"
                         variant="ghost"

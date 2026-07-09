@@ -13,6 +13,7 @@ import (
 	"time"
 
 	"connectrpc.com/connect"
+	dockerclient "github.com/docker/docker/client"
 	"github.com/gopherex/protoc-gen-go-graphql/graphqlrt"
 	graphqlhandler "github.com/graphql-go/handler"
 	"github.com/ogen-go/ogen/middleware"
@@ -32,6 +33,7 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/dsl/diag"
 	"github.com/stroppy-io/stroppy-cloud/internal/gateway"
 	"github.com/stroppy-io/stroppy-cloud/internal/gitrepo"
+	"github.com/stroppy-io/stroppy-cloud/internal/ide"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/adapters"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/docker"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/execution"
@@ -118,8 +120,13 @@ func Run(ctx context.Context, cfg Config) error {
 	// this task explicitly must not force a redeploy there. Once Gitea is
 	// universally provisioned, tighten this to unconditional (matching
 	// postgres/temporal's fail-fast severity).
+	// giteaClient is nil when GiteaToken is unset (feature off). It is reused
+	// below both for catalogBundles (Task 4: selectable GitBundleStore) and
+	// for internal/ide's per-org worktree manager — one client, one
+	// credential, never duplicated.
+	var giteaClient *gitrepo.Client
 	if cfg.GiteaToken != "" {
-		giteaClient, err := gitrepo.NewClient(gitrepo.Config{BaseURL: cfg.GiteaBackend, Token: cfg.GiteaToken})
+		giteaClient, err = gitrepo.NewClient(gitrepo.Config{BaseURL: cfg.GiteaBackend, Token: cfg.GiteaToken})
 		if err != nil {
 			return fmt.Errorf("gitea client: %w", err)
 		}
@@ -239,14 +246,25 @@ func Run(ctx context.Context, cfg Config) error {
 	uploadTTL := adapters.NewStaticUploadTTL(0)
 	tokenMinter := adapters.NewRandomTokenMinter(0)
 
-	// catalogBundles is the SP-C seam's dev/staging BundleStore impl (SP-B
-	// Task 9): a filesystem tree rooted under cfg.CatalogBundleDir, mirroring
-	// blobStore's local-filesystem convention above. SP-C will swap in a
-	// gitea-backed BundleStore without catalogService (or dslService's
-	// provider resolver below) changing.
-	catalogBundles, err := catalogsvc.NewFSBundleStore(cfg.CatalogBundleDir)
-	if err != nil {
-		return fmt.Errorf("catalog bundle store: %w", err)
+	// catalogBundles is the SP-C seam's BundleStore impl. Default: a
+	// filesystem tree rooted under cfg.CatalogBundleDir, mirroring
+	// blobStore's local-filesystem convention above. When Gitea is
+	// provisioned (giteaClient != nil, same GiteaToken gate as the
+	// instance-repo bootstrap above) it is swapped for a GitBundleStore over
+	// the singleton instance repo instead — selectable, defaulting OFF, so
+	// every existing deployment (including the live dev stand, which does
+	// not have GITEA_TOKEN set) keeps behaving exactly as before. Neither
+	// catalogService nor dslService's provider resolver below change either
+	// way — both depend only on the catalogsvc.BundleStore interface.
+	var catalogBundles catalogsvc.BundleStore
+	if giteaClient != nil {
+		catalogBundles = catalogsvc.NewGitBundleStore(giteaClient, gitrepo.InstanceRepoOwner, gitrepo.InstanceRepoName, gitrepo.InstanceRepoBranch)
+	} else {
+		fsBundles, err := catalogsvc.NewFSBundleStore(cfg.CatalogBundleDir)
+		if err != nil {
+			return fmt.Errorf("catalog bundle store: %w", err)
+		}
+		catalogBundles = fsBundles
 	}
 
 	shareRuns := shareRunReader{r: bid}
@@ -776,6 +794,46 @@ func Run(ctx context.Context, cfg Config) error {
 	}
 	defer w.Stop()
 
+	// 8.5) Task 4: per-org code-server lifecycle + worktree materialization
+	// (spec SP-C §3 C2/C4), gated on IdeManagerEnabled — distinct from the
+	// GiteaToken gate above because this spins up real docker containers,
+	// not just a storage backend swap. When disabled (the default),
+	// ideBackends/ideAuthorizer stay nil and gateway.Config falls back to
+	// the manual cfg.IdeBackend override (or 404s, same as before this
+	// task).
+	var ideBackends gateway.IdeBackendResolver
+	var ideAuthorizer gateway.IdeAuthorizer
+	if cfg.IdeManagerEnabled {
+		if giteaClient == nil {
+			return fmt.Errorf("ide manager requires GITEA_TOKEN to be set")
+		}
+		instanceOwner, err := giteaClient.Whoami(ctx)
+		if err != nil {
+			return fmt.Errorf("ide manager: resolve instance repo owner: %w", err)
+		}
+		dockerCli, err := dockerclient.NewClientWithOpts(dockerclient.FromEnv, dockerclient.WithAPIVersionNegotiation())
+		if err != nil {
+			return fmt.Errorf("ide manager: docker client: %w", err)
+		}
+		ideNetwork := cfg.IdeDockerNetwork
+		if ideNetwork == "" {
+			ideNetwork = cfg.AttachNetwork
+		}
+		ideManager := ide.NewManager(ide.Config{
+			Docker:         dockerCli,
+			Gitea:          giteaClient,
+			GiteaBaseURL:   cfg.GiteaBackend,
+			GiteaToken:     cfg.GiteaToken,
+			WorktreeRoot:   cfg.IdeWorktreeRoot,
+			WorktreeVolume: cfg.IdeWorktreeVolume,
+			Image:          cfg.IdeImage,
+			Network:        ideNetwork,
+			InstanceOwner:  instanceOwner,
+		})
+		ideBackends = &ide.BackendResolver{Manager: ideManager, Tenants: store.Tenants()}
+		ideAuthorizer = &ide.Authorizer{Tokens: bearerVerifier, Perms: permResolver, Tenants: store.Tenants()}
+	}
+
 	// 9) Gateway: single agent-facing entrypoint sharing the connect API + SPA.
 	gw, err := gateway.New(gateway.Config{
 		TemporalHostPort:  cfg.TemporalHostPort,
@@ -788,12 +846,12 @@ func Run(ctx context.Context, cfg Config) error {
 		AgentTokens:       agentTokens,
 		GrafanaBackend:    cfg.GrafanaBackend,  // serve /grafana/* from the server origin
 		RegistryBackend:   cfg.RegistryBackend, // serve /v2/* registry mirror from the server origin
-		IdeBackend:        cfg.IdeBackend,      // serve /ide/* embedded code-server from the server origin (empty until Task 4 ships)
-		// TODO(SP-B): wire the RBAC-backed IdeAuthorizer once catalog/RBAC
-		// lands (spec SP-C §3 C4). nil here means /ide/* is unauthenticated
-		// at the gateway boundary whenever IdeBackend is set — acceptable
-		// only because IdeBackend is empty by default (Task 4 not shipped).
-		IdeAuthorizer: nil,
+		// IdeBackend is the manual-override fallback (see its doc); IdeBackends
+		// (Task 4's per-org manager) takes priority whenever IdeManagerEnabled
+		// wired it above — see gateway.go's New().
+		IdeBackend:    cfg.IdeBackend,
+		IdeBackends:   ideBackends,
+		IdeAuthorizer: ideAuthorizer,
 		HTTPFallback:  h2cHandler,
 		Logger:        log,
 	})
