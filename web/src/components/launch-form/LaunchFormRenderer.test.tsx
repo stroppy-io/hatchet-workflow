@@ -103,4 +103,88 @@ describe("LaunchFormRenderer", () => {
 
     await waitFor(() => expect(screen.getByLabelText("total_ram_mb")).toHaveTextContent("3072"));
   });
+
+  it("narrows Enum options via options_expr instead of the static values map (review fix 1)", async () => {
+    const onSubmit = vi.fn();
+    const schema = create(SchemaSchema, {
+      id: { namespace: "stroppy.test", name: "enum-options-expr", version: "v1" },
+      fields: [
+        { name: "kind", kind: { case: "int64", value: { default: 1n } } },
+        {
+          name: "engine",
+          kind: {
+            case: "enum",
+            value: {
+              values: { 1: "postgres", 2: "mysql", 3: "mongo" },
+              // Narrows the option set based on `kind`: postgres/mysql are
+              // relational engines (kind==1), mongo is the only choice
+              // otherwise. The static `values` map above would offer all
+              // three regardless of `kind` if a renderer read it directly —
+              // exactly the landmine this test guards against.
+              optionsExpr: "root.kind == 1 ? [1, 2] : [3]",
+            },
+          },
+        },
+      ],
+    });
+    render(<LaunchFormRenderer schema={schema} onSubmit={onSubmit} />);
+
+    await waitFor(() => expect(screen.getByLabelText("engine")).toBeInTheDocument());
+
+    // `kind` starts unset until the WASM engine's compute pass fills in the
+    // declared default (same async settling the "recomputes a Computed
+    // field" test above waits out) — drive it explicitly to 1 and wait for
+    // that to land before trusting options_expr's evaluation of root.kind.
+    const kindInput = screen.getByLabelText("kind") as HTMLInputElement;
+    fireEvent.change(kindInput, { target: { value: "1" } });
+    await waitFor(() => expect(kindInput.value).toBe("1"));
+
+    const trigger = screen.getByLabelText("engine");
+    fireEvent.pointerDown(trigger, { button: 0, ctrlKey: false });
+    fireEvent.click(trigger);
+    await waitFor(() => expect(screen.getByRole("listbox")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("option", { name: "postgres" })).toBeInTheDocument());
+    expect(screen.getByRole("option", { name: "mysql" })).toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "mongo" })).not.toBeInTheDocument();
+
+    // Close the listbox, flip `kind` away from 1, and reopen: the option set
+    // must be recomputed by the engine (mongo only), not stay stuck at the
+    // first render's static/derived list.
+    fireEvent.keyDown(trigger, { key: "Escape" });
+    fireEvent.change(kindInput, { target: { value: "2" } });
+    await waitFor(() => expect(kindInput.value).toBe("2"));
+
+    fireEvent.pointerDown(trigger, { button: 0, ctrlKey: false });
+    fireEvent.click(trigger);
+    await waitFor(() => expect(screen.getByRole("listbox")).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByRole("option", { name: "mongo" })).toBeInTheDocument());
+    expect(screen.queryByRole("option", { name: "postgres" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("option", { name: "mysql" })).not.toBeInTheDocument();
+  });
+
+  it("honors a field's negative lower bound instead of NumField's default min=0 (review fix 2)", async () => {
+    const onSubmit = vi.fn();
+    const schema = create(SchemaSchema, {
+      id: { namespace: "stroppy.test", name: "negative-bounds", version: "v1" },
+      fields: [
+        // gte(-10) is a legitimately negative range — the input must not
+        // carry an HTML min="0" clamp that would silently reject/clamp
+        // negative values before they ever reach the schemapb validator.
+        { name: "offset", kind: { case: "int64", value: { default: 0n, gte: -10n } } },
+      ],
+    });
+    render(<LaunchFormRenderer schema={schema} onSubmit={onSubmit} />);
+
+    await waitFor(() => expect(screen.getByLabelText("offset")).toBeInTheDocument());
+    const offsetInput = screen.getByLabelText("offset") as HTMLInputElement;
+    expect(offsetInput).not.toHaveAttribute("min", "0");
+    expect(offsetInput.min).toBe("-10");
+
+    // A negative value within the declared bound must validate through the
+    // real engine (no FieldError), proving the bound is honored end-to-end
+    // and not just cosmetically on the <input>.
+    fireEvent.change(offsetInput, { target: { value: "-5" } });
+    await waitFor(() => expect(offsetInput.value).toBe("-5"));
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+  });
 });

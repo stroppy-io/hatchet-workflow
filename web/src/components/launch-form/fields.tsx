@@ -43,18 +43,51 @@ export function StringField({ label, field }: { label: string; field: FieldProps
   );
 }
 
-export function Int64Field({ label, field }: { label: string; field: FieldProps }) {
+// schemapb bounds may be bigint (Int64) or number|"NaN"|"Infinity"|"-Infinity"
+// (Double). Convert to the finite JS number NumField's min/max accept, or
+// `undefined` when the schema declares no bound — NumField itself defaults
+// `min` to 0, which would wrongly clamp a field with a legitimately negative
+// range, so callers below must pass `min={undefined}` explicitly rather than
+// omitting the prop.
+function toBoundNumber(v: unknown): number | undefined {
+  if (v === undefined || v === null) return undefined;
+  const n = typeof v === "bigint" ? Number(v) : Number(v);
+  return Number.isFinite(n) ? n : undefined;
+}
+
+export function Int64Field({
+  label,
+  field,
+  gt,
+  gte,
+  lt,
+  lte,
+}: {
+  label: string;
+  field: FieldProps;
+  gt?: bigint;
+  gte?: bigint;
+  lt?: bigint;
+  lte?: bigint;
+}) {
   // useSchemaForm JSON.stringify's the raw `values` map when calling into the
   // WASM bridge, so int64 values must stay plain JS numbers here (never
   // bigint — JSON.stringify throws on BigInt). schemapb's own int64 JSON
   // convention is number|numeric-string, both of which round-trip fine.
   const raw = field.value;
   const num = typeof raw === "bigint" ? Number(raw) : Number(raw ?? 0);
+  // Inclusive bound takes precedence when both are set; NumField only
+  // supports a single inclusive min/max, so an exclusive-only bound is
+  // widened by one (schemapb still enforces the real, exact constraint).
+  const min = toBoundNumber(gte) ?? (gt !== undefined ? toBoundNumber(gt)! + 1 : undefined);
+  const max = toBoundNumber(lte) ?? (lt !== undefined ? toBoundNumber(lt)! - 1 : undefined);
   return (
     <div className="flex flex-col gap-1">
       <NumField
         id={field.name}
         label={label}
+        min={min}
+        max={max}
         value={Number.isFinite(num) ? num : 0}
         onChange={(v) => field.onChange(Math.trunc(v))}
       />
@@ -63,8 +96,24 @@ export function Int64Field({ label, field }: { label: string; field: FieldProps 
   );
 }
 
-export function DoubleField({ label, field }: { label: string; field: FieldProps }) {
+export function DoubleField({
+  label,
+  field,
+  gt,
+  gte,
+  lt,
+  lte,
+}: {
+  label: string;
+  field: FieldProps;
+  gt?: number | "NaN" | "Infinity" | "-Infinity";
+  gte?: number | "NaN" | "Infinity" | "-Infinity";
+  lt?: number | "NaN" | "Infinity" | "-Infinity";
+  lte?: number | "NaN" | "Infinity" | "-Infinity";
+}) {
   const num = Number(field.value ?? 0);
+  const min = toBoundNumber(gte) ?? (toBoundNumber(gt) !== undefined ? toBoundNumber(gt)! : undefined);
+  const max = toBoundNumber(lte) ?? (toBoundNumber(lt) !== undefined ? toBoundNumber(lt)! : undefined);
   return (
     <div className="flex flex-col gap-1">
       <NumField
@@ -72,6 +121,8 @@ export function DoubleField({ label, field }: { label: string; field: FieldProps
         label={label}
         float
         step={0.01}
+        min={min}
+        max={max}
         value={Number.isFinite(num) ? num : 0}
         onChange={(v) => field.onChange(v)}
       />
@@ -98,10 +149,17 @@ export function EnumField({
   label,
   field,
   values,
+  options,
 }: {
   label: string;
   field: FieldProps;
   values: Record<number, string>;
+  /** Allowed enum values for the current form state — from the engine's
+   *  `form.enumOptions(path)`, which honors dynamic `options_expr`
+   *  narrowing. Must be used instead of the static `values` map's keys,
+   *  which does not reflect options_expr and would let the UI offer
+   *  choices the engine will reject. */
+  options: number[];
 }) {
   const current = field.value === undefined || field.value === null ? "" : String(field.value);
   return (
@@ -112,9 +170,9 @@ export function EnumField({
           <SelectValue placeholder={label} />
         </SelectTrigger>
         <SelectContent>
-          {Object.entries(values).map(([n, name]) => (
-            <SelectItem key={n} value={n}>
-              {name}
+          {options.map((n) => (
+            <SelectItem key={n} value={String(n)}>
+              {values[n] ?? String(n)}
             </SelectItem>
           ))}
         </SelectContent>

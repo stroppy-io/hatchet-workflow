@@ -39,9 +39,29 @@ export default function SchemaFormBody({
       case "string":
         return <StringField key={path} label={label} field={form.register(path)} />;
       case "int64":
-        return <Int64Field key={path} label={label} field={form.register(path)} />;
+        return (
+          <Int64Field
+            key={path}
+            label={label}
+            field={form.register(path)}
+            gt={f.kind.value.gt}
+            gte={f.kind.value.gte}
+            lt={f.kind.value.lt}
+            lte={f.kind.value.lte}
+          />
+        );
       case "double":
-        return <DoubleField key={path} label={label} field={form.register(path)} />;
+        return (
+          <DoubleField
+            key={path}
+            label={label}
+            field={form.register(path)}
+            gt={f.kind.value.gt}
+            gte={f.kind.value.gte}
+            lt={f.kind.value.lt}
+            lte={f.kind.value.lte}
+          />
+        );
       case "bool":
         return <BoolField key={path} label={label} field={form.register(path)} />;
       case "enum":
@@ -51,6 +71,7 @@ export default function SchemaFormBody({
             label={label}
             field={form.register(path)}
             values={f.kind.value.values}
+            options={form.enumOptions(path)}
           />
         );
       case "computed": {
