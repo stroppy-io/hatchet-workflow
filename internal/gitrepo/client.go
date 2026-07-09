@@ -272,3 +272,89 @@ func (c *Client) CommitFiles(ctx context.Context, owner, repo, branch string, fi
 	}
 	return nil
 }
+
+// GetFile reads path's content at ref (branch/tag/commit sha) from
+// owner/repo via Gitea's contents API. owner="" resolves to the token's own
+// user (see resolveOwner), matching CommitFiles' convention.
+func (c *Client) GetFile(ctx context.Context, owner, repo, ref, path string) ([]byte, error) {
+	owner, err := c.resolveOwner(ctx, owner)
+	if err != nil {
+		return nil, fmt.Errorf("resolve owner: %w", err)
+	}
+	url := fmt.Sprintf("%s/api/v1/repos/%s/%s/contents/%s?ref=%s", c.baseURL, owner, repo, path, ref)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "token "+c.token)
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
+		return nil, fmt.Errorf("gitea get contents %s: %s: %s", path, resp.Status, strings.TrimSpace(string(body)))
+	}
+	var out struct {
+		Content  string `json:"content"`
+		Encoding string `json:"encoding"`
+	}
+	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
+		return nil, err
+	}
+	if out.Encoding != "base64" {
+		return nil, fmt.Errorf("gitea get contents %s: unsupported encoding %q", path, out.Encoding)
+	}
+	return base64.StdEncoding.DecodeString(out.Content)
+}
+
+// treeEntry is the subset of Gitea's git-trees API response ListTree needs.
+type treeEntry struct {
+	Path string `json:"path"`
+	Type string `json:"type"` // "blob" or "tree"
+}
+
+// treeResponse is Gitea's GET .../git/trees/{sha}?recursive=true response
+// shape.
+type treeResponse struct {
+	Tree      []treeEntry `json:"tree"`
+	Truncated bool        `json:"truncated"`
+}
+
+// ListTree lists every blob path under ref, recursively — the files map
+// DslService.Check/ComposedSchema/Preview expect, keyed the same way
+// include.Sources already keys a bundle (slash-separated logical path).
+// Directory entries ("tree" type) are omitted; only file blobs are returned.
+func (c *Client) ListTree(ctx context.Context, owner, repo, ref string) ([]string, error) {
+	owner, err := c.resolveOwner(ctx, owner)
+	if err != nil {
+		return nil, fmt.Errorf("resolve owner: %w", err)
+	}
+	url := fmt.Sprintf("%s/api/v1/repos/%s/%s/git/trees/%s?recursive=true", c.baseURL, owner, repo, ref)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return nil, err
+	}
+	req.Header.Set("Authorization", "token "+c.token)
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
+		return nil, fmt.Errorf("gitea list tree %s: %s: %s", ref, resp.Status, strings.TrimSpace(string(body)))
+	}
+	var out treeResponse
+	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
+		return nil, err
+	}
+	paths := make([]string, 0, len(out.Tree))
+	for _, e := range out.Tree {
+		if e.Type == "blob" {
+			paths = append(paths, e.Path)
+		}
+	}
+	return paths, nil
+}

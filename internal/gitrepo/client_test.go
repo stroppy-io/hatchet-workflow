@@ -188,6 +188,86 @@ func TestCommitFiles_UpdatesExistingFileViaPUT(t *testing.T) {
 	}
 }
 
+func TestGetFile_DecodesBase64Content(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if got, want := r.URL.Path, "/api/v1/repos/acme/wf/contents/cluster.yaml"; got != want {
+			t.Fatalf("path = %s, want %s", got, want)
+		}
+		if got, want := r.URL.Query().Get("ref"), "main"; got != want {
+			t.Fatalf("ref = %s, want %s", got, want)
+		}
+		_, _ = w.Write([]byte(`{"content":"cHJvdmlkZXI6CiAgdXNlOiBkb2NrZXI=","encoding":"base64"}`))
+	}))
+	defer server.Close()
+
+	c, err := NewClient(Config{BaseURL: server.URL, Token: "t"})
+	if err != nil {
+		t.Fatalf("new client: %v", err)
+	}
+	got, err := c.GetFile(context.Background(), "acme", "wf", "main", "cluster.yaml")
+	if err != nil {
+		t.Fatalf("get file: %v", err)
+	}
+	if want := "provider:\n  use: docker"; string(got) != want {
+		t.Fatalf("content = %q, want %q", got, want)
+	}
+}
+
+func TestGetFile_NotFoundSurfacesError(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+		_, _ = w.Write([]byte(`{"message":"object does not exist"}`))
+	}))
+	defer server.Close()
+
+	c, err := NewClient(Config{BaseURL: server.URL, Token: "t"})
+	if err != nil {
+		t.Fatalf("new client: %v", err)
+	}
+	if _, err := c.GetFile(context.Background(), "acme", "wf", "main", "missing.yaml"); err == nil {
+		t.Fatal("expected error, got nil")
+	}
+}
+
+func TestListTree_ReturnsOnlyBlobPaths(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if got, want := r.URL.Path, "/api/v1/repos/acme/wf/git/trees/main"; got != want {
+			t.Fatalf("path = %s, want %s", got, want)
+		}
+		if got, want := r.URL.Query().Get("recursive"), "true"; got != want {
+			t.Fatalf("recursive = %s, want %s", got, want)
+		}
+		_, _ = w.Write([]byte(`{
+			"sha": "abc",
+			"tree": [
+				{"path": "cluster.yaml", "type": "blob"},
+				{"path": "components", "type": "tree"},
+				{"path": "components/pg.yaml", "type": "blob"}
+			],
+			"truncated": false
+		}`))
+	}))
+	defer server.Close()
+
+	c, err := NewClient(Config{BaseURL: server.URL, Token: "t"})
+	if err != nil {
+		t.Fatalf("new client: %v", err)
+	}
+	got, err := c.ListTree(context.Background(), "acme", "wf", "main")
+	if err != nil {
+		t.Fatalf("list tree: %v", err)
+	}
+	want := []string{"cluster.yaml", "components/pg.yaml"}
+	if len(got) != len(want) {
+		t.Fatalf("paths = %v, want %v", got, want)
+	}
+	for i := range want {
+		if got[i] != want[i] {
+			t.Fatalf("paths = %v, want %v", got, want)
+		}
+	}
+}
+
 func TestCommitFiles_EmptyOwnerResolvesToTokenOwnerViaWhoami(t *testing.T) {
 	var gotContentsPath string
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
