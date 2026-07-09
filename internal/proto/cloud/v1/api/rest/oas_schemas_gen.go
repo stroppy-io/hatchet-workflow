@@ -17004,6 +17004,52 @@ func (o OptSchemaRef) Or(d SchemaRef) SchemaRef {
 	return d
 }
 
+// NewOptSchemaTemplates returns new OptSchemaTemplates with value set to v.
+func NewOptSchemaTemplates(v SchemaTemplates) OptSchemaTemplates {
+	return OptSchemaTemplates{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSchemaTemplates is optional SchemaTemplates.
+type OptSchemaTemplates struct {
+	Value SchemaTemplates
+	Set   bool
+}
+
+// IsSet returns true if OptSchemaTemplates was set.
+func (o OptSchemaTemplates) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSchemaTemplates) Reset() {
+	var v SchemaTemplates
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSchemaTemplates) SetTo(v SchemaTemplates) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSchemaTemplates) Get() (v SchemaTemplates, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSchemaTemplates) Or(d SchemaTemplates) SchemaTemplates {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptScript returns new OptScript with value set to v.
 func NewOptScript(v Script) OptScript {
 	return OptScript{
@@ -23688,15 +23734,16 @@ func (RuntimeNodeStatus) AllValues() []RuntimeNodeStatus {
 
 // Ref: #/components/schemas/Schema
 type Schema struct {
-	Coerce        OptBool           `json:"coerce"`
-	Defs          OptSchemaDefs     `json:"defs"`
-	Description   OptString         `json:"description"`
-	Fields        []Filed           `json:"fields"`
-	ID            OptSchemaIdentity `json:"id"`
-	MaxProperties OptStringUint64   `json:"maxProperties"`
-	MinProperties OptStringUint64   `json:"minProperties"`
-	Rules         []Rule            `json:"rules"`
-	Strict        OptBool           `json:"strict"`
+	Coerce        OptBool            `json:"coerce"`
+	Defs          OptSchemaDefs      `json:"defs"`
+	Description   OptString          `json:"description"`
+	Fields        []Filed            `json:"fields"`
+	ID            OptSchemaIdentity  `json:"id"`
+	MaxProperties OptStringUint64    `json:"maxProperties"`
+	MinProperties OptStringUint64    `json:"minProperties"`
+	Rules         []Rule             `json:"rules"`
+	Strict        OptBool            `json:"strict"`
+	Templates     OptSchemaTemplates `json:"templates"`
 }
 
 // GetCoerce returns the value of Coerce.
@@ -23744,6 +23791,11 @@ func (s *Schema) GetStrict() OptBool {
 	return s.Strict
 }
 
+// GetTemplates returns the value of Templates.
+func (s *Schema) GetTemplates() OptSchemaTemplates {
+	return s.Templates
+}
+
 // SetCoerce sets the value of Coerce.
 func (s *Schema) SetCoerce(val OptBool) {
 	s.Coerce = val
@@ -23787,6 +23839,11 @@ func (s *Schema) SetRules(val []Rule) {
 // SetStrict sets the value of Strict.
 func (s *Schema) SetStrict(val OptBool) {
 	s.Strict = val
+}
+
+// SetTemplates sets the value of Templates.
+func (s *Schema) SetTemplates(val OptSchemaTemplates) {
+	s.Templates = val
 }
 
 type SchemaDefs map[string]Schema
@@ -23861,6 +23918,17 @@ func (s *SchemaRef) SetID(val OptSchemaIdentity) {
 // SetSchema sets the value of Schema.
 func (s *SchemaRef) SetSchema(val OptSchema) {
 	s.Schema = val
+}
+
+type SchemaTemplates map[string]string
+
+func (s *SchemaTemplates) init() SchemaTemplates {
+	m := *s
+	if m == nil {
+		m = map[string]string{}
+		*s = m
+	}
+	return m
 }
 
 // Ref: #/components/schemas/Script

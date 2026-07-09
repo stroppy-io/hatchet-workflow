@@ -5932,6 +5932,13 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 				}
 				return obj.GetDefs(), nil
 			}},
+			"templates": &graphql.Field{Type: graphqlrt.JSON, Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb8.Schema)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetTemplates(), nil
+			}},
 		}
 	})})
 	o_Schema_Filed = graphql.NewObject(graphql.ObjectConfig{Name: "Schema_Filed", Fields: graphql.FieldsThunk(func() graphql.Fields {

@@ -34,6 +34,7 @@
   - [schemapb.Schema.Filed.Timestamp](#schemapb-schema-filed-timestamp)
   - [schemapb.Schema.Filed.UInt32](#schemapb-schema-filed-uint32)
   - [schemapb.Schema.Filed.UInt64](#schemapb-schema-filed-uint64)
+  - [schemapb.Schema.TemplatesEntry](#schemapb-schema-templatesentry)
   - [schemapb.SchemaIdentity](#schemapb-schemaidentity)
   - [schemapb.SchemaRef](#schemapb-schemaref)
 
@@ -318,6 +319,20 @@ is an error (code "unknown_field").<br>
 
 json_name: strict
 go_name: Strict</pre></td>
+</tr><tr>
+<td>templates</td>
+<td><a href="#schemapb-schema-templatesentry">schemapb.Schema.TemplatesEntry</a></td>
+<td><pre>
+Named render templates (Go text/template syntax) for serialising resolved
+values into a target text format, e.g. "conf" -> a postgresql.conf
+template. Portable data: the engine renders them identically on the Go
+server and in the browser (via WASM). The template is executed against a
+context exposing the ordered fields (.Fields), fields grouped by Group
+(.Groups), and the raw values (.Values); see (*Schema).Render. The
+validation/compute engine itself ignores these.<br>
+
+json_name: templates
+go_name: Templates</pre></td>
 </tr>
 </table>
 
@@ -1921,6 +1936,32 @@ Value must not be any of these.<br>
 
 json_name: notIn
 go_name: NotIn</pre></td>
+</tr>
+</table>
+
+
+
+<a name="schemapb-schema-templatesentry"></a>
+### schemapb.Schema.TemplatesEntry
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>key</td>
+<td>string</td>
+<td><pre>
+json_name: key
+go_name: Key</pre></td>
+</tr><tr>
+<td>value</td>
+<td>string</td>
+<td><pre>
+json_name: value
+go_name: Value</pre></td>
 </tr>
 </table>
 

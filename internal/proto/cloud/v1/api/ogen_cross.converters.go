@@ -8110,6 +8110,10 @@ func SchemaToOgen(src *schemapb.Schema) (*rest.Schema, error) {
 		return nil, err
 	}
 	dst.Defs.SetTo(c6)
+	c8 := convert.Map(src.GetTemplates(), func(v string) string {
+		return string(v)
+	})
+	dst.Templates.SetTo(c8)
 	return &dst, nil
 }
 
@@ -8178,6 +8182,12 @@ func SchemaFromOgen(src *rest.Schema) (*schemapb.Schema, error) {
 			return nil, err
 		}
 		dst.Defs = c16
+	}
+	if mv18, ok := src.Templates.Get(); ok {
+		c19 := convert.Map(mv18, func(v string) string {
+			return string(v)
+		})
+		dst.Templates = c19
 	}
 	return dst, nil
 }

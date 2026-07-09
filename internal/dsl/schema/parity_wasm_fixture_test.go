@@ -1,12 +1,9 @@
 package schema
 
 import (
-	"crypto/sha256"
 	"encoding/hex"
 	"encoding/json"
 	"os"
-	"sort"
-	"strings"
 	"testing"
 
 	"github.com/stretchr/testify/require"
@@ -30,60 +27,7 @@ type parityFixture struct {
 	InvalidExpectedField            string          `json:"invalid_expected_field"`
 	UndeclaredExpectedField         string          `json:"undeclared_expected_field"`
 	UndeclaredProviderExpectedField string          `json:"undeclared_provider_expected_field"`
-	ValidBakedValuesSHA256          string          `json:"valid_baked_values_sha256"`
-}
-
-// canonicalJSON renders v (the generic tree produced by json.Unmarshal /
-// structpb.Struct.AsMap -- maps, slices, strings, float64, bool, nil) as a
-// deterministic, whitespace-free JSON string: object keys sorted
-// recursively, arrays kept in order. This is the "canonical serialized
-// Baked" fallback the SP-D Task 9 brief calls for when a hash isn't exposed
-// on both sides (schemapb.Hash's protowire-based hasher has no WASM/TS
-// counterpart) -- both Go and TS implement the *same* tiny algorithm here
-// (see parity.test.ts's canonicalJSON) so a sha256 of the result is
-// comparable across languages for the plain JSON scalars this fixture uses
-// (strings, small integers/decimals, bools).
-func canonicalJSON(v any) string {
-	switch t := v.(type) {
-	case map[string]any:
-		keys := make([]string, 0, len(t))
-		for k := range t {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-		var b strings.Builder
-		b.WriteByte('{')
-		for i, k := range keys {
-			if i > 0 {
-				b.WriteByte(',')
-			}
-			kb, _ := json.Marshal(k)
-			b.Write(kb)
-			b.WriteByte(':')
-			b.WriteString(canonicalJSON(t[k]))
-		}
-		b.WriteByte('}')
-		return b.String()
-	case []any:
-		var b strings.Builder
-		b.WriteByte('[')
-		for i, e := range t {
-			if i > 0 {
-				b.WriteByte(',')
-			}
-			b.WriteString(canonicalJSON(e))
-		}
-		b.WriteByte(']')
-		return b.String()
-	default:
-		bb, _ := json.Marshal(t)
-		return string(bb)
-	}
-}
-
-func sha256Hex(s string) string {
-	sum := sha256.Sum256([]byte(s))
-	return hex.EncodeToString(sum[:])
+	ValidBakedHash                  string          `json:"valid_baked_hash"`
 }
 
 // buildParityForm is the ONE schema-construction call shared by the fixture
@@ -141,7 +85,7 @@ func TestWriteParityFixture(t *testing.T) {
 	baked, ferrs := form.Bake(validValues)
 	require.Empty(t, ferrs, "valid_values must be the clean control case")
 	require.NotNil(t, baked)
-	validBakedSHA256 := sha256Hex(canonicalJSON(baked.GetValues().AsMap()))
+	validBakedHash := schemapb.Hash(baked)
 
 	fixture := parityFixture{
 		Schema:                          schemaJSON,
@@ -152,7 +96,7 @@ func TestWriteParityFixture(t *testing.T) {
 		InvalidExpectedField:            "threads",
 		UndeclaredExpectedField:         "extra_field",
 		UndeclaredProviderExpectedField: "provider.extra_nested",
-		ValidBakedValuesSHA256:          validBakedSHA256,
+		ValidBakedHash:                  hex.EncodeToString(validBakedHash[:]),
 	}
 	out, err := json.MarshalIndent(fixture, "", "  ")
 	require.NoError(t, err)
@@ -195,13 +139,13 @@ func TestGoBakeForm_MatchesFixtureExpectations(t *testing.T) {
 	fixture := readParityFixture(t)
 	form := mustParitySchema(t, fixture)
 
-	t.Run("valid_values bakes clean and hashes to the fixture's sha256", func(t *testing.T) {
+	t.Run("valid_values bakes clean and hashes to the fixture's recorded hash", func(t *testing.T) {
 		baked, ferrs, err := BakeForm(form, fixture.ValidValues)
 		require.NoError(t, err)
 		require.Empty(t, ferrs, "Go: valid_values must bake clean")
 		require.NotNil(t, baked)
-		got := sha256Hex(canonicalJSON(baked.GetValues().AsMap()))
-		require.Equal(t, fixture.ValidBakedValuesSHA256, got, "Go canonical-values hash must match the fixture's recorded hash")
+		got := schemapb.Hash(baked)
+		require.Equal(t, fixture.ValidBakedHash, hex.EncodeToString(got[:]), "Go schemapb.Hash(baked) must match the fixture's recorded hash")
 	})
 
 	t.Run("invalid_values fails Gte(1) on threads", func(t *testing.T) {

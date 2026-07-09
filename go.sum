@@ -468,8 +468,8 @@ github.com/stretchr/testify v1.8.1/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o
 github.com/stretchr/testify v1.8.2/go.mod h1:w2LPCIKwWwSfY2zedu0+kehJoqGctiVI29o6fzry7u4=
 github.com/stretchr/testify v1.11.1 h1:7s2iGBzp5EwR7/aIZr8ao5+dra3wiQyKjjFuvgVKu7U=
 github.com/stretchr/testify v1.11.1/go.mod h1:wZwfW3scLgRK+23gO65QZefKpKQRnfz6sD981Nm4B6U=
-github.com/stroppy-io/schemapb v1.4.4 h1:0z4Gdkt6Sfbnz7xD5Q5YFtY6YwYziDGLg75aJ63emOo=
-github.com/stroppy-io/schemapb v1.4.4/go.mod h1:XwV5P758Bepuw6tHQyA1HXmQiEYSaC6s61nD8jlBHJk=
+github.com/stroppy-io/schemapb v1.5.0 h1:uHrlqOkBXZ9I+/YUPSEm0S/8I/tu7UMFHbI8cu8ti1c=
+github.com/stroppy-io/schemapb v1.5.0/go.mod h1:XwV5P758Bepuw6tHQyA1HXmQiEYSaC6s61nD8jlBHJk=
 github.com/testcontainers/testcontainers-go v0.42.0 h1:He3IhTzTZOygSXLJPMX7n44XtK+qhjat1nI9cneBbUY=
 github.com/testcontainers/testcontainers-go v0.42.0/go.mod h1:vZjdY1YmUA1qEForxOIOazfsrdyORJAbhi0bp8plN30=
 github.com/testcontainers/testcontainers-go/modules/postgres v0.42.0 h1:GCbb1ndrF7OTDiIvxXyItaDab4qkzTFJ48LKFdM7EIo=

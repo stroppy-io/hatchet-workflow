@@ -549,5 +549,6 @@
     - [schemapb.Schema.Filed.Timestamp](schemapb/README.md#schemapb-schema-filed-timestamp)
     - [schemapb.Schema.Filed.UInt32](schemapb/README.md#schemapb-schema-filed-uint32)
     - [schemapb.Schema.Filed.UInt64](schemapb/README.md#schemapb-schema-filed-uint64)
+    - [schemapb.Schema.TemplatesEntry](schemapb/README.md#schemapb-schema-templatesentry)
     - [schemapb.SchemaIdentity](schemapb/README.md#schemapb-schemaidentity)
     - [schemapb.SchemaRef](schemapb/README.md#schemapb-schemaref)

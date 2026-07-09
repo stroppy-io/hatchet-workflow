@@ -33,7 +33,7 @@ require (
 	github.com/stephenafamo/bob v0.45.0
 	github.com/stephenafamo/scan v0.7.0
 	github.com/stretchr/testify v1.11.1
-	github.com/stroppy-io/schemapb v1.4.4
+	github.com/stroppy-io/schemapb v1.5.0
 	go.temporal.io/api v1.62.12
 	go.temporal.io/sdk v1.44.1
 	golang.org/x/crypto v0.53.0

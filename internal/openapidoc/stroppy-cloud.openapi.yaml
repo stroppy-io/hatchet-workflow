@@ -5284,6 +5284,10 @@ components:
                     type: array
                 strict:
                     type: boolean
+                templates:
+                    additionalProperties:
+                        type: string
+                    type: object
             type: object
         SchemaIdentity:
             additionalProperties: false

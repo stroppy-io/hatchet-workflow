@@ -76,5 +76,5 @@
   "invalid_expected_field": "threads",
   "undeclared_expected_field": "extra_field",
   "undeclared_provider_expected_field": "provider.extra_nested",
-  "valid_baked_values_sha256": "db3ea3982fcb50f51ea4a002973298289fd6457d66ea998eb8226a0ca43d46a7"
+  "valid_baked_hash": "84f85303f7638d7fef2a01002570fc97170ae4a97821c87d60ba5f8c4ddf4b62"
 }

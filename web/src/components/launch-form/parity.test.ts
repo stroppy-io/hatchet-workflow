@@ -1,7 +1,6 @@
 import { describe, it, expect } from "vitest";
-import { createHash } from "node:crypto";
 import { fromJson, type JsonValue } from "@bufbuild/protobuf";
-import { SchemaSchema } from "@stroppy-io/schemapb";
+import { BakedSchema, SchemaSchema } from "@stroppy-io/schemapb";
 import { loadSchemapbEngine } from "@/services/schemapbEngine";
 import fixture from "../../../../internal/dsl/schema/testdata/parity_form.json";
 
@@ -18,33 +17,11 @@ import fixture from "../../../../internal/dsl/schema/testdata/parity_form.json";
 // A real behavioral divergence between the two engines must fail HERE, not
 // be silently reconciled -- so this test drives loadSchemapbEngine()
 // (backed by the actual vendored schemapb.wasm), never a stub.
-
-// canonicalJSON mirrors the Go-side helper of the same name in
-// parity_wasm_fixture_test.go byte-for-byte in algorithm (object keys
-// sorted recursively, arrays kept in order, then JSON-encoded) so a sha256
-// of the result is comparable across languages for this fixture's plain
-// JSON scalars (strings, small integers/decimals, bools). schemapb.Hash
-// itself (the protowire-based hasher schemapb.Baked implements in Go) has
-// no WASM/TS counterpart exposed by @stroppy-io/schemapb -- see the
-// Schemapb class in its .d.ts, whose only bake-shaped exports are
-// validate/compute/bake/merge -- so this canonical-JSON sha256 is the
-// documented fallback ("compare the canonical serialized Baked") rather
-// than a re-implementation of schemapb's own hash algorithm in TS.
-function canonicalJSON(v: unknown): string {
-  if (Array.isArray(v)) {
-    return "[" + v.map(canonicalJSON).join(",") + "]";
-  }
-  if (v !== null && typeof v === "object") {
-    const obj = v as Record<string, unknown>;
-    const keys = Object.keys(obj).sort();
-    return "{" + keys.map((k) => JSON.stringify(k) + ":" + canonicalJSON(obj[k])).join(",") + "}";
-  }
-  return JSON.stringify(v);
-}
-
-function sha256Hex(s: string): string {
-  return createHash("sha256").update(s).digest("hex");
-}
+//
+// As of @stroppy-io/schemapb v1.5.0, Schemapb.hash(baked) runs the exact
+// same schemapb.Hash/HashPB Go code path the server uses (compiled into the
+// same .wasm the engine already loads) -- so this compares the REAL Baked
+// hash on both sides, not a reimplemented canonical-JSON stand-in.
 
 function fieldPaths(errors: { field?: string }[]): string[] {
   return errors.map((e) => e.field ?? "");
@@ -59,8 +36,9 @@ describe("WASM/Go BakeForm parity (SP-D Task 9)", () => {
     expect(result.errors).toHaveLength(0);
     expect(result.baked).toBeDefined();
 
-    const gotHash = sha256Hex(canonicalJSON(result.baked?.values ?? {}));
-    expect(gotHash).toBe(fixture.valid_baked_values_sha256);
+    const baked = fromJson(BakedSchema, result.baked as unknown as JsonValue);
+    const gotHash = engine.hash(baked);
+    expect(gotHash).toBe(fixture.valid_baked_hash);
   });
 
   it("agrees with Go on invalid_values: rejects, blocking the same field path (threads, Gte(1))", async () => {
