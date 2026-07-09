@@ -151,6 +151,8 @@ services:
     build:
       context: .
       dockerfile: deployments/docker/stroppy-cloud.Dockerfile
+      secrets:
+        - npm_token
     depends_on:
       postgres:
         condition: service_healthy
@@ -239,6 +241,12 @@ services:
       - ./deployments/caddy/Caddyfile:/etc/caddy/Caddyfile:ro
       - caddy_data:/data
       - caddy_config:/config
+
+# NPM_TOKEN authenticates the SPA build against GitHub Packages, where
+# @stroppy-io/schemapb lives. Export it before `docker compose build server`.
+secrets:
+  npm_token:
+    environment: NPM_TOKEN
 
 volumes:
   pgdata:

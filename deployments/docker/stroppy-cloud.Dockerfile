@@ -2,8 +2,18 @@
 FROM node:22-alpine AS spa
 
 WORKDIR /app/web
-COPY web/package.json web/yarn.lock* ./
-RUN yarn install --frozen-lockfile 2>/dev/null || yarn install
+# .npmrc maps @stroppy-io/* to GitHub Packages, which requires a token even for
+# public packages. The token arrives as a BuildKit secret so it never lands in
+# an image layer; the generated auth line is written and removed inside one RUN.
+COPY web/package.json web/yarn.lock* web/.npmrc ./
+RUN --mount=type=secret,id=npm_token \
+    if [ -s /run/secrets/npm_token ]; then \
+        printf '//npm.pkg.github.com/:_authToken=%s\n' "$(cat /run/secrets/npm_token)" >> .npmrc; \
+    fi && \
+    yarn install --frozen-lockfile; \
+    status=$?; \
+    sed -i '/_authToken/d' .npmrc; \
+    exit $status
 COPY web/ .
 RUN npx vite build
 
