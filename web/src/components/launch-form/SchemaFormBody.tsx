@@ -28,8 +28,9 @@ export default function SchemaFormBody({
   onSubmit,
   onInvalid,
   submitLabel = "Launch",
+  initialValues,
 }: LaunchFormRendererProps) {
-  const form = useSchemaForm({ schema });
+  const form = useSchemaForm({ schema, initialValues });
 
   function renderField(f: Schema_Filed, path: string): ReactNode {
     if (!form.fieldActive(path)) return null;

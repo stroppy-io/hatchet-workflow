@@ -50,7 +50,6 @@ import { actionsForStatus } from "@/services/runs";
 import {
   cancelRun as recipeCancelRun,
   deleteRun as recipeDeleteRun,
-  startRun as recipeStartRun,
 } from "@/services/recipe";
 import type { RunStatus } from "@/services/dashboard";
 import type { QuotaReservationView } from "@/lib/proto/cloud/v1/api/quota_pb";
@@ -315,26 +314,24 @@ export function RunDetail() {
     }
   }, [tenantSlug, id, flash]);
 
-  // Rerun re-launches the run's ORIGINATING RECIPE bundle (RecipeService.StartRun),
-  // not the run itself — there is no recipe-side "restart this exact run" RPC.
-  // Every live run is a recipe run (run.workflowId set — see
-  // cloud.v1.models.Run's doc), so the button only stays hidden while the run
-  // record hasn't loaded yet (see allowed.has("rerun") && run?.workflowId
-  // below).
-  const onRerun = useCallback(async () => {
+  // Rerun navigates to the ORIGINATING RECIPE's launch form
+  // (/recipes/:workflowId/launch?from=:id) rather than calling
+  // RecipeService.StartRun directly (finding I2: calling StartRun here with
+  // no Filled bakes nil server-side, silently discarding whatever the user
+  // originally typed into the launch form and launching with the bundle's
+  // static defaults instead). LaunchForm.tsx reads `from` and, when this
+  // run's own record carries a stored Baked, prefills the form with those
+  // exact values — still rendered against the CURRENT recipe schema, still
+  // requiring an explicit Launch press, still re-Baked/validated
+  // server-side by StartRun. Every live run is a recipe run (run.workflowId
+  // set — see cloud.v1.models.Run's doc), so the button only stays hidden
+  // while the run record hasn't loaded yet (see allowed.has("rerun") &&
+  // run?.workflowId below).
+  const onRerun = useCallback(() => {
     const workflowId = run?.workflowId;
     if (!workflowId) return;
-    setBusy(true);
-    try {
-      const newRunId = await recipeStartRun(tenantSlug, workflowId);
-      flash("Run re-launched");
-      navigate(`/runs/${newRunId}`);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "Failed to rerun");
-    } finally {
-      setBusy(false);
-    }
-  }, [tenantSlug, run?.workflowId, flash, navigate]);
+    navigate(`/recipes/${workflowId}/launch?from=${encodeURIComponent(id)}`);
+  }, [run?.workflowId, id, navigate]);
 
   const onCancel = useCallback(async () => {
     const ok = await confirm({

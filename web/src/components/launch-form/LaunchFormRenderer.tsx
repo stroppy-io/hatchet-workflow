@@ -22,6 +22,18 @@ export interface LaunchFormRendererProps {
   onSubmit: (baked: BakedJson) => void;
   onInvalid?: (errors: Record<string, FieldErrorJson>) => void;
   submitLabel?: string;
+  /**
+   * Prefill the form's raw values (schemapb useSchemaForm's initialValues —
+   * same nested shape as a Baked.values Struct: top-level workflow inputs
+   * plus a nested "provider" object). Used by the Rerun flow (LaunchForm.tsx)
+   * to seed the form from a prior run's stored Baked snapshot. A value that
+   * no longer corresponds to any field in the CURRENT schema (recipe drift
+   * since the original run) is not silently dropped: useSchemaForm's default
+   * "onChange" validation mode re-validates on mount, so a strict-schema
+   * rejection of a drifted key surfaces as an ordinary field error on this
+   * same form, exactly like any other invalid submission.
+   */
+  initialValues?: Record<string, unknown>;
 }
 
 const SchemaFormBody = lazy(() => import("./SchemaFormBody"));
