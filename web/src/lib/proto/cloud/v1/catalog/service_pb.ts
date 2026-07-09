@@ -18,7 +18,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/catalog/service.proto.
  */
 export const file_cloud_v1_catalog_service: GenFile = /*@__PURE__*/
-  fileDesc("Ch5jbG91ZC92MS9jYXRhbG9nL3NlcnZpY2UucHJvdG8SEGNsb3VkLnYxLmNhdGFsb2cilwIKGkNyZWF0ZUluc3RhbmNlRW50cnlSZXF1ZXN0EjAKBGtpbmQYASABKA4yFi5jbG91ZC52MS5jYXRhbG9nLktpbmRCCvpCB4IBBBABIAASGAoEc2x1ZxgCIAEoCUIK+kIHcgUQARiAARIYCgRuYW1lGAMgASgJQgr6QgdyBRABGP8BEh0KC2Rlc2NyaXB0aW9uGAQgASgJQgj6QgVyAxiAIBJGCgVmaWxlcxgFIAMoCzI3LmNsb3VkLnYxLmNhdGFsb2cuQ3JlYXRlSW5zdGFuY2VFbnRyeVJlcXVlc3QuRmlsZXNFbnRyeRosCgpGaWxlc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoDDoCOAEiTAobQ3JlYXRlSW5zdGFuY2VFbnRyeVJlc3BvbnNlEi0KBWVudHJ5GAEgASgLMh4uY2xvdWQudjEuY2F0YWxvZy5DYXRhbG9nRW50cnkiMAoXR2V0SW5zdGFuY2VFbnRyeVJlcXVlc3QSFQoCaWQYASABKAlCCfpCBnIEEAEYQCJJChhHZXRJbnN0YW5jZUVudHJ5UmVzcG9uc2USLQoFZW50cnkYASABKAsyHi5jbG91ZC52MS5jYXRhbG9nLkNhdGFsb2dFbnRyeSJCChpMaXN0SW5zdGFuY2VFbnRyaWVzUmVxdWVzdBIkCgRraW5kGAEgASgOMhYuY2xvdWQudjEuY2F0YWxvZy5LaW5kIk4KG0xpc3RJbnN0YW5jZUVudHJpZXNSZXNwb25zZRIvCgdlbnRyaWVzGAEgAygLMh4uY2xvdWQudjEuY2F0YWxvZy5DYXRhbG9nRW50cnkiqQEKGlVwZGF0ZUluc3RhbmNlRW50cnlSZXF1ZXN0EhUKAmlkGAEgASgJQgn6QgZyBBABGEASRgoFZmlsZXMYAiADKAsyNy5jbG91ZC52MS5jYXRhbG9nLlVwZGF0ZUluc3RhbmNlRW50cnlSZXF1ZXN0LkZpbGVzRW50cnkaLAoKRmlsZXNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAw6AjgBIkwKG1VwZGF0ZUluc3RhbmNlRW50cnlSZXNwb25zZRItCgVlbnRyeRgBIAEoCzIeLmNsb3VkLnYxLmNhdGFsb2cuQ2F0YWxvZ0VudHJ5IjMKGkRlbGV0ZUluc3RhbmNlRW50cnlSZXF1ZXN0EhUKAmlkGAEgASgJQgn6QgZyBBhAEAEiHQobRGVsZXRlSW5zdGFuY2VFbnRyeVJlc3BvbnNlIv8BChhDcmVhdGVPcmdQcm92aWRlclJlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASGAoEc2x1ZxgCIAEoCUIK+kIHcgUQARiAARIYCgRuYW1lGAMgASgJQgr6QgdyBRABGP8BEh0KC2Rlc2NyaXB0aW9uGAQgASgJQgj6QgVyAxiAIBJECgVmaWxlcxgFIAMoCzI1LmNsb3VkLnYxLmNhdGFsb2cuQ3JlYXRlT3JnUHJvdmlkZXJSZXF1ZXN0LkZpbGVzRW50cnkaLAoKRmlsZXNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAw6AjgBIkoKGUNyZWF0ZU9yZ1Byb3ZpZGVyUmVzcG9uc2USLQoFZW50cnkYASABKAsyHi5jbG91ZC52MS5jYXRhbG9nLkNhdGFsb2dFbnRyeSL/AQoYQ3JlYXRlT3JnV29ya2Zsb3dSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhgKBHNsdWcYAiABKAlCCvpCB3IFEAEYgAESGAoEbmFtZRgDIAEoCUIK+kIHcgUY/wEQARIdCgtkZXNjcmlwdGlvbhgEIAEoCUII+kIFcgMYgCASRAoFZmlsZXMYBSADKAsyNS5jbG91ZC52MS5jYXRhbG9nLkNyZWF0ZU9yZ1dvcmtmbG93UmVxdWVzdC5GaWxlc0VudHJ5GiwKCkZpbGVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgMOgI4ASJKChlDcmVhdGVPcmdXb3JrZmxvd1Jlc3BvbnNlEi0KBWVudHJ5GAEgASgLMh4uY2xvdWQudjEuY2F0YWxvZy5DYXRhbG9nRW50cnkiwwEKGFVwZGF0ZU9yZ1Byb3ZpZGVyUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIVCgJpZBgCIAEoCUIJ+kIGcgQQARhAEkQKBWZpbGVzGAMgAygLMjUuY2xvdWQudjEuY2F0YWxvZy5VcGRhdGVPcmdQcm92aWRlclJlcXVlc3QuRmlsZXNFbnRyeRosCgpGaWxlc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoDDoCOAEiSgoZVXBkYXRlT3JnUHJvdmlkZXJSZXNwb25zZRItCgVlbnRyeRgBIAEoCzIeLmNsb3VkLnYxLmNhdGFsb2cuQ2F0YWxvZ0VudHJ5IsMBChhVcGRhdGVPcmdXb3JrZmxvd1JlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASFQoCaWQYAiABKAlCCfpCBnIEEAEYQBJECgVmaWxlcxgDIAMoCzI1LmNsb3VkLnYxLmNhdGFsb2cuVXBkYXRlT3JnV29ya2Zsb3dSZXF1ZXN0LkZpbGVzRW50cnkaLAoKRmlsZXNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAw6AjgBIkoKGVVwZGF0ZU9yZ1dvcmtmbG93UmVzcG9uc2USLQoFZW50cnkYASABKAsyHi5jbG91ZC52MS5jYXRhbG9nLkNhdGFsb2dFbnRyeSJPChhEZWxldGVPcmdQcm92aWRlclJlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASFQoCaWQYAiABKAlCCfpCBnIEEAEYQCIbChlEZWxldGVPcmdQcm92aWRlclJlc3BvbnNlIk8KGERlbGV0ZU9yZ1dvcmtmbG93UmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEGEAQARIVCgJpZBgCIAEoCUIJ+kIGcgQQARhAIhsKGURlbGV0ZU9yZ1dvcmtmbG93UmVzcG9uc2UiTAoVR2V0T3JnUHJvdmlkZXJSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhUKAmlkGAIgASgJQgn6QgZyBBABGEAiRwoWR2V0T3JnUHJvdmlkZXJSZXNwb25zZRItCgVlbnRyeRgBIAEoCzIeLmNsb3VkLnYxLmNhdGFsb2cuQ2F0YWxvZ0VudHJ5IkwKFUdldE9yZ1dvcmtmbG93UmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIVCgJpZBgCIAEoCUIJ+kIGcgQQARhAIkcKFkdldE9yZ1dvcmtmbG93UmVzcG9uc2USLQoFZW50cnkYASABKAsyHi5jbG91ZC52MS5jYXRhbG9nLkNhdGFsb2dFbnRyeSI3ChdMaXN0T3JnUHJvdmlkZXJzUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEGEAQASJLChhMaXN0T3JnUHJvdmlkZXJzUmVzcG9uc2USLwoHZW50cmllcxgBIAMoCzIeLmNsb3VkLnYxLmNhdGFsb2cuQ2F0YWxvZ0VudHJ5IjcKF0xpc3RPcmdXb3JrZmxvd3NSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAIksKGExpc3RPcmdXb3JrZmxvd3NSZXNwb25zZRIvCgdlbnRyaWVzGAEgAygLMh4uY2xvdWQudjEuY2F0YWxvZy5DYXRhbG9nRW50cnkiYQobTGlua0luc3RhbmNlUHJvdmlkZXJSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEiQKEWluc3RhbmNlX2VudHJ5X2lkGAIgASgJQgn6QgZyBBhAEAEiTQocTGlua0luc3RhbmNlUHJvdmlkZXJSZXNwb25zZRItCgVlbnRyeRgBIAEoCzIeLmNsb3VkLnYxLmNhdGFsb2cuQ2F0YWxvZ0VudHJ5ImEKG0xpbmtJbnN0YW5jZVdvcmtmbG93UmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIkChFpbnN0YW5jZV9lbnRyeV9pZBgCIAEoCUIJ+kIGcgQQARhAIk0KHExpbmtJbnN0YW5jZVdvcmtmbG93UmVzcG9uc2USLQoFZW50cnkYASABKAsyHi5jbG91ZC52MS5jYXRhbG9nLkNhdGFsb2dFbnRyeSKyAQobQ2hlY2tDYXRhbG9nUHJvdmlkZXJSZXF1ZXN0EkcKBWZpbGVzGAEgAygLMjguY2xvdWQudjEuY2F0YWxvZy5DaGVja0NhdGFsb2dQcm92aWRlclJlcXVlc3QuRmlsZXNFbnRyeRIcCgl0ZW5hbnRfaWQYAiABKAlCCfpCBnIEEAEYQBosCgpGaWxlc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoDDoCOAEiTQocQ2hlY2tDYXRhbG9nUHJvdmlkZXJSZXNwb25zZRItCgtkaWFnbm9zdGljcxgBIAMoCzIYLmNsb3VkLnYxLmRzbC5EaWFnbm9zdGljIrIBChtDaGVja0NhdGFsb2dXb3JrZmxvd1JlcXVlc3QSRwoFZmlsZXMYASADKAsyOC5jbG91ZC52MS5jYXRhbG9nLkNoZWNrQ2F0YWxvZ1dvcmtmbG93UmVxdWVzdC5GaWxlc0VudHJ5EhwKCXRlbmFudF9pZBgCIAEoCUIJ+kIGcgQYQBABGiwKCkZpbGVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgMOgI4ASJNChxDaGVja0NhdGFsb2dXb3JrZmxvd1Jlc3BvbnNlEi0KC2RpYWdub3N0aWNzGAEgAygLMhguY2xvdWQudjEuZHNsLkRpYWdub3N0aWMy2RMKDkNhdGFsb2dTZXJ2aWNlEnoKE0NyZWF0ZUluc3RhbmNlRW50cnkSLC5jbG91ZC52MS5jYXRhbG9nLkNyZWF0ZUluc3RhbmNlRW50cnlSZXF1ZXN0Gi0uY2xvdWQudjEuY2F0YWxvZy5DcmVhdGVJbnN0YW5jZUVudHJ5UmVzcG9uc2UiBoq1GAIYARJ6ChNVcGRhdGVJbnN0YW5jZUVudHJ5EiwuY2xvdWQudjEuY2F0YWxvZy5VcGRhdGVJbnN0YW5jZUVudHJ5UmVxdWVzdBotLmNsb3VkLnYxLmNhdGFsb2cuVXBkYXRlSW5zdGFuY2VFbnRyeVJlc3BvbnNlIgaKtRgCGAESegoTRGVsZXRlSW5zdGFuY2VFbnRyeRIsLmNsb3VkLnYxLmNhdGFsb2cuRGVsZXRlSW5zdGFuY2VFbnRyeVJlcXVlc3QaLS5jbG91ZC52MS5jYXRhbG9nLkRlbGV0ZUluc3RhbmNlRW50cnlSZXNwb25zZSIGirUYAhgBEnEKEEdldEluc3RhbmNlRW50cnkSKS5jbG91ZC52MS5jYXRhbG9nLkdldEluc3RhbmNlRW50cnlSZXF1ZXN0GiouY2xvdWQudjEuY2F0YWxvZy5HZXRJbnN0YW5jZUVudHJ5UmVzcG9uc2UiBoq1GAIYARJ6ChNMaXN0SW5zdGFuY2VFbnRyaWVzEiwuY2xvdWQudjEuY2F0YWxvZy5MaXN0SW5zdGFuY2VFbnRyaWVzUmVxdWVzdBotLmNsb3VkLnYxLmNhdGFsb2cuTGlzdEluc3RhbmNlRW50cmllc1Jlc3BvbnNlIgaKtRgCGAESgwEKEUNyZWF0ZU9yZ1Byb3ZpZGVyEiouY2xvdWQudjEuY2F0YWxvZy5DcmVhdGVPcmdQcm92aWRlclJlcXVlc3QaKy5jbG91ZC52MS5jYXRhbG9nLkNyZWF0ZU9yZ1Byb3ZpZGVyUmVzcG9uc2UiFYq1GBEiCXRlbmFudF9pZBIECBAQARKDAQoRQ3JlYXRlT3JnV29ya2Zsb3cSKi5jbG91ZC52MS5jYXRhbG9nLkNyZWF0ZU9yZ1dvcmtmbG93UmVxdWVzdBorLmNsb3VkLnYxLmNhdGFsb2cuQ3JlYXRlT3JnV29ya2Zsb3dSZXNwb25zZSIVirUYERIECBEQASIJdGVuYW50X2lkEoMBChFVcGRhdGVPcmdQcm92aWRlchIqLmNsb3VkLnYxLmNhdGFsb2cuVXBkYXRlT3JnUHJvdmlkZXJSZXF1ZXN0GisuY2xvdWQudjEuY2F0YWxvZy5VcGRhdGVPcmdQcm92aWRlclJlc3BvbnNlIhWKtRgRIgl0ZW5hbnRfaWQSBAgQEAMSgwEKEVVwZGF0ZU9yZ1dvcmtmbG93EiouY2xvdWQudjEuY2F0YWxvZy5VcGRhdGVPcmdXb3JrZmxvd1JlcXVlc3QaKy5jbG91ZC52MS5jYXRhbG9nLlVwZGF0ZU9yZ1dvcmtmbG93UmVzcG9uc2UiFYq1GBESBBADCBEiCXRlbmFudF9pZBKDAQoRRGVsZXRlT3JnUHJvdmlkZXISKi5jbG91ZC52MS5jYXRhbG9nLkRlbGV0ZU9yZ1Byb3ZpZGVyUmVxdWVzdBorLmNsb3VkLnYxLmNhdGFsb2cuRGVsZXRlT3JnUHJvdmlkZXJSZXNwb25zZSIVirUYERIEEAQIECIJdGVuYW50X2lkEoMBChFEZWxldGVPcmdXb3JrZmxvdxIqLmNsb3VkLnYxLmNhdGFsb2cuRGVsZXRlT3JnV29ya2Zsb3dSZXF1ZXN0GisuY2xvdWQudjEuY2F0YWxvZy5EZWxldGVPcmdXb3JrZmxvd1Jlc3BvbnNlIhWKtRgREgQIERAEIgl0ZW5hbnRfaWQSegoOR2V0T3JnUHJvdmlkZXISJy5jbG91ZC52MS5jYXRhbG9nLkdldE9yZ1Byb3ZpZGVyUmVxdWVzdBooLmNsb3VkLnYxLmNhdGFsb2cuR2V0T3JnUHJvdmlkZXJSZXNwb25zZSIVirUYESIJdGVuYW50X2lkEgQQAggQEnoKDkdldE9yZ1dvcmtmbG93EicuY2xvdWQudjEuY2F0YWxvZy5HZXRPcmdXb3JrZmxvd1JlcXVlc3QaKC5jbG91ZC52MS5jYXRhbG9nLkdldE9yZ1dvcmtmbG93UmVzcG9uc2UiFYq1GBESBBACCBEiCXRlbmFudF9pZBKAAQoQTGlzdE9yZ1Byb3ZpZGVycxIpLmNsb3VkLnYxLmNhdGFsb2cuTGlzdE9yZ1Byb3ZpZGVyc1JlcXVlc3QaKi5jbG91ZC52MS5jYXRhbG9nLkxpc3RPcmdQcm92aWRlcnNSZXNwb25zZSIVirUYESIJdGVuYW50X2lkEgQQBQgQEoABChBMaXN0T3JnV29ya2Zsb3dzEikuY2xvdWQudjEuY2F0YWxvZy5MaXN0T3JnV29ya2Zsb3dzUmVxdWVzdBoqLmNsb3VkLnYxLmNhdGFsb2cuTGlzdE9yZ1dvcmtmbG93c1Jlc3BvbnNlIhWKtRgREgQIERAFIgl0ZW5hbnRfaWQSjAEKFExpbmtJbnN0YW5jZVByb3ZpZGVyEi0uY2xvdWQudjEuY2F0YWxvZy5MaW5rSW5zdGFuY2VQcm92aWRlclJlcXVlc3QaLi5jbG91ZC52MS5jYXRhbG9nLkxpbmtJbnN0YW5jZVByb3ZpZGVyUmVzcG9uc2UiFYq1GBESBBABCBAiCXRlbmFudF9pZBKMAQoUTGlua0luc3RhbmNlV29ya2Zsb3cSLS5jbG91ZC52MS5jYXRhbG9nLkxpbmtJbnN0YW5jZVdvcmtmbG93UmVxdWVzdBouLmNsb3VkLnYxLmNhdGFsb2cuTGlua0luc3RhbmNlV29ya2Zsb3dSZXNwb25zZSIVirUYESIJdGVuYW50X2lkEgQQAQgREowBChRDaGVja0NhdGFsb2dQcm92aWRlchItLmNsb3VkLnYxLmNhdGFsb2cuQ2hlY2tDYXRhbG9nUHJvdmlkZXJSZXF1ZXN0Gi4uY2xvdWQudjEuY2F0YWxvZy5DaGVja0NhdGFsb2dQcm92aWRlclJlc3BvbnNlIhWKtRgREgQIEBACIgl0ZW5hbnRfaWQSjAEKFENoZWNrQ2F0YWxvZ1dvcmtmbG93Ei0uY2xvdWQudjEuY2F0YWxvZy5DaGVja0NhdGFsb2dXb3JrZmxvd1JlcXVlc3QaLi5jbG91ZC52MS5jYXRhbG9nLkNoZWNrQ2F0YWxvZ1dvcmtmbG93UmVzcG9uc2UiFYq1GBESBBACCBEiCXRlbmFudF9pZBoGwskmAggBQkVaQ2dpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2NhdGFsb2diBnByb3RvMw", [file_cloud_v1_catalog_models, file_cloud_v1_iam_options, file_cloud_v1_iam_permission, file_cloud_v1_dsl_service, file_graphqlopt_graphql, file_validate_validate]);
+  fileDesc("Ch5jbG91ZC92MS9jYXRhbG9nL3NlcnZpY2UucHJvdG8SEGNsb3VkLnYxLmNhdGFsb2cilwIKGkNyZWF0ZUluc3RhbmNlRW50cnlSZXF1ZXN0EjAKBGtpbmQYASABKA4yFi5jbG91ZC52MS5jYXRhbG9nLktpbmRCCvpCB4IBBBABIAASGAoEc2x1ZxgCIAEoCUIK+kIHcgUYgAEQARIYCgRuYW1lGAMgASgJQgr6QgdyBRj/ARABEh0KC2Rlc2NyaXB0aW9uGAQgASgJQgj6QgVyAxiAIBJGCgVmaWxlcxgFIAMoCzI3LmNsb3VkLnYxLmNhdGFsb2cuQ3JlYXRlSW5zdGFuY2VFbnRyeVJlcXVlc3QuRmlsZXNFbnRyeRosCgpGaWxlc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoDDoCOAEiTAobQ3JlYXRlSW5zdGFuY2VFbnRyeVJlc3BvbnNlEi0KBWVudHJ5GAEgASgLMh4uY2xvdWQudjEuY2F0YWxvZy5DYXRhbG9nRW50cnkiMAoXR2V0SW5zdGFuY2VFbnRyeVJlcXVlc3QSFQoCaWQYASABKAlCCfpCBnIEEAEYQCJJChhHZXRJbnN0YW5jZUVudHJ5UmVzcG9uc2USLQoFZW50cnkYASABKAsyHi5jbG91ZC52MS5jYXRhbG9nLkNhdGFsb2dFbnRyeSI1ChxHZXRJbnN0YW5jZUVudHJ5RmlsZXNSZXF1ZXN0EhUKAmlkGAEgASgJQgn6QgZyBBABGEAimAEKHUdldEluc3RhbmNlRW50cnlGaWxlc1Jlc3BvbnNlEkkKBWZpbGVzGAEgAygLMjouY2xvdWQudjEuY2F0YWxvZy5HZXRJbnN0YW5jZUVudHJ5RmlsZXNSZXNwb25zZS5GaWxlc0VudHJ5GiwKCkZpbGVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgMOgI4ASJCChpMaXN0SW5zdGFuY2VFbnRyaWVzUmVxdWVzdBIkCgRraW5kGAEgASgOMhYuY2xvdWQudjEuY2F0YWxvZy5LaW5kIk4KG0xpc3RJbnN0YW5jZUVudHJpZXNSZXNwb25zZRIvCgdlbnRyaWVzGAEgAygLMh4uY2xvdWQudjEuY2F0YWxvZy5DYXRhbG9nRW50cnkiqQEKGlVwZGF0ZUluc3RhbmNlRW50cnlSZXF1ZXN0EhUKAmlkGAEgASgJQgn6QgZyBBABGEASRgoFZmlsZXMYAiADKAsyNy5jbG91ZC52MS5jYXRhbG9nLlVwZGF0ZUluc3RhbmNlRW50cnlSZXF1ZXN0LkZpbGVzRW50cnkaLAoKRmlsZXNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAw6AjgBIkwKG1VwZGF0ZUluc3RhbmNlRW50cnlSZXNwb25zZRItCgVlbnRyeRgBIAEoCzIeLmNsb3VkLnYxLmNhdGFsb2cuQ2F0YWxvZ0VudHJ5IjMKGkRlbGV0ZUluc3RhbmNlRW50cnlSZXF1ZXN0EhUKAmlkGAEgASgJQgn6QgZyBBABGEAiHQobRGVsZXRlSW5zdGFuY2VFbnRyeVJlc3BvbnNlIv8BChhDcmVhdGVPcmdQcm92aWRlclJlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBhAEAESGAoEc2x1ZxgCIAEoCUIK+kIHcgUQARiAARIYCgRuYW1lGAMgASgJQgr6QgdyBRj/ARABEh0KC2Rlc2NyaXB0aW9uGAQgASgJQgj6QgVyAxiAIBJECgVmaWxlcxgFIAMoCzI1LmNsb3VkLnYxLmNhdGFsb2cuQ3JlYXRlT3JnUHJvdmlkZXJSZXF1ZXN0LkZpbGVzRW50cnkaLAoKRmlsZXNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAw6AjgBIkoKGUNyZWF0ZU9yZ1Byb3ZpZGVyUmVzcG9uc2USLQoFZW50cnkYASABKAsyHi5jbG91ZC52MS5jYXRhbG9nLkNhdGFsb2dFbnRyeSL/AQoYQ3JlYXRlT3JnV29ya2Zsb3dSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhgKBHNsdWcYAiABKAlCCvpCB3IFEAEYgAESGAoEbmFtZRgDIAEoCUIK+kIHcgUQARj/ARIdCgtkZXNjcmlwdGlvbhgEIAEoCUII+kIFcgMYgCASRAoFZmlsZXMYBSADKAsyNS5jbG91ZC52MS5jYXRhbG9nLkNyZWF0ZU9yZ1dvcmtmbG93UmVxdWVzdC5GaWxlc0VudHJ5GiwKCkZpbGVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgMOgI4ASJKChlDcmVhdGVPcmdXb3JrZmxvd1Jlc3BvbnNlEi0KBWVudHJ5GAEgASgLMh4uY2xvdWQudjEuY2F0YWxvZy5DYXRhbG9nRW50cnkiwwEKGFVwZGF0ZU9yZ1Byb3ZpZGVyUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEGEAQARIVCgJpZBgCIAEoCUIJ+kIGcgQQARhAEkQKBWZpbGVzGAMgAygLMjUuY2xvdWQudjEuY2F0YWxvZy5VcGRhdGVPcmdQcm92aWRlclJlcXVlc3QuRmlsZXNFbnRyeRosCgpGaWxlc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoDDoCOAEiSgoZVXBkYXRlT3JnUHJvdmlkZXJSZXNwb25zZRItCgVlbnRyeRgBIAEoCzIeLmNsb3VkLnYxLmNhdGFsb2cuQ2F0YWxvZ0VudHJ5IsMBChhVcGRhdGVPcmdXb3JrZmxvd1JlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASFQoCaWQYAiABKAlCCfpCBnIEGEAQARJECgVmaWxlcxgDIAMoCzI1LmNsb3VkLnYxLmNhdGFsb2cuVXBkYXRlT3JnV29ya2Zsb3dSZXF1ZXN0LkZpbGVzRW50cnkaLAoKRmlsZXNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAw6AjgBIkoKGVVwZGF0ZU9yZ1dvcmtmbG93UmVzcG9uc2USLQoFZW50cnkYASABKAsyHi5jbG91ZC52MS5jYXRhbG9nLkNhdGFsb2dFbnRyeSJPChhEZWxldGVPcmdQcm92aWRlclJlcXVlc3QSHAoJdGVuYW50X2lkGAEgASgJQgn6QgZyBBABGEASFQoCaWQYAiABKAlCCfpCBnIEEAEYQCIbChlEZWxldGVPcmdQcm92aWRlclJlc3BvbnNlIk8KGERlbGV0ZU9yZ1dvcmtmbG93UmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIVCgJpZBgCIAEoCUIJ+kIGcgQQARhAIhsKGURlbGV0ZU9yZ1dvcmtmbG93UmVzcG9uc2UiTAoVR2V0T3JnUHJvdmlkZXJSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQQARhAEhUKAmlkGAIgASgJQgn6QgZyBBABGEAiRwoWR2V0T3JnUHJvdmlkZXJSZXNwb25zZRItCgVlbnRyeRgBIAEoCzIeLmNsb3VkLnYxLmNhdGFsb2cuQ2F0YWxvZ0VudHJ5IkwKFUdldE9yZ1dvcmtmbG93UmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIVCgJpZBgCIAEoCUIJ+kIGcgQQARhAIkcKFkdldE9yZ1dvcmtmbG93UmVzcG9uc2USLQoFZW50cnkYASABKAsyHi5jbG91ZC52MS5jYXRhbG9nLkNhdGFsb2dFbnRyeSJRChpHZXRPcmdQcm92aWRlckZpbGVzUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIVCgJpZBgCIAEoCUIJ+kIGcgQQARhAIpQBChtHZXRPcmdQcm92aWRlckZpbGVzUmVzcG9uc2USRwoFZmlsZXMYASADKAsyOC5jbG91ZC52MS5jYXRhbG9nLkdldE9yZ1Byb3ZpZGVyRmlsZXNSZXNwb25zZS5GaWxlc0VudHJ5GiwKCkZpbGVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgMOgI4ASJRChpHZXRPcmdXb3JrZmxvd0ZpbGVzUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIVCgJpZBgCIAEoCUIJ+kIGcgQYQBABIpQBChtHZXRPcmdXb3JrZmxvd0ZpbGVzUmVzcG9uc2USRwoFZmlsZXMYASADKAsyOC5jbG91ZC52MS5jYXRhbG9nLkdldE9yZ1dvcmtmbG93RmlsZXNSZXNwb25zZS5GaWxlc0VudHJ5GiwKCkZpbGVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgMOgI4ASI3ChdMaXN0T3JnUHJvdmlkZXJzUmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEGEAQASJLChhMaXN0T3JnUHJvdmlkZXJzUmVzcG9uc2USLwoHZW50cmllcxgBIAMoCzIeLmNsb3VkLnYxLmNhdGFsb2cuQ2F0YWxvZ0VudHJ5IjcKF0xpc3RPcmdXb3JrZmxvd3NSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQYQBABIksKGExpc3RPcmdXb3JrZmxvd3NSZXNwb25zZRIvCgdlbnRyaWVzGAEgAygLMh4uY2xvdWQudjEuY2F0YWxvZy5DYXRhbG9nRW50cnkiYQobTGlua0luc3RhbmNlUHJvdmlkZXJSZXF1ZXN0EhwKCXRlbmFudF9pZBgBIAEoCUIJ+kIGcgQYQBABEiQKEWluc3RhbmNlX2VudHJ5X2lkGAIgASgJQgn6QgZyBBABGEAiTQocTGlua0luc3RhbmNlUHJvdmlkZXJSZXNwb25zZRItCgVlbnRyeRgBIAEoCzIeLmNsb3VkLnYxLmNhdGFsb2cuQ2F0YWxvZ0VudHJ5ImEKG0xpbmtJbnN0YW5jZVdvcmtmbG93UmVxdWVzdBIcCgl0ZW5hbnRfaWQYASABKAlCCfpCBnIEEAEYQBIkChFpbnN0YW5jZV9lbnRyeV9pZBgCIAEoCUIJ+kIGcgQQARhAIk0KHExpbmtJbnN0YW5jZVdvcmtmbG93UmVzcG9uc2USLQoFZW50cnkYASABKAsyHi5jbG91ZC52MS5jYXRhbG9nLkNhdGFsb2dFbnRyeSKyAQobQ2hlY2tDYXRhbG9nUHJvdmlkZXJSZXF1ZXN0EkcKBWZpbGVzGAEgAygLMjguY2xvdWQudjEuY2F0YWxvZy5DaGVja0NhdGFsb2dQcm92aWRlclJlcXVlc3QuRmlsZXNFbnRyeRIcCgl0ZW5hbnRfaWQYAiABKAlCCfpCBnIEEAEYQBosCgpGaWxlc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoDDoCOAEiTQocQ2hlY2tDYXRhbG9nUHJvdmlkZXJSZXNwb25zZRItCgtkaWFnbm9zdGljcxgBIAMoCzIYLmNsb3VkLnYxLmRzbC5EaWFnbm9zdGljIrIBChtDaGVja0NhdGFsb2dXb3JrZmxvd1JlcXVlc3QSRwoFZmlsZXMYASADKAsyOC5jbG91ZC52MS5jYXRhbG9nLkNoZWNrQ2F0YWxvZ1dvcmtmbG93UmVxdWVzdC5GaWxlc0VudHJ5EhwKCXRlbmFudF9pZBgCIAEoCUIJ+kIGcgQYQBABGiwKCkZpbGVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgMOgI4ASJNChxDaGVja0NhdGFsb2dXb3JrZmxvd1Jlc3BvbnNlEi0KC2RpYWdub3N0aWNzGAEgAygLMhguY2xvdWQudjEuZHNsLkRpYWdub3N0aWMilgEKHENoZWNrSW5zdGFuY2VQcm92aWRlclJlcXVlc3QSSAoFZmlsZXMYASADKAsyOS5jbG91ZC52MS5jYXRhbG9nLkNoZWNrSW5zdGFuY2VQcm92aWRlclJlcXVlc3QuRmlsZXNFbnRyeRosCgpGaWxlc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoDDoCOAEiTgodQ2hlY2tJbnN0YW5jZVByb3ZpZGVyUmVzcG9uc2USLQoLZGlhZ25vc3RpY3MYASADKAsyGC5jbG91ZC52MS5kc2wuRGlhZ25vc3RpYyKWAQocQ2hlY2tJbnN0YW5jZVdvcmtmbG93UmVxdWVzdBJICgVmaWxlcxgBIAMoCzI5LmNsb3VkLnYxLmNhdGFsb2cuQ2hlY2tJbnN0YW5jZVdvcmtmbG93UmVxdWVzdC5GaWxlc0VudHJ5GiwKCkZpbGVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgMOgI4ASJOCh1DaGVja0luc3RhbmNlV29ya2Zsb3dSZXNwb25zZRItCgtkaWFnbm9zdGljcxgBIAMoCzIYLmNsb3VkLnYxLmRzbC5EaWFnbm9zdGljMvoYCg5DYXRhbG9nU2VydmljZRJ6ChNDcmVhdGVJbnN0YW5jZUVudHJ5EiwuY2xvdWQudjEuY2F0YWxvZy5DcmVhdGVJbnN0YW5jZUVudHJ5UmVxdWVzdBotLmNsb3VkLnYxLmNhdGFsb2cuQ3JlYXRlSW5zdGFuY2VFbnRyeVJlc3BvbnNlIgaKtRgCGAESegoTVXBkYXRlSW5zdGFuY2VFbnRyeRIsLmNsb3VkLnYxLmNhdGFsb2cuVXBkYXRlSW5zdGFuY2VFbnRyeVJlcXVlc3QaLS5jbG91ZC52MS5jYXRhbG9nLlVwZGF0ZUluc3RhbmNlRW50cnlSZXNwb25zZSIGirUYAhgBEnoKE0RlbGV0ZUluc3RhbmNlRW50cnkSLC5jbG91ZC52MS5jYXRhbG9nLkRlbGV0ZUluc3RhbmNlRW50cnlSZXF1ZXN0Gi0uY2xvdWQudjEuY2F0YWxvZy5EZWxldGVJbnN0YW5jZUVudHJ5UmVzcG9uc2UiBoq1GAIYARJxChBHZXRJbnN0YW5jZUVudHJ5EikuY2xvdWQudjEuY2F0YWxvZy5HZXRJbnN0YW5jZUVudHJ5UmVxdWVzdBoqLmNsb3VkLnYxLmNhdGFsb2cuR2V0SW5zdGFuY2VFbnRyeVJlc3BvbnNlIgaKtRgCGAESgAEKFUdldEluc3RhbmNlRW50cnlGaWxlcxIuLmNsb3VkLnYxLmNhdGFsb2cuR2V0SW5zdGFuY2VFbnRyeUZpbGVzUmVxdWVzdBovLmNsb3VkLnYxLmNhdGFsb2cuR2V0SW5zdGFuY2VFbnRyeUZpbGVzUmVzcG9uc2UiBoq1GAIYARJ6ChNMaXN0SW5zdGFuY2VFbnRyaWVzEiwuY2xvdWQudjEuY2F0YWxvZy5MaXN0SW5zdGFuY2VFbnRyaWVzUmVxdWVzdBotLmNsb3VkLnYxLmNhdGFsb2cuTGlzdEluc3RhbmNlRW50cmllc1Jlc3BvbnNlIgaKtRgCGAESgwEKEUNyZWF0ZU9yZ1Byb3ZpZGVyEiouY2xvdWQudjEuY2F0YWxvZy5DcmVhdGVPcmdQcm92aWRlclJlcXVlc3QaKy5jbG91ZC52MS5jYXRhbG9nLkNyZWF0ZU9yZ1Byb3ZpZGVyUmVzcG9uc2UiFYq1GBESBAgQEAEiCXRlbmFudF9pZBKDAQoRQ3JlYXRlT3JnV29ya2Zsb3cSKi5jbG91ZC52MS5jYXRhbG9nLkNyZWF0ZU9yZ1dvcmtmbG93UmVxdWVzdBorLmNsb3VkLnYxLmNhdGFsb2cuQ3JlYXRlT3JnV29ya2Zsb3dSZXNwb25zZSIVirUYESIJdGVuYW50X2lkEgQIERABEoMBChFVcGRhdGVPcmdQcm92aWRlchIqLmNsb3VkLnYxLmNhdGFsb2cuVXBkYXRlT3JnUHJvdmlkZXJSZXF1ZXN0GisuY2xvdWQudjEuY2F0YWxvZy5VcGRhdGVPcmdQcm92aWRlclJlc3BvbnNlIhWKtRgRIgl0ZW5hbnRfaWQSBBADCBASgwEKEVVwZGF0ZU9yZ1dvcmtmbG93EiouY2xvdWQudjEuY2F0YWxvZy5VcGRhdGVPcmdXb3JrZmxvd1JlcXVlc3QaKy5jbG91ZC52MS5jYXRhbG9nLlVwZGF0ZU9yZ1dvcmtmbG93UmVzcG9uc2UiFYq1GBEiCXRlbmFudF9pZBIECBEQAxKDAQoRRGVsZXRlT3JnUHJvdmlkZXISKi5jbG91ZC52MS5jYXRhbG9nLkRlbGV0ZU9yZ1Byb3ZpZGVyUmVxdWVzdBorLmNsb3VkLnYxLmNhdGFsb2cuRGVsZXRlT3JnUHJvdmlkZXJSZXNwb25zZSIVirUYERIECBAQBCIJdGVuYW50X2lkEoMBChFEZWxldGVPcmdXb3JrZmxvdxIqLmNsb3VkLnYxLmNhdGFsb2cuRGVsZXRlT3JnV29ya2Zsb3dSZXF1ZXN0GisuY2xvdWQudjEuY2F0YWxvZy5EZWxldGVPcmdXb3JrZmxvd1Jlc3BvbnNlIhWKtRgREgQIERAEIgl0ZW5hbnRfaWQSegoOR2V0T3JnUHJvdmlkZXISJy5jbG91ZC52MS5jYXRhbG9nLkdldE9yZ1Byb3ZpZGVyUmVxdWVzdBooLmNsb3VkLnYxLmNhdGFsb2cuR2V0T3JnUHJvdmlkZXJSZXNwb25zZSIVirUYESIJdGVuYW50X2lkEgQIEBACEnoKDkdldE9yZ1dvcmtmbG93EicuY2xvdWQudjEuY2F0YWxvZy5HZXRPcmdXb3JrZmxvd1JlcXVlc3QaKC5jbG91ZC52MS5jYXRhbG9nLkdldE9yZ1dvcmtmbG93UmVzcG9uc2UiFYq1GBESBAgREAIiCXRlbmFudF9pZBKJAQoTR2V0T3JnUHJvdmlkZXJGaWxlcxIsLmNsb3VkLnYxLmNhdGFsb2cuR2V0T3JnUHJvdmlkZXJGaWxlc1JlcXVlc3QaLS5jbG91ZC52MS5jYXRhbG9nLkdldE9yZ1Byb3ZpZGVyRmlsZXNSZXNwb25zZSIVirUYERIECBAQAiIJdGVuYW50X2lkEokBChNHZXRPcmdXb3JrZmxvd0ZpbGVzEiwuY2xvdWQudjEuY2F0YWxvZy5HZXRPcmdXb3JrZmxvd0ZpbGVzUmVxdWVzdBotLmNsb3VkLnYxLmNhdGFsb2cuR2V0T3JnV29ya2Zsb3dGaWxlc1Jlc3BvbnNlIhWKtRgREgQIERACIgl0ZW5hbnRfaWQSgAEKEExpc3RPcmdQcm92aWRlcnMSKS5jbG91ZC52MS5jYXRhbG9nLkxpc3RPcmdQcm92aWRlcnNSZXF1ZXN0GiouY2xvdWQudjEuY2F0YWxvZy5MaXN0T3JnUHJvdmlkZXJzUmVzcG9uc2UiFYq1GBESBBAFCBAiCXRlbmFudF9pZBKAAQoQTGlzdE9yZ1dvcmtmbG93cxIpLmNsb3VkLnYxLmNhdGFsb2cuTGlzdE9yZ1dvcmtmbG93c1JlcXVlc3QaKi5jbG91ZC52MS5jYXRhbG9nLkxpc3RPcmdXb3JrZmxvd3NSZXNwb25zZSIVirUYERIEEAUIESIJdGVuYW50X2lkEowBChRMaW5rSW5zdGFuY2VQcm92aWRlchItLmNsb3VkLnYxLmNhdGFsb2cuTGlua0luc3RhbmNlUHJvdmlkZXJSZXF1ZXN0Gi4uY2xvdWQudjEuY2F0YWxvZy5MaW5rSW5zdGFuY2VQcm92aWRlclJlc3BvbnNlIhWKtRgRIgl0ZW5hbnRfaWQSBAgQEAESjAEKFExpbmtJbnN0YW5jZVdvcmtmbG93Ei0uY2xvdWQudjEuY2F0YWxvZy5MaW5rSW5zdGFuY2VXb3JrZmxvd1JlcXVlc3QaLi5jbG91ZC52MS5jYXRhbG9nLkxpbmtJbnN0YW5jZVdvcmtmbG93UmVzcG9uc2UiFYq1GBEiCXRlbmFudF9pZBIECBEQARKMAQoUQ2hlY2tDYXRhbG9nUHJvdmlkZXISLS5jbG91ZC52MS5jYXRhbG9nLkNoZWNrQ2F0YWxvZ1Byb3ZpZGVyUmVxdWVzdBouLmNsb3VkLnYxLmNhdGFsb2cuQ2hlY2tDYXRhbG9nUHJvdmlkZXJSZXNwb25zZSIVirUYERIECBAQAiIJdGVuYW50X2lkEowBChRDaGVja0NhdGFsb2dXb3JrZmxvdxItLmNsb3VkLnYxLmNhdGFsb2cuQ2hlY2tDYXRhbG9nV29ya2Zsb3dSZXF1ZXN0Gi4uY2xvdWQudjEuY2F0YWxvZy5DaGVja0NhdGFsb2dXb3JrZmxvd1Jlc3BvbnNlIhWKtRgREgQIERACIgl0ZW5hbnRfaWQSgAEKFUNoZWNrSW5zdGFuY2VQcm92aWRlchIuLmNsb3VkLnYxLmNhdGFsb2cuQ2hlY2tJbnN0YW5jZVByb3ZpZGVyUmVxdWVzdBovLmNsb3VkLnYxLmNhdGFsb2cuQ2hlY2tJbnN0YW5jZVByb3ZpZGVyUmVzcG9uc2UiBoq1GAIYARKAAQoVQ2hlY2tJbnN0YW5jZVdvcmtmbG93Ei4uY2xvdWQudjEuY2F0YWxvZy5DaGVja0luc3RhbmNlV29ya2Zsb3dSZXF1ZXN0Gi8uY2xvdWQudjEuY2F0YWxvZy5DaGVja0luc3RhbmNlV29ya2Zsb3dSZXNwb25zZSIGirUYAhgBGgbCySYCCAFCRVpDZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvY2F0YWxvZ2IGcHJvdG8z", [file_cloud_v1_catalog_models, file_cloud_v1_iam_options, file_cloud_v1_iam_permission, file_cloud_v1_dsl_service, file_graphqlopt_graphql, file_validate_validate]);
 
 /**
  * @generated from message cloud.v1.catalog.CreateInstanceEntryRequest
@@ -177,6 +177,72 @@ export const GetInstanceEntryResponseSchema: GenMessage<GetInstanceEntryResponse
   messageDesc(file_cloud_v1_catalog_service, 3);
 
 /**
+ * GetInstanceEntryFiles reads a LEVEL_INSTANCE entry's stored bundle back
+ * (the CatalogEntry row itself carries only an opaque source_ref — see
+ * models.proto's doc). admin_only, mirroring every other Instance-level RPC.
+ *
+ * @generated from message cloud.v1.catalog.GetInstanceEntryFilesRequest
+ */
+export type GetInstanceEntryFilesRequest = Message<"cloud.v1.catalog.GetInstanceEntryFilesRequest"> & {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id: string;
+};
+
+/**
+ * GetInstanceEntryFiles reads a LEVEL_INSTANCE entry's stored bundle back
+ * (the CatalogEntry row itself carries only an opaque source_ref — see
+ * models.proto's doc). admin_only, mirroring every other Instance-level RPC.
+ *
+ * @generated from message cloud.v1.catalog.GetInstanceEntryFilesRequest
+ */
+export type GetInstanceEntryFilesRequestJson = {
+  /**
+   * @generated from field: string id = 1;
+   */
+  id?: string;
+};
+
+export type GetInstanceEntryFilesRequestValid = GetInstanceEntryFilesRequest;
+
+/**
+ * Describes the message cloud.v1.catalog.GetInstanceEntryFilesRequest.
+ * Use `create(GetInstanceEntryFilesRequestSchema)` to create a new message.
+ */
+export const GetInstanceEntryFilesRequestSchema: GenMessage<GetInstanceEntryFilesRequest, {jsonType: GetInstanceEntryFilesRequestJson, validType: GetInstanceEntryFilesRequestValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_catalog_service, 4);
+
+/**
+ * @generated from message cloud.v1.catalog.GetInstanceEntryFilesResponse
+ */
+export type GetInstanceEntryFilesResponse = Message<"cloud.v1.catalog.GetInstanceEntryFilesResponse"> & {
+  /**
+   * @generated from field: map<string, bytes> files = 1;
+   */
+  files: { [key: string]: Uint8Array };
+};
+
+/**
+ * @generated from message cloud.v1.catalog.GetInstanceEntryFilesResponse
+ */
+export type GetInstanceEntryFilesResponseJson = {
+  /**
+   * @generated from field: map<string, bytes> files = 1;
+   */
+  files?: { [key: string]: string };
+};
+
+export type GetInstanceEntryFilesResponseValid = GetInstanceEntryFilesResponse;
+
+/**
+ * Describes the message cloud.v1.catalog.GetInstanceEntryFilesResponse.
+ * Use `create(GetInstanceEntryFilesResponseSchema)` to create a new message.
+ */
+export const GetInstanceEntryFilesResponseSchema: GenMessage<GetInstanceEntryFilesResponse, {jsonType: GetInstanceEntryFilesResponseJson, validType: GetInstanceEntryFilesResponseValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_catalog_service, 5);
+
+/**
  * @generated from message cloud.v1.catalog.ListInstanceEntriesRequest
  */
 export type ListInstanceEntriesRequest = Message<"cloud.v1.catalog.ListInstanceEntriesRequest"> & {
@@ -203,7 +269,7 @@ export type ListInstanceEntriesRequestValid = ListInstanceEntriesRequest;
  * Use `create(ListInstanceEntriesRequestSchema)` to create a new message.
  */
 export const ListInstanceEntriesRequestSchema: GenMessage<ListInstanceEntriesRequest, {jsonType: ListInstanceEntriesRequestJson, validType: ListInstanceEntriesRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 4);
+  messageDesc(file_cloud_v1_catalog_service, 6);
 
 /**
  * @generated from message cloud.v1.catalog.ListInstanceEntriesResponse
@@ -232,7 +298,7 @@ export type ListInstanceEntriesResponseValid = ListInstanceEntriesResponse;
  * Use `create(ListInstanceEntriesResponseSchema)` to create a new message.
  */
 export const ListInstanceEntriesResponseSchema: GenMessage<ListInstanceEntriesResponse, {jsonType: ListInstanceEntriesResponseJson, validType: ListInstanceEntriesResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 5);
+  messageDesc(file_cloud_v1_catalog_service, 7);
 
 /**
  * @generated from message cloud.v1.catalog.UpdateInstanceEntryRequest
@@ -271,7 +337,7 @@ export type UpdateInstanceEntryRequestValid = UpdateInstanceEntryRequest;
  * Use `create(UpdateInstanceEntryRequestSchema)` to create a new message.
  */
 export const UpdateInstanceEntryRequestSchema: GenMessage<UpdateInstanceEntryRequest, {jsonType: UpdateInstanceEntryRequestJson, validType: UpdateInstanceEntryRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 6);
+  messageDesc(file_cloud_v1_catalog_service, 8);
 
 /**
  * @generated from message cloud.v1.catalog.UpdateInstanceEntryResponse
@@ -300,7 +366,7 @@ export type UpdateInstanceEntryResponseValid = UpdateInstanceEntryResponse;
  * Use `create(UpdateInstanceEntryResponseSchema)` to create a new message.
  */
 export const UpdateInstanceEntryResponseSchema: GenMessage<UpdateInstanceEntryResponse, {jsonType: UpdateInstanceEntryResponseJson, validType: UpdateInstanceEntryResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 7);
+  messageDesc(file_cloud_v1_catalog_service, 9);
 
 /**
  * @generated from message cloud.v1.catalog.DeleteInstanceEntryRequest
@@ -329,7 +395,7 @@ export type DeleteInstanceEntryRequestValid = DeleteInstanceEntryRequest;
  * Use `create(DeleteInstanceEntryRequestSchema)` to create a new message.
  */
 export const DeleteInstanceEntryRequestSchema: GenMessage<DeleteInstanceEntryRequest, {jsonType: DeleteInstanceEntryRequestJson, validType: DeleteInstanceEntryRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 8);
+  messageDesc(file_cloud_v1_catalog_service, 10);
 
 /**
  * @generated from message cloud.v1.catalog.DeleteInstanceEntryResponse
@@ -350,7 +416,7 @@ export type DeleteInstanceEntryResponseValid = DeleteInstanceEntryResponse;
  * Use `create(DeleteInstanceEntryResponseSchema)` to create a new message.
  */
 export const DeleteInstanceEntryResponseSchema: GenMessage<DeleteInstanceEntryResponse, {jsonType: DeleteInstanceEntryResponseJson, validType: DeleteInstanceEntryResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 9);
+  messageDesc(file_cloud_v1_catalog_service, 11);
 
 /**
  * @generated from message cloud.v1.catalog.CreateOrgProviderRequest
@@ -419,7 +485,7 @@ export type CreateOrgProviderRequestValid = CreateOrgProviderRequest;
  * Use `create(CreateOrgProviderRequestSchema)` to create a new message.
  */
 export const CreateOrgProviderRequestSchema: GenMessage<CreateOrgProviderRequest, {jsonType: CreateOrgProviderRequestJson, validType: CreateOrgProviderRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 10);
+  messageDesc(file_cloud_v1_catalog_service, 12);
 
 /**
  * @generated from message cloud.v1.catalog.CreateOrgProviderResponse
@@ -448,7 +514,7 @@ export type CreateOrgProviderResponseValid = CreateOrgProviderResponse;
  * Use `create(CreateOrgProviderResponseSchema)` to create a new message.
  */
 export const CreateOrgProviderResponseSchema: GenMessage<CreateOrgProviderResponse, {jsonType: CreateOrgProviderResponseJson, validType: CreateOrgProviderResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 11);
+  messageDesc(file_cloud_v1_catalog_service, 13);
 
 /**
  * @generated from message cloud.v1.catalog.CreateOrgWorkflowRequest
@@ -517,7 +583,7 @@ export type CreateOrgWorkflowRequestValid = CreateOrgWorkflowRequest;
  * Use `create(CreateOrgWorkflowRequestSchema)` to create a new message.
  */
 export const CreateOrgWorkflowRequestSchema: GenMessage<CreateOrgWorkflowRequest, {jsonType: CreateOrgWorkflowRequestJson, validType: CreateOrgWorkflowRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 12);
+  messageDesc(file_cloud_v1_catalog_service, 14);
 
 /**
  * @generated from message cloud.v1.catalog.CreateOrgWorkflowResponse
@@ -546,7 +612,7 @@ export type CreateOrgWorkflowResponseValid = CreateOrgWorkflowResponse;
  * Use `create(CreateOrgWorkflowResponseSchema)` to create a new message.
  */
 export const CreateOrgWorkflowResponseSchema: GenMessage<CreateOrgWorkflowResponse, {jsonType: CreateOrgWorkflowResponseJson, validType: CreateOrgWorkflowResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 13);
+  messageDesc(file_cloud_v1_catalog_service, 15);
 
 /**
  * @generated from message cloud.v1.catalog.UpdateOrgProviderRequest
@@ -595,7 +661,7 @@ export type UpdateOrgProviderRequestValid = UpdateOrgProviderRequest;
  * Use `create(UpdateOrgProviderRequestSchema)` to create a new message.
  */
 export const UpdateOrgProviderRequestSchema: GenMessage<UpdateOrgProviderRequest, {jsonType: UpdateOrgProviderRequestJson, validType: UpdateOrgProviderRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 14);
+  messageDesc(file_cloud_v1_catalog_service, 16);
 
 /**
  * @generated from message cloud.v1.catalog.UpdateOrgProviderResponse
@@ -624,7 +690,7 @@ export type UpdateOrgProviderResponseValid = UpdateOrgProviderResponse;
  * Use `create(UpdateOrgProviderResponseSchema)` to create a new message.
  */
 export const UpdateOrgProviderResponseSchema: GenMessage<UpdateOrgProviderResponse, {jsonType: UpdateOrgProviderResponseJson, validType: UpdateOrgProviderResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 15);
+  messageDesc(file_cloud_v1_catalog_service, 17);
 
 /**
  * @generated from message cloud.v1.catalog.UpdateOrgWorkflowRequest
@@ -673,7 +739,7 @@ export type UpdateOrgWorkflowRequestValid = UpdateOrgWorkflowRequest;
  * Use `create(UpdateOrgWorkflowRequestSchema)` to create a new message.
  */
 export const UpdateOrgWorkflowRequestSchema: GenMessage<UpdateOrgWorkflowRequest, {jsonType: UpdateOrgWorkflowRequestJson, validType: UpdateOrgWorkflowRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 16);
+  messageDesc(file_cloud_v1_catalog_service, 18);
 
 /**
  * @generated from message cloud.v1.catalog.UpdateOrgWorkflowResponse
@@ -702,7 +768,7 @@ export type UpdateOrgWorkflowResponseValid = UpdateOrgWorkflowResponse;
  * Use `create(UpdateOrgWorkflowResponseSchema)` to create a new message.
  */
 export const UpdateOrgWorkflowResponseSchema: GenMessage<UpdateOrgWorkflowResponse, {jsonType: UpdateOrgWorkflowResponseJson, validType: UpdateOrgWorkflowResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 17);
+  messageDesc(file_cloud_v1_catalog_service, 19);
 
 /**
  * @generated from message cloud.v1.catalog.DeleteOrgProviderRequest
@@ -741,7 +807,7 @@ export type DeleteOrgProviderRequestValid = DeleteOrgProviderRequest;
  * Use `create(DeleteOrgProviderRequestSchema)` to create a new message.
  */
 export const DeleteOrgProviderRequestSchema: GenMessage<DeleteOrgProviderRequest, {jsonType: DeleteOrgProviderRequestJson, validType: DeleteOrgProviderRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 18);
+  messageDesc(file_cloud_v1_catalog_service, 20);
 
 /**
  * @generated from message cloud.v1.catalog.DeleteOrgProviderResponse
@@ -762,7 +828,7 @@ export type DeleteOrgProviderResponseValid = DeleteOrgProviderResponse;
  * Use `create(DeleteOrgProviderResponseSchema)` to create a new message.
  */
 export const DeleteOrgProviderResponseSchema: GenMessage<DeleteOrgProviderResponse, {jsonType: DeleteOrgProviderResponseJson, validType: DeleteOrgProviderResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 19);
+  messageDesc(file_cloud_v1_catalog_service, 21);
 
 /**
  * @generated from message cloud.v1.catalog.DeleteOrgWorkflowRequest
@@ -801,7 +867,7 @@ export type DeleteOrgWorkflowRequestValid = DeleteOrgWorkflowRequest;
  * Use `create(DeleteOrgWorkflowRequestSchema)` to create a new message.
  */
 export const DeleteOrgWorkflowRequestSchema: GenMessage<DeleteOrgWorkflowRequest, {jsonType: DeleteOrgWorkflowRequestJson, validType: DeleteOrgWorkflowRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 20);
+  messageDesc(file_cloud_v1_catalog_service, 22);
 
 /**
  * @generated from message cloud.v1.catalog.DeleteOrgWorkflowResponse
@@ -822,7 +888,7 @@ export type DeleteOrgWorkflowResponseValid = DeleteOrgWorkflowResponse;
  * Use `create(DeleteOrgWorkflowResponseSchema)` to create a new message.
  */
 export const DeleteOrgWorkflowResponseSchema: GenMessage<DeleteOrgWorkflowResponse, {jsonType: DeleteOrgWorkflowResponseJson, validType: DeleteOrgWorkflowResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 21);
+  messageDesc(file_cloud_v1_catalog_service, 23);
 
 /**
  * @generated from message cloud.v1.catalog.GetOrgProviderRequest
@@ -861,7 +927,7 @@ export type GetOrgProviderRequestValid = GetOrgProviderRequest;
  * Use `create(GetOrgProviderRequestSchema)` to create a new message.
  */
 export const GetOrgProviderRequestSchema: GenMessage<GetOrgProviderRequest, {jsonType: GetOrgProviderRequestJson, validType: GetOrgProviderRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 22);
+  messageDesc(file_cloud_v1_catalog_service, 24);
 
 /**
  * @generated from message cloud.v1.catalog.GetOrgProviderResponse
@@ -890,7 +956,7 @@ export type GetOrgProviderResponseValid = GetOrgProviderResponse;
  * Use `create(GetOrgProviderResponseSchema)` to create a new message.
  */
 export const GetOrgProviderResponseSchema: GenMessage<GetOrgProviderResponse, {jsonType: GetOrgProviderResponseJson, validType: GetOrgProviderResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 23);
+  messageDesc(file_cloud_v1_catalog_service, 25);
 
 /**
  * @generated from message cloud.v1.catalog.GetOrgWorkflowRequest
@@ -929,7 +995,7 @@ export type GetOrgWorkflowRequestValid = GetOrgWorkflowRequest;
  * Use `create(GetOrgWorkflowRequestSchema)` to create a new message.
  */
 export const GetOrgWorkflowRequestSchema: GenMessage<GetOrgWorkflowRequest, {jsonType: GetOrgWorkflowRequestJson, validType: GetOrgWorkflowRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 24);
+  messageDesc(file_cloud_v1_catalog_service, 26);
 
 /**
  * @generated from message cloud.v1.catalog.GetOrgWorkflowResponse
@@ -958,7 +1024,151 @@ export type GetOrgWorkflowResponseValid = GetOrgWorkflowResponse;
  * Use `create(GetOrgWorkflowResponseSchema)` to create a new message.
  */
 export const GetOrgWorkflowResponseSchema: GenMessage<GetOrgWorkflowResponse, {jsonType: GetOrgWorkflowResponseJson, validType: GetOrgWorkflowResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 25);
+  messageDesc(file_cloud_v1_catalog_service, 27);
+
+/**
+ * GetOrgProviderFiles/GetOrgWorkflowFiles read a LEVEL_ORG entry's stored
+ * bundle back (see GetInstanceEntryFiles's doc above) — split per kind for
+ * all_of RBAC, exactly like GetOrgProvider/GetOrgWorkflow.
+ *
+ * @generated from message cloud.v1.catalog.GetOrgProviderFilesRequest
+ */
+export type GetOrgProviderFilesRequest = Message<"cloud.v1.catalog.GetOrgProviderFilesRequest"> & {
+  /**
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * @generated from field: string id = 2;
+   */
+  id: string;
+};
+
+/**
+ * GetOrgProviderFiles/GetOrgWorkflowFiles read a LEVEL_ORG entry's stored
+ * bundle back (see GetInstanceEntryFiles's doc above) — split per kind for
+ * all_of RBAC, exactly like GetOrgProvider/GetOrgWorkflow.
+ *
+ * @generated from message cloud.v1.catalog.GetOrgProviderFilesRequest
+ */
+export type GetOrgProviderFilesRequestJson = {
+  /**
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId?: string;
+
+  /**
+   * @generated from field: string id = 2;
+   */
+  id?: string;
+};
+
+export type GetOrgProviderFilesRequestValid = GetOrgProviderFilesRequest;
+
+/**
+ * Describes the message cloud.v1.catalog.GetOrgProviderFilesRequest.
+ * Use `create(GetOrgProviderFilesRequestSchema)` to create a new message.
+ */
+export const GetOrgProviderFilesRequestSchema: GenMessage<GetOrgProviderFilesRequest, {jsonType: GetOrgProviderFilesRequestJson, validType: GetOrgProviderFilesRequestValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_catalog_service, 28);
+
+/**
+ * @generated from message cloud.v1.catalog.GetOrgProviderFilesResponse
+ */
+export type GetOrgProviderFilesResponse = Message<"cloud.v1.catalog.GetOrgProviderFilesResponse"> & {
+  /**
+   * @generated from field: map<string, bytes> files = 1;
+   */
+  files: { [key: string]: Uint8Array };
+};
+
+/**
+ * @generated from message cloud.v1.catalog.GetOrgProviderFilesResponse
+ */
+export type GetOrgProviderFilesResponseJson = {
+  /**
+   * @generated from field: map<string, bytes> files = 1;
+   */
+  files?: { [key: string]: string };
+};
+
+export type GetOrgProviderFilesResponseValid = GetOrgProviderFilesResponse;
+
+/**
+ * Describes the message cloud.v1.catalog.GetOrgProviderFilesResponse.
+ * Use `create(GetOrgProviderFilesResponseSchema)` to create a new message.
+ */
+export const GetOrgProviderFilesResponseSchema: GenMessage<GetOrgProviderFilesResponse, {jsonType: GetOrgProviderFilesResponseJson, validType: GetOrgProviderFilesResponseValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_catalog_service, 29);
+
+/**
+ * @generated from message cloud.v1.catalog.GetOrgWorkflowFilesRequest
+ */
+export type GetOrgWorkflowFilesRequest = Message<"cloud.v1.catalog.GetOrgWorkflowFilesRequest"> & {
+  /**
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId: string;
+
+  /**
+   * @generated from field: string id = 2;
+   */
+  id: string;
+};
+
+/**
+ * @generated from message cloud.v1.catalog.GetOrgWorkflowFilesRequest
+ */
+export type GetOrgWorkflowFilesRequestJson = {
+  /**
+   * @generated from field: string tenant_id = 1;
+   */
+  tenantId?: string;
+
+  /**
+   * @generated from field: string id = 2;
+   */
+  id?: string;
+};
+
+export type GetOrgWorkflowFilesRequestValid = GetOrgWorkflowFilesRequest;
+
+/**
+ * Describes the message cloud.v1.catalog.GetOrgWorkflowFilesRequest.
+ * Use `create(GetOrgWorkflowFilesRequestSchema)` to create a new message.
+ */
+export const GetOrgWorkflowFilesRequestSchema: GenMessage<GetOrgWorkflowFilesRequest, {jsonType: GetOrgWorkflowFilesRequestJson, validType: GetOrgWorkflowFilesRequestValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_catalog_service, 30);
+
+/**
+ * @generated from message cloud.v1.catalog.GetOrgWorkflowFilesResponse
+ */
+export type GetOrgWorkflowFilesResponse = Message<"cloud.v1.catalog.GetOrgWorkflowFilesResponse"> & {
+  /**
+   * @generated from field: map<string, bytes> files = 1;
+   */
+  files: { [key: string]: Uint8Array };
+};
+
+/**
+ * @generated from message cloud.v1.catalog.GetOrgWorkflowFilesResponse
+ */
+export type GetOrgWorkflowFilesResponseJson = {
+  /**
+   * @generated from field: map<string, bytes> files = 1;
+   */
+  files?: { [key: string]: string };
+};
+
+export type GetOrgWorkflowFilesResponseValid = GetOrgWorkflowFilesResponse;
+
+/**
+ * Describes the message cloud.v1.catalog.GetOrgWorkflowFilesResponse.
+ * Use `create(GetOrgWorkflowFilesResponseSchema)` to create a new message.
+ */
+export const GetOrgWorkflowFilesResponseSchema: GenMessage<GetOrgWorkflowFilesResponse, {jsonType: GetOrgWorkflowFilesResponseJson, validType: GetOrgWorkflowFilesResponseValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_catalog_service, 31);
 
 /**
  * @generated from message cloud.v1.catalog.ListOrgProvidersRequest
@@ -987,7 +1197,7 @@ export type ListOrgProvidersRequestValid = ListOrgProvidersRequest;
  * Use `create(ListOrgProvidersRequestSchema)` to create a new message.
  */
 export const ListOrgProvidersRequestSchema: GenMessage<ListOrgProvidersRequest, {jsonType: ListOrgProvidersRequestJson, validType: ListOrgProvidersRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 26);
+  messageDesc(file_cloud_v1_catalog_service, 32);
 
 /**
  * @generated from message cloud.v1.catalog.ListOrgProvidersResponse
@@ -1016,7 +1226,7 @@ export type ListOrgProvidersResponseValid = ListOrgProvidersResponse;
  * Use `create(ListOrgProvidersResponseSchema)` to create a new message.
  */
 export const ListOrgProvidersResponseSchema: GenMessage<ListOrgProvidersResponse, {jsonType: ListOrgProvidersResponseJson, validType: ListOrgProvidersResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 27);
+  messageDesc(file_cloud_v1_catalog_service, 33);
 
 /**
  * @generated from message cloud.v1.catalog.ListOrgWorkflowsRequest
@@ -1045,7 +1255,7 @@ export type ListOrgWorkflowsRequestValid = ListOrgWorkflowsRequest;
  * Use `create(ListOrgWorkflowsRequestSchema)` to create a new message.
  */
 export const ListOrgWorkflowsRequestSchema: GenMessage<ListOrgWorkflowsRequest, {jsonType: ListOrgWorkflowsRequestJson, validType: ListOrgWorkflowsRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 28);
+  messageDesc(file_cloud_v1_catalog_service, 34);
 
 /**
  * @generated from message cloud.v1.catalog.ListOrgWorkflowsResponse
@@ -1074,7 +1284,7 @@ export type ListOrgWorkflowsResponseValid = ListOrgWorkflowsResponse;
  * Use `create(ListOrgWorkflowsResponseSchema)` to create a new message.
  */
 export const ListOrgWorkflowsResponseSchema: GenMessage<ListOrgWorkflowsResponse, {jsonType: ListOrgWorkflowsResponseJson, validType: ListOrgWorkflowsResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 29);
+  messageDesc(file_cloud_v1_catalog_service, 35);
 
 /**
  * @generated from message cloud.v1.catalog.LinkInstanceProviderRequest
@@ -1113,7 +1323,7 @@ export type LinkInstanceProviderRequestValid = LinkInstanceProviderRequest;
  * Use `create(LinkInstanceProviderRequestSchema)` to create a new message.
  */
 export const LinkInstanceProviderRequestSchema: GenMessage<LinkInstanceProviderRequest, {jsonType: LinkInstanceProviderRequestJson, validType: LinkInstanceProviderRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 30);
+  messageDesc(file_cloud_v1_catalog_service, 36);
 
 /**
  * @generated from message cloud.v1.catalog.LinkInstanceProviderResponse
@@ -1142,7 +1352,7 @@ export type LinkInstanceProviderResponseValid = LinkInstanceProviderResponse;
  * Use `create(LinkInstanceProviderResponseSchema)` to create a new message.
  */
 export const LinkInstanceProviderResponseSchema: GenMessage<LinkInstanceProviderResponse, {jsonType: LinkInstanceProviderResponseJson, validType: LinkInstanceProviderResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 31);
+  messageDesc(file_cloud_v1_catalog_service, 37);
 
 /**
  * @generated from message cloud.v1.catalog.LinkInstanceWorkflowRequest
@@ -1181,7 +1391,7 @@ export type LinkInstanceWorkflowRequestValid = LinkInstanceWorkflowRequest;
  * Use `create(LinkInstanceWorkflowRequestSchema)` to create a new message.
  */
 export const LinkInstanceWorkflowRequestSchema: GenMessage<LinkInstanceWorkflowRequest, {jsonType: LinkInstanceWorkflowRequestJson, validType: LinkInstanceWorkflowRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 32);
+  messageDesc(file_cloud_v1_catalog_service, 38);
 
 /**
  * @generated from message cloud.v1.catalog.LinkInstanceWorkflowResponse
@@ -1210,7 +1420,7 @@ export type LinkInstanceWorkflowResponseValid = LinkInstanceWorkflowResponse;
  * Use `create(LinkInstanceWorkflowResponseSchema)` to create a new message.
  */
 export const LinkInstanceWorkflowResponseSchema: GenMessage<LinkInstanceWorkflowResponse, {jsonType: LinkInstanceWorkflowResponseJson, validType: LinkInstanceWorkflowResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 33);
+  messageDesc(file_cloud_v1_catalog_service, 39);
 
 /**
  * CheckCatalogProviderRequest/CheckCatalogWorkflowRequest carry tenant_id
@@ -1257,7 +1467,7 @@ export type CheckCatalogProviderRequestValid = CheckCatalogProviderRequest;
  * Use `create(CheckCatalogProviderRequestSchema)` to create a new message.
  */
 export const CheckCatalogProviderRequestSchema: GenMessage<CheckCatalogProviderRequest, {jsonType: CheckCatalogProviderRequestJson, validType: CheckCatalogProviderRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 34);
+  messageDesc(file_cloud_v1_catalog_service, 40);
 
 /**
  * @generated from message cloud.v1.catalog.CheckCatalogProviderResponse
@@ -1286,7 +1496,7 @@ export type CheckCatalogProviderResponseValid = CheckCatalogProviderResponse;
  * Use `create(CheckCatalogProviderResponseSchema)` to create a new message.
  */
 export const CheckCatalogProviderResponseSchema: GenMessage<CheckCatalogProviderResponse, {jsonType: CheckCatalogProviderResponseJson, validType: CheckCatalogProviderResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 35);
+  messageDesc(file_cloud_v1_catalog_service, 41);
 
 /**
  * @generated from message cloud.v1.catalog.CheckCatalogWorkflowRequest
@@ -1325,7 +1535,7 @@ export type CheckCatalogWorkflowRequestValid = CheckCatalogWorkflowRequest;
  * Use `create(CheckCatalogWorkflowRequestSchema)` to create a new message.
  */
 export const CheckCatalogWorkflowRequestSchema: GenMessage<CheckCatalogWorkflowRequest, {jsonType: CheckCatalogWorkflowRequestJson, validType: CheckCatalogWorkflowRequestValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 36);
+  messageDesc(file_cloud_v1_catalog_service, 42);
 
 /**
  * @generated from message cloud.v1.catalog.CheckCatalogWorkflowResponse
@@ -1354,7 +1564,141 @@ export type CheckCatalogWorkflowResponseValid = CheckCatalogWorkflowResponse;
  * Use `create(CheckCatalogWorkflowResponseSchema)` to create a new message.
  */
 export const CheckCatalogWorkflowResponseSchema: GenMessage<CheckCatalogWorkflowResponse, {jsonType: CheckCatalogWorkflowResponseJson, validType: CheckCatalogWorkflowResponseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_catalog_service, 37);
+  messageDesc(file_cloud_v1_catalog_service, 43);
+
+/**
+ * CheckInstanceProvider/CheckInstanceWorkflow are CheckCatalogProvider/
+ * CheckCatalogWorkflow's LEVEL_INSTANCE counterparts: MethodAuth has no
+ * any_of between admin_only and all_of (see iam/options.proto's doc), so
+ * instance-scope Check cannot reuse the tenant-gated RPC — it is split into
+ * its own admin_only pair instead, mirroring every other Instance-level RPC
+ * in this file. Like CheckCatalogProvider/Workflow, neither persists
+ * anything and a problem in the bundle is NEVER an RPC error, only a
+ * diagnostic entry.
+ *
+ * @generated from message cloud.v1.catalog.CheckInstanceProviderRequest
+ */
+export type CheckInstanceProviderRequest = Message<"cloud.v1.catalog.CheckInstanceProviderRequest"> & {
+  /**
+   * @generated from field: map<string, bytes> files = 1;
+   */
+  files: { [key: string]: Uint8Array };
+};
+
+/**
+ * CheckInstanceProvider/CheckInstanceWorkflow are CheckCatalogProvider/
+ * CheckCatalogWorkflow's LEVEL_INSTANCE counterparts: MethodAuth has no
+ * any_of between admin_only and all_of (see iam/options.proto's doc), so
+ * instance-scope Check cannot reuse the tenant-gated RPC — it is split into
+ * its own admin_only pair instead, mirroring every other Instance-level RPC
+ * in this file. Like CheckCatalogProvider/Workflow, neither persists
+ * anything and a problem in the bundle is NEVER an RPC error, only a
+ * diagnostic entry.
+ *
+ * @generated from message cloud.v1.catalog.CheckInstanceProviderRequest
+ */
+export type CheckInstanceProviderRequestJson = {
+  /**
+   * @generated from field: map<string, bytes> files = 1;
+   */
+  files?: { [key: string]: string };
+};
+
+export type CheckInstanceProviderRequestValid = CheckInstanceProviderRequest;
+
+/**
+ * Describes the message cloud.v1.catalog.CheckInstanceProviderRequest.
+ * Use `create(CheckInstanceProviderRequestSchema)` to create a new message.
+ */
+export const CheckInstanceProviderRequestSchema: GenMessage<CheckInstanceProviderRequest, {jsonType: CheckInstanceProviderRequestJson, validType: CheckInstanceProviderRequestValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_catalog_service, 44);
+
+/**
+ * @generated from message cloud.v1.catalog.CheckInstanceProviderResponse
+ */
+export type CheckInstanceProviderResponse = Message<"cloud.v1.catalog.CheckInstanceProviderResponse"> & {
+  /**
+   * @generated from field: repeated cloud.v1.dsl.Diagnostic diagnostics = 1;
+   */
+  diagnostics: Diagnostic[];
+};
+
+/**
+ * @generated from message cloud.v1.catalog.CheckInstanceProviderResponse
+ */
+export type CheckInstanceProviderResponseJson = {
+  /**
+   * @generated from field: repeated cloud.v1.dsl.Diagnostic diagnostics = 1;
+   */
+  diagnostics?: DiagnosticJson[];
+};
+
+export type CheckInstanceProviderResponseValid = CheckInstanceProviderResponse;
+
+/**
+ * Describes the message cloud.v1.catalog.CheckInstanceProviderResponse.
+ * Use `create(CheckInstanceProviderResponseSchema)` to create a new message.
+ */
+export const CheckInstanceProviderResponseSchema: GenMessage<CheckInstanceProviderResponse, {jsonType: CheckInstanceProviderResponseJson, validType: CheckInstanceProviderResponseValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_catalog_service, 45);
+
+/**
+ * @generated from message cloud.v1.catalog.CheckInstanceWorkflowRequest
+ */
+export type CheckInstanceWorkflowRequest = Message<"cloud.v1.catalog.CheckInstanceWorkflowRequest"> & {
+  /**
+   * @generated from field: map<string, bytes> files = 1;
+   */
+  files: { [key: string]: Uint8Array };
+};
+
+/**
+ * @generated from message cloud.v1.catalog.CheckInstanceWorkflowRequest
+ */
+export type CheckInstanceWorkflowRequestJson = {
+  /**
+   * @generated from field: map<string, bytes> files = 1;
+   */
+  files?: { [key: string]: string };
+};
+
+export type CheckInstanceWorkflowRequestValid = CheckInstanceWorkflowRequest;
+
+/**
+ * Describes the message cloud.v1.catalog.CheckInstanceWorkflowRequest.
+ * Use `create(CheckInstanceWorkflowRequestSchema)` to create a new message.
+ */
+export const CheckInstanceWorkflowRequestSchema: GenMessage<CheckInstanceWorkflowRequest, {jsonType: CheckInstanceWorkflowRequestJson, validType: CheckInstanceWorkflowRequestValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_catalog_service, 46);
+
+/**
+ * @generated from message cloud.v1.catalog.CheckInstanceWorkflowResponse
+ */
+export type CheckInstanceWorkflowResponse = Message<"cloud.v1.catalog.CheckInstanceWorkflowResponse"> & {
+  /**
+   * @generated from field: repeated cloud.v1.dsl.Diagnostic diagnostics = 1;
+   */
+  diagnostics: Diagnostic[];
+};
+
+/**
+ * @generated from message cloud.v1.catalog.CheckInstanceWorkflowResponse
+ */
+export type CheckInstanceWorkflowResponseJson = {
+  /**
+   * @generated from field: repeated cloud.v1.dsl.Diagnostic diagnostics = 1;
+   */
+  diagnostics?: DiagnosticJson[];
+};
+
+export type CheckInstanceWorkflowResponseValid = CheckInstanceWorkflowResponse;
+
+/**
+ * Describes the message cloud.v1.catalog.CheckInstanceWorkflowResponse.
+ * Use `create(CheckInstanceWorkflowResponseSchema)` to create a new message.
+ */
+export const CheckInstanceWorkflowResponseSchema: GenMessage<CheckInstanceWorkflowResponse, {jsonType: CheckInstanceWorkflowResponseJson, validType: CheckInstanceWorkflowResponseValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_catalog_service, 47);
 
 /**
  * @generated from service cloud.v1.catalog.CatalogService
@@ -1391,6 +1735,14 @@ export const CatalogService: GenService<{
     methodKind: "unary";
     input: typeof GetInstanceEntryRequestSchema;
     output: typeof GetInstanceEntryResponseSchema;
+  },
+  /**
+   * @generated from rpc cloud.v1.catalog.CatalogService.GetInstanceEntryFiles
+   */
+  getInstanceEntryFiles: {
+    methodKind: "unary";
+    input: typeof GetInstanceEntryFilesRequestSchema;
+    output: typeof GetInstanceEntryFilesResponseSchema;
   },
   /**
    * @generated from rpc cloud.v1.catalog.CatalogService.ListInstanceEntries
@@ -1465,6 +1817,22 @@ export const CatalogService: GenService<{
     output: typeof GetOrgWorkflowResponseSchema;
   },
   /**
+   * @generated from rpc cloud.v1.catalog.CatalogService.GetOrgProviderFiles
+   */
+  getOrgProviderFiles: {
+    methodKind: "unary";
+    input: typeof GetOrgProviderFilesRequestSchema;
+    output: typeof GetOrgProviderFilesResponseSchema;
+  },
+  /**
+   * @generated from rpc cloud.v1.catalog.CatalogService.GetOrgWorkflowFiles
+   */
+  getOrgWorkflowFiles: {
+    methodKind: "unary";
+    input: typeof GetOrgWorkflowFilesRequestSchema;
+    output: typeof GetOrgWorkflowFilesResponseSchema;
+  },
+  /**
    * @generated from rpc cloud.v1.catalog.CatalogService.ListOrgProviders
    */
   listOrgProviders: {
@@ -1511,6 +1879,22 @@ export const CatalogService: GenService<{
     methodKind: "unary";
     input: typeof CheckCatalogWorkflowRequestSchema;
     output: typeof CheckCatalogWorkflowResponseSchema;
+  },
+  /**
+   * @generated from rpc cloud.v1.catalog.CatalogService.CheckInstanceProvider
+   */
+  checkInstanceProvider: {
+    methodKind: "unary";
+    input: typeof CheckInstanceProviderRequestSchema;
+    output: typeof CheckInstanceProviderResponseSchema;
+  },
+  /**
+   * @generated from rpc cloud.v1.catalog.CatalogService.CheckInstanceWorkflow
+   */
+  checkInstanceWorkflow: {
+    methodKind: "unary";
+    input: typeof CheckInstanceWorkflowRequestSchema;
+    output: typeof CheckInstanceWorkflowResponseSchema;
   },
 }> = /*@__PURE__*/
   serviceDesc(file_cloud_v1_catalog_service, 0);

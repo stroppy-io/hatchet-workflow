@@ -307,6 +307,117 @@ func (m *GetInstanceEntryResponse) UnmarshalJSON(data []byte) error {
 	return m.Decode(d)
 }
 
+func (m *GetInstanceEntryFilesRequest) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Id != "" {
+		e.FieldStart("id")
+		e.Str(m.Id)
+	}
+	e.ObjEnd()
+}
+
+func (m *GetInstanceEntryFilesRequest) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "id":
+			if seen["Id"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Id"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Id = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *GetInstanceEntryFilesRequest) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *GetInstanceEntryFilesRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *GetInstanceEntryFilesResponse) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if len(m.Files) > 0 {
+		e.FieldStart("files")
+		e.ObjStart()
+		for k, v := range m.Files {
+			e.FieldStart(k)
+			jxpb.EncBytes(e, v)
+		}
+		e.ObjEnd()
+	}
+	e.ObjEnd()
+}
+
+func (m *GetInstanceEntryFilesResponse) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "files":
+			if seen["Files"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Files"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			if m.Files == nil {
+				m.Files = make(map[string][]byte)
+			}
+			return d.Obj(func(d *jx.Decoder, ks string) error {
+				mk := ks
+				var mv []byte
+				tv, err := jxpb.DecBytes(d)
+				if err != nil {
+					return err
+				}
+				mv = tv
+				m.Files[mk] = mv
+				return nil
+			})
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *GetInstanceEntryFilesResponse) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *GetInstanceEntryFilesResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
 func (m *ListInstanceEntriesRequest) Encode(e *jx.Encoder) {
 	if m == nil {
 		e.ObjStart()
@@ -1717,6 +1828,264 @@ func (m *GetOrgWorkflowResponse) UnmarshalJSON(data []byte) error {
 	return m.Decode(d)
 }
 
+func (m *GetOrgProviderFilesRequest) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.TenantId != "" {
+		e.FieldStart("tenantId")
+		e.Str(m.TenantId)
+	}
+	if m.Id != "" {
+		e.FieldStart("id")
+		e.Str(m.Id)
+	}
+	e.ObjEnd()
+}
+
+func (m *GetOrgProviderFilesRequest) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "tenantId", "tenant_id":
+			if seen["TenantId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["TenantId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.TenantId = v
+			return nil
+		case "id":
+			if seen["Id"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Id"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Id = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *GetOrgProviderFilesRequest) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *GetOrgProviderFilesRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *GetOrgProviderFilesResponse) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if len(m.Files) > 0 {
+		e.FieldStart("files")
+		e.ObjStart()
+		for k, v := range m.Files {
+			e.FieldStart(k)
+			jxpb.EncBytes(e, v)
+		}
+		e.ObjEnd()
+	}
+	e.ObjEnd()
+}
+
+func (m *GetOrgProviderFilesResponse) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "files":
+			if seen["Files"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Files"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			if m.Files == nil {
+				m.Files = make(map[string][]byte)
+			}
+			return d.Obj(func(d *jx.Decoder, ks string) error {
+				mk := ks
+				var mv []byte
+				tv, err := jxpb.DecBytes(d)
+				if err != nil {
+					return err
+				}
+				mv = tv
+				m.Files[mk] = mv
+				return nil
+			})
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *GetOrgProviderFilesResponse) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *GetOrgProviderFilesResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *GetOrgWorkflowFilesRequest) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.TenantId != "" {
+		e.FieldStart("tenantId")
+		e.Str(m.TenantId)
+	}
+	if m.Id != "" {
+		e.FieldStart("id")
+		e.Str(m.Id)
+	}
+	e.ObjEnd()
+}
+
+func (m *GetOrgWorkflowFilesRequest) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "tenantId", "tenant_id":
+			if seen["TenantId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["TenantId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.TenantId = v
+			return nil
+		case "id":
+			if seen["Id"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Id"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Id = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *GetOrgWorkflowFilesRequest) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *GetOrgWorkflowFilesRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *GetOrgWorkflowFilesResponse) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if len(m.Files) > 0 {
+		e.FieldStart("files")
+		e.ObjStart()
+		for k, v := range m.Files {
+			e.FieldStart(k)
+			jxpb.EncBytes(e, v)
+		}
+		e.ObjEnd()
+	}
+	e.ObjEnd()
+}
+
+func (m *GetOrgWorkflowFilesResponse) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "files":
+			if seen["Files"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Files"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			if m.Files == nil {
+				m.Files = make(map[string][]byte)
+			}
+			return d.Obj(func(d *jx.Decoder, ks string) error {
+				mk := ks
+				var mv []byte
+				tv, err := jxpb.DecBytes(d)
+				if err != nil {
+					return err
+				}
+				mv = tv
+				m.Files[mk] = mv
+				return nil
+			})
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *GetOrgWorkflowFilesResponse) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *GetOrgWorkflowFilesResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
 func (m *ListOrgProvidersRequest) Encode(e *jx.Encoder) {
 	if m == nil {
 		e.ObjStart()
@@ -2421,6 +2790,240 @@ func (m *CheckCatalogWorkflowResponse) MarshalJSON() ([]byte, error) {
 }
 
 func (m *CheckCatalogWorkflowResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *CheckInstanceProviderRequest) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if len(m.Files) > 0 {
+		e.FieldStart("files")
+		e.ObjStart()
+		for k, v := range m.Files {
+			e.FieldStart(k)
+			jxpb.EncBytes(e, v)
+		}
+		e.ObjEnd()
+	}
+	e.ObjEnd()
+}
+
+func (m *CheckInstanceProviderRequest) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "files":
+			if seen["Files"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Files"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			if m.Files == nil {
+				m.Files = make(map[string][]byte)
+			}
+			return d.Obj(func(d *jx.Decoder, ks string) error {
+				mk := ks
+				var mv []byte
+				tv, err := jxpb.DecBytes(d)
+				if err != nil {
+					return err
+				}
+				mv = tv
+				m.Files[mk] = mv
+				return nil
+			})
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *CheckInstanceProviderRequest) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *CheckInstanceProviderRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *CheckInstanceProviderResponse) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if len(m.Diagnostics) > 0 {
+		e.FieldStart("diagnostics")
+		e.ArrStart()
+		for _, v := range m.Diagnostics {
+			jxpb.EncMessage(e, v)
+		}
+		e.ArrEnd()
+	}
+	e.ObjEnd()
+}
+
+func (m *CheckInstanceProviderResponse) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "diagnostics":
+			if seen["Diagnostics"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Diagnostics"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &dsl.Diagnostic{}
+				if err := jxpb.DecMessage(d, el); err != nil {
+					return err
+				}
+				m.Diagnostics = append(m.Diagnostics, el)
+				return nil
+			})
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *CheckInstanceProviderResponse) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *CheckInstanceProviderResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *CheckInstanceWorkflowRequest) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if len(m.Files) > 0 {
+		e.FieldStart("files")
+		e.ObjStart()
+		for k, v := range m.Files {
+			e.FieldStart(k)
+			jxpb.EncBytes(e, v)
+		}
+		e.ObjEnd()
+	}
+	e.ObjEnd()
+}
+
+func (m *CheckInstanceWorkflowRequest) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "files":
+			if seen["Files"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Files"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			if m.Files == nil {
+				m.Files = make(map[string][]byte)
+			}
+			return d.Obj(func(d *jx.Decoder, ks string) error {
+				mk := ks
+				var mv []byte
+				tv, err := jxpb.DecBytes(d)
+				if err != nil {
+					return err
+				}
+				mv = tv
+				m.Files[mk] = mv
+				return nil
+			})
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *CheckInstanceWorkflowRequest) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *CheckInstanceWorkflowRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *CheckInstanceWorkflowResponse) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if len(m.Diagnostics) > 0 {
+		e.FieldStart("diagnostics")
+		e.ArrStart()
+		for _, v := range m.Diagnostics {
+			jxpb.EncMessage(e, v)
+		}
+		e.ArrEnd()
+	}
+	e.ObjEnd()
+}
+
+func (m *CheckInstanceWorkflowResponse) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "diagnostics":
+			if seen["Diagnostics"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Diagnostics"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &dsl.Diagnostic{}
+				if err := jxpb.DecMessage(d, el); err != nil {
+					return err
+				}
+				m.Diagnostics = append(m.Diagnostics, el)
+				return nil
+			})
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *CheckInstanceWorkflowResponse) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *CheckInstanceWorkflowResponse) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return m.Decode(d)
 }

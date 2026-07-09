@@ -35,6 +35,17 @@ option go_package = "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1
         a missing request field resolves to "" (see iam/options.proto's
         MethodAuth.tenant_field doc), which would fail every tenant-scoped
         grant. The field exists purely for RBAC, not storage.
+        CheckInstanceProvider/CheckInstanceWorkflow are their admin_only,
+        tenant-less LEVEL_INSTANCE counterparts — MethodAuth has no any_of
+        between admin_only and all_of, so instance-scope Check cannot reuse
+        the tenant-gated pair and gets its own RPCs instead.
+
+      - GetInstanceEntryFiles / GetOrgProviderFiles / GetOrgWorkflowFiles
+        read a stored CatalogEntry's bundle back (files, not just the
+        source_ref pointer), gated identically to the corresponding Get*
+        RPC. Without these, a client that did not itself just create/update
+        an entry has no way to read its content — see bundlestore.go's
+        BundleStore.Read.
 
     Every message carrying map<string, bytes> files has no GraphQL scalar
     for that shape out of the box (see cloud/v1/dsl/service.proto's own
@@ -54,6 +65,12 @@ message CreateInstanceEntryResponse { CatalogEntry entry = 1; }
 
 message GetInstanceEntryRequest { string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}]; }
 message GetInstanceEntryResponse { CatalogEntry entry = 1; }
+
+// GetInstanceEntryFiles reads a LEVEL_INSTANCE entry's stored bundle back
+// (the CatalogEntry row itself carries only an opaque source_ref — see
+// models.proto's doc). admin_only, mirroring every other Instance-level RPC.
+message GetInstanceEntryFilesRequest { string id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}]; }
+message GetInstanceEntryFilesResponse { map<string, bytes> files = 1; }
 
 message ListInstanceEntriesRequest { Kind kind = 1; }
 message ListInstanceEntriesResponse { repeated CatalogEntry entries = 1; }
@@ -119,6 +136,20 @@ message GetOrgWorkflowRequest {
 }
 message GetOrgWorkflowResponse { CatalogEntry entry = 1; }
 
+// GetOrgProviderFiles/GetOrgWorkflowFiles read a LEVEL_ORG entry's stored
+// bundle back (see GetInstanceEntryFiles's doc above) — split per kind for
+// all_of RBAC, exactly like GetOrgProvider/GetOrgWorkflow.
+message GetOrgProviderFilesRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+message GetOrgProviderFilesResponse { map<string, bytes> files = 1; }
+message GetOrgWorkflowFilesRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string id = 2 [(validate.rules).string = {min_len: 1, max_len: 64}];
+}
+message GetOrgWorkflowFilesResponse { map<string, bytes> files = 1; }
+
 message ListOrgProvidersRequest { string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}]; }
 message ListOrgProvidersResponse { repeated CatalogEntry entries = 1; }
 message ListOrgWorkflowsRequest { string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}]; }
@@ -149,6 +180,19 @@ message CheckCatalogWorkflowRequest {
 }
 message CheckCatalogWorkflowResponse { repeated cloud.v1.dsl.Diagnostic diagnostics = 1; }
 
+// CheckInstanceProvider/CheckInstanceWorkflow are CheckCatalogProvider/
+// CheckCatalogWorkflow's LEVEL_INSTANCE counterparts: MethodAuth has no
+// any_of between admin_only and all_of (see iam/options.proto's doc), so
+// instance-scope Check cannot reuse the tenant-gated RPC — it is split into
+// its own admin_only pair instead, mirroring every other Instance-level RPC
+// in this file. Like CheckCatalogProvider/Workflow, neither persists
+// anything and a problem in the bundle is NEVER an RPC error, only a
+// diagnostic entry.
+message CheckInstanceProviderRequest { map<string, bytes> files = 1; }
+message CheckInstanceProviderResponse { repeated cloud.v1.dsl.Diagnostic diagnostics = 1; }
+message CheckInstanceWorkflowRequest { map<string, bytes> files = 1; }
+message CheckInstanceWorkflowResponse { repeated cloud.v1.dsl.Diagnostic diagnostics = 1; }
+
 service CatalogService {
     // map<string, bytes> has no GraphQL scalar out of the box; the browser
     // IDE consumes this service directly via Connect (see the file doc).
@@ -164,6 +208,9 @@ service CatalogService {
         option (cloud.v1.iam.auth) = { admin_only: true };
     }
     rpc GetInstanceEntry(GetInstanceEntryRequest) returns (GetInstanceEntryResponse) {
+        option (cloud.v1.iam.auth) = { admin_only: true };
+    }
+    rpc GetInstanceEntryFiles(GetInstanceEntryFilesRequest) returns (GetInstanceEntryFilesResponse) {
         option (cloud.v1.iam.auth) = { admin_only: true };
     }
     rpc ListInstanceEntries(ListInstanceEntriesRequest) returns (ListInstanceEntriesResponse) {
@@ -194,6 +241,12 @@ service CatalogService {
     rpc GetOrgWorkflow(GetOrgWorkflowRequest) returns (GetOrgWorkflowResponse) {
         option (cloud.v1.iam.auth) = { all_of: [{resource: RESOURCE_WORKFLOW, action: ACTION_READ}], tenant_field: "tenant_id" };
     }
+    rpc GetOrgProviderFiles(GetOrgProviderFilesRequest) returns (GetOrgProviderFilesResponse) {
+        option (cloud.v1.iam.auth) = { all_of: [{resource: RESOURCE_PROVIDER, action: ACTION_READ}], tenant_field: "tenant_id" };
+    }
+    rpc GetOrgWorkflowFiles(GetOrgWorkflowFilesRequest) returns (GetOrgWorkflowFilesResponse) {
+        option (cloud.v1.iam.auth) = { all_of: [{resource: RESOURCE_WORKFLOW, action: ACTION_READ}], tenant_field: "tenant_id" };
+    }
     rpc ListOrgProviders(ListOrgProvidersRequest) returns (ListOrgProvidersResponse) {
         option (cloud.v1.iam.auth) = { all_of: [{resource: RESOURCE_PROVIDER, action: ACTION_LIST}], tenant_field: "tenant_id" };
     }
@@ -213,5 +266,12 @@ service CatalogService {
     }
     rpc CheckCatalogWorkflow(CheckCatalogWorkflowRequest) returns (CheckCatalogWorkflowResponse) {
         option (cloud.v1.iam.auth) = { all_of: [{resource: RESOURCE_WORKFLOW, action: ACTION_READ}], tenant_field: "tenant_id" };
+    }
+
+    rpc CheckInstanceProvider(CheckInstanceProviderRequest) returns (CheckInstanceProviderResponse) {
+        option (cloud.v1.iam.auth) = { admin_only: true };
+    }
+    rpc CheckInstanceWorkflow(CheckInstanceWorkflowRequest) returns (CheckInstanceWorkflowResponse) {
+        option (cloud.v1.iam.auth) = { admin_only: true };
     }
 }

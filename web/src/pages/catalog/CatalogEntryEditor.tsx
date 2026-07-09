@@ -9,10 +9,11 @@
 // createOrgEntry.
 //
 // EDIT: CatalogEntry carries no file contents of its own (only an opaque
-// source_ref — see services/catalog.ts's file doc for why). cachedEntryFiles
-// pre-fills the editor ONLY when this browser session itself created or last
-// updated this entry; otherwise the editor opens EMPTY with an explicit
-// banner, never fabricating content. Saving always calls
+// source_ref — see catalog/models.proto's doc for why). cachedEntryFiles
+// pre-fills the editor for free when this browser session itself just
+// created/updated this entry; otherwise getInstanceEntryFiles/getOrgEntryFiles
+// (GetInstanceEntryFiles/GetOrgProviderFiles/GetOrgWorkflowFiles) fetch the
+// stored bundle back from the server. Saving always calls
 // updateInstanceEntry/updateOrgEntry with the full files map (bytes, not a
 // diff) — for a LINKED org entry this is exactly the fork-on-edit path: the
 // server implicitly forks (new id, origin -> FORKED) rather than mutating the
@@ -42,10 +43,13 @@ import { DslEditor } from "@/components/ui/dsl-editor";
 import {
   cachedEntryFiles,
   checkCatalogBundle,
+  checkInstanceBundle,
   createInstanceEntry,
   createOrgEntry,
   getInstanceEntry,
+  getInstanceEntryFiles,
   getOrgEntry,
+  getOrgEntryFiles,
   updateInstanceEntry,
   updateOrgEntry,
   type CatalogDiagnosticVM,
@@ -110,7 +114,6 @@ export function CatalogEntryEditor({ scope }: CatalogEntryEditorProps) {
   const [activePath, setActivePath] = useState(() =>
     isEdit ? "" : firstPath(templateFor(kind)),
   );
-  const [contentUnavailable, setContentUnavailable] = useState(false);
 
   const [loading, setLoading] = useState(isEdit);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -137,22 +140,23 @@ export function CatalogEntryEditor({ scope }: CatalogEntryEditorProps) {
           ? getOrgEntry(slug, kind, id)
           : Promise.reject(new Error("no tenant"));
     load
-      .then((e) => {
+      .then(async (e) => {
         if (cancelled) return;
         setEntry(e);
         setEntrySlug(e.slug);
         setName(e.name);
         setDescription(e.description);
+        // cachedEntryFiles is a fast, no-round-trip path for the one session
+        // that just created/updated this entry; every other load fetches the
+        // stored bundle back from the server (GetInstanceEntryFiles/
+        // GetOrgProviderFiles/GetOrgWorkflowFiles — see services/catalog.ts).
         const cached = cachedEntryFiles(e.id);
-        if (cached) {
-          setFiles(cached);
-          setActivePath(firstPath(cached));
-          setContentUnavailable(false);
-        } else {
-          setFiles({});
-          setActivePath("");
-          setContentUnavailable(true);
-        }
+        const loadedFiles =
+          cached ??
+          (scope === "instance" ? await getInstanceEntryFiles(e.id) : await getOrgEntryFiles(slug, kind, e.id));
+        if (cancelled) return;
+        setFiles(loadedFiles);
+        setActivePath(firstPath(loadedFiles));
       })
       .catch((e) => !cancelled && setLoadError(e instanceof Error ? e.message : String(e)))
       .finally(() => !cancelled && setLoading(false));
@@ -162,18 +166,21 @@ export function CatalogEntryEditor({ scope }: CatalogEntryEditorProps) {
   }, [isEdit, id, scope, slug, kind]);
 
   // Bundle-wide diagnostics: debounced re-check on any edit, mirrors
-  // RecipeEditor. Skipped entirely while content is known-unavailable (an
-  // empty bundle would just report "no files" noise).
+  // RecipeEditor. Org scope uses CheckCatalogProvider/Workflow (tenant-gated
+  // RBAC); instance scope uses their admin_only CheckInstanceProvider/
+  // Workflow counterpart (see services/catalog.ts's doc).
   useEffect(() => {
-    if (loading || contentUnavailable || Object.keys(files).length === 0 || !slug) return;
+    if (loading || Object.keys(files).length === 0) return;
+    if (scope === "org" && !slug) return;
     let cancelled = false;
     setChecking(true);
     const t = setTimeout(() => {
-      checkCatalogBundle(slug, kind, files)
+      const check = scope === "instance" ? checkInstanceBundle(kind, files) : checkCatalogBundle(slug, kind, files);
+      check
         .then((diags) => !cancelled && setDiagnostics(diags))
         .catch((e) => {
           if (cancelled) return;
-          console.warn("CatalogEntryEditor: checkCatalogBundle failed", e);
+          console.warn("CatalogEntryEditor: check bundle failed", e);
           setDiagnostics([]);
         })
         .finally(() => !cancelled && setChecking(false));
@@ -182,16 +189,11 @@ export function CatalogEntryEditor({ scope }: CatalogEntryEditorProps) {
       cancelled = true;
       clearTimeout(t);
     };
-  }, [files, loading, contentUnavailable, slug, kind]);
+  }, [files, loading, slug, kind, scope]);
 
   const slugMissing = !entrySlug.trim();
   const nameMissing = !name.trim();
-  const canSave =
-    !saving &&
-    !nameMissing &&
-    (isEdit || !slugMissing) &&
-    Object.keys(files).length > 0 &&
-    !contentUnavailable;
+  const canSave = !saving && !nameMissing && (isEdit || !slugMissing) && Object.keys(files).length > 0;
 
   const updateFileContent = useCallback((path: string, value: string) => {
     setFiles((cur) => ({ ...cur, [path]: value }));
@@ -361,15 +363,6 @@ export function CatalogEntryEditor({ scope }: CatalogEntryEditorProps) {
           the live link stays untouched and unaffected.
         </div>
       )}
-      {contentUnavailable && (
-        <div className="mx-5 mt-3 flex items-center gap-2 border border-amber-900/50 bg-amber-950/20 px-3 py-2 text-xs text-amber-400">
-          <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-          The catalog stores only a pointer to this entry&rsquo;s bundle, not its
-          contents — there is no way to read an existing entry&rsquo;s files back
-          into this browser. Saving is disabled until you provide a fresh, full
-          bundle below.
-        </div>
-      )}
       {nameMissing && (
         <div className="mx-5 mt-3 flex items-center gap-2 border border-amber-900/50 bg-amber-950/20 px-3 py-2 text-xs text-amber-400">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
@@ -383,26 +376,6 @@ export function CatalogEntryEditor({ scope }: CatalogEntryEditorProps) {
       )}
 
       <div className="min-h-0 flex-1 overflow-hidden px-5 py-5">
-        {contentUnavailable ? (
-          <div className="flex h-full flex-col items-center justify-center gap-3 border border-dashed border-zinc-800 text-center text-xs text-zinc-500">
-            <FileCode2 className="h-6 w-6 text-zinc-700" />
-            <div className="max-w-sm">
-              Start a fresh bundle to save a new version of this {kindLabel}.
-            </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() => {
-                const t = templateFor(kind);
-                setFiles(t);
-                setActivePath(firstPath(t));
-                setContentUnavailable(false);
-              }}
-            >
-              <Plus className="h-3.5 w-3.5" /> Start from template
-            </Button>
-          </div>
-        ) : (
           <div className="grid h-full min-h-0 grid-cols-[14rem_minmax(0,1fr)_20rem] gap-4">
             {/* Left: file list */}
             <Card className="flex min-h-0 flex-col">
@@ -496,19 +469,7 @@ export function CatalogEntryEditor({ scope }: CatalogEntryEditorProps) {
                 Diagnostics{diagnostics.length > 0 && ` (${diagnostics.length})`}
               </div>
               <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto p-2">
-                {scope === "instance" ? (
-                  <div className="px-1 py-2 text-xs text-zinc-600">
-                    Live check-as-you-type is org-scoped (CheckCatalogProvider/
-                    Workflow requires a tenant to resolve RBAC against) and
-                    unavailable for instance-level entries. The bundle is
-                    still checked server-side on save —{" "}
-                    {entry
-                      ? entry.summary.compiles
-                        ? "the last saved version compiled cleanly."
-                        : "the last saved version had compile errors."
-                      : "results appear here after your first save."}
-                  </div>
-                ) : diagnostics.length === 0 ? (
+                {diagnostics.length === 0 ? (
                   <div className="px-1 py-2 text-xs text-zinc-600">
                     {checking ? "Checking…" : "No issues found."}
                   </div>
@@ -538,7 +499,6 @@ export function CatalogEntryEditor({ scope }: CatalogEntryEditorProps) {
               </div>
             </Card>
           </div>
-        )}
       </div>
     </div>
   );

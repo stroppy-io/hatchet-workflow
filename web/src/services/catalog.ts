@@ -6,16 +6,13 @@
 // from the slug (services/tenant.ts) before calling the backend, exactly like
 // recipe.ts.
 //
-// IMPORTANT GAP (see .superpowers/sdd/spb-frontend-report.md for the full
-// note): CatalogEntry carries only an opaque `source_ref` bundle-store
-// pointer, never the files themselves — CatalogService has NO RPC to read a
-// stored bundle's file contents back (unlike RecipeService.GetRecipe, whose
-// RecipeRecord embeds bundle.files). So the browser can author a NEW bundle
-// from scratch (Create) and can re-submit a FULL replacement bundle (Update),
-// but it cannot pre-populate an editor with an existing entry's current file
-// contents when that entry wasn't authored in this session. entryFilesCache
-// below covers the one case where content IS available client-side: right
-// after this browser created/updated an entry, in the same session.
+// getEntryFiles (below) reads a stored entry's bundle back via
+// GetInstanceEntryFiles/GetOrgProviderFiles/GetOrgWorkflowFiles — closing the
+// GAP the original spb-frontend-report.md documented (CatalogEntry carries
+// only an opaque `source_ref` pointer, never its files). entryFilesCache still
+// exists as a fast, no-round-trip path for the one session that just
+// created/updated an entry; getEntryFiles is the fallback for every other
+// caller (a fresh page load, another session, ...).
 
 import { toJson } from "@bufbuild/protobuf";
 import {
@@ -86,11 +83,20 @@ export interface CreateCatalogEntryInput {
 // --- encode/decode helpers (mirrors recipe.ts) -------------------------------
 
 const encoder = new TextEncoder();
+const decoder = new TextDecoder();
 
 function encodeFiles(files: Record<string, string>): Record<string, Uint8Array> {
   const out: Record<string, Uint8Array> = {};
   for (const [path, content] of Object.entries(files)) {
     out[path] = encoder.encode(content);
+  }
+  return out;
+}
+
+function decodeFiles(files: Record<string, Uint8Array>): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const [path, content] of Object.entries(files)) {
+    out[path] = decoder.decode(content);
   }
   return out;
 }
@@ -198,6 +204,12 @@ export async function deleteInstanceEntry(id: string): Promise<void> {
   await catalogClient.deleteInstanceEntry({ id });
 }
 
+/** GetInstanceEntryFiles — reads a LEVEL_INSTANCE entry's stored bundle back. */
+export async function getInstanceEntryFiles(id: string): Promise<Record<string, string>> {
+  const { files } = await catalogClient.getInstanceEntryFiles({ id });
+  return decodeFiles(files);
+}
+
 // --- Org-level (LEVEL_ORG), split per kind -----------------------------------
 
 export async function listOrgEntries(
@@ -293,6 +305,21 @@ export async function deleteOrgEntry(
   }
 }
 
+/** GetOrgProviderFiles/GetOrgWorkflowFiles — reads a LEVEL_ORG entry's stored
+ * bundle back (org counterpart of getInstanceEntryFiles above). */
+export async function getOrgEntryFiles(
+  tenantSlug: string,
+  kind: CatalogKind,
+  id: string,
+): Promise<Record<string, string>> {
+  const tenantId = await resolveTenantId(tenantSlug);
+  const { files } =
+    kind === "KIND_PROVIDER"
+      ? await catalogClient.getOrgProviderFiles({ tenantId, id })
+      : await catalogClient.getOrgWorkflowFiles({ tenantId, id });
+  return decodeFiles(files);
+}
+
 /** LinkInstanceProvider/LinkInstanceWorkflow — creates a new LEVEL_ORG row of
  * origin LINKED referencing the instance entry, sharing its content
  * (no bundle copy). Changes to the instance entry do NOT retroactively
@@ -328,5 +355,22 @@ export async function checkCatalogBundle(
     kind === "KIND_PROVIDER"
       ? await catalogClient.checkCatalogProvider(req)
       : await catalogClient.checkCatalogWorkflow(req);
+  return diagnostics.map(diagnosticToVM);
+}
+
+/** CheckInstanceProvider/CheckInstanceWorkflow — CheckCatalogProvider/
+ * CheckCatalogWorkflow's admin_only, tenant-less LEVEL_INSTANCE counterpart:
+ * live check-as-you-type for the instance-scope catalog editor, which has no
+ * tenant to resolve all_of RBAC against (see service.proto's file doc for why
+ * these are split from the tenant-gated pair). */
+export async function checkInstanceBundle(
+  kind: CatalogKind,
+  files: Record<string, string>,
+): Promise<CatalogDiagnosticVM[]> {
+  const req = { files: encodeFiles(files) };
+  const { diagnostics } =
+    kind === "KIND_PROVIDER"
+      ? await catalogClient.checkInstanceProvider(req)
+      : await catalogClient.checkInstanceWorkflow(req);
   return diagnostics.map(diagnosticToVM);
 }

@@ -25835,6 +25835,7 @@ type Summary2 struct {
 	DbKind           OptSummary2DbKind           `json:"dbKind"`
 	DbPresetId       OptString                   `json:"dbPresetId"`
 	DbPresetName     OptString                   `json:"dbPresetName"`
+	DbVersion        OptString                   `json:"dbVersion"`
 	Duration         OptDuration                 `json:"duration"`
 	FinishedAt       OptDateTime                 `json:"finishedAt"`
 	NodeCount        OptInt32                    `json:"nodeCount"`
@@ -25863,6 +25864,11 @@ func (s *Summary2) GetDbPresetId() OptString {
 // GetDbPresetName returns the value of DbPresetName.
 func (s *Summary2) GetDbPresetName() OptString {
 	return s.DbPresetName
+}
+
+// GetDbVersion returns the value of DbVersion.
+func (s *Summary2) GetDbVersion() OptString {
+	return s.DbVersion
 }
 
 // GetDuration returns the value of Duration.
@@ -25943,6 +25949,11 @@ func (s *Summary2) SetDbPresetId(val OptString) {
 // SetDbPresetName sets the value of DbPresetName.
 func (s *Summary2) SetDbPresetName(val OptString) {
 	s.DbPresetName = val
+}
+
+// SetDbVersion sets the value of DbVersion.
+func (s *Summary2) SetDbVersion(val OptString) {
+	s.DbVersion = val
 }
 
 // SetDuration sets the value of Duration.

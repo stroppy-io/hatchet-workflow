@@ -63,6 +63,15 @@ func (s *Service) GetInstanceEntry(ctx context.Context, req *catalogpb.GetInstan
 	return &catalogpb.GetInstanceEntryResponse{Entry: entry}, nil
 }
 
+// GetInstanceEntryFiles reads a LEVEL_INSTANCE entry's stored bundle back.
+func (s *Service) GetInstanceEntryFiles(ctx context.Context, req *catalogpb.GetInstanceEntryFilesRequest) (*catalogpb.GetInstanceEntryFilesResponse, error) {
+	files, err := s.getEntryFiles(ctx, catalogpb.Level_LEVEL_INSTANCE, "", req.GetId(), catalogpb.Kind_KIND_UNSPECIFIED)
+	if err != nil {
+		return nil, err
+	}
+	return &catalogpb.GetInstanceEntryFilesResponse{Files: files}, nil
+}
+
 // ListInstanceEntries returns every LEVEL_INSTANCE entry of the requested
 // kind.
 func (s *Service) ListInstanceEntries(ctx context.Context, req *catalogpb.ListInstanceEntriesRequest) (*catalogpb.ListInstanceEntriesResponse, error) {
@@ -145,6 +154,24 @@ func (s *Service) GetOrgWorkflow(ctx context.Context, req *catalogpb.GetOrgWorkf
 	return &catalogpb.GetOrgWorkflowResponse{Entry: entry}, nil
 }
 
+// GetOrgProviderFiles reads a LEVEL_ORG KIND_PROVIDER entry's stored bundle back.
+func (s *Service) GetOrgProviderFiles(ctx context.Context, req *catalogpb.GetOrgProviderFilesRequest) (*catalogpb.GetOrgProviderFilesResponse, error) {
+	files, err := s.getEntryFiles(ctx, catalogpb.Level_LEVEL_ORG, req.GetTenantId(), req.GetId(), catalogpb.Kind_KIND_PROVIDER)
+	if err != nil {
+		return nil, err
+	}
+	return &catalogpb.GetOrgProviderFilesResponse{Files: files}, nil
+}
+
+// GetOrgWorkflowFiles reads a LEVEL_ORG KIND_WORKFLOW entry's stored bundle back.
+func (s *Service) GetOrgWorkflowFiles(ctx context.Context, req *catalogpb.GetOrgWorkflowFilesRequest) (*catalogpb.GetOrgWorkflowFilesResponse, error) {
+	files, err := s.getEntryFiles(ctx, catalogpb.Level_LEVEL_ORG, req.GetTenantId(), req.GetId(), catalogpb.Kind_KIND_WORKFLOW)
+	if err != nil {
+		return nil, err
+	}
+	return &catalogpb.GetOrgWorkflowFilesResponse{Files: files}, nil
+}
+
 func (s *Service) ListOrgProviders(ctx context.Context, req *catalogpb.ListOrgProvidersRequest) (*catalogpb.ListOrgProvidersResponse, error) {
 	entries, err := s.listEntries(ctx, catalogpb.Level_LEVEL_ORG, req.GetTenantId(), catalogpb.Kind_KIND_PROVIDER)
 	if err != nil {
@@ -183,7 +210,7 @@ func (s *Service) LinkInstanceWorkflow(ctx context.Context, req *catalogpb.LinkI
 // this codebase, a problem in the bundle itself is NEVER an RPC error, only
 // a diagnostic entry.
 func (s *Service) CheckCatalogProvider(ctx context.Context, req *catalogpb.CheckCatalogProviderRequest) (*catalogpb.CheckCatalogProviderResponse, error) {
-	diags, err := s.checkCatalog(ctx, catalogpb.Kind_KIND_PROVIDER, req.GetTenantId(), req.GetFiles())
+	diags, err := s.checkCatalog(ctx, catalogpb.Level_LEVEL_ORG, catalogpb.Kind_KIND_PROVIDER, req.GetTenantId(), req.GetFiles())
 	if err != nil {
 		return nil, err
 	}
@@ -191,11 +218,31 @@ func (s *Service) CheckCatalogProvider(ctx context.Context, req *catalogpb.Check
 }
 
 func (s *Service) CheckCatalogWorkflow(ctx context.Context, req *catalogpb.CheckCatalogWorkflowRequest) (*catalogpb.CheckCatalogWorkflowResponse, error) {
-	diags, err := s.checkCatalog(ctx, catalogpb.Kind_KIND_WORKFLOW, req.GetTenantId(), req.GetFiles())
+	diags, err := s.checkCatalog(ctx, catalogpb.Level_LEVEL_ORG, catalogpb.Kind_KIND_WORKFLOW, req.GetTenantId(), req.GetFiles())
 	if err != nil {
 		return nil, err
 	}
 	return &catalogpb.CheckCatalogWorkflowResponse{Diagnostics: diags}, nil
+}
+
+// CheckInstanceProvider/CheckInstanceWorkflow are CheckCatalogProvider/
+// CheckCatalogWorkflow's admin_only, tenant-less LEVEL_INSTANCE counterparts
+// — see service.proto's file doc for why instance-scope Check cannot reuse
+// the tenant-gated pair.
+func (s *Service) CheckInstanceProvider(ctx context.Context, req *catalogpb.CheckInstanceProviderRequest) (*catalogpb.CheckInstanceProviderResponse, error) {
+	diags, err := s.checkCatalog(ctx, catalogpb.Level_LEVEL_INSTANCE, catalogpb.Kind_KIND_PROVIDER, "", req.GetFiles())
+	if err != nil {
+		return nil, err
+	}
+	return &catalogpb.CheckInstanceProviderResponse{Diagnostics: diags}, nil
+}
+
+func (s *Service) CheckInstanceWorkflow(ctx context.Context, req *catalogpb.CheckInstanceWorkflowRequest) (*catalogpb.CheckInstanceWorkflowResponse, error) {
+	diags, err := s.checkCatalog(ctx, catalogpb.Level_LEVEL_INSTANCE, catalogpb.Kind_KIND_WORKFLOW, "", req.GetFiles())
+	if err != nil {
+		return nil, err
+	}
+	return &catalogpb.CheckInstanceWorkflowResponse{Diagnostics: diags}, nil
 }
 
 /*
@@ -491,9 +538,11 @@ func (s *Service) linkInstanceEntry(ctx context.Context, kind catalogpb.Kind, te
 }
 
 // checkCatalog is the shared implementation behind CheckCatalogProvider/
-// CheckCatalogWorkflow: it never touches storage, only Check.
-func (s *Service) checkCatalog(ctx context.Context, kind catalogpb.Kind, tenantID string, files map[string][]byte) ([]*dslpb.Diagnostic, error) {
-	if err := requireLevel(catalogpb.Level_LEVEL_ORG, tenantID); err != nil {
+// CheckCatalogWorkflow (level=LEVEL_ORG) and CheckInstanceProvider/
+// CheckInstanceWorkflow (level=LEVEL_INSTANCE, tenantID=""): it never
+// touches storage, only Check.
+func (s *Service) checkCatalog(ctx context.Context, level catalogpb.Level, kind catalogpb.Kind, tenantID string, files map[string][]byte) ([]*dslpb.Diagnostic, error) {
+	if err := requireLevel(level, tenantID); err != nil {
 		return nil, err
 	}
 	diags, err := s.d.Check(ctx, kind, files)
@@ -501,6 +550,50 @@ func (s *Service) checkCatalog(ctx context.Context, kind catalogpb.Kind, tenantI
 		return nil, utils.MapErr(err)
 	}
 	return diags, nil
+}
+
+// getEntryFiles is the shared implementation behind every GetXFiles RPC: it
+// resolves (level, tenantID, id) exactly like getEntry, then reads the
+// entry's stored bundle from BundleStore. A LINKED row seeded with no
+// source_ref of its own (see ForkEntry's doc in catalog.go) is resolved via
+// its source_entry_id, mirroring ForkEntry's own fallback.
+func (s *Service) getEntryFiles(ctx context.Context, level catalogpb.Level, tenantID, id string, kindHint catalogpb.Kind) (map[string][]byte, error) {
+	if err := requireLevel(level, tenantID); err != nil {
+		return nil, err
+	}
+	entry, err := s.entryOfKind(ctx, level, tenantID, id, kindHint)
+	if err != nil {
+		return nil, utils.MapErr(err)
+	}
+	ref, err := s.resolveSourceRef(ctx, entry)
+	if err != nil {
+		return nil, utils.MapErr(err)
+	}
+	if ref == "" {
+		return nil, status.Error(codes.NotFound, "catalog entry has no stored bundle")
+	}
+	files, err := s.d.Bundles.Read(ctx, ref)
+	if err != nil {
+		return nil, utils.MapErr(err)
+	}
+	return files, nil
+}
+
+// resolveSourceRef returns entry's bundle ref, falling back to its source
+// instance row's ref when entry itself carries none — the same fallback
+// ForkEntry (catalog.go) uses for a LINKED row seeded by SeedOrgCatalog.
+func (s *Service) resolveSourceRef(ctx context.Context, entry *catalogpb.CatalogEntry) (string, error) {
+	if ref := entry.GetSourceRef(); ref != "" {
+		return ref, nil
+	}
+	if entry.GetSourceEntryId() == "" {
+		return "", nil
+	}
+	src, err := s.d.Entries.Get(ctx, catalogpb.Level_LEVEL_INSTANCE, "", entry.GetSourceEntryId())
+	if err != nil {
+		return "", err
+	}
+	return src.GetSourceRef(), nil
 }
 
 // summaryFor derives a new entry's denormalized Summary from its kind: a

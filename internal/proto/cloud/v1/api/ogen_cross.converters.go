@@ -9724,6 +9724,7 @@ func Summary2ToOgen(src *models.Run_Summary) (*rest.Summary2, error) {
 	if src.Duration != nil {
 		dst.Duration.SetTo(convert.DurationFromProto(src.GetDuration()))
 	}
+	dst.DbVersion.SetTo(string(src.GetDbVersion()))
 	return &dst, nil
 }
 
@@ -9841,6 +9842,9 @@ func Summary2FromOgen(src *rest.Summary2) (*models.Run_Summary, error) {
 	}
 	if v19, ok := src.Duration.Get(); ok {
 		dst.Duration = convert.DurationToProto(v19)
+	}
+	if v20, ok := src.DbVersion.Get(); ok {
+		dst.DbVersion = string(v20)
 	}
 	return dst, nil
 }

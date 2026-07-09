@@ -13,6 +13,12 @@
   - [cloud.v1.catalog.CheckCatalogWorkflowRequest](#cloud-v1-catalog-checkcatalogworkflowrequest)
   - [cloud.v1.catalog.CheckCatalogWorkflowRequest.FilesEntry](#cloud-v1-catalog-checkcatalogworkflowrequest-filesentry)
   - [cloud.v1.catalog.CheckCatalogWorkflowResponse](#cloud-v1-catalog-checkcatalogworkflowresponse)
+  - [cloud.v1.catalog.CheckInstanceProviderRequest](#cloud-v1-catalog-checkinstanceproviderrequest)
+  - [cloud.v1.catalog.CheckInstanceProviderRequest.FilesEntry](#cloud-v1-catalog-checkinstanceproviderrequest-filesentry)
+  - [cloud.v1.catalog.CheckInstanceProviderResponse](#cloud-v1-catalog-checkinstanceproviderresponse)
+  - [cloud.v1.catalog.CheckInstanceWorkflowRequest](#cloud-v1-catalog-checkinstanceworkflowrequest)
+  - [cloud.v1.catalog.CheckInstanceWorkflowRequest.FilesEntry](#cloud-v1-catalog-checkinstanceworkflowrequest-filesentry)
+  - [cloud.v1.catalog.CheckInstanceWorkflowResponse](#cloud-v1-catalog-checkinstanceworkflowresponse)
   - [cloud.v1.catalog.CreateInstanceEntryRequest](#cloud-v1-catalog-createinstanceentryrequest)
   - [cloud.v1.catalog.CreateInstanceEntryRequest.FilesEntry](#cloud-v1-catalog-createinstanceentryrequest-filesentry)
   - [cloud.v1.catalog.CreateInstanceEntryResponse](#cloud-v1-catalog-createinstanceentryresponse)
@@ -28,10 +34,19 @@
   - [cloud.v1.catalog.DeleteOrgProviderResponse](#cloud-v1-catalog-deleteorgproviderresponse)
   - [cloud.v1.catalog.DeleteOrgWorkflowRequest](#cloud-v1-catalog-deleteorgworkflowrequest)
   - [cloud.v1.catalog.DeleteOrgWorkflowResponse](#cloud-v1-catalog-deleteorgworkflowresponse)
+  - [cloud.v1.catalog.GetInstanceEntryFilesRequest](#cloud-v1-catalog-getinstanceentryfilesrequest)
+  - [cloud.v1.catalog.GetInstanceEntryFilesResponse](#cloud-v1-catalog-getinstanceentryfilesresponse)
+  - [cloud.v1.catalog.GetInstanceEntryFilesResponse.FilesEntry](#cloud-v1-catalog-getinstanceentryfilesresponse-filesentry)
   - [cloud.v1.catalog.GetInstanceEntryRequest](#cloud-v1-catalog-getinstanceentryrequest)
   - [cloud.v1.catalog.GetInstanceEntryResponse](#cloud-v1-catalog-getinstanceentryresponse)
+  - [cloud.v1.catalog.GetOrgProviderFilesRequest](#cloud-v1-catalog-getorgproviderfilesrequest)
+  - [cloud.v1.catalog.GetOrgProviderFilesResponse](#cloud-v1-catalog-getorgproviderfilesresponse)
+  - [cloud.v1.catalog.GetOrgProviderFilesResponse.FilesEntry](#cloud-v1-catalog-getorgproviderfilesresponse-filesentry)
   - [cloud.v1.catalog.GetOrgProviderRequest](#cloud-v1-catalog-getorgproviderrequest)
   - [cloud.v1.catalog.GetOrgProviderResponse](#cloud-v1-catalog-getorgproviderresponse)
+  - [cloud.v1.catalog.GetOrgWorkflowFilesRequest](#cloud-v1-catalog-getorgworkflowfilesrequest)
+  - [cloud.v1.catalog.GetOrgWorkflowFilesResponse](#cloud-v1-catalog-getorgworkflowfilesresponse)
+  - [cloud.v1.catalog.GetOrgWorkflowFilesResponse.FilesEntry](#cloud-v1-catalog-getorgworkflowfilesresponse-filesentry)
   - [cloud.v1.catalog.GetOrgWorkflowRequest](#cloud-v1-catalog-getorgworkflowrequest)
   - [cloud.v1.catalog.GetOrgWorkflowResponse](#cloud-v1-catalog-getorgworkflowresponse)
   - [cloud.v1.catalog.Kind](#cloud-v1-catalog-kind)
@@ -344,6 +359,149 @@ go_name: Value</pre></td>
 
 <a name="cloud-v1-catalog-checkcatalogworkflowresponse"></a>
 ### cloud.v1.catalog.CheckCatalogWorkflowResponse
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>diagnostics</td>
+<td><a href="../dsl/README.md#cloud-v1-dsl-diagnostic">cloud.v1.dsl.Diagnostic</a></td>
+<td><pre>
+json_name: diagnostics
+go_name: Diagnostics</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-catalog-checkinstanceproviderrequest"></a>
+### cloud.v1.catalog.CheckInstanceProviderRequest
+
+<pre>
+CheckInstanceProvider/CheckInstanceWorkflow are CheckCatalogProvider/
+CheckCatalogWorkflow's LEVEL_INSTANCE counterparts: MethodAuth has no
+any_of between admin_only and all_of (see iam/options.proto's doc), so
+instance-scope Check cannot reuse the tenant-gated RPC — it is split into
+its own admin_only pair instead, mirroring every other Instance-level RPC
+in this file. Like CheckCatalogProvider/Workflow, neither persists
+anything and a problem in the bundle is NEVER an RPC error, only a
+diagnostic entry.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>files</td>
+<td><a href="#cloud-v1-catalog-checkinstanceproviderrequest-filesentry">cloud.v1.catalog.CheckInstanceProviderRequest.FilesEntry</a></td>
+<td><pre>
+json_name: files
+go_name: Files</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-catalog-checkinstanceproviderrequest-filesentry"></a>
+### cloud.v1.catalog.CheckInstanceProviderRequest.FilesEntry
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>key</td>
+<td>string</td>
+<td><pre>
+json_name: key
+go_name: Key</pre></td>
+</tr><tr>
+<td>value</td>
+<td>bytes</td>
+<td><pre>
+json_name: value
+go_name: Value</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-catalog-checkinstanceproviderresponse"></a>
+### cloud.v1.catalog.CheckInstanceProviderResponse
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>diagnostics</td>
+<td><a href="../dsl/README.md#cloud-v1-dsl-diagnostic">cloud.v1.dsl.Diagnostic</a></td>
+<td><pre>
+json_name: diagnostics
+go_name: Diagnostics</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-catalog-checkinstanceworkflowrequest"></a>
+### cloud.v1.catalog.CheckInstanceWorkflowRequest
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>files</td>
+<td><a href="#cloud-v1-catalog-checkinstanceworkflowrequest-filesentry">cloud.v1.catalog.CheckInstanceWorkflowRequest.FilesEntry</a></td>
+<td><pre>
+json_name: files
+go_name: Files</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-catalog-checkinstanceworkflowrequest-filesentry"></a>
+### cloud.v1.catalog.CheckInstanceWorkflowRequest.FilesEntry
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>key</td>
+<td>string</td>
+<td><pre>
+json_name: key
+go_name: Key</pre></td>
+</tr><tr>
+<td>value</td>
+<td>bytes</td>
+<td><pre>
+json_name: value
+go_name: Value</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-catalog-checkinstanceworkflowresponse"></a>
+### cloud.v1.catalog.CheckInstanceWorkflowResponse
 
 <table>
 <tr>
@@ -719,6 +877,78 @@ go_name: TenantId</pre></td>
 
 
 
+<a name="cloud-v1-catalog-getinstanceentryfilesrequest"></a>
+### cloud.v1.catalog.GetInstanceEntryFilesRequest
+
+<pre>
+GetInstanceEntryFiles reads a LEVEL_INSTANCE entry's stored bundle back
+(the CatalogEntry row itself carries only an opaque source_ref — see
+models.proto's doc). admin_only, mirroring every other Instance-level RPC.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>id</td>
+<td>string</td>
+<td><pre>
+json_name: id
+go_name: Id</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-catalog-getinstanceentryfilesresponse"></a>
+### cloud.v1.catalog.GetInstanceEntryFilesResponse
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>files</td>
+<td><a href="#cloud-v1-catalog-getinstanceentryfilesresponse-filesentry">cloud.v1.catalog.GetInstanceEntryFilesResponse.FilesEntry</a></td>
+<td><pre>
+json_name: files
+go_name: Files</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-catalog-getinstanceentryfilesresponse-filesentry"></a>
+### cloud.v1.catalog.GetInstanceEntryFilesResponse.FilesEntry
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>key</td>
+<td>string</td>
+<td><pre>
+json_name: key
+go_name: Key</pre></td>
+</tr><tr>
+<td>value</td>
+<td>bytes</td>
+<td><pre>
+json_name: value
+go_name: Value</pre></td>
+</tr>
+</table>
+
+
+
 <a name="cloud-v1-catalog-getinstanceentryrequest"></a>
 ### cloud.v1.catalog.GetInstanceEntryRequest
 
@@ -754,6 +984,84 @@ go_name: Id</pre></td>
 <td><pre>
 json_name: entry
 go_name: Entry</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-catalog-getorgproviderfilesrequest"></a>
+### cloud.v1.catalog.GetOrgProviderFilesRequest
+
+<pre>
+GetOrgProviderFiles/GetOrgWorkflowFiles read a LEVEL_ORG entry's stored
+bundle back (see GetInstanceEntryFiles's doc above) — split per kind for
+all_of RBAC, exactly like GetOrgProvider/GetOrgWorkflow.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>id</td>
+<td>string</td>
+<td><pre>
+json_name: id
+go_name: Id</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+json_name: tenantId
+go_name: TenantId</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-catalog-getorgproviderfilesresponse"></a>
+### cloud.v1.catalog.GetOrgProviderFilesResponse
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>files</td>
+<td><a href="#cloud-v1-catalog-getorgproviderfilesresponse-filesentry">cloud.v1.catalog.GetOrgProviderFilesResponse.FilesEntry</a></td>
+<td><pre>
+json_name: files
+go_name: Files</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-catalog-getorgproviderfilesresponse-filesentry"></a>
+### cloud.v1.catalog.GetOrgProviderFilesResponse.FilesEntry
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>key</td>
+<td>string</td>
+<td><pre>
+json_name: key
+go_name: Key</pre></td>
+</tr><tr>
+<td>value</td>
+<td>bytes</td>
+<td><pre>
+json_name: value
+go_name: Value</pre></td>
 </tr>
 </table>
 
@@ -800,6 +1108,78 @@ go_name: TenantId</pre></td>
 <td><pre>
 json_name: entry
 go_name: Entry</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-catalog-getorgworkflowfilesrequest"></a>
+### cloud.v1.catalog.GetOrgWorkflowFilesRequest
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>id</td>
+<td>string</td>
+<td><pre>
+json_name: id
+go_name: Id</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+json_name: tenantId
+go_name: TenantId</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-catalog-getorgworkflowfilesresponse"></a>
+### cloud.v1.catalog.GetOrgWorkflowFilesResponse
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>files</td>
+<td><a href="#cloud-v1-catalog-getorgworkflowfilesresponse-filesentry">cloud.v1.catalog.GetOrgWorkflowFilesResponse.FilesEntry</a></td>
+<td><pre>
+json_name: files
+go_name: Files</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-catalog-getorgworkflowfilesresponse-filesentry"></a>
+### cloud.v1.catalog.GetOrgWorkflowFilesResponse.FilesEntry
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>key</td>
+<td>string</td>
+<td><pre>
+json_name: key
+go_name: Key</pre></td>
+</tr><tr>
+<td>value</td>
+<td>bytes</td>
+<td><pre>
+json_name: value
+go_name: Value</pre></td>
 </tr>
 </table>
 

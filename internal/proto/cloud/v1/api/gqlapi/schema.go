@@ -7134,6 +7134,13 @@ func NewSchema(srv *Server) (graphql.Schema, error) {
 				}
 				return obj.GetDuration(), nil
 			}},
+			"dbVersion": &graphql.Field{Type: graphql.NewNonNull(graphql.String), Resolve: func(p graphql.ResolveParams) (interface{}, error) {
+				obj, _ := p.Source.(*pb6.Run_Summary)
+				if obj == nil {
+					return nil, nil
+				}
+				return obj.GetDbVersion(), nil
+			}},
 		}
 	})})
 	o_Baked = graphql.NewObject(graphql.ObjectConfig{Name: "Baked", Fields: graphql.FieldsThunk(func() graphql.Fields {

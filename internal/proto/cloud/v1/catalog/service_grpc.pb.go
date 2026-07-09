@@ -19,25 +19,30 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	CatalogService_CreateInstanceEntry_FullMethodName  = "/cloud.v1.catalog.CatalogService/CreateInstanceEntry"
-	CatalogService_UpdateInstanceEntry_FullMethodName  = "/cloud.v1.catalog.CatalogService/UpdateInstanceEntry"
-	CatalogService_DeleteInstanceEntry_FullMethodName  = "/cloud.v1.catalog.CatalogService/DeleteInstanceEntry"
-	CatalogService_GetInstanceEntry_FullMethodName     = "/cloud.v1.catalog.CatalogService/GetInstanceEntry"
-	CatalogService_ListInstanceEntries_FullMethodName  = "/cloud.v1.catalog.CatalogService/ListInstanceEntries"
-	CatalogService_CreateOrgProvider_FullMethodName    = "/cloud.v1.catalog.CatalogService/CreateOrgProvider"
-	CatalogService_CreateOrgWorkflow_FullMethodName    = "/cloud.v1.catalog.CatalogService/CreateOrgWorkflow"
-	CatalogService_UpdateOrgProvider_FullMethodName    = "/cloud.v1.catalog.CatalogService/UpdateOrgProvider"
-	CatalogService_UpdateOrgWorkflow_FullMethodName    = "/cloud.v1.catalog.CatalogService/UpdateOrgWorkflow"
-	CatalogService_DeleteOrgProvider_FullMethodName    = "/cloud.v1.catalog.CatalogService/DeleteOrgProvider"
-	CatalogService_DeleteOrgWorkflow_FullMethodName    = "/cloud.v1.catalog.CatalogService/DeleteOrgWorkflow"
-	CatalogService_GetOrgProvider_FullMethodName       = "/cloud.v1.catalog.CatalogService/GetOrgProvider"
-	CatalogService_GetOrgWorkflow_FullMethodName       = "/cloud.v1.catalog.CatalogService/GetOrgWorkflow"
-	CatalogService_ListOrgProviders_FullMethodName     = "/cloud.v1.catalog.CatalogService/ListOrgProviders"
-	CatalogService_ListOrgWorkflows_FullMethodName     = "/cloud.v1.catalog.CatalogService/ListOrgWorkflows"
-	CatalogService_LinkInstanceProvider_FullMethodName = "/cloud.v1.catalog.CatalogService/LinkInstanceProvider"
-	CatalogService_LinkInstanceWorkflow_FullMethodName = "/cloud.v1.catalog.CatalogService/LinkInstanceWorkflow"
-	CatalogService_CheckCatalogProvider_FullMethodName = "/cloud.v1.catalog.CatalogService/CheckCatalogProvider"
-	CatalogService_CheckCatalogWorkflow_FullMethodName = "/cloud.v1.catalog.CatalogService/CheckCatalogWorkflow"
+	CatalogService_CreateInstanceEntry_FullMethodName   = "/cloud.v1.catalog.CatalogService/CreateInstanceEntry"
+	CatalogService_UpdateInstanceEntry_FullMethodName   = "/cloud.v1.catalog.CatalogService/UpdateInstanceEntry"
+	CatalogService_DeleteInstanceEntry_FullMethodName   = "/cloud.v1.catalog.CatalogService/DeleteInstanceEntry"
+	CatalogService_GetInstanceEntry_FullMethodName      = "/cloud.v1.catalog.CatalogService/GetInstanceEntry"
+	CatalogService_GetInstanceEntryFiles_FullMethodName = "/cloud.v1.catalog.CatalogService/GetInstanceEntryFiles"
+	CatalogService_ListInstanceEntries_FullMethodName   = "/cloud.v1.catalog.CatalogService/ListInstanceEntries"
+	CatalogService_CreateOrgProvider_FullMethodName     = "/cloud.v1.catalog.CatalogService/CreateOrgProvider"
+	CatalogService_CreateOrgWorkflow_FullMethodName     = "/cloud.v1.catalog.CatalogService/CreateOrgWorkflow"
+	CatalogService_UpdateOrgProvider_FullMethodName     = "/cloud.v1.catalog.CatalogService/UpdateOrgProvider"
+	CatalogService_UpdateOrgWorkflow_FullMethodName     = "/cloud.v1.catalog.CatalogService/UpdateOrgWorkflow"
+	CatalogService_DeleteOrgProvider_FullMethodName     = "/cloud.v1.catalog.CatalogService/DeleteOrgProvider"
+	CatalogService_DeleteOrgWorkflow_FullMethodName     = "/cloud.v1.catalog.CatalogService/DeleteOrgWorkflow"
+	CatalogService_GetOrgProvider_FullMethodName        = "/cloud.v1.catalog.CatalogService/GetOrgProvider"
+	CatalogService_GetOrgWorkflow_FullMethodName        = "/cloud.v1.catalog.CatalogService/GetOrgWorkflow"
+	CatalogService_GetOrgProviderFiles_FullMethodName   = "/cloud.v1.catalog.CatalogService/GetOrgProviderFiles"
+	CatalogService_GetOrgWorkflowFiles_FullMethodName   = "/cloud.v1.catalog.CatalogService/GetOrgWorkflowFiles"
+	CatalogService_ListOrgProviders_FullMethodName      = "/cloud.v1.catalog.CatalogService/ListOrgProviders"
+	CatalogService_ListOrgWorkflows_FullMethodName      = "/cloud.v1.catalog.CatalogService/ListOrgWorkflows"
+	CatalogService_LinkInstanceProvider_FullMethodName  = "/cloud.v1.catalog.CatalogService/LinkInstanceProvider"
+	CatalogService_LinkInstanceWorkflow_FullMethodName  = "/cloud.v1.catalog.CatalogService/LinkInstanceWorkflow"
+	CatalogService_CheckCatalogProvider_FullMethodName  = "/cloud.v1.catalog.CatalogService/CheckCatalogProvider"
+	CatalogService_CheckCatalogWorkflow_FullMethodName  = "/cloud.v1.catalog.CatalogService/CheckCatalogWorkflow"
+	CatalogService_CheckInstanceProvider_FullMethodName = "/cloud.v1.catalog.CatalogService/CheckInstanceProvider"
+	CatalogService_CheckInstanceWorkflow_FullMethodName = "/cloud.v1.catalog.CatalogService/CheckInstanceWorkflow"
 )
 
 // CatalogServiceClient is the client API for CatalogService service.
@@ -48,6 +53,7 @@ type CatalogServiceClient interface {
 	UpdateInstanceEntry(ctx context.Context, in *UpdateInstanceEntryRequest, opts ...grpc.CallOption) (*UpdateInstanceEntryResponse, error)
 	DeleteInstanceEntry(ctx context.Context, in *DeleteInstanceEntryRequest, opts ...grpc.CallOption) (*DeleteInstanceEntryResponse, error)
 	GetInstanceEntry(ctx context.Context, in *GetInstanceEntryRequest, opts ...grpc.CallOption) (*GetInstanceEntryResponse, error)
+	GetInstanceEntryFiles(ctx context.Context, in *GetInstanceEntryFilesRequest, opts ...grpc.CallOption) (*GetInstanceEntryFilesResponse, error)
 	ListInstanceEntries(ctx context.Context, in *ListInstanceEntriesRequest, opts ...grpc.CallOption) (*ListInstanceEntriesResponse, error)
 	CreateOrgProvider(ctx context.Context, in *CreateOrgProviderRequest, opts ...grpc.CallOption) (*CreateOrgProviderResponse, error)
 	CreateOrgWorkflow(ctx context.Context, in *CreateOrgWorkflowRequest, opts ...grpc.CallOption) (*CreateOrgWorkflowResponse, error)
@@ -57,12 +63,16 @@ type CatalogServiceClient interface {
 	DeleteOrgWorkflow(ctx context.Context, in *DeleteOrgWorkflowRequest, opts ...grpc.CallOption) (*DeleteOrgWorkflowResponse, error)
 	GetOrgProvider(ctx context.Context, in *GetOrgProviderRequest, opts ...grpc.CallOption) (*GetOrgProviderResponse, error)
 	GetOrgWorkflow(ctx context.Context, in *GetOrgWorkflowRequest, opts ...grpc.CallOption) (*GetOrgWorkflowResponse, error)
+	GetOrgProviderFiles(ctx context.Context, in *GetOrgProviderFilesRequest, opts ...grpc.CallOption) (*GetOrgProviderFilesResponse, error)
+	GetOrgWorkflowFiles(ctx context.Context, in *GetOrgWorkflowFilesRequest, opts ...grpc.CallOption) (*GetOrgWorkflowFilesResponse, error)
 	ListOrgProviders(ctx context.Context, in *ListOrgProvidersRequest, opts ...grpc.CallOption) (*ListOrgProvidersResponse, error)
 	ListOrgWorkflows(ctx context.Context, in *ListOrgWorkflowsRequest, opts ...grpc.CallOption) (*ListOrgWorkflowsResponse, error)
 	LinkInstanceProvider(ctx context.Context, in *LinkInstanceProviderRequest, opts ...grpc.CallOption) (*LinkInstanceProviderResponse, error)
 	LinkInstanceWorkflow(ctx context.Context, in *LinkInstanceWorkflowRequest, opts ...grpc.CallOption) (*LinkInstanceWorkflowResponse, error)
 	CheckCatalogProvider(ctx context.Context, in *CheckCatalogProviderRequest, opts ...grpc.CallOption) (*CheckCatalogProviderResponse, error)
 	CheckCatalogWorkflow(ctx context.Context, in *CheckCatalogWorkflowRequest, opts ...grpc.CallOption) (*CheckCatalogWorkflowResponse, error)
+	CheckInstanceProvider(ctx context.Context, in *CheckInstanceProviderRequest, opts ...grpc.CallOption) (*CheckInstanceProviderResponse, error)
+	CheckInstanceWorkflow(ctx context.Context, in *CheckInstanceWorkflowRequest, opts ...grpc.CallOption) (*CheckInstanceWorkflowResponse, error)
 }
 
 type catalogServiceClient struct {
@@ -107,6 +117,16 @@ func (c *catalogServiceClient) GetInstanceEntry(ctx context.Context, in *GetInst
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(GetInstanceEntryResponse)
 	err := c.cc.Invoke(ctx, CatalogService_GetInstanceEntry_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *catalogServiceClient) GetInstanceEntryFiles(ctx context.Context, in *GetInstanceEntryFilesRequest, opts ...grpc.CallOption) (*GetInstanceEntryFilesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetInstanceEntryFilesResponse)
+	err := c.cc.Invoke(ctx, CatalogService_GetInstanceEntryFiles_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -203,6 +223,26 @@ func (c *catalogServiceClient) GetOrgWorkflow(ctx context.Context, in *GetOrgWor
 	return out, nil
 }
 
+func (c *catalogServiceClient) GetOrgProviderFiles(ctx context.Context, in *GetOrgProviderFilesRequest, opts ...grpc.CallOption) (*GetOrgProviderFilesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetOrgProviderFilesResponse)
+	err := c.cc.Invoke(ctx, CatalogService_GetOrgProviderFiles_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *catalogServiceClient) GetOrgWorkflowFiles(ctx context.Context, in *GetOrgWorkflowFilesRequest, opts ...grpc.CallOption) (*GetOrgWorkflowFilesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetOrgWorkflowFilesResponse)
+	err := c.cc.Invoke(ctx, CatalogService_GetOrgWorkflowFiles_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *catalogServiceClient) ListOrgProviders(ctx context.Context, in *ListOrgProvidersRequest, opts ...grpc.CallOption) (*ListOrgProvidersResponse, error) {
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(ListOrgProvidersResponse)
@@ -263,6 +303,26 @@ func (c *catalogServiceClient) CheckCatalogWorkflow(ctx context.Context, in *Che
 	return out, nil
 }
 
+func (c *catalogServiceClient) CheckInstanceProvider(ctx context.Context, in *CheckInstanceProviderRequest, opts ...grpc.CallOption) (*CheckInstanceProviderResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CheckInstanceProviderResponse)
+	err := c.cc.Invoke(ctx, CatalogService_CheckInstanceProvider_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *catalogServiceClient) CheckInstanceWorkflow(ctx context.Context, in *CheckInstanceWorkflowRequest, opts ...grpc.CallOption) (*CheckInstanceWorkflowResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(CheckInstanceWorkflowResponse)
+	err := c.cc.Invoke(ctx, CatalogService_CheckInstanceWorkflow_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // CatalogServiceServer is the server API for CatalogService service.
 // All implementations must embed UnimplementedCatalogServiceServer
 // for forward compatibility.
@@ -271,6 +331,7 @@ type CatalogServiceServer interface {
 	UpdateInstanceEntry(context.Context, *UpdateInstanceEntryRequest) (*UpdateInstanceEntryResponse, error)
 	DeleteInstanceEntry(context.Context, *DeleteInstanceEntryRequest) (*DeleteInstanceEntryResponse, error)
 	GetInstanceEntry(context.Context, *GetInstanceEntryRequest) (*GetInstanceEntryResponse, error)
+	GetInstanceEntryFiles(context.Context, *GetInstanceEntryFilesRequest) (*GetInstanceEntryFilesResponse, error)
 	ListInstanceEntries(context.Context, *ListInstanceEntriesRequest) (*ListInstanceEntriesResponse, error)
 	CreateOrgProvider(context.Context, *CreateOrgProviderRequest) (*CreateOrgProviderResponse, error)
 	CreateOrgWorkflow(context.Context, *CreateOrgWorkflowRequest) (*CreateOrgWorkflowResponse, error)
@@ -280,12 +341,16 @@ type CatalogServiceServer interface {
 	DeleteOrgWorkflow(context.Context, *DeleteOrgWorkflowRequest) (*DeleteOrgWorkflowResponse, error)
 	GetOrgProvider(context.Context, *GetOrgProviderRequest) (*GetOrgProviderResponse, error)
 	GetOrgWorkflow(context.Context, *GetOrgWorkflowRequest) (*GetOrgWorkflowResponse, error)
+	GetOrgProviderFiles(context.Context, *GetOrgProviderFilesRequest) (*GetOrgProviderFilesResponse, error)
+	GetOrgWorkflowFiles(context.Context, *GetOrgWorkflowFilesRequest) (*GetOrgWorkflowFilesResponse, error)
 	ListOrgProviders(context.Context, *ListOrgProvidersRequest) (*ListOrgProvidersResponse, error)
 	ListOrgWorkflows(context.Context, *ListOrgWorkflowsRequest) (*ListOrgWorkflowsResponse, error)
 	LinkInstanceProvider(context.Context, *LinkInstanceProviderRequest) (*LinkInstanceProviderResponse, error)
 	LinkInstanceWorkflow(context.Context, *LinkInstanceWorkflowRequest) (*LinkInstanceWorkflowResponse, error)
 	CheckCatalogProvider(context.Context, *CheckCatalogProviderRequest) (*CheckCatalogProviderResponse, error)
 	CheckCatalogWorkflow(context.Context, *CheckCatalogWorkflowRequest) (*CheckCatalogWorkflowResponse, error)
+	CheckInstanceProvider(context.Context, *CheckInstanceProviderRequest) (*CheckInstanceProviderResponse, error)
+	CheckInstanceWorkflow(context.Context, *CheckInstanceWorkflowRequest) (*CheckInstanceWorkflowResponse, error)
 	mustEmbedUnimplementedCatalogServiceServer()
 }
 
@@ -307,6 +372,9 @@ func (UnimplementedCatalogServiceServer) DeleteInstanceEntry(context.Context, *D
 }
 func (UnimplementedCatalogServiceServer) GetInstanceEntry(context.Context, *GetInstanceEntryRequest) (*GetInstanceEntryResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetInstanceEntry not implemented")
+}
+func (UnimplementedCatalogServiceServer) GetInstanceEntryFiles(context.Context, *GetInstanceEntryFilesRequest) (*GetInstanceEntryFilesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetInstanceEntryFiles not implemented")
 }
 func (UnimplementedCatalogServiceServer) ListInstanceEntries(context.Context, *ListInstanceEntriesRequest) (*ListInstanceEntriesResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListInstanceEntries not implemented")
@@ -335,6 +403,12 @@ func (UnimplementedCatalogServiceServer) GetOrgProvider(context.Context, *GetOrg
 func (UnimplementedCatalogServiceServer) GetOrgWorkflow(context.Context, *GetOrgWorkflowRequest) (*GetOrgWorkflowResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetOrgWorkflow not implemented")
 }
+func (UnimplementedCatalogServiceServer) GetOrgProviderFiles(context.Context, *GetOrgProviderFilesRequest) (*GetOrgProviderFilesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetOrgProviderFiles not implemented")
+}
+func (UnimplementedCatalogServiceServer) GetOrgWorkflowFiles(context.Context, *GetOrgWorkflowFilesRequest) (*GetOrgWorkflowFilesResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GetOrgWorkflowFiles not implemented")
+}
 func (UnimplementedCatalogServiceServer) ListOrgProviders(context.Context, *ListOrgProvidersRequest) (*ListOrgProvidersResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method ListOrgProviders not implemented")
 }
@@ -352,6 +426,12 @@ func (UnimplementedCatalogServiceServer) CheckCatalogProvider(context.Context, *
 }
 func (UnimplementedCatalogServiceServer) CheckCatalogWorkflow(context.Context, *CheckCatalogWorkflowRequest) (*CheckCatalogWorkflowResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method CheckCatalogWorkflow not implemented")
+}
+func (UnimplementedCatalogServiceServer) CheckInstanceProvider(context.Context, *CheckInstanceProviderRequest) (*CheckInstanceProviderResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CheckInstanceProvider not implemented")
+}
+func (UnimplementedCatalogServiceServer) CheckInstanceWorkflow(context.Context, *CheckInstanceWorkflowRequest) (*CheckInstanceWorkflowResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method CheckInstanceWorkflow not implemented")
 }
 func (UnimplementedCatalogServiceServer) mustEmbedUnimplementedCatalogServiceServer() {}
 func (UnimplementedCatalogServiceServer) testEmbeddedByValue()                        {}
@@ -442,6 +522,24 @@ func _CatalogService_GetInstanceEntry_Handler(srv interface{}, ctx context.Conte
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(CatalogServiceServer).GetInstanceEntry(ctx, req.(*GetInstanceEntryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CatalogService_GetInstanceEntryFiles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetInstanceEntryFilesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CatalogServiceServer).GetInstanceEntryFiles(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CatalogService_GetInstanceEntryFiles_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CatalogServiceServer).GetInstanceEntryFiles(ctx, req.(*GetInstanceEntryFilesRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -608,6 +706,42 @@ func _CatalogService_GetOrgWorkflow_Handler(srv interface{}, ctx context.Context
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CatalogService_GetOrgProviderFiles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOrgProviderFilesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CatalogServiceServer).GetOrgProviderFiles(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CatalogService_GetOrgProviderFiles_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CatalogServiceServer).GetOrgProviderFiles(ctx, req.(*GetOrgProviderFilesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CatalogService_GetOrgWorkflowFiles_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetOrgWorkflowFilesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CatalogServiceServer).GetOrgWorkflowFiles(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CatalogService_GetOrgWorkflowFiles_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CatalogServiceServer).GetOrgWorkflowFiles(ctx, req.(*GetOrgWorkflowFilesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 func _CatalogService_ListOrgProviders_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
 	in := new(ListOrgProvidersRequest)
 	if err := dec(in); err != nil {
@@ -716,6 +850,42 @@ func _CatalogService_CheckCatalogWorkflow_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _CatalogService_CheckInstanceProvider_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CheckInstanceProviderRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CatalogServiceServer).CheckInstanceProvider(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CatalogService_CheckInstanceProvider_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CatalogServiceServer).CheckInstanceProvider(ctx, req.(*CheckInstanceProviderRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CatalogService_CheckInstanceWorkflow_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CheckInstanceWorkflowRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CatalogServiceServer).CheckInstanceWorkflow(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: CatalogService_CheckInstanceWorkflow_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CatalogServiceServer).CheckInstanceWorkflow(ctx, req.(*CheckInstanceWorkflowRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // CatalogService_ServiceDesc is the grpc.ServiceDesc for CatalogService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -738,6 +908,10 @@ var CatalogService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetInstanceEntry",
 			Handler:    _CatalogService_GetInstanceEntry_Handler,
+		},
+		{
+			MethodName: "GetInstanceEntryFiles",
+			Handler:    _CatalogService_GetInstanceEntryFiles_Handler,
 		},
 		{
 			MethodName: "ListInstanceEntries",
@@ -776,6 +950,14 @@ var CatalogService_ServiceDesc = grpc.ServiceDesc{
 			Handler:    _CatalogService_GetOrgWorkflow_Handler,
 		},
 		{
+			MethodName: "GetOrgProviderFiles",
+			Handler:    _CatalogService_GetOrgProviderFiles_Handler,
+		},
+		{
+			MethodName: "GetOrgWorkflowFiles",
+			Handler:    _CatalogService_GetOrgWorkflowFiles_Handler,
+		},
+		{
 			MethodName: "ListOrgProviders",
 			Handler:    _CatalogService_ListOrgProviders_Handler,
 		},
@@ -798,6 +980,14 @@ var CatalogService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CheckCatalogWorkflow",
 			Handler:    _CatalogService_CheckCatalogWorkflow_Handler,
+		},
+		{
+			MethodName: "CheckInstanceProvider",
+			Handler:    _CatalogService_CheckInstanceProvider_Handler,
+		},
+		{
+			MethodName: "CheckInstanceWorkflow",
+			Handler:    _CatalogService_CheckInstanceWorkflow_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

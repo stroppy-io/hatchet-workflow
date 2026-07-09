@@ -45,6 +45,9 @@ const (
 	// CatalogServiceGetInstanceEntryProcedure is the fully-qualified name of the CatalogService's
 	// GetInstanceEntry RPC.
 	CatalogServiceGetInstanceEntryProcedure = "/cloud.v1.catalog.CatalogService/GetInstanceEntry"
+	// CatalogServiceGetInstanceEntryFilesProcedure is the fully-qualified name of the CatalogService's
+	// GetInstanceEntryFiles RPC.
+	CatalogServiceGetInstanceEntryFilesProcedure = "/cloud.v1.catalog.CatalogService/GetInstanceEntryFiles"
 	// CatalogServiceListInstanceEntriesProcedure is the fully-qualified name of the CatalogService's
 	// ListInstanceEntries RPC.
 	CatalogServiceListInstanceEntriesProcedure = "/cloud.v1.catalog.CatalogService/ListInstanceEntries"
@@ -72,6 +75,12 @@ const (
 	// CatalogServiceGetOrgWorkflowProcedure is the fully-qualified name of the CatalogService's
 	// GetOrgWorkflow RPC.
 	CatalogServiceGetOrgWorkflowProcedure = "/cloud.v1.catalog.CatalogService/GetOrgWorkflow"
+	// CatalogServiceGetOrgProviderFilesProcedure is the fully-qualified name of the CatalogService's
+	// GetOrgProviderFiles RPC.
+	CatalogServiceGetOrgProviderFilesProcedure = "/cloud.v1.catalog.CatalogService/GetOrgProviderFiles"
+	// CatalogServiceGetOrgWorkflowFilesProcedure is the fully-qualified name of the CatalogService's
+	// GetOrgWorkflowFiles RPC.
+	CatalogServiceGetOrgWorkflowFilesProcedure = "/cloud.v1.catalog.CatalogService/GetOrgWorkflowFiles"
 	// CatalogServiceListOrgProvidersProcedure is the fully-qualified name of the CatalogService's
 	// ListOrgProviders RPC.
 	CatalogServiceListOrgProvidersProcedure = "/cloud.v1.catalog.CatalogService/ListOrgProviders"
@@ -90,6 +99,12 @@ const (
 	// CatalogServiceCheckCatalogWorkflowProcedure is the fully-qualified name of the CatalogService's
 	// CheckCatalogWorkflow RPC.
 	CatalogServiceCheckCatalogWorkflowProcedure = "/cloud.v1.catalog.CatalogService/CheckCatalogWorkflow"
+	// CatalogServiceCheckInstanceProviderProcedure is the fully-qualified name of the CatalogService's
+	// CheckInstanceProvider RPC.
+	CatalogServiceCheckInstanceProviderProcedure = "/cloud.v1.catalog.CatalogService/CheckInstanceProvider"
+	// CatalogServiceCheckInstanceWorkflowProcedure is the fully-qualified name of the CatalogService's
+	// CheckInstanceWorkflow RPC.
+	CatalogServiceCheckInstanceWorkflowProcedure = "/cloud.v1.catalog.CatalogService/CheckInstanceWorkflow"
 )
 
 // CatalogServiceClient is a client for the cloud.v1.catalog.CatalogService service.
@@ -98,6 +113,7 @@ type CatalogServiceClient interface {
 	UpdateInstanceEntry(context.Context, *catalog.UpdateInstanceEntryRequest) (*catalog.UpdateInstanceEntryResponse, error)
 	DeleteInstanceEntry(context.Context, *catalog.DeleteInstanceEntryRequest) (*catalog.DeleteInstanceEntryResponse, error)
 	GetInstanceEntry(context.Context, *catalog.GetInstanceEntryRequest) (*catalog.GetInstanceEntryResponse, error)
+	GetInstanceEntryFiles(context.Context, *catalog.GetInstanceEntryFilesRequest) (*catalog.GetInstanceEntryFilesResponse, error)
 	ListInstanceEntries(context.Context, *catalog.ListInstanceEntriesRequest) (*catalog.ListInstanceEntriesResponse, error)
 	CreateOrgProvider(context.Context, *catalog.CreateOrgProviderRequest) (*catalog.CreateOrgProviderResponse, error)
 	CreateOrgWorkflow(context.Context, *catalog.CreateOrgWorkflowRequest) (*catalog.CreateOrgWorkflowResponse, error)
@@ -107,12 +123,16 @@ type CatalogServiceClient interface {
 	DeleteOrgWorkflow(context.Context, *catalog.DeleteOrgWorkflowRequest) (*catalog.DeleteOrgWorkflowResponse, error)
 	GetOrgProvider(context.Context, *catalog.GetOrgProviderRequest) (*catalog.GetOrgProviderResponse, error)
 	GetOrgWorkflow(context.Context, *catalog.GetOrgWorkflowRequest) (*catalog.GetOrgWorkflowResponse, error)
+	GetOrgProviderFiles(context.Context, *catalog.GetOrgProviderFilesRequest) (*catalog.GetOrgProviderFilesResponse, error)
+	GetOrgWorkflowFiles(context.Context, *catalog.GetOrgWorkflowFilesRequest) (*catalog.GetOrgWorkflowFilesResponse, error)
 	ListOrgProviders(context.Context, *catalog.ListOrgProvidersRequest) (*catalog.ListOrgProvidersResponse, error)
 	ListOrgWorkflows(context.Context, *catalog.ListOrgWorkflowsRequest) (*catalog.ListOrgWorkflowsResponse, error)
 	LinkInstanceProvider(context.Context, *catalog.LinkInstanceProviderRequest) (*catalog.LinkInstanceProviderResponse, error)
 	LinkInstanceWorkflow(context.Context, *catalog.LinkInstanceWorkflowRequest) (*catalog.LinkInstanceWorkflowResponse, error)
 	CheckCatalogProvider(context.Context, *catalog.CheckCatalogProviderRequest) (*catalog.CheckCatalogProviderResponse, error)
 	CheckCatalogWorkflow(context.Context, *catalog.CheckCatalogWorkflowRequest) (*catalog.CheckCatalogWorkflowResponse, error)
+	CheckInstanceProvider(context.Context, *catalog.CheckInstanceProviderRequest) (*catalog.CheckInstanceProviderResponse, error)
+	CheckInstanceWorkflow(context.Context, *catalog.CheckInstanceWorkflowRequest) (*catalog.CheckInstanceWorkflowResponse, error)
 }
 
 // NewCatalogServiceClient constructs a client for the cloud.v1.catalog.CatalogService service. By
@@ -148,6 +168,12 @@ func NewCatalogServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			httpClient,
 			baseURL+CatalogServiceGetInstanceEntryProcedure,
 			connect.WithSchema(catalogServiceMethods.ByName("GetInstanceEntry")),
+			connect.WithClientOptions(opts...),
+		),
+		getInstanceEntryFiles: connect.NewClient[catalog.GetInstanceEntryFilesRequest, catalog.GetInstanceEntryFilesResponse](
+			httpClient,
+			baseURL+CatalogServiceGetInstanceEntryFilesProcedure,
+			connect.WithSchema(catalogServiceMethods.ByName("GetInstanceEntryFiles")),
 			connect.WithClientOptions(opts...),
 		),
 		listInstanceEntries: connect.NewClient[catalog.ListInstanceEntriesRequest, catalog.ListInstanceEntriesResponse](
@@ -204,6 +230,18 @@ func NewCatalogServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(catalogServiceMethods.ByName("GetOrgWorkflow")),
 			connect.WithClientOptions(opts...),
 		),
+		getOrgProviderFiles: connect.NewClient[catalog.GetOrgProviderFilesRequest, catalog.GetOrgProviderFilesResponse](
+			httpClient,
+			baseURL+CatalogServiceGetOrgProviderFilesProcedure,
+			connect.WithSchema(catalogServiceMethods.ByName("GetOrgProviderFiles")),
+			connect.WithClientOptions(opts...),
+		),
+		getOrgWorkflowFiles: connect.NewClient[catalog.GetOrgWorkflowFilesRequest, catalog.GetOrgWorkflowFilesResponse](
+			httpClient,
+			baseURL+CatalogServiceGetOrgWorkflowFilesProcedure,
+			connect.WithSchema(catalogServiceMethods.ByName("GetOrgWorkflowFiles")),
+			connect.WithClientOptions(opts...),
+		),
 		listOrgProviders: connect.NewClient[catalog.ListOrgProvidersRequest, catalog.ListOrgProvidersResponse](
 			httpClient,
 			baseURL+CatalogServiceListOrgProvidersProcedure,
@@ -240,30 +278,47 @@ func NewCatalogServiceClient(httpClient connect.HTTPClient, baseURL string, opts
 			connect.WithSchema(catalogServiceMethods.ByName("CheckCatalogWorkflow")),
 			connect.WithClientOptions(opts...),
 		),
+		checkInstanceProvider: connect.NewClient[catalog.CheckInstanceProviderRequest, catalog.CheckInstanceProviderResponse](
+			httpClient,
+			baseURL+CatalogServiceCheckInstanceProviderProcedure,
+			connect.WithSchema(catalogServiceMethods.ByName("CheckInstanceProvider")),
+			connect.WithClientOptions(opts...),
+		),
+		checkInstanceWorkflow: connect.NewClient[catalog.CheckInstanceWorkflowRequest, catalog.CheckInstanceWorkflowResponse](
+			httpClient,
+			baseURL+CatalogServiceCheckInstanceWorkflowProcedure,
+			connect.WithSchema(catalogServiceMethods.ByName("CheckInstanceWorkflow")),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
 // catalogServiceClient implements CatalogServiceClient.
 type catalogServiceClient struct {
-	createInstanceEntry  *connect.Client[catalog.CreateInstanceEntryRequest, catalog.CreateInstanceEntryResponse]
-	updateInstanceEntry  *connect.Client[catalog.UpdateInstanceEntryRequest, catalog.UpdateInstanceEntryResponse]
-	deleteInstanceEntry  *connect.Client[catalog.DeleteInstanceEntryRequest, catalog.DeleteInstanceEntryResponse]
-	getInstanceEntry     *connect.Client[catalog.GetInstanceEntryRequest, catalog.GetInstanceEntryResponse]
-	listInstanceEntries  *connect.Client[catalog.ListInstanceEntriesRequest, catalog.ListInstanceEntriesResponse]
-	createOrgProvider    *connect.Client[catalog.CreateOrgProviderRequest, catalog.CreateOrgProviderResponse]
-	createOrgWorkflow    *connect.Client[catalog.CreateOrgWorkflowRequest, catalog.CreateOrgWorkflowResponse]
-	updateOrgProvider    *connect.Client[catalog.UpdateOrgProviderRequest, catalog.UpdateOrgProviderResponse]
-	updateOrgWorkflow    *connect.Client[catalog.UpdateOrgWorkflowRequest, catalog.UpdateOrgWorkflowResponse]
-	deleteOrgProvider    *connect.Client[catalog.DeleteOrgProviderRequest, catalog.DeleteOrgProviderResponse]
-	deleteOrgWorkflow    *connect.Client[catalog.DeleteOrgWorkflowRequest, catalog.DeleteOrgWorkflowResponse]
-	getOrgProvider       *connect.Client[catalog.GetOrgProviderRequest, catalog.GetOrgProviderResponse]
-	getOrgWorkflow       *connect.Client[catalog.GetOrgWorkflowRequest, catalog.GetOrgWorkflowResponse]
-	listOrgProviders     *connect.Client[catalog.ListOrgProvidersRequest, catalog.ListOrgProvidersResponse]
-	listOrgWorkflows     *connect.Client[catalog.ListOrgWorkflowsRequest, catalog.ListOrgWorkflowsResponse]
-	linkInstanceProvider *connect.Client[catalog.LinkInstanceProviderRequest, catalog.LinkInstanceProviderResponse]
-	linkInstanceWorkflow *connect.Client[catalog.LinkInstanceWorkflowRequest, catalog.LinkInstanceWorkflowResponse]
-	checkCatalogProvider *connect.Client[catalog.CheckCatalogProviderRequest, catalog.CheckCatalogProviderResponse]
-	checkCatalogWorkflow *connect.Client[catalog.CheckCatalogWorkflowRequest, catalog.CheckCatalogWorkflowResponse]
+	createInstanceEntry   *connect.Client[catalog.CreateInstanceEntryRequest, catalog.CreateInstanceEntryResponse]
+	updateInstanceEntry   *connect.Client[catalog.UpdateInstanceEntryRequest, catalog.UpdateInstanceEntryResponse]
+	deleteInstanceEntry   *connect.Client[catalog.DeleteInstanceEntryRequest, catalog.DeleteInstanceEntryResponse]
+	getInstanceEntry      *connect.Client[catalog.GetInstanceEntryRequest, catalog.GetInstanceEntryResponse]
+	getInstanceEntryFiles *connect.Client[catalog.GetInstanceEntryFilesRequest, catalog.GetInstanceEntryFilesResponse]
+	listInstanceEntries   *connect.Client[catalog.ListInstanceEntriesRequest, catalog.ListInstanceEntriesResponse]
+	createOrgProvider     *connect.Client[catalog.CreateOrgProviderRequest, catalog.CreateOrgProviderResponse]
+	createOrgWorkflow     *connect.Client[catalog.CreateOrgWorkflowRequest, catalog.CreateOrgWorkflowResponse]
+	updateOrgProvider     *connect.Client[catalog.UpdateOrgProviderRequest, catalog.UpdateOrgProviderResponse]
+	updateOrgWorkflow     *connect.Client[catalog.UpdateOrgWorkflowRequest, catalog.UpdateOrgWorkflowResponse]
+	deleteOrgProvider     *connect.Client[catalog.DeleteOrgProviderRequest, catalog.DeleteOrgProviderResponse]
+	deleteOrgWorkflow     *connect.Client[catalog.DeleteOrgWorkflowRequest, catalog.DeleteOrgWorkflowResponse]
+	getOrgProvider        *connect.Client[catalog.GetOrgProviderRequest, catalog.GetOrgProviderResponse]
+	getOrgWorkflow        *connect.Client[catalog.GetOrgWorkflowRequest, catalog.GetOrgWorkflowResponse]
+	getOrgProviderFiles   *connect.Client[catalog.GetOrgProviderFilesRequest, catalog.GetOrgProviderFilesResponse]
+	getOrgWorkflowFiles   *connect.Client[catalog.GetOrgWorkflowFilesRequest, catalog.GetOrgWorkflowFilesResponse]
+	listOrgProviders      *connect.Client[catalog.ListOrgProvidersRequest, catalog.ListOrgProvidersResponse]
+	listOrgWorkflows      *connect.Client[catalog.ListOrgWorkflowsRequest, catalog.ListOrgWorkflowsResponse]
+	linkInstanceProvider  *connect.Client[catalog.LinkInstanceProviderRequest, catalog.LinkInstanceProviderResponse]
+	linkInstanceWorkflow  *connect.Client[catalog.LinkInstanceWorkflowRequest, catalog.LinkInstanceWorkflowResponse]
+	checkCatalogProvider  *connect.Client[catalog.CheckCatalogProviderRequest, catalog.CheckCatalogProviderResponse]
+	checkCatalogWorkflow  *connect.Client[catalog.CheckCatalogWorkflowRequest, catalog.CheckCatalogWorkflowResponse]
+	checkInstanceProvider *connect.Client[catalog.CheckInstanceProviderRequest, catalog.CheckInstanceProviderResponse]
+	checkInstanceWorkflow *connect.Client[catalog.CheckInstanceWorkflowRequest, catalog.CheckInstanceWorkflowResponse]
 }
 
 // CreateInstanceEntry calls cloud.v1.catalog.CatalogService.CreateInstanceEntry.
@@ -296,6 +351,15 @@ func (c *catalogServiceClient) DeleteInstanceEntry(ctx context.Context, req *cat
 // GetInstanceEntry calls cloud.v1.catalog.CatalogService.GetInstanceEntry.
 func (c *catalogServiceClient) GetInstanceEntry(ctx context.Context, req *catalog.GetInstanceEntryRequest) (*catalog.GetInstanceEntryResponse, error) {
 	response, err := c.getInstanceEntry.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// GetInstanceEntryFiles calls cloud.v1.catalog.CatalogService.GetInstanceEntryFiles.
+func (c *catalogServiceClient) GetInstanceEntryFiles(ctx context.Context, req *catalog.GetInstanceEntryFilesRequest) (*catalog.GetInstanceEntryFilesResponse, error) {
+	response, err := c.getInstanceEntryFiles.CallUnary(ctx, connect.NewRequest(req))
 	if response != nil {
 		return response.Msg, err
 	}
@@ -383,6 +447,24 @@ func (c *catalogServiceClient) GetOrgWorkflow(ctx context.Context, req *catalog.
 	return nil, err
 }
 
+// GetOrgProviderFiles calls cloud.v1.catalog.CatalogService.GetOrgProviderFiles.
+func (c *catalogServiceClient) GetOrgProviderFiles(ctx context.Context, req *catalog.GetOrgProviderFilesRequest) (*catalog.GetOrgProviderFilesResponse, error) {
+	response, err := c.getOrgProviderFiles.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// GetOrgWorkflowFiles calls cloud.v1.catalog.CatalogService.GetOrgWorkflowFiles.
+func (c *catalogServiceClient) GetOrgWorkflowFiles(ctx context.Context, req *catalog.GetOrgWorkflowFilesRequest) (*catalog.GetOrgWorkflowFilesResponse, error) {
+	response, err := c.getOrgWorkflowFiles.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // ListOrgProviders calls cloud.v1.catalog.CatalogService.ListOrgProviders.
 func (c *catalogServiceClient) ListOrgProviders(ctx context.Context, req *catalog.ListOrgProvidersRequest) (*catalog.ListOrgProvidersResponse, error) {
 	response, err := c.listOrgProviders.CallUnary(ctx, connect.NewRequest(req))
@@ -437,12 +519,31 @@ func (c *catalogServiceClient) CheckCatalogWorkflow(ctx context.Context, req *ca
 	return nil, err
 }
 
+// CheckInstanceProvider calls cloud.v1.catalog.CatalogService.CheckInstanceProvider.
+func (c *catalogServiceClient) CheckInstanceProvider(ctx context.Context, req *catalog.CheckInstanceProviderRequest) (*catalog.CheckInstanceProviderResponse, error) {
+	response, err := c.checkInstanceProvider.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
+// CheckInstanceWorkflow calls cloud.v1.catalog.CatalogService.CheckInstanceWorkflow.
+func (c *catalogServiceClient) CheckInstanceWorkflow(ctx context.Context, req *catalog.CheckInstanceWorkflowRequest) (*catalog.CheckInstanceWorkflowResponse, error) {
+	response, err := c.checkInstanceWorkflow.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // CatalogServiceHandler is an implementation of the cloud.v1.catalog.CatalogService service.
 type CatalogServiceHandler interface {
 	CreateInstanceEntry(context.Context, *catalog.CreateInstanceEntryRequest) (*catalog.CreateInstanceEntryResponse, error)
 	UpdateInstanceEntry(context.Context, *catalog.UpdateInstanceEntryRequest) (*catalog.UpdateInstanceEntryResponse, error)
 	DeleteInstanceEntry(context.Context, *catalog.DeleteInstanceEntryRequest) (*catalog.DeleteInstanceEntryResponse, error)
 	GetInstanceEntry(context.Context, *catalog.GetInstanceEntryRequest) (*catalog.GetInstanceEntryResponse, error)
+	GetInstanceEntryFiles(context.Context, *catalog.GetInstanceEntryFilesRequest) (*catalog.GetInstanceEntryFilesResponse, error)
 	ListInstanceEntries(context.Context, *catalog.ListInstanceEntriesRequest) (*catalog.ListInstanceEntriesResponse, error)
 	CreateOrgProvider(context.Context, *catalog.CreateOrgProviderRequest) (*catalog.CreateOrgProviderResponse, error)
 	CreateOrgWorkflow(context.Context, *catalog.CreateOrgWorkflowRequest) (*catalog.CreateOrgWorkflowResponse, error)
@@ -452,12 +553,16 @@ type CatalogServiceHandler interface {
 	DeleteOrgWorkflow(context.Context, *catalog.DeleteOrgWorkflowRequest) (*catalog.DeleteOrgWorkflowResponse, error)
 	GetOrgProvider(context.Context, *catalog.GetOrgProviderRequest) (*catalog.GetOrgProviderResponse, error)
 	GetOrgWorkflow(context.Context, *catalog.GetOrgWorkflowRequest) (*catalog.GetOrgWorkflowResponse, error)
+	GetOrgProviderFiles(context.Context, *catalog.GetOrgProviderFilesRequest) (*catalog.GetOrgProviderFilesResponse, error)
+	GetOrgWorkflowFiles(context.Context, *catalog.GetOrgWorkflowFilesRequest) (*catalog.GetOrgWorkflowFilesResponse, error)
 	ListOrgProviders(context.Context, *catalog.ListOrgProvidersRequest) (*catalog.ListOrgProvidersResponse, error)
 	ListOrgWorkflows(context.Context, *catalog.ListOrgWorkflowsRequest) (*catalog.ListOrgWorkflowsResponse, error)
 	LinkInstanceProvider(context.Context, *catalog.LinkInstanceProviderRequest) (*catalog.LinkInstanceProviderResponse, error)
 	LinkInstanceWorkflow(context.Context, *catalog.LinkInstanceWorkflowRequest) (*catalog.LinkInstanceWorkflowResponse, error)
 	CheckCatalogProvider(context.Context, *catalog.CheckCatalogProviderRequest) (*catalog.CheckCatalogProviderResponse, error)
 	CheckCatalogWorkflow(context.Context, *catalog.CheckCatalogWorkflowRequest) (*catalog.CheckCatalogWorkflowResponse, error)
+	CheckInstanceProvider(context.Context, *catalog.CheckInstanceProviderRequest) (*catalog.CheckInstanceProviderResponse, error)
+	CheckInstanceWorkflow(context.Context, *catalog.CheckInstanceWorkflowRequest) (*catalog.CheckInstanceWorkflowResponse, error)
 }
 
 // NewCatalogServiceHandler builds an HTTP handler from the service implementation. It returns the
@@ -489,6 +594,12 @@ func NewCatalogServiceHandler(svc CatalogServiceHandler, opts ...connect.Handler
 		CatalogServiceGetInstanceEntryProcedure,
 		svc.GetInstanceEntry,
 		connect.WithSchema(catalogServiceMethods.ByName("GetInstanceEntry")),
+		connect.WithHandlerOptions(opts...),
+	)
+	catalogServiceGetInstanceEntryFilesHandler := connect.NewUnaryHandlerSimple(
+		CatalogServiceGetInstanceEntryFilesProcedure,
+		svc.GetInstanceEntryFiles,
+		connect.WithSchema(catalogServiceMethods.ByName("GetInstanceEntryFiles")),
 		connect.WithHandlerOptions(opts...),
 	)
 	catalogServiceListInstanceEntriesHandler := connect.NewUnaryHandlerSimple(
@@ -545,6 +656,18 @@ func NewCatalogServiceHandler(svc CatalogServiceHandler, opts ...connect.Handler
 		connect.WithSchema(catalogServiceMethods.ByName("GetOrgWorkflow")),
 		connect.WithHandlerOptions(opts...),
 	)
+	catalogServiceGetOrgProviderFilesHandler := connect.NewUnaryHandlerSimple(
+		CatalogServiceGetOrgProviderFilesProcedure,
+		svc.GetOrgProviderFiles,
+		connect.WithSchema(catalogServiceMethods.ByName("GetOrgProviderFiles")),
+		connect.WithHandlerOptions(opts...),
+	)
+	catalogServiceGetOrgWorkflowFilesHandler := connect.NewUnaryHandlerSimple(
+		CatalogServiceGetOrgWorkflowFilesProcedure,
+		svc.GetOrgWorkflowFiles,
+		connect.WithSchema(catalogServiceMethods.ByName("GetOrgWorkflowFiles")),
+		connect.WithHandlerOptions(opts...),
+	)
 	catalogServiceListOrgProvidersHandler := connect.NewUnaryHandlerSimple(
 		CatalogServiceListOrgProvidersProcedure,
 		svc.ListOrgProviders,
@@ -581,6 +704,18 @@ func NewCatalogServiceHandler(svc CatalogServiceHandler, opts ...connect.Handler
 		connect.WithSchema(catalogServiceMethods.ByName("CheckCatalogWorkflow")),
 		connect.WithHandlerOptions(opts...),
 	)
+	catalogServiceCheckInstanceProviderHandler := connect.NewUnaryHandlerSimple(
+		CatalogServiceCheckInstanceProviderProcedure,
+		svc.CheckInstanceProvider,
+		connect.WithSchema(catalogServiceMethods.ByName("CheckInstanceProvider")),
+		connect.WithHandlerOptions(opts...),
+	)
+	catalogServiceCheckInstanceWorkflowHandler := connect.NewUnaryHandlerSimple(
+		CatalogServiceCheckInstanceWorkflowProcedure,
+		svc.CheckInstanceWorkflow,
+		connect.WithSchema(catalogServiceMethods.ByName("CheckInstanceWorkflow")),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/cloud.v1.catalog.CatalogService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case CatalogServiceCreateInstanceEntryProcedure:
@@ -591,6 +726,8 @@ func NewCatalogServiceHandler(svc CatalogServiceHandler, opts ...connect.Handler
 			catalogServiceDeleteInstanceEntryHandler.ServeHTTP(w, r)
 		case CatalogServiceGetInstanceEntryProcedure:
 			catalogServiceGetInstanceEntryHandler.ServeHTTP(w, r)
+		case CatalogServiceGetInstanceEntryFilesProcedure:
+			catalogServiceGetInstanceEntryFilesHandler.ServeHTTP(w, r)
 		case CatalogServiceListInstanceEntriesProcedure:
 			catalogServiceListInstanceEntriesHandler.ServeHTTP(w, r)
 		case CatalogServiceCreateOrgProviderProcedure:
@@ -609,6 +746,10 @@ func NewCatalogServiceHandler(svc CatalogServiceHandler, opts ...connect.Handler
 			catalogServiceGetOrgProviderHandler.ServeHTTP(w, r)
 		case CatalogServiceGetOrgWorkflowProcedure:
 			catalogServiceGetOrgWorkflowHandler.ServeHTTP(w, r)
+		case CatalogServiceGetOrgProviderFilesProcedure:
+			catalogServiceGetOrgProviderFilesHandler.ServeHTTP(w, r)
+		case CatalogServiceGetOrgWorkflowFilesProcedure:
+			catalogServiceGetOrgWorkflowFilesHandler.ServeHTTP(w, r)
 		case CatalogServiceListOrgProvidersProcedure:
 			catalogServiceListOrgProvidersHandler.ServeHTTP(w, r)
 		case CatalogServiceListOrgWorkflowsProcedure:
@@ -621,6 +762,10 @@ func NewCatalogServiceHandler(svc CatalogServiceHandler, opts ...connect.Handler
 			catalogServiceCheckCatalogProviderHandler.ServeHTTP(w, r)
 		case CatalogServiceCheckCatalogWorkflowProcedure:
 			catalogServiceCheckCatalogWorkflowHandler.ServeHTTP(w, r)
+		case CatalogServiceCheckInstanceProviderProcedure:
+			catalogServiceCheckInstanceProviderHandler.ServeHTTP(w, r)
+		case CatalogServiceCheckInstanceWorkflowProcedure:
+			catalogServiceCheckInstanceWorkflowHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -644,6 +789,10 @@ func (UnimplementedCatalogServiceHandler) DeleteInstanceEntry(context.Context, *
 
 func (UnimplementedCatalogServiceHandler) GetInstanceEntry(context.Context, *catalog.GetInstanceEntryRequest) (*catalog.GetInstanceEntryResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.catalog.CatalogService.GetInstanceEntry is not implemented"))
+}
+
+func (UnimplementedCatalogServiceHandler) GetInstanceEntryFiles(context.Context, *catalog.GetInstanceEntryFilesRequest) (*catalog.GetInstanceEntryFilesResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.catalog.CatalogService.GetInstanceEntryFiles is not implemented"))
 }
 
 func (UnimplementedCatalogServiceHandler) ListInstanceEntries(context.Context, *catalog.ListInstanceEntriesRequest) (*catalog.ListInstanceEntriesResponse, error) {
@@ -682,6 +831,14 @@ func (UnimplementedCatalogServiceHandler) GetOrgWorkflow(context.Context, *catal
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.catalog.CatalogService.GetOrgWorkflow is not implemented"))
 }
 
+func (UnimplementedCatalogServiceHandler) GetOrgProviderFiles(context.Context, *catalog.GetOrgProviderFilesRequest) (*catalog.GetOrgProviderFilesResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.catalog.CatalogService.GetOrgProviderFiles is not implemented"))
+}
+
+func (UnimplementedCatalogServiceHandler) GetOrgWorkflowFiles(context.Context, *catalog.GetOrgWorkflowFilesRequest) (*catalog.GetOrgWorkflowFilesResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.catalog.CatalogService.GetOrgWorkflowFiles is not implemented"))
+}
+
 func (UnimplementedCatalogServiceHandler) ListOrgProviders(context.Context, *catalog.ListOrgProvidersRequest) (*catalog.ListOrgProvidersResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.catalog.CatalogService.ListOrgProviders is not implemented"))
 }
@@ -704,4 +861,12 @@ func (UnimplementedCatalogServiceHandler) CheckCatalogProvider(context.Context, 
 
 func (UnimplementedCatalogServiceHandler) CheckCatalogWorkflow(context.Context, *catalog.CheckCatalogWorkflowRequest) (*catalog.CheckCatalogWorkflowResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.catalog.CatalogService.CheckCatalogWorkflow is not implemented"))
+}
+
+func (UnimplementedCatalogServiceHandler) CheckInstanceProvider(context.Context, *catalog.CheckInstanceProviderRequest) (*catalog.CheckInstanceProviderResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.catalog.CatalogService.CheckInstanceProvider is not implemented"))
+}
+
+func (UnimplementedCatalogServiceHandler) CheckInstanceWorkflow(context.Context, *catalog.CheckInstanceWorkflowRequest) (*catalog.CheckInstanceWorkflowResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.catalog.CatalogService.CheckInstanceWorkflow is not implemented"))
 }

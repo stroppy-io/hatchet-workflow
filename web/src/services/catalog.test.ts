@@ -10,7 +10,11 @@ const {
   updateOrgProvider,
   linkInstanceProvider,
   checkCatalogProvider,
+  checkInstanceProvider,
   deleteOrgWorkflow,
+  getInstanceEntryFiles,
+  getOrgProviderFiles,
+  getOrgWorkflowFiles,
 } = vi.hoisted(() => ({
   listOrgProviders: vi.fn(),
   listOrgWorkflows: vi.fn(),
@@ -19,7 +23,11 @@ const {
   updateOrgProvider: vi.fn(),
   linkInstanceProvider: vi.fn(),
   checkCatalogProvider: vi.fn(),
+  checkInstanceProvider: vi.fn(),
   deleteOrgWorkflow: vi.fn(),
+  getInstanceEntryFiles: vi.fn(),
+  getOrgProviderFiles: vi.fn(),
+  getOrgWorkflowFiles: vi.fn(),
 }));
 
 vi.mock("@/services/client", () => ({
@@ -31,16 +39,23 @@ vi.mock("@/services/client", () => ({
     updateOrgProvider,
     linkInstanceProvider,
     checkCatalogProvider,
+    checkInstanceProvider,
     deleteOrgWorkflow,
+    getInstanceEntryFiles,
+    getOrgProviderFiles,
+    getOrgWorkflowFiles,
   },
 }));
 vi.mock("@/services/tenant", () => ({ resolveTenantId: vi.fn().mockResolvedValue("t1") }));
 
 import {
   checkCatalogBundle,
+  checkInstanceBundle,
   createOrgEntry,
   deleteOrgEntry,
   getOrgEntry,
+  getInstanceEntryFiles as getInstanceEntryFilesFn,
+  getOrgEntryFiles,
   linkInstanceEntry,
   listOrgEntries,
   updateOrgEntry,
@@ -74,7 +89,11 @@ beforeEach(() => {
   updateOrgProvider.mockReset();
   linkInstanceProvider.mockReset();
   checkCatalogProvider.mockReset();
+  checkInstanceProvider.mockReset();
   deleteOrgWorkflow.mockReset();
+  getInstanceEntryFiles.mockReset();
+  getOrgProviderFiles.mockReset();
+  getOrgWorkflowFiles.mockReset();
 });
 
 describe("listOrgEntries", () => {
@@ -185,5 +204,49 @@ describe("deleteOrgEntry", () => {
     deleteOrgWorkflow.mockResolvedValue({});
     await deleteOrgEntry("acme", "KIND_WORKFLOW", "w1");
     expect(deleteOrgWorkflow).toHaveBeenCalledWith({ tenantId: "t1", id: "w1" });
+  });
+});
+
+describe("getInstanceEntryFiles", () => {
+  it("decodes the RPC's byte-map files back to strings", async () => {
+    getInstanceEntryFiles.mockResolvedValue({
+      files: { "manifest.yaml": new TextEncoder().encode("name: yandex\n") },
+    });
+    const files = await getInstanceEntryFilesFn("i1");
+    expect(getInstanceEntryFiles).toHaveBeenCalledWith({ id: "i1" });
+    expect(files).toEqual({ "manifest.yaml": "name: yandex\n" });
+  });
+});
+
+describe("getOrgEntryFiles", () => {
+  it("routes KIND_PROVIDER to GetOrgProviderFiles with the resolved tenant id", async () => {
+    getOrgProviderFiles.mockResolvedValue({
+      files: { "manifest.yaml": new TextEncoder().encode("name: yandex\n") },
+    });
+    const files = await getOrgEntryFiles("acme", "KIND_PROVIDER", "e1");
+    expect(getOrgProviderFiles).toHaveBeenCalledWith({ tenantId: "t1", id: "e1" });
+    expect(files).toEqual({ "manifest.yaml": "name: yandex\n" });
+  });
+
+  it("routes KIND_WORKFLOW to GetOrgWorkflowFiles", async () => {
+    getOrgWorkflowFiles.mockResolvedValue({ files: {} });
+    await getOrgEntryFiles("acme", "KIND_WORKFLOW", "e2");
+    expect(getOrgWorkflowFiles).toHaveBeenCalledWith({ tenantId: "t1", id: "e2" });
+    expect(getOrgProviderFiles).not.toHaveBeenCalled();
+  });
+});
+
+describe("checkInstanceBundle", () => {
+  it("sends encoded files with no tenant id, decodes diagnostics", async () => {
+    checkInstanceProvider.mockResolvedValue({
+      diagnostics: [{ severity: 1, path: "manifest.yaml", line: 1, col: 1, message: "bad", module: "m" }],
+    });
+    const diags = await checkInstanceBundle("KIND_PROVIDER", { "manifest.yaml": "name: x\n" });
+    expect(diags).toEqual([
+      { severity: "error", path: "manifest.yaml", line: 1, col: 1, message: "bad", module: "m" },
+    ]);
+    const call = checkInstanceProvider.mock.calls[0][0];
+    expect(call.tenantId).toBeUndefined();
+    expect(new TextDecoder().decode(call.files["manifest.yaml"])).toBe("name: x\n");
   });
 });

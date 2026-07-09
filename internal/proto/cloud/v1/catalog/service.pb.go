@@ -233,6 +233,97 @@ func (x *GetInstanceEntryResponse) GetEntry() *CatalogEntry {
 	return nil
 }
 
+// GetInstanceEntryFiles reads a LEVEL_INSTANCE entry's stored bundle back
+// (the CatalogEntry row itself carries only an opaque source_ref — see
+// models.proto's doc). admin_only, mirroring every other Instance-level RPC.
+type GetInstanceEntryFilesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Id            string                 `protobuf:"bytes,1,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetInstanceEntryFilesRequest) Reset() {
+	*x = GetInstanceEntryFilesRequest{}
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[4]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetInstanceEntryFilesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetInstanceEntryFilesRequest) ProtoMessage() {}
+
+func (x *GetInstanceEntryFilesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[4]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetInstanceEntryFilesRequest.ProtoReflect.Descriptor instead.
+func (*GetInstanceEntryFilesRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{4}
+}
+
+func (x *GetInstanceEntryFilesRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type GetInstanceEntryFilesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Files         map[string][]byte      `protobuf:"bytes,1,rep,name=files,proto3" json:"files,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetInstanceEntryFilesResponse) Reset() {
+	*x = GetInstanceEntryFilesResponse{}
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[5]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetInstanceEntryFilesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetInstanceEntryFilesResponse) ProtoMessage() {}
+
+func (x *GetInstanceEntryFilesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[5]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetInstanceEntryFilesResponse.ProtoReflect.Descriptor instead.
+func (*GetInstanceEntryFilesResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{5}
+}
+
+func (x *GetInstanceEntryFilesResponse) GetFiles() map[string][]byte {
+	if x != nil {
+		return x.Files
+	}
+	return nil
+}
+
 type ListInstanceEntriesRequest struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
 	Kind          Kind                   `protobuf:"varint,1,opt,name=kind,proto3,enum=cloud.v1.catalog.Kind" json:"kind,omitempty"`
@@ -242,7 +333,7 @@ type ListInstanceEntriesRequest struct {
 
 func (x *ListInstanceEntriesRequest) Reset() {
 	*x = ListInstanceEntriesRequest{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[4]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -254,7 +345,7 @@ func (x *ListInstanceEntriesRequest) String() string {
 func (*ListInstanceEntriesRequest) ProtoMessage() {}
 
 func (x *ListInstanceEntriesRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[4]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -267,7 +358,7 @@ func (x *ListInstanceEntriesRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListInstanceEntriesRequest.ProtoReflect.Descriptor instead.
 func (*ListInstanceEntriesRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{4}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{6}
 }
 
 func (x *ListInstanceEntriesRequest) GetKind() Kind {
@@ -286,7 +377,7 @@ type ListInstanceEntriesResponse struct {
 
 func (x *ListInstanceEntriesResponse) Reset() {
 	*x = ListInstanceEntriesResponse{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[5]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -298,7 +389,7 @@ func (x *ListInstanceEntriesResponse) String() string {
 func (*ListInstanceEntriesResponse) ProtoMessage() {}
 
 func (x *ListInstanceEntriesResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[5]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -311,7 +402,7 @@ func (x *ListInstanceEntriesResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListInstanceEntriesResponse.ProtoReflect.Descriptor instead.
 func (*ListInstanceEntriesResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{5}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{7}
 }
 
 func (x *ListInstanceEntriesResponse) GetEntries() []*CatalogEntry {
@@ -331,7 +422,7 @@ type UpdateInstanceEntryRequest struct {
 
 func (x *UpdateInstanceEntryRequest) Reset() {
 	*x = UpdateInstanceEntryRequest{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[6]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[8]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -343,7 +434,7 @@ func (x *UpdateInstanceEntryRequest) String() string {
 func (*UpdateInstanceEntryRequest) ProtoMessage() {}
 
 func (x *UpdateInstanceEntryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[6]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[8]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -356,7 +447,7 @@ func (x *UpdateInstanceEntryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateInstanceEntryRequest.ProtoReflect.Descriptor instead.
 func (*UpdateInstanceEntryRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{6}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{8}
 }
 
 func (x *UpdateInstanceEntryRequest) GetId() string {
@@ -382,7 +473,7 @@ type UpdateInstanceEntryResponse struct {
 
 func (x *UpdateInstanceEntryResponse) Reset() {
 	*x = UpdateInstanceEntryResponse{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[7]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -394,7 +485,7 @@ func (x *UpdateInstanceEntryResponse) String() string {
 func (*UpdateInstanceEntryResponse) ProtoMessage() {}
 
 func (x *UpdateInstanceEntryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[7]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -407,7 +498,7 @@ func (x *UpdateInstanceEntryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateInstanceEntryResponse.ProtoReflect.Descriptor instead.
 func (*UpdateInstanceEntryResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{7}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{9}
 }
 
 func (x *UpdateInstanceEntryResponse) GetEntry() *CatalogEntry {
@@ -426,7 +517,7 @@ type DeleteInstanceEntryRequest struct {
 
 func (x *DeleteInstanceEntryRequest) Reset() {
 	*x = DeleteInstanceEntryRequest{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[8]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[10]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -438,7 +529,7 @@ func (x *DeleteInstanceEntryRequest) String() string {
 func (*DeleteInstanceEntryRequest) ProtoMessage() {}
 
 func (x *DeleteInstanceEntryRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[8]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[10]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -451,7 +542,7 @@ func (x *DeleteInstanceEntryRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteInstanceEntryRequest.ProtoReflect.Descriptor instead.
 func (*DeleteInstanceEntryRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{8}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{10}
 }
 
 func (x *DeleteInstanceEntryRequest) GetId() string {
@@ -469,7 +560,7 @@ type DeleteInstanceEntryResponse struct {
 
 func (x *DeleteInstanceEntryResponse) Reset() {
 	*x = DeleteInstanceEntryResponse{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[9]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[11]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -481,7 +572,7 @@ func (x *DeleteInstanceEntryResponse) String() string {
 func (*DeleteInstanceEntryResponse) ProtoMessage() {}
 
 func (x *DeleteInstanceEntryResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[9]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[11]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -494,7 +585,7 @@ func (x *DeleteInstanceEntryResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteInstanceEntryResponse.ProtoReflect.Descriptor instead.
 func (*DeleteInstanceEntryResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{9}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{11}
 }
 
 type CreateOrgProviderRequest struct {
@@ -510,7 +601,7 @@ type CreateOrgProviderRequest struct {
 
 func (x *CreateOrgProviderRequest) Reset() {
 	*x = CreateOrgProviderRequest{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[10]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[12]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -522,7 +613,7 @@ func (x *CreateOrgProviderRequest) String() string {
 func (*CreateOrgProviderRequest) ProtoMessage() {}
 
 func (x *CreateOrgProviderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[10]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[12]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -535,7 +626,7 @@ func (x *CreateOrgProviderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateOrgProviderRequest.ProtoReflect.Descriptor instead.
 func (*CreateOrgProviderRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{10}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{12}
 }
 
 func (x *CreateOrgProviderRequest) GetTenantId() string {
@@ -582,7 +673,7 @@ type CreateOrgProviderResponse struct {
 
 func (x *CreateOrgProviderResponse) Reset() {
 	*x = CreateOrgProviderResponse{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[11]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[13]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -594,7 +685,7 @@ func (x *CreateOrgProviderResponse) String() string {
 func (*CreateOrgProviderResponse) ProtoMessage() {}
 
 func (x *CreateOrgProviderResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[11]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[13]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -607,7 +698,7 @@ func (x *CreateOrgProviderResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateOrgProviderResponse.ProtoReflect.Descriptor instead.
 func (*CreateOrgProviderResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{11}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{13}
 }
 
 func (x *CreateOrgProviderResponse) GetEntry() *CatalogEntry {
@@ -630,7 +721,7 @@ type CreateOrgWorkflowRequest struct {
 
 func (x *CreateOrgWorkflowRequest) Reset() {
 	*x = CreateOrgWorkflowRequest{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[12]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[14]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -642,7 +733,7 @@ func (x *CreateOrgWorkflowRequest) String() string {
 func (*CreateOrgWorkflowRequest) ProtoMessage() {}
 
 func (x *CreateOrgWorkflowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[12]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[14]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -655,7 +746,7 @@ func (x *CreateOrgWorkflowRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateOrgWorkflowRequest.ProtoReflect.Descriptor instead.
 func (*CreateOrgWorkflowRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{12}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{14}
 }
 
 func (x *CreateOrgWorkflowRequest) GetTenantId() string {
@@ -702,7 +793,7 @@ type CreateOrgWorkflowResponse struct {
 
 func (x *CreateOrgWorkflowResponse) Reset() {
 	*x = CreateOrgWorkflowResponse{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[13]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[15]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -714,7 +805,7 @@ func (x *CreateOrgWorkflowResponse) String() string {
 func (*CreateOrgWorkflowResponse) ProtoMessage() {}
 
 func (x *CreateOrgWorkflowResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[13]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[15]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -727,7 +818,7 @@ func (x *CreateOrgWorkflowResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CreateOrgWorkflowResponse.ProtoReflect.Descriptor instead.
 func (*CreateOrgWorkflowResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{13}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{15}
 }
 
 func (x *CreateOrgWorkflowResponse) GetEntry() *CatalogEntry {
@@ -748,7 +839,7 @@ type UpdateOrgProviderRequest struct {
 
 func (x *UpdateOrgProviderRequest) Reset() {
 	*x = UpdateOrgProviderRequest{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[14]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[16]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -760,7 +851,7 @@ func (x *UpdateOrgProviderRequest) String() string {
 func (*UpdateOrgProviderRequest) ProtoMessage() {}
 
 func (x *UpdateOrgProviderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[14]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[16]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -773,7 +864,7 @@ func (x *UpdateOrgProviderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateOrgProviderRequest.ProtoReflect.Descriptor instead.
 func (*UpdateOrgProviderRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{14}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{16}
 }
 
 func (x *UpdateOrgProviderRequest) GetTenantId() string {
@@ -806,7 +897,7 @@ type UpdateOrgProviderResponse struct {
 
 func (x *UpdateOrgProviderResponse) Reset() {
 	*x = UpdateOrgProviderResponse{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[15]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[17]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -818,7 +909,7 @@ func (x *UpdateOrgProviderResponse) String() string {
 func (*UpdateOrgProviderResponse) ProtoMessage() {}
 
 func (x *UpdateOrgProviderResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[15]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[17]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -831,7 +922,7 @@ func (x *UpdateOrgProviderResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateOrgProviderResponse.ProtoReflect.Descriptor instead.
 func (*UpdateOrgProviderResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{15}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{17}
 }
 
 func (x *UpdateOrgProviderResponse) GetEntry() *CatalogEntry {
@@ -852,7 +943,7 @@ type UpdateOrgWorkflowRequest struct {
 
 func (x *UpdateOrgWorkflowRequest) Reset() {
 	*x = UpdateOrgWorkflowRequest{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[16]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[18]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -864,7 +955,7 @@ func (x *UpdateOrgWorkflowRequest) String() string {
 func (*UpdateOrgWorkflowRequest) ProtoMessage() {}
 
 func (x *UpdateOrgWorkflowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[16]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[18]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -877,7 +968,7 @@ func (x *UpdateOrgWorkflowRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateOrgWorkflowRequest.ProtoReflect.Descriptor instead.
 func (*UpdateOrgWorkflowRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{16}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{18}
 }
 
 func (x *UpdateOrgWorkflowRequest) GetTenantId() string {
@@ -910,7 +1001,7 @@ type UpdateOrgWorkflowResponse struct {
 
 func (x *UpdateOrgWorkflowResponse) Reset() {
 	*x = UpdateOrgWorkflowResponse{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[17]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[19]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -922,7 +1013,7 @@ func (x *UpdateOrgWorkflowResponse) String() string {
 func (*UpdateOrgWorkflowResponse) ProtoMessage() {}
 
 func (x *UpdateOrgWorkflowResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[17]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[19]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -935,7 +1026,7 @@ func (x *UpdateOrgWorkflowResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use UpdateOrgWorkflowResponse.ProtoReflect.Descriptor instead.
 func (*UpdateOrgWorkflowResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{17}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{19}
 }
 
 func (x *UpdateOrgWorkflowResponse) GetEntry() *CatalogEntry {
@@ -955,7 +1046,7 @@ type DeleteOrgProviderRequest struct {
 
 func (x *DeleteOrgProviderRequest) Reset() {
 	*x = DeleteOrgProviderRequest{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[18]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[20]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -967,7 +1058,7 @@ func (x *DeleteOrgProviderRequest) String() string {
 func (*DeleteOrgProviderRequest) ProtoMessage() {}
 
 func (x *DeleteOrgProviderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[18]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[20]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -980,7 +1071,7 @@ func (x *DeleteOrgProviderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteOrgProviderRequest.ProtoReflect.Descriptor instead.
 func (*DeleteOrgProviderRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{18}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{20}
 }
 
 func (x *DeleteOrgProviderRequest) GetTenantId() string {
@@ -1005,7 +1096,7 @@ type DeleteOrgProviderResponse struct {
 
 func (x *DeleteOrgProviderResponse) Reset() {
 	*x = DeleteOrgProviderResponse{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[19]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[21]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1017,7 +1108,7 @@ func (x *DeleteOrgProviderResponse) String() string {
 func (*DeleteOrgProviderResponse) ProtoMessage() {}
 
 func (x *DeleteOrgProviderResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[19]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[21]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1030,7 +1121,7 @@ func (x *DeleteOrgProviderResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteOrgProviderResponse.ProtoReflect.Descriptor instead.
 func (*DeleteOrgProviderResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{19}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{21}
 }
 
 type DeleteOrgWorkflowRequest struct {
@@ -1043,7 +1134,7 @@ type DeleteOrgWorkflowRequest struct {
 
 func (x *DeleteOrgWorkflowRequest) Reset() {
 	*x = DeleteOrgWorkflowRequest{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[20]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[22]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1055,7 +1146,7 @@ func (x *DeleteOrgWorkflowRequest) String() string {
 func (*DeleteOrgWorkflowRequest) ProtoMessage() {}
 
 func (x *DeleteOrgWorkflowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[20]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[22]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1068,7 +1159,7 @@ func (x *DeleteOrgWorkflowRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteOrgWorkflowRequest.ProtoReflect.Descriptor instead.
 func (*DeleteOrgWorkflowRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{20}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{22}
 }
 
 func (x *DeleteOrgWorkflowRequest) GetTenantId() string {
@@ -1093,7 +1184,7 @@ type DeleteOrgWorkflowResponse struct {
 
 func (x *DeleteOrgWorkflowResponse) Reset() {
 	*x = DeleteOrgWorkflowResponse{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[21]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[23]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1105,7 +1196,7 @@ func (x *DeleteOrgWorkflowResponse) String() string {
 func (*DeleteOrgWorkflowResponse) ProtoMessage() {}
 
 func (x *DeleteOrgWorkflowResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[21]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[23]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1118,7 +1209,7 @@ func (x *DeleteOrgWorkflowResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use DeleteOrgWorkflowResponse.ProtoReflect.Descriptor instead.
 func (*DeleteOrgWorkflowResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{21}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{23}
 }
 
 type GetOrgProviderRequest struct {
@@ -1131,7 +1222,7 @@ type GetOrgProviderRequest struct {
 
 func (x *GetOrgProviderRequest) Reset() {
 	*x = GetOrgProviderRequest{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[22]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[24]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1143,7 +1234,7 @@ func (x *GetOrgProviderRequest) String() string {
 func (*GetOrgProviderRequest) ProtoMessage() {}
 
 func (x *GetOrgProviderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[22]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[24]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1156,7 +1247,7 @@ func (x *GetOrgProviderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetOrgProviderRequest.ProtoReflect.Descriptor instead.
 func (*GetOrgProviderRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{22}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{24}
 }
 
 func (x *GetOrgProviderRequest) GetTenantId() string {
@@ -1182,7 +1273,7 @@ type GetOrgProviderResponse struct {
 
 func (x *GetOrgProviderResponse) Reset() {
 	*x = GetOrgProviderResponse{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[23]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[25]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1194,7 +1285,7 @@ func (x *GetOrgProviderResponse) String() string {
 func (*GetOrgProviderResponse) ProtoMessage() {}
 
 func (x *GetOrgProviderResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[23]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[25]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1207,7 +1298,7 @@ func (x *GetOrgProviderResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetOrgProviderResponse.ProtoReflect.Descriptor instead.
 func (*GetOrgProviderResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{23}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{25}
 }
 
 func (x *GetOrgProviderResponse) GetEntry() *CatalogEntry {
@@ -1227,7 +1318,7 @@ type GetOrgWorkflowRequest struct {
 
 func (x *GetOrgWorkflowRequest) Reset() {
 	*x = GetOrgWorkflowRequest{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[24]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[26]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1239,7 +1330,7 @@ func (x *GetOrgWorkflowRequest) String() string {
 func (*GetOrgWorkflowRequest) ProtoMessage() {}
 
 func (x *GetOrgWorkflowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[24]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[26]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1252,7 +1343,7 @@ func (x *GetOrgWorkflowRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetOrgWorkflowRequest.ProtoReflect.Descriptor instead.
 func (*GetOrgWorkflowRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{24}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{26}
 }
 
 func (x *GetOrgWorkflowRequest) GetTenantId() string {
@@ -1278,7 +1369,7 @@ type GetOrgWorkflowResponse struct {
 
 func (x *GetOrgWorkflowResponse) Reset() {
 	*x = GetOrgWorkflowResponse{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[25]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[27]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1290,7 +1381,7 @@ func (x *GetOrgWorkflowResponse) String() string {
 func (*GetOrgWorkflowResponse) ProtoMessage() {}
 
 func (x *GetOrgWorkflowResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[25]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[27]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1303,12 +1394,207 @@ func (x *GetOrgWorkflowResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use GetOrgWorkflowResponse.ProtoReflect.Descriptor instead.
 func (*GetOrgWorkflowResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{25}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{27}
 }
 
 func (x *GetOrgWorkflowResponse) GetEntry() *CatalogEntry {
 	if x != nil {
 		return x.Entry
+	}
+	return nil
+}
+
+// GetOrgProviderFiles/GetOrgWorkflowFiles read a LEVEL_ORG entry's stored
+// bundle back (see GetInstanceEntryFiles's doc above) — split per kind for
+// all_of RBAC, exactly like GetOrgProvider/GetOrgWorkflow.
+type GetOrgProviderFilesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetOrgProviderFilesRequest) Reset() {
+	*x = GetOrgProviderFilesRequest{}
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[28]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetOrgProviderFilesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetOrgProviderFilesRequest) ProtoMessage() {}
+
+func (x *GetOrgProviderFilesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[28]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetOrgProviderFilesRequest.ProtoReflect.Descriptor instead.
+func (*GetOrgProviderFilesRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{28}
+}
+
+func (x *GetOrgProviderFilesRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *GetOrgProviderFilesRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type GetOrgProviderFilesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Files         map[string][]byte      `protobuf:"bytes,1,rep,name=files,proto3" json:"files,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetOrgProviderFilesResponse) Reset() {
+	*x = GetOrgProviderFilesResponse{}
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[29]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetOrgProviderFilesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetOrgProviderFilesResponse) ProtoMessage() {}
+
+func (x *GetOrgProviderFilesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[29]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetOrgProviderFilesResponse.ProtoReflect.Descriptor instead.
+func (*GetOrgProviderFilesResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{29}
+}
+
+func (x *GetOrgProviderFilesResponse) GetFiles() map[string][]byte {
+	if x != nil {
+		return x.Files
+	}
+	return nil
+}
+
+type GetOrgWorkflowFilesRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	TenantId      string                 `protobuf:"bytes,1,opt,name=tenant_id,json=tenantId,proto3" json:"tenant_id,omitempty"`
+	Id            string                 `protobuf:"bytes,2,opt,name=id,proto3" json:"id,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetOrgWorkflowFilesRequest) Reset() {
+	*x = GetOrgWorkflowFilesRequest{}
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[30]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetOrgWorkflowFilesRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetOrgWorkflowFilesRequest) ProtoMessage() {}
+
+func (x *GetOrgWorkflowFilesRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[30]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetOrgWorkflowFilesRequest.ProtoReflect.Descriptor instead.
+func (*GetOrgWorkflowFilesRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{30}
+}
+
+func (x *GetOrgWorkflowFilesRequest) GetTenantId() string {
+	if x != nil {
+		return x.TenantId
+	}
+	return ""
+}
+
+func (x *GetOrgWorkflowFilesRequest) GetId() string {
+	if x != nil {
+		return x.Id
+	}
+	return ""
+}
+
+type GetOrgWorkflowFilesResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Files         map[string][]byte      `protobuf:"bytes,1,rep,name=files,proto3" json:"files,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *GetOrgWorkflowFilesResponse) Reset() {
+	*x = GetOrgWorkflowFilesResponse{}
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[31]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *GetOrgWorkflowFilesResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*GetOrgWorkflowFilesResponse) ProtoMessage() {}
+
+func (x *GetOrgWorkflowFilesResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[31]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use GetOrgWorkflowFilesResponse.ProtoReflect.Descriptor instead.
+func (*GetOrgWorkflowFilesResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{31}
+}
+
+func (x *GetOrgWorkflowFilesResponse) GetFiles() map[string][]byte {
+	if x != nil {
+		return x.Files
 	}
 	return nil
 }
@@ -1322,7 +1608,7 @@ type ListOrgProvidersRequest struct {
 
 func (x *ListOrgProvidersRequest) Reset() {
 	*x = ListOrgProvidersRequest{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[26]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[32]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1334,7 +1620,7 @@ func (x *ListOrgProvidersRequest) String() string {
 func (*ListOrgProvidersRequest) ProtoMessage() {}
 
 func (x *ListOrgProvidersRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[26]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[32]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1347,7 +1633,7 @@ func (x *ListOrgProvidersRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListOrgProvidersRequest.ProtoReflect.Descriptor instead.
 func (*ListOrgProvidersRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{26}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{32}
 }
 
 func (x *ListOrgProvidersRequest) GetTenantId() string {
@@ -1366,7 +1652,7 @@ type ListOrgProvidersResponse struct {
 
 func (x *ListOrgProvidersResponse) Reset() {
 	*x = ListOrgProvidersResponse{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[27]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[33]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1378,7 +1664,7 @@ func (x *ListOrgProvidersResponse) String() string {
 func (*ListOrgProvidersResponse) ProtoMessage() {}
 
 func (x *ListOrgProvidersResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[27]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[33]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1391,7 +1677,7 @@ func (x *ListOrgProvidersResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListOrgProvidersResponse.ProtoReflect.Descriptor instead.
 func (*ListOrgProvidersResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{27}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{33}
 }
 
 func (x *ListOrgProvidersResponse) GetEntries() []*CatalogEntry {
@@ -1410,7 +1696,7 @@ type ListOrgWorkflowsRequest struct {
 
 func (x *ListOrgWorkflowsRequest) Reset() {
 	*x = ListOrgWorkflowsRequest{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[28]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[34]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1422,7 +1708,7 @@ func (x *ListOrgWorkflowsRequest) String() string {
 func (*ListOrgWorkflowsRequest) ProtoMessage() {}
 
 func (x *ListOrgWorkflowsRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[28]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[34]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1435,7 +1721,7 @@ func (x *ListOrgWorkflowsRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListOrgWorkflowsRequest.ProtoReflect.Descriptor instead.
 func (*ListOrgWorkflowsRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{28}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{34}
 }
 
 func (x *ListOrgWorkflowsRequest) GetTenantId() string {
@@ -1454,7 +1740,7 @@ type ListOrgWorkflowsResponse struct {
 
 func (x *ListOrgWorkflowsResponse) Reset() {
 	*x = ListOrgWorkflowsResponse{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[29]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[35]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1466,7 +1752,7 @@ func (x *ListOrgWorkflowsResponse) String() string {
 func (*ListOrgWorkflowsResponse) ProtoMessage() {}
 
 func (x *ListOrgWorkflowsResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[29]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[35]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1479,7 +1765,7 @@ func (x *ListOrgWorkflowsResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use ListOrgWorkflowsResponse.ProtoReflect.Descriptor instead.
 func (*ListOrgWorkflowsResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{29}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{35}
 }
 
 func (x *ListOrgWorkflowsResponse) GetEntries() []*CatalogEntry {
@@ -1499,7 +1785,7 @@ type LinkInstanceProviderRequest struct {
 
 func (x *LinkInstanceProviderRequest) Reset() {
 	*x = LinkInstanceProviderRequest{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[30]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[36]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1511,7 +1797,7 @@ func (x *LinkInstanceProviderRequest) String() string {
 func (*LinkInstanceProviderRequest) ProtoMessage() {}
 
 func (x *LinkInstanceProviderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[30]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[36]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1524,7 +1810,7 @@ func (x *LinkInstanceProviderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LinkInstanceProviderRequest.ProtoReflect.Descriptor instead.
 func (*LinkInstanceProviderRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{30}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{36}
 }
 
 func (x *LinkInstanceProviderRequest) GetTenantId() string {
@@ -1550,7 +1836,7 @@ type LinkInstanceProviderResponse struct {
 
 func (x *LinkInstanceProviderResponse) Reset() {
 	*x = LinkInstanceProviderResponse{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[31]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[37]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1562,7 +1848,7 @@ func (x *LinkInstanceProviderResponse) String() string {
 func (*LinkInstanceProviderResponse) ProtoMessage() {}
 
 func (x *LinkInstanceProviderResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[31]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[37]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1575,7 +1861,7 @@ func (x *LinkInstanceProviderResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LinkInstanceProviderResponse.ProtoReflect.Descriptor instead.
 func (*LinkInstanceProviderResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{31}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{37}
 }
 
 func (x *LinkInstanceProviderResponse) GetEntry() *CatalogEntry {
@@ -1595,7 +1881,7 @@ type LinkInstanceWorkflowRequest struct {
 
 func (x *LinkInstanceWorkflowRequest) Reset() {
 	*x = LinkInstanceWorkflowRequest{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[32]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[38]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1607,7 +1893,7 @@ func (x *LinkInstanceWorkflowRequest) String() string {
 func (*LinkInstanceWorkflowRequest) ProtoMessage() {}
 
 func (x *LinkInstanceWorkflowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[32]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[38]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1620,7 +1906,7 @@ func (x *LinkInstanceWorkflowRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LinkInstanceWorkflowRequest.ProtoReflect.Descriptor instead.
 func (*LinkInstanceWorkflowRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{32}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{38}
 }
 
 func (x *LinkInstanceWorkflowRequest) GetTenantId() string {
@@ -1646,7 +1932,7 @@ type LinkInstanceWorkflowResponse struct {
 
 func (x *LinkInstanceWorkflowResponse) Reset() {
 	*x = LinkInstanceWorkflowResponse{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[33]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[39]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1658,7 +1944,7 @@ func (x *LinkInstanceWorkflowResponse) String() string {
 func (*LinkInstanceWorkflowResponse) ProtoMessage() {}
 
 func (x *LinkInstanceWorkflowResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[33]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[39]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1671,7 +1957,7 @@ func (x *LinkInstanceWorkflowResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use LinkInstanceWorkflowResponse.ProtoReflect.Descriptor instead.
 func (*LinkInstanceWorkflowResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{33}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{39}
 }
 
 func (x *LinkInstanceWorkflowResponse) GetEntry() *CatalogEntry {
@@ -1694,7 +1980,7 @@ type CheckCatalogProviderRequest struct {
 
 func (x *CheckCatalogProviderRequest) Reset() {
 	*x = CheckCatalogProviderRequest{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[34]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[40]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1706,7 +1992,7 @@ func (x *CheckCatalogProviderRequest) String() string {
 func (*CheckCatalogProviderRequest) ProtoMessage() {}
 
 func (x *CheckCatalogProviderRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[34]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[40]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1719,7 +2005,7 @@ func (x *CheckCatalogProviderRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CheckCatalogProviderRequest.ProtoReflect.Descriptor instead.
 func (*CheckCatalogProviderRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{34}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{40}
 }
 
 func (x *CheckCatalogProviderRequest) GetFiles() map[string][]byte {
@@ -1745,7 +2031,7 @@ type CheckCatalogProviderResponse struct {
 
 func (x *CheckCatalogProviderResponse) Reset() {
 	*x = CheckCatalogProviderResponse{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[35]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[41]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1757,7 +2043,7 @@ func (x *CheckCatalogProviderResponse) String() string {
 func (*CheckCatalogProviderResponse) ProtoMessage() {}
 
 func (x *CheckCatalogProviderResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[35]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[41]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1770,7 +2056,7 @@ func (x *CheckCatalogProviderResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CheckCatalogProviderResponse.ProtoReflect.Descriptor instead.
 func (*CheckCatalogProviderResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{35}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{41}
 }
 
 func (x *CheckCatalogProviderResponse) GetDiagnostics() []*dsl.Diagnostic {
@@ -1790,7 +2076,7 @@ type CheckCatalogWorkflowRequest struct {
 
 func (x *CheckCatalogWorkflowRequest) Reset() {
 	*x = CheckCatalogWorkflowRequest{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[36]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[42]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1802,7 +2088,7 @@ func (x *CheckCatalogWorkflowRequest) String() string {
 func (*CheckCatalogWorkflowRequest) ProtoMessage() {}
 
 func (x *CheckCatalogWorkflowRequest) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[36]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[42]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1815,7 +2101,7 @@ func (x *CheckCatalogWorkflowRequest) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CheckCatalogWorkflowRequest.ProtoReflect.Descriptor instead.
 func (*CheckCatalogWorkflowRequest) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{36}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{42}
 }
 
 func (x *CheckCatalogWorkflowRequest) GetFiles() map[string][]byte {
@@ -1841,7 +2127,7 @@ type CheckCatalogWorkflowResponse struct {
 
 func (x *CheckCatalogWorkflowResponse) Reset() {
 	*x = CheckCatalogWorkflowResponse{}
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[37]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[43]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -1853,7 +2139,7 @@ func (x *CheckCatalogWorkflowResponse) String() string {
 func (*CheckCatalogWorkflowResponse) ProtoMessage() {}
 
 func (x *CheckCatalogWorkflowResponse) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_catalog_service_proto_msgTypes[37]
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[43]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -1866,10 +2152,194 @@ func (x *CheckCatalogWorkflowResponse) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use CheckCatalogWorkflowResponse.ProtoReflect.Descriptor instead.
 func (*CheckCatalogWorkflowResponse) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{37}
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{43}
 }
 
 func (x *CheckCatalogWorkflowResponse) GetDiagnostics() []*dsl.Diagnostic {
+	if x != nil {
+		return x.Diagnostics
+	}
+	return nil
+}
+
+// CheckInstanceProvider/CheckInstanceWorkflow are CheckCatalogProvider/
+// CheckCatalogWorkflow's LEVEL_INSTANCE counterparts: MethodAuth has no
+// any_of between admin_only and all_of (see iam/options.proto's doc), so
+// instance-scope Check cannot reuse the tenant-gated RPC — it is split into
+// its own admin_only pair instead, mirroring every other Instance-level RPC
+// in this file. Like CheckCatalogProvider/Workflow, neither persists
+// anything and a problem in the bundle is NEVER an RPC error, only a
+// diagnostic entry.
+type CheckInstanceProviderRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Files         map[string][]byte      `protobuf:"bytes,1,rep,name=files,proto3" json:"files,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CheckInstanceProviderRequest) Reset() {
+	*x = CheckInstanceProviderRequest{}
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[44]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CheckInstanceProviderRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckInstanceProviderRequest) ProtoMessage() {}
+
+func (x *CheckInstanceProviderRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[44]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckInstanceProviderRequest.ProtoReflect.Descriptor instead.
+func (*CheckInstanceProviderRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{44}
+}
+
+func (x *CheckInstanceProviderRequest) GetFiles() map[string][]byte {
+	if x != nil {
+		return x.Files
+	}
+	return nil
+}
+
+type CheckInstanceProviderResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Diagnostics   []*dsl.Diagnostic      `protobuf:"bytes,1,rep,name=diagnostics,proto3" json:"diagnostics,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CheckInstanceProviderResponse) Reset() {
+	*x = CheckInstanceProviderResponse{}
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[45]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CheckInstanceProviderResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckInstanceProviderResponse) ProtoMessage() {}
+
+func (x *CheckInstanceProviderResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[45]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckInstanceProviderResponse.ProtoReflect.Descriptor instead.
+func (*CheckInstanceProviderResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{45}
+}
+
+func (x *CheckInstanceProviderResponse) GetDiagnostics() []*dsl.Diagnostic {
+	if x != nil {
+		return x.Diagnostics
+	}
+	return nil
+}
+
+type CheckInstanceWorkflowRequest struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Files         map[string][]byte      `protobuf:"bytes,1,rep,name=files,proto3" json:"files,omitempty" protobuf_key:"bytes,1,opt,name=key" protobuf_val:"bytes,2,opt,name=value"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CheckInstanceWorkflowRequest) Reset() {
+	*x = CheckInstanceWorkflowRequest{}
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[46]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CheckInstanceWorkflowRequest) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckInstanceWorkflowRequest) ProtoMessage() {}
+
+func (x *CheckInstanceWorkflowRequest) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[46]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckInstanceWorkflowRequest.ProtoReflect.Descriptor instead.
+func (*CheckInstanceWorkflowRequest) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{46}
+}
+
+func (x *CheckInstanceWorkflowRequest) GetFiles() map[string][]byte {
+	if x != nil {
+		return x.Files
+	}
+	return nil
+}
+
+type CheckInstanceWorkflowResponse struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	Diagnostics   []*dsl.Diagnostic      `protobuf:"bytes,1,rep,name=diagnostics,proto3" json:"diagnostics,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *CheckInstanceWorkflowResponse) Reset() {
+	*x = CheckInstanceWorkflowResponse{}
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[47]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *CheckInstanceWorkflowResponse) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*CheckInstanceWorkflowResponse) ProtoMessage() {}
+
+func (x *CheckInstanceWorkflowResponse) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_catalog_service_proto_msgTypes[47]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use CheckInstanceWorkflowResponse.ProtoReflect.Descriptor instead.
+func (*CheckInstanceWorkflowResponse) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_catalog_service_proto_rawDescGZIP(), []int{47}
+}
+
+func (x *CheckInstanceWorkflowResponse) GetDiagnostics() []*dsl.Diagnostic {
 	if x != nil {
 		return x.Diagnostics
 	}
@@ -1899,7 +2369,15 @@ const file_cloud_v1_catalog_service_proto_rawDesc = "" +
 	"\x17GetInstanceEntryRequest\x12\x19\n" +
 	"\x02id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"P\n" +
 	"\x18GetInstanceEntryResponse\x124\n" +
-	"\x05entry\x18\x01 \x01(\v2\x1e.cloud.v1.catalog.CatalogEntryR\x05entry\"H\n" +
+	"\x05entry\x18\x01 \x01(\v2\x1e.cloud.v1.catalog.CatalogEntryR\x05entry\"9\n" +
+	"\x1cGetInstanceEntryFilesRequest\x12\x19\n" +
+	"\x02id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"\xab\x01\n" +
+	"\x1dGetInstanceEntryFilesResponse\x12P\n" +
+	"\x05files\x18\x01 \x03(\v2:.cloud.v1.catalog.GetInstanceEntryFilesResponse.FilesEntryR\x05files\x1a8\n" +
+	"\n" +
+	"FilesEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\fR\x05value:\x028\x01\"H\n" +
 	"\x1aListInstanceEntriesRequest\x12*\n" +
 	"\x04kind\x18\x01 \x01(\x0e2\x16.cloud.v1.catalog.KindR\x04kind\"W\n" +
 	"\x1bListInstanceEntriesResponse\x128\n" +
@@ -1981,7 +2459,25 @@ const file_cloud_v1_catalog_service_proto_rawDesc = "" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x19\n" +
 	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"N\n" +
 	"\x16GetOrgWorkflowResponse\x124\n" +
-	"\x05entry\x18\x01 \x01(\v2\x1e.cloud.v1.catalog.CatalogEntryR\x05entry\"A\n" +
+	"\x05entry\x18\x01 \x01(\v2\x1e.cloud.v1.catalog.CatalogEntryR\x05entry\"_\n" +
+	"\x1aGetOrgProviderFilesRequest\x12&\n" +
+	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x19\n" +
+	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"\xa7\x01\n" +
+	"\x1bGetOrgProviderFilesResponse\x12N\n" +
+	"\x05files\x18\x01 \x03(\v28.cloud.v1.catalog.GetOrgProviderFilesResponse.FilesEntryR\x05files\x1a8\n" +
+	"\n" +
+	"FilesEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\fR\x05value:\x028\x01\"_\n" +
+	"\x1aGetOrgWorkflowFilesRequest\x12&\n" +
+	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\x12\x19\n" +
+	"\x02id\x18\x02 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\x02id\"\xa7\x01\n" +
+	"\x1bGetOrgWorkflowFilesResponse\x12N\n" +
+	"\x05files\x18\x01 \x03(\v28.cloud.v1.catalog.GetOrgWorkflowFilesResponse.FilesEntryR\x05files\x1a8\n" +
+	"\n" +
+	"FilesEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\fR\x05value:\x028\x01\"A\n" +
 	"\x17ListOrgProvidersRequest\x12&\n" +
 	"\ttenant_id\x18\x01 \x01(\tB\t\xfaB\x06r\x04\x10\x01\x18@R\btenantId\"T\n" +
 	"\x18ListOrgProvidersResponse\x128\n" +
@@ -2017,12 +2513,29 @@ const file_cloud_v1_catalog_service_proto_rawDesc = "" +
 	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
 	"\x05value\x18\x02 \x01(\fR\x05value:\x028\x01\"Z\n" +
 	"\x1cCheckCatalogWorkflowResponse\x12:\n" +
-	"\vdiagnostics\x18\x01 \x03(\v2\x18.cloud.v1.dsl.DiagnosticR\vdiagnostics2\xd9\x13\n" +
+	"\vdiagnostics\x18\x01 \x03(\v2\x18.cloud.v1.dsl.DiagnosticR\vdiagnostics\"\xa9\x01\n" +
+	"\x1cCheckInstanceProviderRequest\x12O\n" +
+	"\x05files\x18\x01 \x03(\v29.cloud.v1.catalog.CheckInstanceProviderRequest.FilesEntryR\x05files\x1a8\n" +
+	"\n" +
+	"FilesEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\fR\x05value:\x028\x01\"[\n" +
+	"\x1dCheckInstanceProviderResponse\x12:\n" +
+	"\vdiagnostics\x18\x01 \x03(\v2\x18.cloud.v1.dsl.DiagnosticR\vdiagnostics\"\xa9\x01\n" +
+	"\x1cCheckInstanceWorkflowRequest\x12O\n" +
+	"\x05files\x18\x01 \x03(\v29.cloud.v1.catalog.CheckInstanceWorkflowRequest.FilesEntryR\x05files\x1a8\n" +
+	"\n" +
+	"FilesEntry\x12\x10\n" +
+	"\x03key\x18\x01 \x01(\tR\x03key\x12\x14\n" +
+	"\x05value\x18\x02 \x01(\fR\x05value:\x028\x01\"[\n" +
+	"\x1dCheckInstanceWorkflowResponse\x12:\n" +
+	"\vdiagnostics\x18\x01 \x03(\v2\x18.cloud.v1.dsl.DiagnosticR\vdiagnostics2\xfa\x18\n" +
 	"\x0eCatalogService\x12z\n" +
 	"\x13CreateInstanceEntry\x12,.cloud.v1.catalog.CreateInstanceEntryRequest\x1a-.cloud.v1.catalog.CreateInstanceEntryResponse\"\x06\x8a\xb5\x18\x02\x18\x01\x12z\n" +
 	"\x13UpdateInstanceEntry\x12,.cloud.v1.catalog.UpdateInstanceEntryRequest\x1a-.cloud.v1.catalog.UpdateInstanceEntryResponse\"\x06\x8a\xb5\x18\x02\x18\x01\x12z\n" +
 	"\x13DeleteInstanceEntry\x12,.cloud.v1.catalog.DeleteInstanceEntryRequest\x1a-.cloud.v1.catalog.DeleteInstanceEntryResponse\"\x06\x8a\xb5\x18\x02\x18\x01\x12q\n" +
-	"\x10GetInstanceEntry\x12).cloud.v1.catalog.GetInstanceEntryRequest\x1a*.cloud.v1.catalog.GetInstanceEntryResponse\"\x06\x8a\xb5\x18\x02\x18\x01\x12z\n" +
+	"\x10GetInstanceEntry\x12).cloud.v1.catalog.GetInstanceEntryRequest\x1a*.cloud.v1.catalog.GetInstanceEntryResponse\"\x06\x8a\xb5\x18\x02\x18\x01\x12\x80\x01\n" +
+	"\x15GetInstanceEntryFiles\x12..cloud.v1.catalog.GetInstanceEntryFilesRequest\x1a/.cloud.v1.catalog.GetInstanceEntryFilesResponse\"\x06\x8a\xb5\x18\x02\x18\x01\x12z\n" +
 	"\x13ListInstanceEntries\x12,.cloud.v1.catalog.ListInstanceEntriesRequest\x1a-.cloud.v1.catalog.ListInstanceEntriesResponse\"\x06\x8a\xb5\x18\x02\x18\x01\x12\x83\x01\n" +
 	"\x11CreateOrgProvider\x12*.cloud.v1.catalog.CreateOrgProviderRequest\x1a+.cloud.v1.catalog.CreateOrgProviderResponse\"\x15\x8a\xb5\x18\x11\x12\x04\b\x10\x10\x01\"\ttenant_id\x12\x83\x01\n" +
 	"\x11CreateOrgWorkflow\x12*.cloud.v1.catalog.CreateOrgWorkflowRequest\x1a+.cloud.v1.catalog.CreateOrgWorkflowResponse\"\x15\x8a\xb5\x18\x11\x12\x04\b\x11\x10\x01\"\ttenant_id\x12\x83\x01\n" +
@@ -2031,13 +2544,17 @@ const file_cloud_v1_catalog_service_proto_rawDesc = "" +
 	"\x11DeleteOrgProvider\x12*.cloud.v1.catalog.DeleteOrgProviderRequest\x1a+.cloud.v1.catalog.DeleteOrgProviderResponse\"\x15\x8a\xb5\x18\x11\x12\x04\b\x10\x10\x04\"\ttenant_id\x12\x83\x01\n" +
 	"\x11DeleteOrgWorkflow\x12*.cloud.v1.catalog.DeleteOrgWorkflowRequest\x1a+.cloud.v1.catalog.DeleteOrgWorkflowResponse\"\x15\x8a\xb5\x18\x11\x12\x04\b\x11\x10\x04\"\ttenant_id\x12z\n" +
 	"\x0eGetOrgProvider\x12'.cloud.v1.catalog.GetOrgProviderRequest\x1a(.cloud.v1.catalog.GetOrgProviderResponse\"\x15\x8a\xb5\x18\x11\x12\x04\b\x10\x10\x02\"\ttenant_id\x12z\n" +
-	"\x0eGetOrgWorkflow\x12'.cloud.v1.catalog.GetOrgWorkflowRequest\x1a(.cloud.v1.catalog.GetOrgWorkflowResponse\"\x15\x8a\xb5\x18\x11\x12\x04\b\x11\x10\x02\"\ttenant_id\x12\x80\x01\n" +
+	"\x0eGetOrgWorkflow\x12'.cloud.v1.catalog.GetOrgWorkflowRequest\x1a(.cloud.v1.catalog.GetOrgWorkflowResponse\"\x15\x8a\xb5\x18\x11\x12\x04\b\x11\x10\x02\"\ttenant_id\x12\x89\x01\n" +
+	"\x13GetOrgProviderFiles\x12,.cloud.v1.catalog.GetOrgProviderFilesRequest\x1a-.cloud.v1.catalog.GetOrgProviderFilesResponse\"\x15\x8a\xb5\x18\x11\x12\x04\b\x10\x10\x02\"\ttenant_id\x12\x89\x01\n" +
+	"\x13GetOrgWorkflowFiles\x12,.cloud.v1.catalog.GetOrgWorkflowFilesRequest\x1a-.cloud.v1.catalog.GetOrgWorkflowFilesResponse\"\x15\x8a\xb5\x18\x11\x12\x04\b\x11\x10\x02\"\ttenant_id\x12\x80\x01\n" +
 	"\x10ListOrgProviders\x12).cloud.v1.catalog.ListOrgProvidersRequest\x1a*.cloud.v1.catalog.ListOrgProvidersResponse\"\x15\x8a\xb5\x18\x11\x12\x04\b\x10\x10\x05\"\ttenant_id\x12\x80\x01\n" +
 	"\x10ListOrgWorkflows\x12).cloud.v1.catalog.ListOrgWorkflowsRequest\x1a*.cloud.v1.catalog.ListOrgWorkflowsResponse\"\x15\x8a\xb5\x18\x11\x12\x04\b\x11\x10\x05\"\ttenant_id\x12\x8c\x01\n" +
 	"\x14LinkInstanceProvider\x12-.cloud.v1.catalog.LinkInstanceProviderRequest\x1a..cloud.v1.catalog.LinkInstanceProviderResponse\"\x15\x8a\xb5\x18\x11\x12\x04\b\x10\x10\x01\"\ttenant_id\x12\x8c\x01\n" +
 	"\x14LinkInstanceWorkflow\x12-.cloud.v1.catalog.LinkInstanceWorkflowRequest\x1a..cloud.v1.catalog.LinkInstanceWorkflowResponse\"\x15\x8a\xb5\x18\x11\x12\x04\b\x11\x10\x01\"\ttenant_id\x12\x8c\x01\n" +
 	"\x14CheckCatalogProvider\x12-.cloud.v1.catalog.CheckCatalogProviderRequest\x1a..cloud.v1.catalog.CheckCatalogProviderResponse\"\x15\x8a\xb5\x18\x11\x12\x04\b\x10\x10\x02\"\ttenant_id\x12\x8c\x01\n" +
-	"\x14CheckCatalogWorkflow\x12-.cloud.v1.catalog.CheckCatalogWorkflowRequest\x1a..cloud.v1.catalog.CheckCatalogWorkflowResponse\"\x15\x8a\xb5\x18\x11\x12\x04\b\x11\x10\x02\"\ttenant_id\x1a\x06\xc2\xc9&\x02\b\x01BEZCgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/catalogb\x06proto3"
+	"\x14CheckCatalogWorkflow\x12-.cloud.v1.catalog.CheckCatalogWorkflowRequest\x1a..cloud.v1.catalog.CheckCatalogWorkflowResponse\"\x15\x8a\xb5\x18\x11\x12\x04\b\x11\x10\x02\"\ttenant_id\x12\x80\x01\n" +
+	"\x15CheckInstanceProvider\x12..cloud.v1.catalog.CheckInstanceProviderRequest\x1a/.cloud.v1.catalog.CheckInstanceProviderResponse\"\x06\x8a\xb5\x18\x02\x18\x01\x12\x80\x01\n" +
+	"\x15CheckInstanceWorkflow\x12..cloud.v1.catalog.CheckInstanceWorkflowRequest\x1a/.cloud.v1.catalog.CheckInstanceWorkflowResponse\"\x06\x8a\xb5\x18\x02\x18\x01\x1a\x06\xc2\xc9&\x02\b\x01BEZCgithub.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/catalogb\x06proto3"
 
 var (
 	file_cloud_v1_catalog_service_proto_rawDescOnce sync.Once
@@ -2051,128 +2568,160 @@ func file_cloud_v1_catalog_service_proto_rawDescGZIP() []byte {
 	return file_cloud_v1_catalog_service_proto_rawDescData
 }
 
-var file_cloud_v1_catalog_service_proto_msgTypes = make([]protoimpl.MessageInfo, 46)
+var file_cloud_v1_catalog_service_proto_msgTypes = make([]protoimpl.MessageInfo, 61)
 var file_cloud_v1_catalog_service_proto_goTypes = []any{
-	(*CreateInstanceEntryRequest)(nil),   // 0: cloud.v1.catalog.CreateInstanceEntryRequest
-	(*CreateInstanceEntryResponse)(nil),  // 1: cloud.v1.catalog.CreateInstanceEntryResponse
-	(*GetInstanceEntryRequest)(nil),      // 2: cloud.v1.catalog.GetInstanceEntryRequest
-	(*GetInstanceEntryResponse)(nil),     // 3: cloud.v1.catalog.GetInstanceEntryResponse
-	(*ListInstanceEntriesRequest)(nil),   // 4: cloud.v1.catalog.ListInstanceEntriesRequest
-	(*ListInstanceEntriesResponse)(nil),  // 5: cloud.v1.catalog.ListInstanceEntriesResponse
-	(*UpdateInstanceEntryRequest)(nil),   // 6: cloud.v1.catalog.UpdateInstanceEntryRequest
-	(*UpdateInstanceEntryResponse)(nil),  // 7: cloud.v1.catalog.UpdateInstanceEntryResponse
-	(*DeleteInstanceEntryRequest)(nil),   // 8: cloud.v1.catalog.DeleteInstanceEntryRequest
-	(*DeleteInstanceEntryResponse)(nil),  // 9: cloud.v1.catalog.DeleteInstanceEntryResponse
-	(*CreateOrgProviderRequest)(nil),     // 10: cloud.v1.catalog.CreateOrgProviderRequest
-	(*CreateOrgProviderResponse)(nil),    // 11: cloud.v1.catalog.CreateOrgProviderResponse
-	(*CreateOrgWorkflowRequest)(nil),     // 12: cloud.v1.catalog.CreateOrgWorkflowRequest
-	(*CreateOrgWorkflowResponse)(nil),    // 13: cloud.v1.catalog.CreateOrgWorkflowResponse
-	(*UpdateOrgProviderRequest)(nil),     // 14: cloud.v1.catalog.UpdateOrgProviderRequest
-	(*UpdateOrgProviderResponse)(nil),    // 15: cloud.v1.catalog.UpdateOrgProviderResponse
-	(*UpdateOrgWorkflowRequest)(nil),     // 16: cloud.v1.catalog.UpdateOrgWorkflowRequest
-	(*UpdateOrgWorkflowResponse)(nil),    // 17: cloud.v1.catalog.UpdateOrgWorkflowResponse
-	(*DeleteOrgProviderRequest)(nil),     // 18: cloud.v1.catalog.DeleteOrgProviderRequest
-	(*DeleteOrgProviderResponse)(nil),    // 19: cloud.v1.catalog.DeleteOrgProviderResponse
-	(*DeleteOrgWorkflowRequest)(nil),     // 20: cloud.v1.catalog.DeleteOrgWorkflowRequest
-	(*DeleteOrgWorkflowResponse)(nil),    // 21: cloud.v1.catalog.DeleteOrgWorkflowResponse
-	(*GetOrgProviderRequest)(nil),        // 22: cloud.v1.catalog.GetOrgProviderRequest
-	(*GetOrgProviderResponse)(nil),       // 23: cloud.v1.catalog.GetOrgProviderResponse
-	(*GetOrgWorkflowRequest)(nil),        // 24: cloud.v1.catalog.GetOrgWorkflowRequest
-	(*GetOrgWorkflowResponse)(nil),       // 25: cloud.v1.catalog.GetOrgWorkflowResponse
-	(*ListOrgProvidersRequest)(nil),      // 26: cloud.v1.catalog.ListOrgProvidersRequest
-	(*ListOrgProvidersResponse)(nil),     // 27: cloud.v1.catalog.ListOrgProvidersResponse
-	(*ListOrgWorkflowsRequest)(nil),      // 28: cloud.v1.catalog.ListOrgWorkflowsRequest
-	(*ListOrgWorkflowsResponse)(nil),     // 29: cloud.v1.catalog.ListOrgWorkflowsResponse
-	(*LinkInstanceProviderRequest)(nil),  // 30: cloud.v1.catalog.LinkInstanceProviderRequest
-	(*LinkInstanceProviderResponse)(nil), // 31: cloud.v1.catalog.LinkInstanceProviderResponse
-	(*LinkInstanceWorkflowRequest)(nil),  // 32: cloud.v1.catalog.LinkInstanceWorkflowRequest
-	(*LinkInstanceWorkflowResponse)(nil), // 33: cloud.v1.catalog.LinkInstanceWorkflowResponse
-	(*CheckCatalogProviderRequest)(nil),  // 34: cloud.v1.catalog.CheckCatalogProviderRequest
-	(*CheckCatalogProviderResponse)(nil), // 35: cloud.v1.catalog.CheckCatalogProviderResponse
-	(*CheckCatalogWorkflowRequest)(nil),  // 36: cloud.v1.catalog.CheckCatalogWorkflowRequest
-	(*CheckCatalogWorkflowResponse)(nil), // 37: cloud.v1.catalog.CheckCatalogWorkflowResponse
-	nil,                                  // 38: cloud.v1.catalog.CreateInstanceEntryRequest.FilesEntry
-	nil,                                  // 39: cloud.v1.catalog.UpdateInstanceEntryRequest.FilesEntry
-	nil,                                  // 40: cloud.v1.catalog.CreateOrgProviderRequest.FilesEntry
-	nil,                                  // 41: cloud.v1.catalog.CreateOrgWorkflowRequest.FilesEntry
-	nil,                                  // 42: cloud.v1.catalog.UpdateOrgProviderRequest.FilesEntry
-	nil,                                  // 43: cloud.v1.catalog.UpdateOrgWorkflowRequest.FilesEntry
-	nil,                                  // 44: cloud.v1.catalog.CheckCatalogProviderRequest.FilesEntry
-	nil,                                  // 45: cloud.v1.catalog.CheckCatalogWorkflowRequest.FilesEntry
-	(Kind)(0),                            // 46: cloud.v1.catalog.Kind
-	(*CatalogEntry)(nil),                 // 47: cloud.v1.catalog.CatalogEntry
-	(*dsl.Diagnostic)(nil),               // 48: cloud.v1.dsl.Diagnostic
+	(*CreateInstanceEntryRequest)(nil),    // 0: cloud.v1.catalog.CreateInstanceEntryRequest
+	(*CreateInstanceEntryResponse)(nil),   // 1: cloud.v1.catalog.CreateInstanceEntryResponse
+	(*GetInstanceEntryRequest)(nil),       // 2: cloud.v1.catalog.GetInstanceEntryRequest
+	(*GetInstanceEntryResponse)(nil),      // 3: cloud.v1.catalog.GetInstanceEntryResponse
+	(*GetInstanceEntryFilesRequest)(nil),  // 4: cloud.v1.catalog.GetInstanceEntryFilesRequest
+	(*GetInstanceEntryFilesResponse)(nil), // 5: cloud.v1.catalog.GetInstanceEntryFilesResponse
+	(*ListInstanceEntriesRequest)(nil),    // 6: cloud.v1.catalog.ListInstanceEntriesRequest
+	(*ListInstanceEntriesResponse)(nil),   // 7: cloud.v1.catalog.ListInstanceEntriesResponse
+	(*UpdateInstanceEntryRequest)(nil),    // 8: cloud.v1.catalog.UpdateInstanceEntryRequest
+	(*UpdateInstanceEntryResponse)(nil),   // 9: cloud.v1.catalog.UpdateInstanceEntryResponse
+	(*DeleteInstanceEntryRequest)(nil),    // 10: cloud.v1.catalog.DeleteInstanceEntryRequest
+	(*DeleteInstanceEntryResponse)(nil),   // 11: cloud.v1.catalog.DeleteInstanceEntryResponse
+	(*CreateOrgProviderRequest)(nil),      // 12: cloud.v1.catalog.CreateOrgProviderRequest
+	(*CreateOrgProviderResponse)(nil),     // 13: cloud.v1.catalog.CreateOrgProviderResponse
+	(*CreateOrgWorkflowRequest)(nil),      // 14: cloud.v1.catalog.CreateOrgWorkflowRequest
+	(*CreateOrgWorkflowResponse)(nil),     // 15: cloud.v1.catalog.CreateOrgWorkflowResponse
+	(*UpdateOrgProviderRequest)(nil),      // 16: cloud.v1.catalog.UpdateOrgProviderRequest
+	(*UpdateOrgProviderResponse)(nil),     // 17: cloud.v1.catalog.UpdateOrgProviderResponse
+	(*UpdateOrgWorkflowRequest)(nil),      // 18: cloud.v1.catalog.UpdateOrgWorkflowRequest
+	(*UpdateOrgWorkflowResponse)(nil),     // 19: cloud.v1.catalog.UpdateOrgWorkflowResponse
+	(*DeleteOrgProviderRequest)(nil),      // 20: cloud.v1.catalog.DeleteOrgProviderRequest
+	(*DeleteOrgProviderResponse)(nil),     // 21: cloud.v1.catalog.DeleteOrgProviderResponse
+	(*DeleteOrgWorkflowRequest)(nil),      // 22: cloud.v1.catalog.DeleteOrgWorkflowRequest
+	(*DeleteOrgWorkflowResponse)(nil),     // 23: cloud.v1.catalog.DeleteOrgWorkflowResponse
+	(*GetOrgProviderRequest)(nil),         // 24: cloud.v1.catalog.GetOrgProviderRequest
+	(*GetOrgProviderResponse)(nil),        // 25: cloud.v1.catalog.GetOrgProviderResponse
+	(*GetOrgWorkflowRequest)(nil),         // 26: cloud.v1.catalog.GetOrgWorkflowRequest
+	(*GetOrgWorkflowResponse)(nil),        // 27: cloud.v1.catalog.GetOrgWorkflowResponse
+	(*GetOrgProviderFilesRequest)(nil),    // 28: cloud.v1.catalog.GetOrgProviderFilesRequest
+	(*GetOrgProviderFilesResponse)(nil),   // 29: cloud.v1.catalog.GetOrgProviderFilesResponse
+	(*GetOrgWorkflowFilesRequest)(nil),    // 30: cloud.v1.catalog.GetOrgWorkflowFilesRequest
+	(*GetOrgWorkflowFilesResponse)(nil),   // 31: cloud.v1.catalog.GetOrgWorkflowFilesResponse
+	(*ListOrgProvidersRequest)(nil),       // 32: cloud.v1.catalog.ListOrgProvidersRequest
+	(*ListOrgProvidersResponse)(nil),      // 33: cloud.v1.catalog.ListOrgProvidersResponse
+	(*ListOrgWorkflowsRequest)(nil),       // 34: cloud.v1.catalog.ListOrgWorkflowsRequest
+	(*ListOrgWorkflowsResponse)(nil),      // 35: cloud.v1.catalog.ListOrgWorkflowsResponse
+	(*LinkInstanceProviderRequest)(nil),   // 36: cloud.v1.catalog.LinkInstanceProviderRequest
+	(*LinkInstanceProviderResponse)(nil),  // 37: cloud.v1.catalog.LinkInstanceProviderResponse
+	(*LinkInstanceWorkflowRequest)(nil),   // 38: cloud.v1.catalog.LinkInstanceWorkflowRequest
+	(*LinkInstanceWorkflowResponse)(nil),  // 39: cloud.v1.catalog.LinkInstanceWorkflowResponse
+	(*CheckCatalogProviderRequest)(nil),   // 40: cloud.v1.catalog.CheckCatalogProviderRequest
+	(*CheckCatalogProviderResponse)(nil),  // 41: cloud.v1.catalog.CheckCatalogProviderResponse
+	(*CheckCatalogWorkflowRequest)(nil),   // 42: cloud.v1.catalog.CheckCatalogWorkflowRequest
+	(*CheckCatalogWorkflowResponse)(nil),  // 43: cloud.v1.catalog.CheckCatalogWorkflowResponse
+	(*CheckInstanceProviderRequest)(nil),  // 44: cloud.v1.catalog.CheckInstanceProviderRequest
+	(*CheckInstanceProviderResponse)(nil), // 45: cloud.v1.catalog.CheckInstanceProviderResponse
+	(*CheckInstanceWorkflowRequest)(nil),  // 46: cloud.v1.catalog.CheckInstanceWorkflowRequest
+	(*CheckInstanceWorkflowResponse)(nil), // 47: cloud.v1.catalog.CheckInstanceWorkflowResponse
+	nil,                                   // 48: cloud.v1.catalog.CreateInstanceEntryRequest.FilesEntry
+	nil,                                   // 49: cloud.v1.catalog.GetInstanceEntryFilesResponse.FilesEntry
+	nil,                                   // 50: cloud.v1.catalog.UpdateInstanceEntryRequest.FilesEntry
+	nil,                                   // 51: cloud.v1.catalog.CreateOrgProviderRequest.FilesEntry
+	nil,                                   // 52: cloud.v1.catalog.CreateOrgWorkflowRequest.FilesEntry
+	nil,                                   // 53: cloud.v1.catalog.UpdateOrgProviderRequest.FilesEntry
+	nil,                                   // 54: cloud.v1.catalog.UpdateOrgWorkflowRequest.FilesEntry
+	nil,                                   // 55: cloud.v1.catalog.GetOrgProviderFilesResponse.FilesEntry
+	nil,                                   // 56: cloud.v1.catalog.GetOrgWorkflowFilesResponse.FilesEntry
+	nil,                                   // 57: cloud.v1.catalog.CheckCatalogProviderRequest.FilesEntry
+	nil,                                   // 58: cloud.v1.catalog.CheckCatalogWorkflowRequest.FilesEntry
+	nil,                                   // 59: cloud.v1.catalog.CheckInstanceProviderRequest.FilesEntry
+	nil,                                   // 60: cloud.v1.catalog.CheckInstanceWorkflowRequest.FilesEntry
+	(Kind)(0),                             // 61: cloud.v1.catalog.Kind
+	(*CatalogEntry)(nil),                  // 62: cloud.v1.catalog.CatalogEntry
+	(*dsl.Diagnostic)(nil),                // 63: cloud.v1.dsl.Diagnostic
 }
 var file_cloud_v1_catalog_service_proto_depIdxs = []int32{
-	46, // 0: cloud.v1.catalog.CreateInstanceEntryRequest.kind:type_name -> cloud.v1.catalog.Kind
-	38, // 1: cloud.v1.catalog.CreateInstanceEntryRequest.files:type_name -> cloud.v1.catalog.CreateInstanceEntryRequest.FilesEntry
-	47, // 2: cloud.v1.catalog.CreateInstanceEntryResponse.entry:type_name -> cloud.v1.catalog.CatalogEntry
-	47, // 3: cloud.v1.catalog.GetInstanceEntryResponse.entry:type_name -> cloud.v1.catalog.CatalogEntry
-	46, // 4: cloud.v1.catalog.ListInstanceEntriesRequest.kind:type_name -> cloud.v1.catalog.Kind
-	47, // 5: cloud.v1.catalog.ListInstanceEntriesResponse.entries:type_name -> cloud.v1.catalog.CatalogEntry
-	39, // 6: cloud.v1.catalog.UpdateInstanceEntryRequest.files:type_name -> cloud.v1.catalog.UpdateInstanceEntryRequest.FilesEntry
-	47, // 7: cloud.v1.catalog.UpdateInstanceEntryResponse.entry:type_name -> cloud.v1.catalog.CatalogEntry
-	40, // 8: cloud.v1.catalog.CreateOrgProviderRequest.files:type_name -> cloud.v1.catalog.CreateOrgProviderRequest.FilesEntry
-	47, // 9: cloud.v1.catalog.CreateOrgProviderResponse.entry:type_name -> cloud.v1.catalog.CatalogEntry
-	41, // 10: cloud.v1.catalog.CreateOrgWorkflowRequest.files:type_name -> cloud.v1.catalog.CreateOrgWorkflowRequest.FilesEntry
-	47, // 11: cloud.v1.catalog.CreateOrgWorkflowResponse.entry:type_name -> cloud.v1.catalog.CatalogEntry
-	42, // 12: cloud.v1.catalog.UpdateOrgProviderRequest.files:type_name -> cloud.v1.catalog.UpdateOrgProviderRequest.FilesEntry
-	47, // 13: cloud.v1.catalog.UpdateOrgProviderResponse.entry:type_name -> cloud.v1.catalog.CatalogEntry
-	43, // 14: cloud.v1.catalog.UpdateOrgWorkflowRequest.files:type_name -> cloud.v1.catalog.UpdateOrgWorkflowRequest.FilesEntry
-	47, // 15: cloud.v1.catalog.UpdateOrgWorkflowResponse.entry:type_name -> cloud.v1.catalog.CatalogEntry
-	47, // 16: cloud.v1.catalog.GetOrgProviderResponse.entry:type_name -> cloud.v1.catalog.CatalogEntry
-	47, // 17: cloud.v1.catalog.GetOrgWorkflowResponse.entry:type_name -> cloud.v1.catalog.CatalogEntry
-	47, // 18: cloud.v1.catalog.ListOrgProvidersResponse.entries:type_name -> cloud.v1.catalog.CatalogEntry
-	47, // 19: cloud.v1.catalog.ListOrgWorkflowsResponse.entries:type_name -> cloud.v1.catalog.CatalogEntry
-	47, // 20: cloud.v1.catalog.LinkInstanceProviderResponse.entry:type_name -> cloud.v1.catalog.CatalogEntry
-	47, // 21: cloud.v1.catalog.LinkInstanceWorkflowResponse.entry:type_name -> cloud.v1.catalog.CatalogEntry
-	44, // 22: cloud.v1.catalog.CheckCatalogProviderRequest.files:type_name -> cloud.v1.catalog.CheckCatalogProviderRequest.FilesEntry
-	48, // 23: cloud.v1.catalog.CheckCatalogProviderResponse.diagnostics:type_name -> cloud.v1.dsl.Diagnostic
-	45, // 24: cloud.v1.catalog.CheckCatalogWorkflowRequest.files:type_name -> cloud.v1.catalog.CheckCatalogWorkflowRequest.FilesEntry
-	48, // 25: cloud.v1.catalog.CheckCatalogWorkflowResponse.diagnostics:type_name -> cloud.v1.dsl.Diagnostic
-	0,  // 26: cloud.v1.catalog.CatalogService.CreateInstanceEntry:input_type -> cloud.v1.catalog.CreateInstanceEntryRequest
-	6,  // 27: cloud.v1.catalog.CatalogService.UpdateInstanceEntry:input_type -> cloud.v1.catalog.UpdateInstanceEntryRequest
-	8,  // 28: cloud.v1.catalog.CatalogService.DeleteInstanceEntry:input_type -> cloud.v1.catalog.DeleteInstanceEntryRequest
-	2,  // 29: cloud.v1.catalog.CatalogService.GetInstanceEntry:input_type -> cloud.v1.catalog.GetInstanceEntryRequest
-	4,  // 30: cloud.v1.catalog.CatalogService.ListInstanceEntries:input_type -> cloud.v1.catalog.ListInstanceEntriesRequest
-	10, // 31: cloud.v1.catalog.CatalogService.CreateOrgProvider:input_type -> cloud.v1.catalog.CreateOrgProviderRequest
-	12, // 32: cloud.v1.catalog.CatalogService.CreateOrgWorkflow:input_type -> cloud.v1.catalog.CreateOrgWorkflowRequest
-	14, // 33: cloud.v1.catalog.CatalogService.UpdateOrgProvider:input_type -> cloud.v1.catalog.UpdateOrgProviderRequest
-	16, // 34: cloud.v1.catalog.CatalogService.UpdateOrgWorkflow:input_type -> cloud.v1.catalog.UpdateOrgWorkflowRequest
-	18, // 35: cloud.v1.catalog.CatalogService.DeleteOrgProvider:input_type -> cloud.v1.catalog.DeleteOrgProviderRequest
-	20, // 36: cloud.v1.catalog.CatalogService.DeleteOrgWorkflow:input_type -> cloud.v1.catalog.DeleteOrgWorkflowRequest
-	22, // 37: cloud.v1.catalog.CatalogService.GetOrgProvider:input_type -> cloud.v1.catalog.GetOrgProviderRequest
-	24, // 38: cloud.v1.catalog.CatalogService.GetOrgWorkflow:input_type -> cloud.v1.catalog.GetOrgWorkflowRequest
-	26, // 39: cloud.v1.catalog.CatalogService.ListOrgProviders:input_type -> cloud.v1.catalog.ListOrgProvidersRequest
-	28, // 40: cloud.v1.catalog.CatalogService.ListOrgWorkflows:input_type -> cloud.v1.catalog.ListOrgWorkflowsRequest
-	30, // 41: cloud.v1.catalog.CatalogService.LinkInstanceProvider:input_type -> cloud.v1.catalog.LinkInstanceProviderRequest
-	32, // 42: cloud.v1.catalog.CatalogService.LinkInstanceWorkflow:input_type -> cloud.v1.catalog.LinkInstanceWorkflowRequest
-	34, // 43: cloud.v1.catalog.CatalogService.CheckCatalogProvider:input_type -> cloud.v1.catalog.CheckCatalogProviderRequest
-	36, // 44: cloud.v1.catalog.CatalogService.CheckCatalogWorkflow:input_type -> cloud.v1.catalog.CheckCatalogWorkflowRequest
-	1,  // 45: cloud.v1.catalog.CatalogService.CreateInstanceEntry:output_type -> cloud.v1.catalog.CreateInstanceEntryResponse
-	7,  // 46: cloud.v1.catalog.CatalogService.UpdateInstanceEntry:output_type -> cloud.v1.catalog.UpdateInstanceEntryResponse
-	9,  // 47: cloud.v1.catalog.CatalogService.DeleteInstanceEntry:output_type -> cloud.v1.catalog.DeleteInstanceEntryResponse
-	3,  // 48: cloud.v1.catalog.CatalogService.GetInstanceEntry:output_type -> cloud.v1.catalog.GetInstanceEntryResponse
-	5,  // 49: cloud.v1.catalog.CatalogService.ListInstanceEntries:output_type -> cloud.v1.catalog.ListInstanceEntriesResponse
-	11, // 50: cloud.v1.catalog.CatalogService.CreateOrgProvider:output_type -> cloud.v1.catalog.CreateOrgProviderResponse
-	13, // 51: cloud.v1.catalog.CatalogService.CreateOrgWorkflow:output_type -> cloud.v1.catalog.CreateOrgWorkflowResponse
-	15, // 52: cloud.v1.catalog.CatalogService.UpdateOrgProvider:output_type -> cloud.v1.catalog.UpdateOrgProviderResponse
-	17, // 53: cloud.v1.catalog.CatalogService.UpdateOrgWorkflow:output_type -> cloud.v1.catalog.UpdateOrgWorkflowResponse
-	19, // 54: cloud.v1.catalog.CatalogService.DeleteOrgProvider:output_type -> cloud.v1.catalog.DeleteOrgProviderResponse
-	21, // 55: cloud.v1.catalog.CatalogService.DeleteOrgWorkflow:output_type -> cloud.v1.catalog.DeleteOrgWorkflowResponse
-	23, // 56: cloud.v1.catalog.CatalogService.GetOrgProvider:output_type -> cloud.v1.catalog.GetOrgProviderResponse
-	25, // 57: cloud.v1.catalog.CatalogService.GetOrgWorkflow:output_type -> cloud.v1.catalog.GetOrgWorkflowResponse
-	27, // 58: cloud.v1.catalog.CatalogService.ListOrgProviders:output_type -> cloud.v1.catalog.ListOrgProvidersResponse
-	29, // 59: cloud.v1.catalog.CatalogService.ListOrgWorkflows:output_type -> cloud.v1.catalog.ListOrgWorkflowsResponse
-	31, // 60: cloud.v1.catalog.CatalogService.LinkInstanceProvider:output_type -> cloud.v1.catalog.LinkInstanceProviderResponse
-	33, // 61: cloud.v1.catalog.CatalogService.LinkInstanceWorkflow:output_type -> cloud.v1.catalog.LinkInstanceWorkflowResponse
-	35, // 62: cloud.v1.catalog.CatalogService.CheckCatalogProvider:output_type -> cloud.v1.catalog.CheckCatalogProviderResponse
-	37, // 63: cloud.v1.catalog.CatalogService.CheckCatalogWorkflow:output_type -> cloud.v1.catalog.CheckCatalogWorkflowResponse
-	45, // [45:64] is the sub-list for method output_type
-	26, // [26:45] is the sub-list for method input_type
-	26, // [26:26] is the sub-list for extension type_name
-	26, // [26:26] is the sub-list for extension extendee
-	0,  // [0:26] is the sub-list for field type_name
+	61, // 0: cloud.v1.catalog.CreateInstanceEntryRequest.kind:type_name -> cloud.v1.catalog.Kind
+	48, // 1: cloud.v1.catalog.CreateInstanceEntryRequest.files:type_name -> cloud.v1.catalog.CreateInstanceEntryRequest.FilesEntry
+	62, // 2: cloud.v1.catalog.CreateInstanceEntryResponse.entry:type_name -> cloud.v1.catalog.CatalogEntry
+	62, // 3: cloud.v1.catalog.GetInstanceEntryResponse.entry:type_name -> cloud.v1.catalog.CatalogEntry
+	49, // 4: cloud.v1.catalog.GetInstanceEntryFilesResponse.files:type_name -> cloud.v1.catalog.GetInstanceEntryFilesResponse.FilesEntry
+	61, // 5: cloud.v1.catalog.ListInstanceEntriesRequest.kind:type_name -> cloud.v1.catalog.Kind
+	62, // 6: cloud.v1.catalog.ListInstanceEntriesResponse.entries:type_name -> cloud.v1.catalog.CatalogEntry
+	50, // 7: cloud.v1.catalog.UpdateInstanceEntryRequest.files:type_name -> cloud.v1.catalog.UpdateInstanceEntryRequest.FilesEntry
+	62, // 8: cloud.v1.catalog.UpdateInstanceEntryResponse.entry:type_name -> cloud.v1.catalog.CatalogEntry
+	51, // 9: cloud.v1.catalog.CreateOrgProviderRequest.files:type_name -> cloud.v1.catalog.CreateOrgProviderRequest.FilesEntry
+	62, // 10: cloud.v1.catalog.CreateOrgProviderResponse.entry:type_name -> cloud.v1.catalog.CatalogEntry
+	52, // 11: cloud.v1.catalog.CreateOrgWorkflowRequest.files:type_name -> cloud.v1.catalog.CreateOrgWorkflowRequest.FilesEntry
+	62, // 12: cloud.v1.catalog.CreateOrgWorkflowResponse.entry:type_name -> cloud.v1.catalog.CatalogEntry
+	53, // 13: cloud.v1.catalog.UpdateOrgProviderRequest.files:type_name -> cloud.v1.catalog.UpdateOrgProviderRequest.FilesEntry
+	62, // 14: cloud.v1.catalog.UpdateOrgProviderResponse.entry:type_name -> cloud.v1.catalog.CatalogEntry
+	54, // 15: cloud.v1.catalog.UpdateOrgWorkflowRequest.files:type_name -> cloud.v1.catalog.UpdateOrgWorkflowRequest.FilesEntry
+	62, // 16: cloud.v1.catalog.UpdateOrgWorkflowResponse.entry:type_name -> cloud.v1.catalog.CatalogEntry
+	62, // 17: cloud.v1.catalog.GetOrgProviderResponse.entry:type_name -> cloud.v1.catalog.CatalogEntry
+	62, // 18: cloud.v1.catalog.GetOrgWorkflowResponse.entry:type_name -> cloud.v1.catalog.CatalogEntry
+	55, // 19: cloud.v1.catalog.GetOrgProviderFilesResponse.files:type_name -> cloud.v1.catalog.GetOrgProviderFilesResponse.FilesEntry
+	56, // 20: cloud.v1.catalog.GetOrgWorkflowFilesResponse.files:type_name -> cloud.v1.catalog.GetOrgWorkflowFilesResponse.FilesEntry
+	62, // 21: cloud.v1.catalog.ListOrgProvidersResponse.entries:type_name -> cloud.v1.catalog.CatalogEntry
+	62, // 22: cloud.v1.catalog.ListOrgWorkflowsResponse.entries:type_name -> cloud.v1.catalog.CatalogEntry
+	62, // 23: cloud.v1.catalog.LinkInstanceProviderResponse.entry:type_name -> cloud.v1.catalog.CatalogEntry
+	62, // 24: cloud.v1.catalog.LinkInstanceWorkflowResponse.entry:type_name -> cloud.v1.catalog.CatalogEntry
+	57, // 25: cloud.v1.catalog.CheckCatalogProviderRequest.files:type_name -> cloud.v1.catalog.CheckCatalogProviderRequest.FilesEntry
+	63, // 26: cloud.v1.catalog.CheckCatalogProviderResponse.diagnostics:type_name -> cloud.v1.dsl.Diagnostic
+	58, // 27: cloud.v1.catalog.CheckCatalogWorkflowRequest.files:type_name -> cloud.v1.catalog.CheckCatalogWorkflowRequest.FilesEntry
+	63, // 28: cloud.v1.catalog.CheckCatalogWorkflowResponse.diagnostics:type_name -> cloud.v1.dsl.Diagnostic
+	59, // 29: cloud.v1.catalog.CheckInstanceProviderRequest.files:type_name -> cloud.v1.catalog.CheckInstanceProviderRequest.FilesEntry
+	63, // 30: cloud.v1.catalog.CheckInstanceProviderResponse.diagnostics:type_name -> cloud.v1.dsl.Diagnostic
+	60, // 31: cloud.v1.catalog.CheckInstanceWorkflowRequest.files:type_name -> cloud.v1.catalog.CheckInstanceWorkflowRequest.FilesEntry
+	63, // 32: cloud.v1.catalog.CheckInstanceWorkflowResponse.diagnostics:type_name -> cloud.v1.dsl.Diagnostic
+	0,  // 33: cloud.v1.catalog.CatalogService.CreateInstanceEntry:input_type -> cloud.v1.catalog.CreateInstanceEntryRequest
+	8,  // 34: cloud.v1.catalog.CatalogService.UpdateInstanceEntry:input_type -> cloud.v1.catalog.UpdateInstanceEntryRequest
+	10, // 35: cloud.v1.catalog.CatalogService.DeleteInstanceEntry:input_type -> cloud.v1.catalog.DeleteInstanceEntryRequest
+	2,  // 36: cloud.v1.catalog.CatalogService.GetInstanceEntry:input_type -> cloud.v1.catalog.GetInstanceEntryRequest
+	4,  // 37: cloud.v1.catalog.CatalogService.GetInstanceEntryFiles:input_type -> cloud.v1.catalog.GetInstanceEntryFilesRequest
+	6,  // 38: cloud.v1.catalog.CatalogService.ListInstanceEntries:input_type -> cloud.v1.catalog.ListInstanceEntriesRequest
+	12, // 39: cloud.v1.catalog.CatalogService.CreateOrgProvider:input_type -> cloud.v1.catalog.CreateOrgProviderRequest
+	14, // 40: cloud.v1.catalog.CatalogService.CreateOrgWorkflow:input_type -> cloud.v1.catalog.CreateOrgWorkflowRequest
+	16, // 41: cloud.v1.catalog.CatalogService.UpdateOrgProvider:input_type -> cloud.v1.catalog.UpdateOrgProviderRequest
+	18, // 42: cloud.v1.catalog.CatalogService.UpdateOrgWorkflow:input_type -> cloud.v1.catalog.UpdateOrgWorkflowRequest
+	20, // 43: cloud.v1.catalog.CatalogService.DeleteOrgProvider:input_type -> cloud.v1.catalog.DeleteOrgProviderRequest
+	22, // 44: cloud.v1.catalog.CatalogService.DeleteOrgWorkflow:input_type -> cloud.v1.catalog.DeleteOrgWorkflowRequest
+	24, // 45: cloud.v1.catalog.CatalogService.GetOrgProvider:input_type -> cloud.v1.catalog.GetOrgProviderRequest
+	26, // 46: cloud.v1.catalog.CatalogService.GetOrgWorkflow:input_type -> cloud.v1.catalog.GetOrgWorkflowRequest
+	28, // 47: cloud.v1.catalog.CatalogService.GetOrgProviderFiles:input_type -> cloud.v1.catalog.GetOrgProviderFilesRequest
+	30, // 48: cloud.v1.catalog.CatalogService.GetOrgWorkflowFiles:input_type -> cloud.v1.catalog.GetOrgWorkflowFilesRequest
+	32, // 49: cloud.v1.catalog.CatalogService.ListOrgProviders:input_type -> cloud.v1.catalog.ListOrgProvidersRequest
+	34, // 50: cloud.v1.catalog.CatalogService.ListOrgWorkflows:input_type -> cloud.v1.catalog.ListOrgWorkflowsRequest
+	36, // 51: cloud.v1.catalog.CatalogService.LinkInstanceProvider:input_type -> cloud.v1.catalog.LinkInstanceProviderRequest
+	38, // 52: cloud.v1.catalog.CatalogService.LinkInstanceWorkflow:input_type -> cloud.v1.catalog.LinkInstanceWorkflowRequest
+	40, // 53: cloud.v1.catalog.CatalogService.CheckCatalogProvider:input_type -> cloud.v1.catalog.CheckCatalogProviderRequest
+	42, // 54: cloud.v1.catalog.CatalogService.CheckCatalogWorkflow:input_type -> cloud.v1.catalog.CheckCatalogWorkflowRequest
+	44, // 55: cloud.v1.catalog.CatalogService.CheckInstanceProvider:input_type -> cloud.v1.catalog.CheckInstanceProviderRequest
+	46, // 56: cloud.v1.catalog.CatalogService.CheckInstanceWorkflow:input_type -> cloud.v1.catalog.CheckInstanceWorkflowRequest
+	1,  // 57: cloud.v1.catalog.CatalogService.CreateInstanceEntry:output_type -> cloud.v1.catalog.CreateInstanceEntryResponse
+	9,  // 58: cloud.v1.catalog.CatalogService.UpdateInstanceEntry:output_type -> cloud.v1.catalog.UpdateInstanceEntryResponse
+	11, // 59: cloud.v1.catalog.CatalogService.DeleteInstanceEntry:output_type -> cloud.v1.catalog.DeleteInstanceEntryResponse
+	3,  // 60: cloud.v1.catalog.CatalogService.GetInstanceEntry:output_type -> cloud.v1.catalog.GetInstanceEntryResponse
+	5,  // 61: cloud.v1.catalog.CatalogService.GetInstanceEntryFiles:output_type -> cloud.v1.catalog.GetInstanceEntryFilesResponse
+	7,  // 62: cloud.v1.catalog.CatalogService.ListInstanceEntries:output_type -> cloud.v1.catalog.ListInstanceEntriesResponse
+	13, // 63: cloud.v1.catalog.CatalogService.CreateOrgProvider:output_type -> cloud.v1.catalog.CreateOrgProviderResponse
+	15, // 64: cloud.v1.catalog.CatalogService.CreateOrgWorkflow:output_type -> cloud.v1.catalog.CreateOrgWorkflowResponse
+	17, // 65: cloud.v1.catalog.CatalogService.UpdateOrgProvider:output_type -> cloud.v1.catalog.UpdateOrgProviderResponse
+	19, // 66: cloud.v1.catalog.CatalogService.UpdateOrgWorkflow:output_type -> cloud.v1.catalog.UpdateOrgWorkflowResponse
+	21, // 67: cloud.v1.catalog.CatalogService.DeleteOrgProvider:output_type -> cloud.v1.catalog.DeleteOrgProviderResponse
+	23, // 68: cloud.v1.catalog.CatalogService.DeleteOrgWorkflow:output_type -> cloud.v1.catalog.DeleteOrgWorkflowResponse
+	25, // 69: cloud.v1.catalog.CatalogService.GetOrgProvider:output_type -> cloud.v1.catalog.GetOrgProviderResponse
+	27, // 70: cloud.v1.catalog.CatalogService.GetOrgWorkflow:output_type -> cloud.v1.catalog.GetOrgWorkflowResponse
+	29, // 71: cloud.v1.catalog.CatalogService.GetOrgProviderFiles:output_type -> cloud.v1.catalog.GetOrgProviderFilesResponse
+	31, // 72: cloud.v1.catalog.CatalogService.GetOrgWorkflowFiles:output_type -> cloud.v1.catalog.GetOrgWorkflowFilesResponse
+	33, // 73: cloud.v1.catalog.CatalogService.ListOrgProviders:output_type -> cloud.v1.catalog.ListOrgProvidersResponse
+	35, // 74: cloud.v1.catalog.CatalogService.ListOrgWorkflows:output_type -> cloud.v1.catalog.ListOrgWorkflowsResponse
+	37, // 75: cloud.v1.catalog.CatalogService.LinkInstanceProvider:output_type -> cloud.v1.catalog.LinkInstanceProviderResponse
+	39, // 76: cloud.v1.catalog.CatalogService.LinkInstanceWorkflow:output_type -> cloud.v1.catalog.LinkInstanceWorkflowResponse
+	41, // 77: cloud.v1.catalog.CatalogService.CheckCatalogProvider:output_type -> cloud.v1.catalog.CheckCatalogProviderResponse
+	43, // 78: cloud.v1.catalog.CatalogService.CheckCatalogWorkflow:output_type -> cloud.v1.catalog.CheckCatalogWorkflowResponse
+	45, // 79: cloud.v1.catalog.CatalogService.CheckInstanceProvider:output_type -> cloud.v1.catalog.CheckInstanceProviderResponse
+	47, // 80: cloud.v1.catalog.CatalogService.CheckInstanceWorkflow:output_type -> cloud.v1.catalog.CheckInstanceWorkflowResponse
+	57, // [57:81] is the sub-list for method output_type
+	33, // [33:57] is the sub-list for method input_type
+	33, // [33:33] is the sub-list for extension type_name
+	33, // [33:33] is the sub-list for extension extendee
+	0,  // [0:33] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_catalog_service_proto_init() }
@@ -2187,7 +2736,7 @@ func file_cloud_v1_catalog_service_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_catalog_service_proto_rawDesc), len(file_cloud_v1_catalog_service_proto_rawDesc)),
 			NumEnums:      0,
-			NumMessages:   46,
+			NumMessages:   61,
 			NumExtensions: 0,
 			NumServices:   1,
 		},

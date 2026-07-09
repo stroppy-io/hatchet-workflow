@@ -5998,6 +5998,9 @@ components:
                 dbPresetName:
                     maxLength: 255
                     type: string
+                dbVersion:
+                    maxLength: 64
+                    type: string
                 duration:
                     format: duration
                     type: string

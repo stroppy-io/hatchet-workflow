@@ -47839,6 +47839,12 @@ func (s *Summary2) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.DbVersion.Set {
+			e.FieldStart("dbVersion")
+			s.DbVersion.Encode(e)
+		}
+	}
+	{
 		if s.Duration.Set {
 			e.FieldStart("duration")
 			s.Duration.Encode(e)
@@ -47918,23 +47924,24 @@ func (s *Summary2) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfSummary2 = [16]string{
+var jsonFieldsNameOfSummary2 = [17]string{
 	0:  "dbKind",
 	1:  "dbPresetId",
 	2:  "dbPresetName",
-	3:  "duration",
-	4:  "finishedAt",
-	5:  "nodeCount",
-	6:  "progressPct",
-	7:  "provider",
-	8:  "startedAt",
-	9:  "stroppyVersion",
-	10: "testPresetId",
-	11: "testPresetName",
-	12: "topologyLabel",
-	13: "workloadName",
-	14: "workloadPresetId",
-	15: "workloadProtocol",
+	3:  "dbVersion",
+	4:  "duration",
+	5:  "finishedAt",
+	6:  "nodeCount",
+	7:  "progressPct",
+	8:  "provider",
+	9:  "startedAt",
+	10: "stroppyVersion",
+	11: "testPresetId",
+	12: "testPresetName",
+	13: "topologyLabel",
+	14: "workloadName",
+	15: "workloadPresetId",
+	16: "workloadProtocol",
 }
 
 // Decode decodes Summary2 from json.
@@ -47974,6 +47981,16 @@ func (s *Summary2) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"dbPresetName\"")
+			}
+		case "dbVersion":
+			if err := func() error {
+				s.DbVersion.Reset()
+				if err := s.DbVersion.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"dbVersion\"")
 			}
 		case "duration":
 			if err := func() error {

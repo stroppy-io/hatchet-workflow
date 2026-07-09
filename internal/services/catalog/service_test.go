@@ -601,6 +601,112 @@ func TestLinkInstanceProvider_WrongKindSourceIsNotFound(t *testing.T) {
 }
 
 /*
+	===== GetInstanceEntryFiles / GetOrgProviderFiles / GetOrgWorkflowFiles =====
+*/
+
+func TestGetInstanceEntryFiles_ReturnsStoredBundle(t *testing.T) {
+	svc := newTestService()
+	created, err := svc.CreateInstanceEntry(context.Background(), &catalogpb.CreateInstanceEntryRequest{
+		Kind: catalogpb.Kind_KIND_PROVIDER, Slug: "yandex", Name: "Yandex", Files: providerFiles(),
+	})
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	id := created.GetEntry().GetEntity().GetId()
+
+	resp, err := svc.GetInstanceEntryFiles(context.Background(), &catalogpb.GetInstanceEntryFilesRequest{Id: id})
+	if err != nil {
+		t.Fatalf("GetInstanceEntryFiles: %v", err)
+	}
+	if got, want := string(resp.GetFiles()["manifest.yaml"]), string(providerFiles()["manifest.yaml"]); got != want {
+		t.Fatalf("files[manifest.yaml] = %q, want %q", got, want)
+	}
+}
+
+func TestGetInstanceEntryFiles_AbsentIdIsNotFound(t *testing.T) {
+	svc := newTestService()
+	_, err := svc.GetInstanceEntryFiles(context.Background(), &catalogpb.GetInstanceEntryFilesRequest{Id: uuid.NewString()})
+	if status.Code(err) != codes.NotFound {
+		t.Fatalf("status = %s, want %s; err=%v", status.Code(err), codes.NotFound, err)
+	}
+}
+
+func TestGetOrgProviderFiles_ReturnsStoredBundle(t *testing.T) {
+	svc := newTestService()
+	created, err := svc.CreateOrgProvider(context.Background(), &catalogpb.CreateOrgProviderRequest{
+		TenantId: "tenant-1", Slug: "yandex", Name: "Yandex", Files: providerFiles(),
+	})
+	if err != nil {
+		t.Fatalf("create: %v", err)
+	}
+	id := created.GetEntry().GetEntity().GetId()
+
+	resp, err := svc.GetOrgProviderFiles(context.Background(), &catalogpb.GetOrgProviderFilesRequest{TenantId: "tenant-1", Id: id})
+	if err != nil {
+		t.Fatalf("GetOrgProviderFiles: %v", err)
+	}
+	if got, want := string(resp.GetFiles()["manifest.yaml"]), string(providerFiles()["manifest.yaml"]); got != want {
+		t.Fatalf("files[manifest.yaml] = %q, want %q", got, want)
+	}
+}
+
+func TestGetOrgProviderFiles_WrongKindIsNotFound(t *testing.T) {
+	svc := newTestService()
+	created, err := svc.CreateOrgWorkflow(context.Background(), &catalogpb.CreateOrgWorkflowRequest{
+		TenantId: "tenant-1", Slug: "pg-ha", Name: "PG HA", Files: map[string][]byte{"cluster.yaml": clusterYAML()},
+	})
+	if err != nil {
+		t.Fatalf("create workflow: %v", err)
+	}
+	id := created.GetEntry().GetEntity().GetId()
+
+	_, err = svc.GetOrgProviderFiles(context.Background(), &catalogpb.GetOrgProviderFilesRequest{TenantId: "tenant-1", Id: id})
+	if status.Code(err) != codes.NotFound {
+		t.Fatalf("status = %s, want %s; err=%v", status.Code(err), codes.NotFound, err)
+	}
+}
+
+func TestGetOrgWorkflowFiles_LinkedRowWithNoOwnRefResolvesViaSourceEntry(t *testing.T) {
+	// Mirrors ForkEntry's own fallback: a LINKED row seeded with no
+	// source_ref of its own must still resolve files through its
+	// source_entry_id -> the instance row's ref.
+	repo := newFakeEntryRepo()
+	bundles := NewMemoryBundleStore()
+	ref, err := bundles.Write(context.Background(), "", map[string][]byte{"cluster.yaml": clusterYAML()})
+	if err != nil {
+		t.Fatalf("bundle write: %v", err)
+	}
+	instance := instanceEntry(catalogpb.Kind_KIND_WORKFLOW, "pg-ha", 1)
+	instance.SourceRef = ref
+	repo.mustCreate(t, instance)
+
+	linked := orgEntry(catalogpb.Kind_KIND_WORKFLOW, "tenant-1", "pg-ha", 1)
+	linked.Origin = catalogpb.Origin_ORIGIN_LINKED
+	linked.SourceEntryId = instance.GetEntity().GetId()
+	linked.SourceRef = "" // seeded with no own ref, see ForkEntry's doc
+	repo.mustCreate(t, linked)
+
+	svc := NewService(Deps{Entries: repo, Bundles: bundles, Check: stubChecker(nil), Authn: fakeAuthn{}})
+	resp, err := svc.GetOrgWorkflowFiles(context.Background(), &catalogpb.GetOrgWorkflowFilesRequest{
+		TenantId: "tenant-1", Id: linked.GetEntity().GetId(),
+	})
+	if err != nil {
+		t.Fatalf("GetOrgWorkflowFiles: %v", err)
+	}
+	if got, want := string(resp.GetFiles()["cluster.yaml"]), string(clusterYAML()); got != want {
+		t.Fatalf("files[cluster.yaml] = %q, want %q", got, want)
+	}
+}
+
+func TestGetOrgProviderFiles_RequiresTenantID(t *testing.T) {
+	svc := newTestService()
+	_, err := svc.GetOrgProviderFiles(context.Background(), &catalogpb.GetOrgProviderFilesRequest{Id: uuid.NewString()})
+	if status.Code(err) != codes.InvalidArgument {
+		t.Fatalf("status = %s, want %s; err=%v", status.Code(err), codes.InvalidArgument, err)
+	}
+}
+
+/*
 	===== CheckCatalogProvider / CheckCatalogWorkflow =====
 */
 
@@ -628,6 +734,40 @@ func TestCheckCatalogProvider_RequiresTenantID(t *testing.T) {
 	_, err := svc.CheckCatalogProvider(context.Background(), &catalogpb.CheckCatalogProviderRequest{Files: providerFiles()})
 	if status.Code(err) != codes.InvalidArgument {
 		t.Fatalf("status = %s, want %s; err=%v", status.Code(err), codes.InvalidArgument, err)
+	}
+}
+
+/*
+	===== CheckInstanceProvider / CheckInstanceWorkflow =====
+*/
+
+func TestCheckInstanceProvider_ReturnsDiagnosticsWithoutPersistingOrTenant(t *testing.T) {
+	repo := newFakeEntryRepo()
+	diags := []*dslpb.Diagnostic{{Severity: dslpb.Severity_SEVERITY_WARNING, Message: "watch out"}}
+	svc := NewService(Deps{Entries: repo, Bundles: NewMemoryBundleStore(), Check: stubChecker(diags), Authn: fakeAuthn{}})
+
+	resp, err := svc.CheckInstanceProvider(context.Background(), &catalogpb.CheckInstanceProviderRequest{Files: providerFiles()})
+	if err != nil {
+		t.Fatalf("CheckInstanceProvider: %v", err)
+	}
+	if len(resp.GetDiagnostics()) != 1 || resp.GetDiagnostics()[0].GetMessage() != "watch out" {
+		t.Fatalf("diagnostics = %v, want the stub diagnostic", resp.GetDiagnostics())
+	}
+	if len(repo.byID) != 0 {
+		t.Fatalf("repo has %d rows, want 0 (Check must never persist)", len(repo.byID))
+	}
+}
+
+func TestCheckInstanceWorkflow_ReturnsDiagnostics(t *testing.T) {
+	svc := newTestService()
+	resp, err := svc.CheckInstanceWorkflow(context.Background(), &catalogpb.CheckInstanceWorkflowRequest{
+		Files: map[string][]byte{"cluster.yaml": clusterYAML()},
+	})
+	if err != nil {
+		t.Fatalf("CheckInstanceWorkflow: %v", err)
+	}
+	if len(resp.GetDiagnostics()) != 0 {
+		t.Fatalf("diagnostics = %v, want none (stub checker returns nil)", resp.GetDiagnostics())
 	}
 }
 
