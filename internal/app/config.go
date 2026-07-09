@@ -83,4 +83,24 @@ type Config struct {
 	// When empty, first-boot seeding is skipped entirely (no password is
 	// invented).
 	AdminPassword string
+	// GiteaBackend is the internal Gitea base URL (e.g. "http://gitea:3000")
+	// the gateway reverse-proxies IDE git traffic to and internal/gitrepo's
+	// bootstrap dials directly. Empty disables SP-C's git backend entirely —
+	// no instance-repo bootstrap runs and gateway.Config.IdeBackend is left
+	// unset (404 on /ide/*) — so existing deployments without Gitea
+	// provisioned yet are unaffected. See docker-compose.yaml's gitea
+	// service.
+	GiteaBackend string
+	// GiteaToken is the Gitea API token (SP-C's git backend credential),
+	// sent as "Authorization: token <GiteaToken>". Provisioned out-of-band
+	// (docker exec gitea gitea admin user generate-access-token — see
+	// docker-compose.yaml's gitea service comment) and passed only via
+	// environment; never committed, never baked into an image layer, and
+	// never crosses a Temporal workflow-history boundary — the same posture
+	// MonitoringToken already has in this Config.
+	GiteaToken string
+	// IdeBackend is the internal code-server base URL the gateway
+	// reverse-proxies /ide/* to (spec SP-C §3 C2). Empty disables the route
+	// (404). Unset until Task 4 (per-org code-server lifecycle) ships.
+	IdeBackend string
 }

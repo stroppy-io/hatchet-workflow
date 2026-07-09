@@ -31,6 +31,7 @@ import (
 	domsettings "github.com/stroppy-io/stroppy-cloud/internal/domain/settings"
 	"github.com/stroppy-io/stroppy-cloud/internal/dsl/diag"
 	"github.com/stroppy-io/stroppy-cloud/internal/gateway"
+	"github.com/stroppy-io/stroppy-cloud/internal/gitrepo"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/adapters"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/docker"
 	"github.com/stroppy-io/stroppy-cloud/internal/infrastructure/execution"
@@ -104,6 +105,28 @@ func Run(ctx context.Context, cfg Config) error {
 		return fmt.Errorf("dial temporal: %w", err)
 	}
 	defer tc.Close()
+
+	// 2.5) Gitea instance-repo bootstrap (SP-C git backend, spec
+	// docs/superpowers/specs/2026-07-08-sp-c-internal-git-ide.md §3 C1).
+	// Gated on GiteaToken being set (not just GiteaBackend, which defaults to
+	// "http://gitea:3000" — see cmd/cli/serve_cmd.go): the credential is the
+	// operator's signal that Gitea has actually been provisioned. Deployments
+	// that have not yet set up Gitea are unaffected — this is a softer
+	// posture than the plan's "fail server boot like an unreachable
+	// postgres" recommendation, chosen because the gitea sidecar is not yet
+	// wired into every existing deployment (including the live dev stand) and
+	// this task explicitly must not force a redeploy there. Once Gitea is
+	// universally provisioned, tighten this to unconditional (matching
+	// postgres/temporal's fail-fast severity).
+	if cfg.GiteaToken != "" {
+		giteaClient, err := gitrepo.NewClient(gitrepo.Config{BaseURL: cfg.GiteaBackend, Token: cfg.GiteaToken})
+		if err != nil {
+			return fmt.Errorf("gitea client: %w", err)
+		}
+		if err := gitrepo.Bootstrap(ctx, giteaClient); err != nil {
+			return fmt.Errorf("gitea instance-repo bootstrap: %w", err)
+		}
+	}
 
 	// 3) Identity layer.
 	idCfg := identity.Config{

@@ -48,6 +48,9 @@ func serveCmd() *cobra.Command {
 				CatalogBundleDir:     env("STROPPY_CATALOG_BUNDLE_DIR", "/var/lib/stroppy-cache/catalog-bundles"),
 				AdminEmail:           env("STROPPY_ADMIN_EMAIL", "admin@stroppy.local"),
 				AdminPassword:        os.Getenv("STROPPY_ADMIN_PASSWORD"),
+				GiteaBackend:         env("GITEA_BACKEND", "http://gitea:3000"),
+				GiteaToken:           os.Getenv("GITEA_TOKEN"),
+				IdeBackend:           os.Getenv("IDE_BACKEND"),
 			}
 
 			ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)

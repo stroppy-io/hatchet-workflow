@@ -114,6 +114,35 @@ services:
       # VfileUseRangeOps:0 — fixes 503 "unexpected range" on CDN repos (PGDG).
       - ./deployments/apt-cacher-ng/acng-rangefix.conf:/etc/apt-cacher-ng/zz-rangefix.conf:ro
 
+  # --- Gitea (SP-C internal git backend: instance + org catalog repos) ---
+  # GITEA_TOKEN is provisioned out-of-band, NOT baked into this compose file or
+  # any image layer: after first boot, run once
+  #   docker compose exec -T gitea gitea admin user create \
+  #     --admin --username stroppy-bot --password '<random>' \
+  #     --email bootstrap@stroppy.local --must-change-password=false
+  #   docker compose exec -T gitea gitea admin user generate-access-token \
+  #     --username stroppy-bot --token-name server --scopes write:repository,write:organization
+  # and export the printed token as GITEA_TOKEN before `docker compose up
+  # server` (or place it in a git-ignored .env — never commit it). The server
+  # only reads it from its environment (internal/app.Config.GiteaToken); it
+  # never crosses a Temporal workflow-history boundary and is not written to
+  # any log.
+  gitea:
+    image: gitea/gitea:1.23
+    restart: always
+    environment:
+      GITEA__server__ROOT_URL: http://gitea:3000/
+      GITEA__server__DISABLE_SSH: "true"
+      GITEA__service__DISABLE_REGISTRATION: "true"
+      GITEA__security__INSTALL_LOCK: "true"
+    volumes:
+      - giteadata:/data
+    healthcheck:
+      test: [ "CMD-SHELL", "curl -sf http://localhost:3000/api/healthz || exit 1" ]
+      interval: 5s
+      timeout: 3s
+      retries: 10
+
   # --- Temporal (runs execute as workflows) ---
   temporal:
     image: temporalio/auto-setup:1.25.2
@@ -162,6 +191,8 @@ services:
         condition: service_started
       apt-cacher-ng:
         condition: service_started
+      gitea:
+        condition: service_started
     command:
       - serve
     volumes:
@@ -202,6 +233,12 @@ services:
       STROPPY_BINARY_CACHE_DIR: /var/lib/stroppy-cache/binaries
       STROPPY_APT_CACHE_BACKEND: apt-cacher-ng:3142
       STROPPY_REGISTRY_BACKEND: http://registry:5000
+      # SP-C git backend. GITEA_TOKEN has NO default here on purpose — see the
+      # gitea service comment above; leaving it unset disables instance-repo
+      # bootstrap (internal/app/run.go) so a first-ever `docker compose up`
+      # still succeeds before the operator provisions the token.
+      GITEA_BACKEND: http://gitea:3000
+      GITEA_TOKEN: ${GITEA_TOKEN:-}
       STROPPY_UPSTREAM: https://github.com/stroppy-io/stroppy/releases/download/v5.1.2/stroppy_linux_amd64.tar.gz
       QUOTA_REFRESH_INTERVAL: 0
       YC_TOKEN: ${YC_TOKEN:-}
@@ -259,3 +296,4 @@ volumes:
   caddy_data:
   caddy_config:
   registry-data:
+  giteadata:
