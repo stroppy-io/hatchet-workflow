@@ -492,8 +492,42 @@ var safeConditionRe = regexp.MustCompile(`^[A-Za-z0-9_.()!<>=&|+\-*/\s]+$`)
 // translateValidationCondition translates a simple Terraform validation
 // condition expression (referencing the variable being validated, and
 // possibly other variables, via `var.NAME`) into a schemapb rule expression
-// (schemapb rules are evaluated with `root` bound to the values map, so
-// `var.NAME` becomes `root.NAME` -- see schemapb/new.go's ExampleRule).
+// attached to the derived params schema's own Rules (SchemaB.Rules, a
+// schema-level rule -- see DeriveProviderParamsSchemapb's `builder.Rules(...)`
+// call).
+//
+// `var.NAME` becomes `this.NAME`, NOT `root.NAME`. This schema is mounted at
+// two different depths by its two callers, and only `this` is stable across
+// both: ComposeFormSchema (form.go) nests it under a "provider" object field
+// via schemapb.ObjectOf, and schemapb/validate.go's checkObject evaluates a
+// nested object's own schema-level Rules with `this` bound to that object's
+// own local values map at every nesting depth -- while `root` stays bound to
+// the outermost form root for the whole recursion (see schemapb/compute.go
+// and validate.go's checkObject -> evalRule). A `root.NAME` rule is therefore
+// wrong once nested: at the top of a composed launch form, "replicas" lives
+// at root["provider"]["replicas"], not root["replicas"], so root.replicas
+// evaluates to nil/undefined and every Bake of the nested form errors on the
+// rule (see the characterization tests in
+// tfvars_schemapb_nested_rule_bug_test.go and .superpowers/sdd/
+// spd-i1-fix-report.md's "Secondary finding" for the empirical trace: this
+// was previously flagged as a known-but-unfixed bug during SP-I1's rule
+// parity fixture work; that fixture's own hand-written rule already worked
+// around it with `this.replicas`).
+//
+// This assumes the derived params schema is never itself Bake'd as a
+// standalone root schema in production -- verified true as of this fix (see
+// spd-celscope-report.md): the only production Bake call is form.go's
+// BakeForm on the composed (always-nested-when-params-non-empty) form;
+// ApplyBakedInputs (baked_apply.go) only does a structural unknownKeys walk
+// over paramsSchema, never Bake/Validate. A schema-level Rule on a schema
+// used as the literal Bake root (not nested under any object field) would
+// see `this == nil` (schemapb/validate.go's top-level `validate` evaluates
+// root rules with `this: nil`), so `this.NAME` is NOT safe for that calling
+// convention -- but that convention has no real caller here. If a future
+// caller ever needs a standalone-safe params Bake, that is a genuine
+// schemapb gap (no single rule expression is correct both unnested-as-root
+// and nested-under-an-object) and needs an upstream schemapb decision, not a
+// local workaround.
 //
 // Only simple expressions survive: comparisons/boolean combinations over
 // var.* references, numeric literals, and arithmetic (e.g.
@@ -510,5 +544,5 @@ func translateValidationCondition(cond string) (string, bool) {
 	if !strings.Contains(cond, "var.") {
 		return "", false
 	}
-	return varRefRe.ReplaceAllString(cond, "root.$1"), true
+	return varRefRe.ReplaceAllString(cond, "this.$1"), true
 }
