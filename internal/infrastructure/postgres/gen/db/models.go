@@ -7,14 +7,6 @@ import (
 	"time"
 )
 
-type TestRunRecords struct {
-	ID        string
-	TenantID  string
-	CreatedAt time.Time
-	UpdatedAt time.Time
-	Data      json.RawMessage
-}
-
 type RunRecords struct {
 	ID        string
 	TenantID  string

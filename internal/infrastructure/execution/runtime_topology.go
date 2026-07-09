@@ -521,33 +521,6 @@ func (b *runtimeTopologyBuilder) addVmagentBaseEdges(machineID string, status co
 	})
 }
 
-func (b *runtimeTopologyBuilder) addVectorBaseEdges(machineID string, status commonpb.Status, stage *workflowpb.Stage, componentIDs []string) {
-	b.addVectorControlPlaneEdge(machineID, status, stage)
-	for _, componentID := range componentIDs {
-		if componentID == "" {
-			continue
-		}
-		b.addEdge(&topology.RuntimeConnection{
-			Id:              runtimeEdgeID("monitor", machineID, "vector", "component-logs", componentID),
-			FromNodeId:      runtimeMonitorNodeID(machineID, "vector"),
-			ToNodeId:        runtimeComponentNodeID(componentID),
-			Kind:            topology.Connection_KIND_OBSERVATION,
-			Protocol:        topology.Connection_PROTOCOL_UNSPECIFIED,
-			Mode:            topology.Connection_MODE_STREAM,
-			EndpointName:    "logs/journald_and_files",
-			Phase:           executeDeploymentPlanNodeName,
-			NodeExecutionId: stageNodeExecutionID(stage),
-			Status:          pendingIfUnspecified(status),
-			StatusReason:    runtimeStageStatusReason(stage, "vector_collects_local_component_logs"),
-			StartedAt:       stageStartedAt(stage),
-			FinishedAt:      stageFinishedAt(stage),
-			Labels: map[string]string{
-				runtimeLabelRelation: "local_log_collection",
-			},
-		})
-	}
-}
-
 func (b *runtimeTopologyBuilder) addVectorControlPlaneEdge(machineID string, status commonpb.Status, stage *workflowpb.Stage) {
 	b.addEdge(&topology.RuntimeConnection{
 		Id:              runtimeEdgeID("monitor", machineID, "vector", "control-plane", "logs"),
@@ -916,30 +889,6 @@ func operationLabels(op *monitorpb.PipelineOperation) map[string]string {
 		labels["mentions"] = strings.Join(op.GetMentions(), ",")
 	}
 	return labels
-}
-
-func operationEndpointName(op *monitorpb.PipelineOperation) string {
-	switch op.GetKind() {
-	case monitorpb.OperationKind_OPERATION_KIND_CREATE_DIR:
-		return "create_dir"
-	case monitorpb.OperationKind_OPERATION_KIND_WRITE_FILE:
-		if op.GetFilePath() != "" {
-			return "write_file:" + op.GetFilePath()
-		}
-		return "write_file"
-	case monitorpb.OperationKind_OPERATION_KIND_FETCH_FILE:
-		if op.GetTarget() != "" {
-			return "fetch_file:" + op.GetTarget()
-		}
-		return "fetch_file"
-	case monitorpb.OperationKind_OPERATION_KIND_CALL_CMD:
-		return "call_cmd"
-	default:
-		if op.GetTarget() != "" {
-			return op.GetTarget()
-		}
-		return "agent_action"
-	}
 }
 
 func stageStatusReason(stage *workflowpb.Stage) string {

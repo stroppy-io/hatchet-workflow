@@ -647,13 +647,6 @@ func pendingIfUnspecified(status common.Status) common.Status {
 	return status
 }
 
-func labelOr(labels map[string]string, key, fallback string) string {
-	if value := labels[key]; value != "" {
-		return value
-	}
-	return fallback
-}
-
 func logRef(runID, nodeExecutionID, componentID string) *monitor.LogRef {
 	return &monitor.LogRef{
 		RunId:           runID,

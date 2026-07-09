@@ -2,6 +2,8 @@ package postgres
 
 import (
 	"context"
+	"fmt"
+	"strconv"
 	"strings"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
@@ -12,14 +14,12 @@ import (
 /*
 	===== RunRepo.List dynamic query =====
 
-	Near-duplicate of test_run_list.go's TestRunRepo.List: same WHERE/ORDER-BY/
-	paging builder, targeting run_records instead of test_run_records and
-	unmarshaling into models.Run. This duplication is DELIBERATE (SP-E plan
-	Task 7 deletes test_run_list.go once the write path fully cuts over to
-	run_records, leaving this file as the sole copy) — do not try to unify the
-	two List methods.
+	Was a near-duplicate of the now-deleted test_run_list.go's TestRunRepo.List
+	(SP-E Task 7 deleted the TestRunRecord/test_run_records path once the write
+	path fully cut over to run_records; this is the sole surviving copy of the
+	WHERE/ORDER-BY/paging builder, retargeted at run_records/models.Run).
 
-	Differences from TestRunRepo.List:
+	Historical differences from the deleted TestRunRepo.List:
 	  - table: run_records (FROM / favorite-EXISTS target / FavoriteKind target).
 	  - strip-columns: Run's heavy blobs are runtimeState and compiledPlan (not
 	    TestRunRecord's deploymentPlan/infrastructureState, which Run doesn't
@@ -27,18 +27,134 @@ import (
 	  - no suite_run_id/suite_cell_id: Run has no suite membership (spec §5/§6.A:
 	    dead field, dropped). query.GetSuiteRunId()/GetSuiteCellIds()/
 	    GetStandalone() are silently ignored — ListTestRunsRequest keeps those
-	    fields for TestRunRepo.List's sake until Task 7.
+	    fields around for wire compatibility.
 	  - favorites: reuses commonpb.FavoriteKind_FAVORITE_KIND_TEST_RUN (favorites
-	    are keyed by (kind, target_id); a Run.entity.id and a TestRunRecord's are
-	    drawn from the same id space and never coexist per row post-cutover, so
-	    sharing the kind avoids a proto enum change).
+	    are keyed by (kind, target_id); a Run.entity.id and a TestRunRecord's were
+	    drawn from the same id space and never coexisted per row, so sharing the
+	    kind avoided a proto enum change).
 
-	The j* jsonb-path consts (jStatus, jDBKind, ...) are shared, unchanged, from
-	test_run_list.go — both tables store the same protojson shape under those
-	paths, so redeclaring them here would just duplicate identical strings.
-	buildOrderBy/testRunSearchClause/statusNames/encodeOffsetToken/
-	decodeOffsetToken are likewise shared unchanged.
+	The j* jsonb-path consts (jStatus, jDBKind, ...), argBuilder, buildOrderBy,
+	testRunSearchClause and statusNames below were moved here unchanged from
+	test_run_list.go when it was deleted — both tables store the same protojson
+	shape under those paths. encodeOffsetToken/decodeOffsetToken moved to
+	list_helpers.go (also used by pageRecords there).
 */
+
+const (
+	defaultTestRunPageSize = 50
+	maxTestRunPageSize     = 500
+)
+
+// jsonb path expressions into the Run blob (protojson camelCase).
+const (
+	jNameLower      = "lower(coalesce(data->'entity'->>'name',''))"
+	jSearchText     = "lower(coalesce(data->'entity'->>'name','') || E'\\n' || coalesce(data->'entity'->>'description',''))"
+	jAuthorID       = "data->'entity'->>'authorId'"
+	jDeletedAt      = "data->'entity'->'timings'->>'deletedAt'"
+	jUpdatedAtTs    = "(data->'entity'->'timings'->>'updatedAt')::timestamptz"
+	jStatus         = "data->>'status'"
+	jTrigger        = "data->>'trigger'"
+	jDBKind         = "data->'summary'->>'dbKind'"
+	jProvider       = "data->'summary'->>'provider'"
+	jProtocol       = "data->'summary'->>'workloadProtocol'"
+	jStroppyVersion = "data->'summary'->>'stroppyVersion'"
+	jWorkloadName   = "coalesce(data->'summary'->>'workloadName','')"
+	jDBPresetID     = "data->'summary'->>'dbPresetId'"
+	jWorkloadPreset = "data->'summary'->>'workloadPresetId'"
+	jTestPresetID   = "data->'summary'->>'testPresetId'"
+	jProgressPct    = "coalesce((data->'summary'->>'progressPct')::numeric,0)"
+	jNodeCount      = "coalesce((data->'summary'->>'nodeCount')::numeric,0)"
+	jStartedAtTs    = "(data->'summary'->>'startedAt')::timestamptz"
+	jFinishedAtTs   = "(data->'summary'->>'finishedAt')::timestamptz"
+	// duration is protojson "<float>s"; strip trailing 's' and cast to numeric seconds.
+	jDurationSecs = "coalesce(nullif(rtrim(data->'summary'->>'duration','s'),'')::numeric,0)"
+)
+
+// argBuilder accumulates parameterized $n placeholders for a dynamic query.
+type argBuilder struct {
+	args []any
+}
+
+// place appends v and returns its $n placeholder.
+func (b *argBuilder) place(v any) string {
+	b.args = append(b.args, v)
+	return "$" + strconv.Itoa(len(b.args))
+}
+
+// statusNames maps a status enum slice to their protojson string names.
+func statusNames(ss []commonpb.Status) []string {
+	out := make([]string, 0, len(ss))
+	for _, s := range ss {
+		out = append(out, s.String())
+	}
+	return out
+}
+
+func testRunSearchClause(b *argBuilder, search string) string {
+	return jSearchText + " LIKE " + b.place("%"+strings.ToLower(search)+"%")
+}
+
+// buildOrderBy returns the ORDER BY clause for the requested sort. Unset sort or
+// an unknown kind falls back to a stable created_at DESC. A secondary id ASC key
+// makes every ordering deterministic for stable offset paging.
+func buildOrderBy(sort *api.ListTestRunsRequest_Sort) string {
+	col := "created_at"
+	dir := "DESC"
+	if sort != nil {
+		dir = "ASC"
+		if sort.GetDesc() {
+			dir = "DESC"
+		}
+		switch by := sort.GetBy().(type) {
+		case *api.ListTestRunsRequest_Sort_Entity:
+			switch by.Entity {
+			case commonpb.EntitySortField_ENTITY_SORT_FIELD_NAME:
+				col = jNameLower
+			case commonpb.EntitySortField_ENTITY_SORT_FIELD_CREATED_AT:
+				col = "created_at"
+			case commonpb.EntitySortField_ENTITY_SORT_FIELD_UPDATED_AT:
+				col = "updated_at"
+			case commonpb.EntitySortField_ENTITY_SORT_FIELD_AUTHOR_ID:
+				col = jAuthorID
+			default:
+				// FAVORITE / UNSPECIFIED: no per-row column without the caller —
+				// keep the stable created_at default.
+				col, dir = "created_at", "DESC"
+			}
+		case *api.ListTestRunsRequest_Sort_Kind_:
+			switch by.Kind {
+			case api.ListTestRunsRequest_Sort_KIND_STATUS:
+				col = jStatus
+			case api.ListTestRunsRequest_Sort_KIND_DB_KIND:
+				col = jDBKind
+			case api.ListTestRunsRequest_Sort_KIND_WORKLOAD:
+				col = jWorkloadName
+			case api.ListTestRunsRequest_Sort_KIND_PROVIDER:
+				col = jProvider
+			case api.ListTestRunsRequest_Sort_KIND_PROGRESS:
+				col = jProgressPct
+			case api.ListTestRunsRequest_Sort_KIND_DURATION:
+				col = jDurationSecs
+			case api.ListTestRunsRequest_Sort_KIND_STARTED_AT:
+				col = jStartedAtTs
+			case api.ListTestRunsRequest_Sort_KIND_FINISHED_AT:
+				col = jFinishedAtTs
+			case api.ListTestRunsRequest_Sort_KIND_NODE_COUNT:
+				col = jNodeCount
+			case api.ListTestRunsRequest_Sort_KIND_PROTOCOL:
+				col = jProtocol
+			case api.ListTestRunsRequest_Sort_KIND_TEST_PRESET:
+				col = jTestPresetID
+			case api.ListTestRunsRequest_Sort_KIND_TRIGGER:
+				col = jTrigger
+			default:
+				col, dir = "created_at", "DESC"
+			}
+		}
+	}
+	// NULLS LAST keeps unset timestamps/values at the end for either direction.
+	return fmt.Sprintf("%s %s NULLS LAST, id ASC", col, dir)
+}
 
 // List honors the full ListTestRunsRequest against postgres for run_records:
 // tenant scope plus every filter/facet (except suite membership, which Run has

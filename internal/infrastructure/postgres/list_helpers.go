@@ -2,7 +2,9 @@ package postgres
 
 import (
 	"context"
+	"encoding/base64"
 	"sort"
+	"strconv"
 	"strings"
 
 	"google.golang.org/protobuf/types/known/timestamppb"
@@ -17,6 +19,33 @@ const (
 	defaultRecordPageSize = 50
 	maxRecordPageSize     = 500
 )
+
+// encodeOffsetToken builds the opaque next-page cursor for offset n. Shared by
+// every offset-paginated List (pageRecords here, RunRepo.List in run_list.go).
+func encodeOffsetToken(n int) string {
+	return base64.RawURLEncoding.EncodeToString([]byte("offset:" + strconv.Itoa(n)))
+}
+
+// decodeOffsetToken parses an opaque cursor back to an offset; ok=false for an
+// empty/invalid token (treated as first page).
+func decodeOffsetToken(tok string) (int, bool) {
+	if tok == "" {
+		return 0, false
+	}
+	raw, err := base64.RawURLEncoding.DecodeString(tok)
+	if err != nil {
+		return 0, false
+	}
+	s := string(raw)
+	if !strings.HasPrefix(s, "offset:") {
+		return 0, false
+	}
+	n, err := strconv.Atoi(strings.TrimPrefix(s, "offset:"))
+	if err != nil || n < 0 {
+		return 0, false
+	}
+	return n, true
+}
 
 type entityRecord interface {
 	GetEntity() *commonpb.Entity

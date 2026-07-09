@@ -14,7 +14,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/dsl/service.proto.
  */
 export const file_cloud_v1_dsl_service: GenFile = /*@__PURE__*/
-  fileDesc("ChpjbG91ZC92MS9kc2wvc2VydmljZS5wcm90bxIMY2xvdWQudjEuZHNsIoQBChVDb21wb3NlZFNjaGVtYVJlcXVlc3QSPQoFZmlsZXMYASADKAsyLi5jbG91ZC52MS5kc2wuQ29tcG9zZWRTY2hlbWFSZXF1ZXN0LkZpbGVzRW50cnkaLAoKRmlsZXNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAw6AjgBIi0KFkNvbXBvc2VkU2NoZW1hUmVzcG9uc2USEwoLc2NoZW1hX2pzb24YASABKAkicgoMQ2hlY2tSZXF1ZXN0EjQKBWZpbGVzGAEgAygLMiUuY2xvdWQudjEuZHNsLkNoZWNrUmVxdWVzdC5GaWxlc0VudHJ5GiwKCkZpbGVzRW50cnkSCwoDa2V5GAEgASgJEg0KBXZhbHVlGAIgASgMOgI4ASI+Cg1DaGVja1Jlc3BvbnNlEi0KC2RpYWdub3N0aWNzGAEgAygLMhguY2xvdWQudjEuZHNsLkRpYWdub3N0aWMidgoOUHJldmlld1JlcXVlc3QSNgoFZmlsZXMYASADKAsyJy5jbG91ZC52MS5kc2wuUHJldmlld1JlcXVlc3QuRmlsZXNFbnRyeRosCgpGaWxlc0VudHJ5EgsKA2tleRgBIAEoCRINCgV2YWx1ZRgCIAEoDDoCOAEiagoPUHJldmlld1Jlc3BvbnNlEigKBHBsYW4YASABKAsyGi5jbG91ZC52MS5kc2wuQ29tcGlsZWRQbGFuEi0KC2RpYWdub3N0aWNzGAIgAygLMhguY2xvdWQudjEuZHNsLkRpYWdub3N0aWMigAEKCkRpYWdub3N0aWMSKAoIc2V2ZXJpdHkYASABKA4yFi5jbG91ZC52MS5kc2wuU2V2ZXJpdHkSDAoEcGF0aBgCIAEoCRIMCgRsaW5lGAMgASgNEgsKA2NvbBgEIAEoDRIPCgdtZXNzYWdlGAUgASgJEg4KBm1vZHVsZRgGIAEoCSpOCghTZXZlcml0eRIYChRTRVZFUklUWV9VTlNQRUNJRklFRBAAEhIKDlNFVkVSSVRZX0VSUk9SEAESFAoQU0VWRVJJVFlfV0FSTklORxACMpYCCgpEc2xTZXJ2aWNlEmQKDkNvbXBvc2VkU2NoZW1hEiMuY2xvdWQudjEuZHNsLkNvbXBvc2VkU2NoZW1hUmVxdWVzdBokLmNsb3VkLnYxLmRzbC5Db21wb3NlZFNjaGVtYVJlc3BvbnNlIgeQAgGKtRgAEkkKBUNoZWNrEhouY2xvdWQudjEuZHNsLkNoZWNrUmVxdWVzdBobLmNsb3VkLnYxLmRzbC5DaGVja1Jlc3BvbnNlIgeQAgGKtRgAEk8KB1ByZXZpZXcSHC5jbG91ZC52MS5kc2wuUHJldmlld1JlcXVlc3QaHS5jbG91ZC52MS5kc2wuUHJldmlld1Jlc3BvbnNlIgeQAgGKtRgAGgbCySYCCAFCQVo/Z2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvZHNsYgZwcm90bzM", [file_cloud_v1_dsl_compiled, file_cloud_v1_iam_options, file_graphqlopt_graphql]);
+  fileDesc("ChpjbG91ZC92MS9kc2wvc2VydmljZS5wcm90bxIMY2xvdWQudjEuZHNsIoQBChVDb21wb3NlZFNjaGVtYVJlcXVlc3QSPQoFZmlsZXMYASADKAsyLi5jbG91ZC52MS5kc2wuQ29tcG9zZWRTY2hlbWFSZXF1ZXN0LkZpbGVzRW50cnkaLAoKRmlsZXNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAw6AjgBIi0KFkNvbXBvc2VkU2NoZW1hUmVzcG9uc2USEwoLc2NoZW1hX2pzb24YASABKAkihQEKDENoZWNrUmVxdWVzdBI0CgVmaWxlcxgBIAMoCzIlLmNsb3VkLnYxLmRzbC5DaGVja1JlcXVlc3QuRmlsZXNFbnRyeRIRCgl0ZW5hbnRfaWQYAiABKAkaLAoKRmlsZXNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAw6AjgBIj4KDUNoZWNrUmVzcG9uc2USLQoLZGlhZ25vc3RpY3MYASADKAsyGC5jbG91ZC52MS5kc2wuRGlhZ25vc3RpYyKJAQoOUHJldmlld1JlcXVlc3QSNgoFZmlsZXMYASADKAsyJy5jbG91ZC52MS5kc2wuUHJldmlld1JlcXVlc3QuRmlsZXNFbnRyeRIRCgl0ZW5hbnRfaWQYAiABKAkaLAoKRmlsZXNFbnRyeRILCgNrZXkYASABKAkSDQoFdmFsdWUYAiABKAw6AjgBImoKD1ByZXZpZXdSZXNwb25zZRIoCgRwbGFuGAEgASgLMhouY2xvdWQudjEuZHNsLkNvbXBpbGVkUGxhbhItCgtkaWFnbm9zdGljcxgCIAMoCzIYLmNsb3VkLnYxLmRzbC5EaWFnbm9zdGljIoABCgpEaWFnbm9zdGljEigKCHNldmVyaXR5GAEgASgOMhYuY2xvdWQudjEuZHNsLlNldmVyaXR5EgwKBHBhdGgYAiABKAkSDAoEbGluZRgDIAEoDRILCgNjb2wYBCABKA0SDwoHbWVzc2FnZRgFIAEoCRIOCgZtb2R1bGUYBiABKAkqTgoIU2V2ZXJpdHkSGAoUU0VWRVJJVFlfVU5TUEVDSUZJRUQQABISCg5TRVZFUklUWV9FUlJPUhABEhQKEFNFVkVSSVRZX1dBUk5JTkcQAjKWAgoKRHNsU2VydmljZRJkCg5Db21wb3NlZFNjaGVtYRIjLmNsb3VkLnYxLmRzbC5Db21wb3NlZFNjaGVtYVJlcXVlc3QaJC5jbG91ZC52MS5kc2wuQ29tcG9zZWRTY2hlbWFSZXNwb25zZSIHkAIBirUYABJJCgVDaGVjaxIaLmNsb3VkLnYxLmRzbC5DaGVja1JlcXVlc3QaGy5jbG91ZC52MS5kc2wuQ2hlY2tSZXNwb25zZSIHkAIBirUYABJPCgdQcmV2aWV3EhwuY2xvdWQudjEuZHNsLlByZXZpZXdSZXF1ZXN0Gh0uY2xvdWQudjEuZHNsLlByZXZpZXdSZXNwb25zZSIHkAIBirUYABoGwskmAggBQkFaP2dpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL2RzbGIGcHJvdG8z", [file_cloud_v1_dsl_compiled, file_cloud_v1_iam_options, file_graphqlopt_graphql]);
 
 /**
  * ComposedSchemaRequest несёт весь бандл рецепта (cluster.yaml, workflow.yaml,
@@ -102,6 +102,17 @@ export type CheckRequest = Message<"cloud.v1.dsl.CheckRequest"> & {
    * @generated from field: map<string, bytes> files = 1;
    */
   files: { [key: string]: Uint8Array };
+
+  /**
+   * tenant_id — если задан и сервер сконфигурирован с ProviderResolver
+   * (см. internal/services/dsl.WithProviderResolver), provider.use
+   * резолвится против org-каталога этого тенанта (SP-B §B5) вместо
+   * локального бандла. Пусто — прежнее поведение (лёгаси-lookup внутри
+   * бандла), без изменений.
+   *
+   * @generated from field: string tenant_id = 2;
+   */
+  tenantId: string;
 };
 
 /**
@@ -114,6 +125,17 @@ export type CheckRequestJson = {
    * @generated from field: map<string, bytes> files = 1;
    */
   files?: { [key: string]: string };
+
+  /**
+   * tenant_id — если задан и сервер сконфигурирован с ProviderResolver
+   * (см. internal/services/dsl.WithProviderResolver), provider.use
+   * резолвится против org-каталога этого тенанта (SP-B §B5) вместо
+   * локального бандла. Пусто — прежнее поведение (лёгаси-lookup внутри
+   * бандла), без изменений.
+   *
+   * @generated from field: string tenant_id = 2;
+   */
+  tenantId?: string;
 };
 
 export type CheckRequestValid = CheckRequest;
@@ -172,6 +194,13 @@ export type PreviewRequest = Message<"cloud.v1.dsl.PreviewRequest"> & {
    * @generated from field: map<string, bytes> files = 1;
    */
   files: { [key: string]: Uint8Array };
+
+  /**
+   * tenant_id — см. CheckRequest.tenant_id.
+   *
+   * @generated from field: string tenant_id = 2;
+   */
+  tenantId: string;
 };
 
 /**
@@ -184,6 +213,13 @@ export type PreviewRequestJson = {
    * @generated from field: map<string, bytes> files = 1;
    */
   files?: { [key: string]: string };
+
+  /**
+   * tenant_id — см. CheckRequest.tenant_id.
+   *
+   * @generated from field: string tenant_id = 2;
+   */
+  tenantId?: string;
 };
 
 export type PreviewRequestValid = PreviewRequest;
