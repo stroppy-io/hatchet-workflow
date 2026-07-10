@@ -17,6 +17,7 @@
 import { toJson } from "@bufbuild/protobuf";
 import {
   CatalogEntrySchema,
+  Kind,
   type CatalogEntry,
   type CatalogEntryJson,
   type KindJson,
@@ -30,6 +31,16 @@ import { resolveTenantId } from "@/services/tenant";
 export type CatalogLevel = LevelJson;
 export type CatalogKind = Exclude<KindJson, "KIND_UNSPECIFIED">;
 export type CatalogOrigin = OriginJson;
+
+// CatalogKind is the enum's JSON *name* ("KIND_PROVIDER") — what the server
+// sends back and what the UI routes on. A request message field, however,
+// holds the enum's numeric value, and protobuf-es refuses a string there
+// ("cannot encode enum cloud.v1.catalog.Kind to JSON: expected number").
+// Translate at the boundary rather than casting the type away.
+const KIND_WIRE: Record<CatalogKind, Kind> = {
+  KIND_PROVIDER: Kind.PROVIDER,
+  KIND_WORKFLOW: Kind.WORKFLOW,
+};
 
 /** One cloud.v1.dsl.Diagnostic, severity flattened to a lower-case string. Mirrors recipe.ts's DiagnosticVM. */
 export interface CatalogDiagnosticVM {
@@ -162,7 +173,7 @@ export function cachedEntryFiles(entryId: string): Record<string, string> | unde
 // --- Instance-level (LEVEL_INSTANCE, admin_only) ----------------------------
 
 export async function listInstanceEntries(kind: CatalogKind): Promise<CatalogEntryVM[]> {
-  const { entries } = await catalogClient.listInstanceEntries({ kind: kind as never });
+  const { entries } = await catalogClient.listInstanceEntries({ kind: KIND_WIRE[kind] });
   return entries.map(entryToVM);
 }
 
@@ -177,7 +188,7 @@ export async function createInstanceEntry(
   input: CreateCatalogEntryInput,
 ): Promise<CatalogEntryVM> {
   const { entry } = await catalogClient.createInstanceEntry({
-    kind: kind as never,
+    kind: KIND_WIRE[kind],
     slug: input.slug,
     name: input.name,
     description: input.description,

@@ -15,6 +15,7 @@ const {
   getInstanceEntryFiles,
   getOrgProviderFiles,
   getOrgWorkflowFiles,
+  listInstanceEntries,
 } = vi.hoisted(() => ({
   listOrgProviders: vi.fn(),
   listOrgWorkflows: vi.fn(),
@@ -28,6 +29,7 @@ const {
   getInstanceEntryFiles: vi.fn(),
   getOrgProviderFiles: vi.fn(),
   getOrgWorkflowFiles: vi.fn(),
+  listInstanceEntries: vi.fn(),
 }));
 
 vi.mock("@/services/client", () => ({
@@ -44,6 +46,7 @@ vi.mock("@/services/client", () => ({
     getInstanceEntryFiles,
     getOrgProviderFiles,
     getOrgWorkflowFiles,
+    listInstanceEntries,
   },
 }));
 vi.mock("@/services/tenant", () => ({ resolveTenantId: vi.fn().mockResolvedValue("t1") }));
@@ -248,5 +251,20 @@ describe("checkInstanceBundle", () => {
     const call = checkInstanceProvider.mock.calls[0][0];
     expect(call.tenantId).toBeUndefined();
     expect(new TextDecoder().decode(call.files["manifest.yaml"])).toBe("name: x\n");
+  });
+});
+
+describe("instance-scope enum encoding", () => {
+  it("sends Kind as its numeric wire value, not its JSON name", async () => {
+    // A `kind: kind as never` cast used to pass the string "KIND_PROVIDER"
+    // into a numeric enum field; protobuf-es then threw
+    // "cannot encode enum cloud.v1.catalog.Kind to JSON: expected number"
+    // at request time, so the instance catalog page could never load.
+    listInstanceEntries.mockResolvedValue({ entries: [] });
+    const { listInstanceEntries: listFn } = await import("@/services/catalog");
+    await listFn("KIND_PROVIDER");
+    const arg = listInstanceEntries.mock.calls[0][0];
+    expect(arg.kind).toBe(1);
+    expect(typeof arg.kind).toBe("number");
   });
 });
