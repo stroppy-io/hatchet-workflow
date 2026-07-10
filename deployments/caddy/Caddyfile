@@ -37,9 +37,9 @@
 		reverse_proxy {$CADDY_REGISTRY_UPSTREAM:127.0.0.1:5000}
 	}
 
-	handle /grafana/* {
-		reverse_proxy {$CADDY_GRAFANA_UPSTREAM:127.0.0.1:3001}
-	}
+	# /grafana/* is deliberately NOT handled here. It falls through to the server
+	# gateway below, which is the single entrypoint: proxying straight to Grafana
+	# would bypass the gateway and re-expose the anonymous datasource proxy.
 
 	handle {
 		reverse_proxy {$CADDY_UPSTREAM:127.0.0.1:8080} {

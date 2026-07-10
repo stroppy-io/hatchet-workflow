@@ -191,6 +191,39 @@ function metricToVM(m: RawMetric): MetricVM {
   };
 }
 
+/**
+ * What the share page needs to embed Grafana: the run the token exposes and the
+ * window to pin the dashboards to.
+ */
+export interface SharedSessionVM {
+  runId: string;
+  /** unix millis; 0/absent when unknown */
+  from?: number;
+  /** unix millis; absent while the run is still going */
+  to?: number;
+}
+
+/**
+ * Exchange the share token for a scoped session.
+ *
+ * The gateway answers with an HttpOnly `stroppy_share` cookie. Grafana's public
+ * organisation forwards that cookie to its only datasource — the gateway's
+ * /public/metrics proxy — which pins every query to this one run. The panels are
+ * therefore live and interactive without the viewer being able to reach any
+ * other run's series: the token, not the dashboard URL, decides what is visible.
+ *
+ * A revoked, expired or unknown token 404s exactly like a nonexistent one.
+ */
+export async function startSharedSession(token: string): Promise<SharedSessionVM> {
+  const resp = await fetch(`/public/share/${encodeURIComponent(token)}/session`, {
+    credentials: "include",
+  });
+  if (!resp.ok) {
+    throw new Error("share session unavailable");
+  }
+  return (await resp.json()) as SharedSessionVM;
+}
+
 export async function getSharedRun(token: string): Promise<SharedRunVM | undefined> {
   const resp = await publicShareClient.getSharedRun({ token });
   const j = toJson(GetSharedRunResponseSchema, resp) as {

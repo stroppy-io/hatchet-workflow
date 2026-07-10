@@ -43,6 +43,7 @@ func serveCmd() *cobra.Command {
 				MonitoringURL:        os.Getenv("MONITORING_URL"),
 				MonitoringToken:      os.Getenv("MONITORING_TOKEN"),
 				GrafanaBackend:       os.Getenv("GRAFANA_BACKEND"),
+				MetricsQueryBackend:  os.Getenv("STROPPY_METRICS_QUERY_BACKEND"),
 				RegistryBackend:      env("STROPPY_REGISTRY_BACKEND", "http://registry:5000"),
 				PackageBlobDir:       env("STROPPY_PACKAGE_DIR", "/var/lib/stroppy-cache/packages"),
 				AdminEmail:           env("STROPPY_ADMIN_EMAIL", "admin@stroppy.local"),

@@ -775,8 +775,12 @@ func Run(ctx context.Context, cfg Config) error {
 		AgentTokens:       agentTokens,
 		GrafanaBackend:    cfg.GrafanaBackend,  // serve /grafana/* from the server origin
 		RegistryBackend:   cfg.RegistryBackend, // serve /v2/* registry mirror from the server origin
-		HTTPFallback:      h2cHandler,
-		Logger:            log,
+		// Share links: /public/share/{token}/session mints the scope cookie and
+		// /public/metrics/* serves ONLY that run's series to Grafana's public org.
+		MetricsQueryBackend: cfg.MetricsQueryBackend,
+		ShareScopes:         adapters.NewShareScopeResolver(store.Shares()),
+		HTTPFallback:        h2cHandler,
+		Logger:              log,
 	})
 	if err != nil {
 		return fmt.Errorf("build gateway: %w", err)

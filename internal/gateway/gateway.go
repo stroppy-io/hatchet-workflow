@@ -42,6 +42,15 @@ type Config struct {
 	// proxy and monitoring relay. Empty disables those checks and is intended
 	// only for tests/local unsecured wiring.
 	AgentTokens AgentTokenVerifier
+	// MetricsQueryBackend is the Prometheus-compatible read endpoint (e.g.
+	// "http://vmselect:8481/select/multitenant/prometheus") that share-scoped
+	// public queries are relayed to — the same series the authenticated Grafana
+	// datasource reads. Empty disables /public/metrics/* (503).
+	MetricsQueryBackend string
+	// ShareScopes resolves a public share token into the single run it exposes.
+	// It backs both /public/share/{token}/session and the run filter forced onto
+	// every /public/metrics/* query. Empty disables both routes (404).
+	ShareScopes ShareResolver
 	// GrafanaBackend is the internal Grafana base URL (e.g. "http://grafana:3001")
 	// the gateway reverse-proxies /grafana/* to, so the embedded dashboards are
 	// served from the SAME server origin — no separate public Grafana URL needed.
@@ -75,6 +84,8 @@ type Gateway struct {
 	monitorProxy  http.Handler
 	grafanaProxy  http.Handler
 	registryProxy http.Handler
+	publicMetrics http.Handler
+	shareScopes   ShareResolver
 
 	grpc    *grpc.Server
 	backend *grpc.ClientConn
@@ -130,6 +141,14 @@ func New(cfg Config) (*Gateway, error) {
 		}
 		g.registryProxy = rp
 	}
+	g.shareScopes = cfg.ShareScopes
+	if cfg.MetricsQueryBackend != "" && cfg.ShareScopes != nil {
+		pm, err := newPublicMetricsProxy(cfg.MetricsQueryBackend, cfg.MonitoringToken, cfg.ShareScopes, logger)
+		if err != nil {
+			return nil, fmt.Errorf("gateway: metrics query backend %q: %w", cfg.MetricsQueryBackend, err)
+		}
+		g.publicMetrics = pm
+	}
 	g.http = &http.Server{Handler: http.HandlerFunc(g.serveHTTP), ReadHeaderTimeout: 30 * time.Second}
 	return g, nil
 }
@@ -159,6 +178,17 @@ func (g *Gateway) serveHTTP(w http.ResponseWriter, r *http.Request) {
 			return
 		}
 		g.monitorProxy.ServeHTTP(w, r)
+	case strings.HasPrefix(r.URL.Path, "/public/share/"):
+		// Share link -> HttpOnly cookie Grafana forwards to the scoped datasource.
+		g.servePublicShareSession(w, r)
+	case strings.HasPrefix(r.URL.Path, "/public/metrics/"):
+		// Share-scoped VictoriaMetrics reads. The ONLY thing standing between a
+		// share viewer and every tenant's series, so it fails closed.
+		if g.publicMetrics == nil {
+			http.NotFound(w, r)
+			return
+		}
+		g.publicMetrics.ServeHTTP(w, r)
 	case r.URL.Path == "/grafana" || strings.HasPrefix(r.URL.Path, "/grafana/"):
 		// Embedded Grafana served from the server origin (sub-path /grafana).
 		if g.grafanaProxy == nil {

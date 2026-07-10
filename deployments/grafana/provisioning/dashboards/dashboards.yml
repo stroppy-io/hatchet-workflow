@@ -1,6 +1,11 @@
+# Dashboards for the authenticated organisation. The `public` org's copies are
+# uploaded by grafana-init over the HTTP API — a file provider pinned to orgId 2
+# makes Grafana refuse to start until that org exists, and only Grafana's own API
+# can create it.
 apiVersion: 1
 providers:
   - name: stroppy
+    orgId: 1
     folder: Stroppy
     type: file
     options:

@@ -73,14 +73,29 @@ services:
   grafana:
     image: grafana/grafana:12.4.2
     restart: always
-    ports:
-      - "${BIND_ADDR:-0.0.0.0}:3001:3000"
+    # NOT published: Grafana is reachable only through the server gateway at
+    # <server>/grafana. Publishing 3001 would expose the UI (and, historically,
+    # an anonymous datasource proxy over every tenant's metrics) directly.
+    expose:
+      - "3000"
     environment:
       GF_SECURITY_ADMIN_USER: admin
-      GF_SECURITY_ADMIN_PASSWORD: ${GF_ADMIN_PASSWORD:-admin}
+      # No default: a blank/`admin` password on an embedded Grafana is a real
+      # foothold. Compose fails fast if it is unset.
+      GF_SECURITY_ADMIN_PASSWORD: ${GF_ADMIN_PASSWORD:?GF_ADMIN_PASSWORD is required}
+      # Anonymous access exists ONLY to serve share links, and lands in the
+      # `public` org, which holds a single share-scoped datasource. It must never
+      # be pointed at Main Org. — that org queries every tenant's series.
       GF_AUTH_ANONYMOUS_ENABLED: ${GF_ANON_ENABLED:-true}
+      GF_AUTH_ANONYMOUS_ORG_NAME: public
       GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      # Explore would let a viewer run ad-hoc queries; the panels are enough.
+      GF_EXPLORE_ENABLED: "false"
+      # Never publish snapshots to the public snapshots.raintank.io service.
+      GF_SNAPSHOTS_EXTERNAL_ENABLED: "false"
       GF_SECURITY_ALLOW_EMBEDDING: "true"
+      GF_SECURITY_COOKIE_SAMESITE: lax
+      GF_SECURITY_COOKIE_SECURE: ${GF_COOKIE_SECURE:-false}
       # Grafana is reached through the server gateway at <server>/grafana (no
       # separate public Grafana URL). Serve from the /grafana sub-path; the
       # root_url path must be /grafana (domain is only used for absolute links).
@@ -90,6 +105,25 @@ services:
       - grafanadata:/var/lib/grafana
       - ./deployments/grafana/provisioning:/etc/grafana/provisioning:ro
       - ./deployments/grafana/dashboards:/var/lib/grafana/dashboards:ro
+
+  # Builds the `public` org anonymous share-link viewers land in: one scoped
+  # datasource (-> the gateway's /public/metrics proxy) plus the dashboards.
+  # Grafana cannot create the org itself, and a provisioning file naming a
+  # missing org stops it from booting — so this runs over the API afterwards.
+  grafana-init:
+    image: curlimages/curl:8.11.1
+    restart: on-failure
+    depends_on:
+      - grafana
+    environment:
+      GRAFANA_URL: http://grafana:3000
+      GRAFANA_USER: admin
+      GRAFANA_PASSWORD: ${GF_ADMIN_PASSWORD:?GF_ADMIN_PASSWORD is required}
+      PUBLIC_METRICS_URL: ${GF_PUBLIC_METRICS_URL:-http://server:8080/public/metrics}
+    volumes:
+      - ./deployments/grafana/init.sh:/init.sh:ro
+      - ./deployments/grafana/dashboards:/dashboards:ro
+    entrypoint: ["sh", "/init.sh"]
 
   # --- vmagent (scrapes server /metrics, pushes to vminsert) ---
   vmagent:
@@ -180,6 +214,9 @@ services:
       # gateway (GRAFANA_BACKEND) — no separate public Grafana URL per environment.
       GRAFANA_URL: ${GRAFANA_URL:-/grafana}
       GRAFANA_BACKEND: ${GRAFANA_BACKEND:-http://grafana:3000}
+      # Backs /public/metrics/*: the same series Grafana's own datasource reads,
+      # but every share-link query is pinned to the one run its token grants.
+      STROPPY_METRICS_QUERY_BACKEND: ${STROPPY_METRICS_QUERY_BACKEND:-http://vmselect:8481/select/multitenant/prometheus}
       # Seed a root admin on first boot so a fresh `docker compose up` is
       # immediately usable (login admin/admin). Override in prod via .env.
       STROPPY_ADMIN_EMAIL: ${STROPPY_ADMIN_EMAIL:-admin@stroppy.local}

@@ -66,6 +66,12 @@ type Config struct {
 	// GrafanaBackend is the embedded Grafana upstream the gateway reverse-proxies
 	// /grafana/* to, serving dashboards from the same server origin.
 	GrafanaBackend string
+	// MetricsQueryBackend is the Prometheus-compatible read endpoint share-scoped
+	// public queries are relayed to (STROPPY_METRICS_QUERY_BACKEND). It is the
+	// same series Grafana's own datasource reads, e.g.
+	// http://vmselect:8481/select/multitenant/prometheus. Empty disables the
+	// public /public/metrics/* route.
+	MetricsQueryBackend string
 	// RegistryBackend is the Docker registry upstream the gateway reverse-proxies
 	// /v2/* to, so agents can pull images without direct internet access.
 	// Defaults to http://registry:5000 (STROPPY_REGISTRY_BACKEND env var).

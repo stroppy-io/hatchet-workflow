@@ -1,8 +1,17 @@
+# Authenticated users' datasource: vmselect directly — every tenant, every run.
+# It lives in Main Org. (orgId 1) and must NEVER be reachable anonymously.
+#
+# The `public` org (orgId 2) that anonymous share-link viewers land in gets its
+# own same-named datasource pointing at the gateway's share-scoped proxy. It is
+# created by the grafana-init service over the HTTP API, NOT here: file
+# provisioning is read at startup, and Grafana refuses to boot when a provisioned
+# entry references an organisation that does not exist yet.
 apiVersion: 1
 prune: true
 datasources:
   - name: VictoriaMetrics
     uid: victoriametrics
+    orgId: 1
     type: prometheus
     access: proxy
     url: http://vmselect:8481/select/multitenant/prometheus
