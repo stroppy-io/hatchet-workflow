@@ -2,7 +2,7 @@
 // so they can be shipped inside the server binary and seeded into the
 // catalog as builtin KIND_WORKFLOW entries (internal/services/catalog's
 // Deps.BuiltinWorkflows) — mirroring deployments/terraform/yandex's
-// go:embed pattern for provider modules (see that package's embed.go).
+// the same embedding pattern provider modules use (see that package's embed.go).
 package dslexamples
 
 import (
