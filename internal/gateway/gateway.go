@@ -69,6 +69,12 @@ type Config struct {
 	// code-server). nil disables the check — dev/test only. SP-B supplies the
 	// real RBAC-backed implementation once catalog/RBAC lands.
 	IdeAuthorizer IdeAuthorizer
+	// IdeTicketExchanger performs the browser-auth ticket->cookie exchange
+	// (see ide_auth.go's doc) for /ide/* requests that carry a ticket query
+	// parameter. nil disables ticket-based auth: /ide/* then only accepts
+	// IdeAuthorizer's Authorization-header check, exactly as before this
+	// handshake existed.
+	IdeTicketExchanger IdeTicketExchanger
 	// HTTPFallback handles every HTTP/1.1 request that is not one of the gateway's
 	// own agent-facing routes — i.e. the control-plane connect API + the embedded
 	// SPA. Empty means unmatched routes 404. This lets the connect server and UI
@@ -89,11 +95,12 @@ type Gateway struct {
 	httpFallback    http.Handler
 	logger          *slog.Logger
 
-	monitorProxy  http.Handler
-	grafanaProxy  http.Handler
-	registryProxy http.Handler
-	ideProxy      http.Handler
-	ideAuthorizer IdeAuthorizer
+	monitorProxy       http.Handler
+	grafanaProxy       http.Handler
+	registryProxy      http.Handler
+	ideProxy           http.Handler
+	ideAuthorizer      IdeAuthorizer
+	ideTicketExchanger IdeTicketExchanger
 
 	grpc    *grpc.Server
 	backend *grpc.ClientConn
@@ -172,6 +179,9 @@ func New(cfg Config) (*Gateway, error) {
 	if g.ideProxy != nil && g.ideAuthorizer == nil {
 		return nil, errors.New("gateway: ide backend configured without IdeAuthorizer — refusing to expose /ide/* unauthenticated")
 	}
+	if g.ideProxy != nil {
+		g.ideTicketExchanger = cfg.IdeTicketExchanger
+	}
 	g.http = &http.Server{Handler: http.HandlerFunc(g.serveHTTP), ReadHeaderTimeout: 30 * time.Second}
 	return g, nil
 }
@@ -224,6 +234,25 @@ func (g *Gateway) serveHTTP(w http.ResponseWriter, r *http.Request) {
 		if g.ideProxy == nil {
 			http.NotFound(w, r)
 			return
+		}
+		// Browser-auth handshake: a request carrying a ticket query parameter
+		// is exchanged for an httpOnly session cookie + redirect BEFORE the
+		// normal authorizer check runs — the ticket IS the credential for
+		// this one request, standing in for the Authorization header a plain
+		// browser navigation cannot present. A bad/expired/replayed/
+		// cross-scope ticket is a 403 here, never a redirect — only a nil
+		// error from Exchange may produce one (see IdeTicketExchanger's doc).
+		if g.ideTicketExchanger != nil {
+			cookie, redirectURL, ok, err := g.ideTicketExchanger.Exchange(r)
+			if err != nil {
+				http.Error(w, "invalid ide ticket", http.StatusForbidden)
+				return
+			}
+			if ok {
+				http.SetCookie(w, cookie)
+				http.Redirect(w, r, redirectURL, http.StatusFound)
+				return
+			}
 		}
 		// New() guarantees a non-nil authorizer whenever ideProxy is set, so
 		// this is a plain check, never a nil-skips-authz shortcut.

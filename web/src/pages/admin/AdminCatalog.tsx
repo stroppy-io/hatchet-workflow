@@ -27,6 +27,7 @@ import {
   type CatalogEntryVM,
   type CatalogKind,
 } from "@/services/catalog";
+import { openInIde } from "@/services/ide";
 
 function StatusLine({ value, tone = "default" }: { value: string | null; tone?: "default" | "error" }) {
   if (!value) return null;
@@ -61,8 +62,14 @@ const KIND_PARAM: Record<"providers" | "workflows", CatalogKind> = {
 // (internal/ide.Authorizer.CanAuthor) — a non-admin's click 403s at the
 // gateway, same as every other LEVEL_INSTANCE write path.
 function instanceIdeUrl(tab: "providers" | "workflows", slug: string): string {
+  // The scope segment is EntryKindProvider/EntryKindWorkflow — singular,
+  // exactly what internal/ide.ParseScope requires — never the plural tab
+  // name (that stays plural only in the `folder` deep link below, which
+  // mirrors the repo's own on-disk providers/<slug> | workflows/<slug>
+  // layout, a completely different string).
+  const entryKind = tab === "providers" ? "provider" : "workflow";
   const folder = encodeURIComponent(`/home/coder/project/${tab}/${slug}`);
-  return `/ide/instance/${tab}/${slug}?folder=${folder}`;
+  return `/ide/instance/${entryKind}/${slug}?folder=${folder}`;
 }
 
 export function AdminCatalog() {
@@ -96,6 +103,15 @@ export function AdminCatalog() {
     const list = entries ?? [];
     return { total: list.length, compiling: list.filter((e) => e.summary.compiles).length };
   }, [entries]);
+
+  async function onOpenIde(entry: CatalogEntryVM) {
+    setError(null);
+    try {
+      await openInIde(instanceIdeUrl(tabParam, entry.slug));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
 
   async function onDelete(entry: CatalogEntryVM) {
     const ok = await confirm({
@@ -218,10 +234,14 @@ export function AdminCatalog() {
                   <TableCell className="text-xs text-muted-foreground">{fmtDate(entry.updatedAt)}</TableCell>
                   <TableCell className="text-right" onClick={(e) => e.stopPropagation()}>
                     <div className="flex justify-end gap-1">
-                      <Button size="icon" variant="ghost" asChild aria-label="Open in IDE">
-                        <a href={instanceIdeUrl(tabParam, entry.slug)} target="_blank" rel="noreferrer">
-                          <Code2 className="h-3.5 w-3.5" />
-                        </a>
+                      <Button
+                        size="icon"
+                        variant="ghost"
+                        aria-label="Open in IDE"
+                        title="Open in IDE"
+                        onClick={() => void onOpenIde(entry)}
+                      >
+                        <Code2 className="h-3.5 w-3.5" />
                       </Button>
                       <Button
                         size="icon"

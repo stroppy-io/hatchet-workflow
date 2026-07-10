@@ -171,3 +171,18 @@ func (s Scope) Key() string {
 	}
 	return "org:" + s.OrgSlug + ":" + s.EntryKind + ":" + s.EntrySlug
 }
+
+// Prefix reconstructs the canonical "/ide/..." URL prefix for s — the
+// request path with Rest stripped back off (the inverse of ParseScope minus
+// Rest). Used to scope the browser-auth session cookie's Path attribute
+// (see ticket.go/TicketExchanger) to exactly this one entry repo, and to
+// rebuild the clean post-exchange redirect URL (Prefix + Rest). Note
+// OrgSlug here is whatever the Scope was built with — ParseScope always
+// leaves it as the URL slug, never a resolved tenant id (see Scope's doc),
+// so Prefix always reproduces a browser-facing URL, never an internal one.
+func (s Scope) Prefix() string {
+	if s.Kind == ScopeInstance {
+		return "/ide/instance/" + s.EntryKind + "/" + s.EntrySlug
+	}
+	return "/ide/org/" + s.OrgSlug + "/" + s.EntryKind + "/" + s.EntrySlug
+}

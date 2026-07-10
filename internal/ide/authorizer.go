@@ -55,17 +55,53 @@ type Authorizer struct {
 	Tokens  TokenVerifier
 	Perms   PermissionResolver
 	Tenants TenantResolver
+	// Sessions verifies the httpOnly IDE session cookie the browser-auth
+	// handshake sets (TicketExchanger, ticket.go) — the second credential
+	// shape CanAuthor accepts, alongside the Authorization header. nil
+	// disables cookie-based auth entirely (CanAuthor then behaves exactly
+	// as it did before the browser-auth handshake existed: header only),
+	// which keeps every existing curl/API/test caller unaffected.
+	Sessions SessionVerifier
 }
 
 var _ gateway.IdeAuthorizer = (*Authorizer)(nil)
 
-// CanAuthor implements gateway.IdeAuthorizer.
+// CanAuthor implements gateway.IdeAuthorizer. Two independent credential
+// shapes are accepted, checked in this order:
+//
+//  1. The stroppy_ide_session cookie (if Sessions is configured and the
+//     cookie is present): proof that THIS exact scope was already
+//     authorized once, at ticket-mint time, using the caller's Bearer
+//     token (TicketIssuer.Issue runs this very method against the target
+//     scope before ever minting a ticket — see its doc). The cookie is
+//     scope-bound (its own "scope" claim, plus the Path attribute the
+//     browser enforces) so it can never be replayed against a different
+//     scope; verifiedSession checks the claim explicitly rather than
+//     trusting Path alone, since Path scoping is a browser-side courtesy,
+//     not a server-side guarantee against a forged Cookie header. A valid
+//     cookie short-circuits straight to true — no repeated permission
+//     lookup on every asset/websocket-frame request for the lifetime of
+//     the IDE session, by design (see ticket.go's package doc for the
+//     trust boundary this establishes).
+//  2. The Authorization header, exactly as before this handshake existed:
+//     full claims verification + IsAdmin/RESOURCE_PROVIDER/RESOURCE_WORKFLOW
+//     permission resolution. This is what curl/the API/every existing test
+//     still uses, and what TicketIssuer.Issue itself uses to authorize the
+//     ticket mint in the first place.
 func (a *Authorizer) CanAuthor(r *http.Request) bool {
-	if a == nil || a.Tokens == nil {
+	if a == nil {
 		return false
 	}
 	scope, err := ParseScope(r.URL.Path)
 	if err != nil {
+		return false
+	}
+	if a.Sessions != nil {
+		if a.verifiedSession(r, scope.Key()) {
+			return true
+		}
+	}
+	if a.Tokens == nil {
 		return false
 	}
 	claims, ok := a.verifiedClaims(r)
@@ -172,4 +208,23 @@ func (a *Authorizer) verifiedClaims(r *http.Request) (*iampb.AccessClaims, bool)
 		return nil, false
 	}
 	return claims, true
+}
+
+// verifiedSession reports whether r carries a valid stroppy_ide_session
+// cookie whose scope claim matches wantScope exactly. A cookie present but
+// invalid (bad signature, expired, wrong purpose) or scoped to a DIFFERENT
+// key (a different org, a different entry, instance vs. org) is rejected,
+// never treated as "no cookie" silently upgraded to something else — the
+// caller falls through to the Authorization-header path, which will also
+// fail closed if that is likewise absent/invalid.
+func (a *Authorizer) verifiedSession(r *http.Request, wantScope string) bool {
+	c, err := r.Cookie(ideSessionCookieName)
+	if err != nil || c.Value == "" {
+		return false
+	}
+	accountID, scope, err := a.Sessions.VerifySession(r.Context(), c.Value)
+	if err != nil || accountID == "" || scope != wantScope {
+		return false
+	}
+	return true
 }

@@ -31,6 +31,7 @@ import {
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import { Panel } from "@/pages/dashboard/Panel";
 import { getOrgProvider, hasOrgPermission, type OrgRole } from "@/services/org";
+import { openInIde } from "@/services/ide";
 import {
   deleteOrgEntry,
   linkInstanceEntry,
@@ -67,8 +68,14 @@ function fmtDate(iso?: string): string {
 // GitBundleStore's package doc) until it is forked, so the caller must gate
 // this behind origin !== "ORIGIN_LINKED".
 function orgIdeUrl(orgSlug: string, tab: "providers" | "workflows", slug: string): string {
+  // The scope segment is EntryKindProvider/EntryKindWorkflow — singular,
+  // exactly what internal/ide.ParseScope requires — never the plural tab
+  // name (that stays plural only in the `folder` deep link below, which
+  // mirrors the repo's own on-disk providers/<slug> | workflows/<slug>
+  // layout, a completely different string).
+  const entryKind = tab === "providers" ? "provider" : "workflow";
   const folder = encodeURIComponent(`/home/coder/project/${tab}/${slug}`);
-  return `/ide/org/${orgSlug}/${tab}/${slug}?folder=${folder}`;
+  return `/ide/org/${orgSlug}/${entryKind}/${slug}?folder=${folder}`;
 }
 
 function OriginBadge({ origin }: { origin: CatalogEntryVM["origin"] }) {
@@ -220,6 +227,15 @@ export function OrgCatalog() {
     }
   }
 
+  async function onOpenIde(entry: CatalogEntryVM) {
+    setError(null);
+    try {
+      await openInIde(orgIdeUrl(slug, tabParam, entry.slug));
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
   return (
     <div className="mx-auto max-w-6xl p-8">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -342,16 +358,12 @@ export function OrgCatalog() {
                               ? "Requires update permission on this resource"
                               : "Open in IDE"
                         }
-                        asChild={canUpdate && entry.origin !== "ORIGIN_LINKED"}
                         aria-label="Open in IDE"
+                        onClick={
+                          canUpdate && entry.origin !== "ORIGIN_LINKED" ? () => void onOpenIde(entry) : undefined
+                        }
                       >
-                        {canUpdate && entry.origin !== "ORIGIN_LINKED" ? (
-                          <a href={orgIdeUrl(slug, tabParam, entry.slug)} target="_blank" rel="noreferrer">
-                            <Code2 className="h-3.5 w-3.5" />
-                          </a>
-                        ) : (
-                          <Code2 className="h-3.5 w-3.5" />
-                        )}
+                        <Code2 className="h-3.5 w-3.5" />
                       </Button>
                       <Button
                         size="icon"

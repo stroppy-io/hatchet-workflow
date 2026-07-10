@@ -895,6 +895,8 @@ func Run(ctx context.Context, cfg Config) error {
 	// task).
 	var ideBackends gateway.IdeBackendResolver
 	var ideAuthorizer gateway.IdeAuthorizer
+	var ideTicketIssuer *ide.TicketIssuer
+	var ideTicketExchanger gateway.IdeTicketExchanger
 	if cfg.IdeManagerEnabled && giteaClient == nil {
 		// Either GITEA_TOKEN is unset, or its bootstrap failed above. Serve
 		// without the IDE rather than refusing to boot the control plane —
@@ -923,8 +925,32 @@ func Run(ctx context.Context, cfg Config) error {
 			LSPBinaryPath:  cfg.IdeLSPBinaryPath,
 		})
 		ideBackends = &ide.BackendResolver{Manager: ideManager, Tenants: store.Tenants()}
-		ideAuthorizer = &ide.Authorizer{Tokens: bearerVerifier, Perms: permResolver, Tenants: store.Tenants()}
+		// ideTickets backs the browser-auth handshake: a browser navigating
+		// to /ide/<scope>/... cannot present the SPA's Bearer header (see
+		// internal/ide/ticket.go's package doc), so a short-lived single-use
+		// ticket (minted via the authenticated /api/ide/ticket call below)
+		// stands in for it, exchanged by the gateway for an httpOnly
+		// scope-bound session cookie. Reuses idCfg's SAME signing secret as
+		// the access/refresh tokens — no separate key.
+		ideTickets, err := identity.NewIdeTicketService(idCfg)
+		if err != nil {
+			return fmt.Errorf("ide ticket service: %w", err)
+		}
+		authorizer := &ide.Authorizer{Tokens: bearerVerifier, Perms: permResolver, Tenants: store.Tenants(), Sessions: ideTickets}
+		ideAuthorizer = authorizer
+		ideTicketIssuer = &ide.TicketIssuer{Authorizer: authorizer, Tickets: ideTickets}
+		ideTicketExchanger = &ide.TicketExchanger{Tickets: ideTickets}
 	}
+	// The authenticated half of the browser-auth handshake (see
+	// ide_ticket_handler.go) is a plain route on the SAME mux the connect
+	// API + SPA already share — registered here (after ideTicketIssuer is
+	// known) even though mux itself was built in step 7 above; *http.
+	// ServeMux is mutated in place and h2cHandler below only captures a
+	// reference to it, so a route added at this point is visible to every
+	// request the server ever handles. ideTicketIssuer is nil when the IDE
+	// manager is disabled — the handler itself 404s in that case rather
+	// than needing a second guard here.
+	mux.HandleFunc("/api/ide/ticket", ideTicketHandler(ideTicketIssuer))
 
 	// 9) Gateway: single agent-facing entrypoint sharing the connect API + SPA.
 	gw, err := gateway.New(gateway.Config{
@@ -941,11 +967,12 @@ func Run(ctx context.Context, cfg Config) error {
 		// IdeBackend is the manual-override fallback (see its doc); IdeBackends
 		// (Task 4's per-org manager) takes priority whenever IdeManagerEnabled
 		// wired it above — see gateway.go's New().
-		IdeBackend:    cfg.IdeBackend,
-		IdeBackends:   ideBackends,
-		IdeAuthorizer: ideAuthorizer,
-		HTTPFallback:  h2cHandler,
-		Logger:        log,
+		IdeBackend:         cfg.IdeBackend,
+		IdeBackends:        ideBackends,
+		IdeAuthorizer:      ideAuthorizer,
+		IdeTicketExchanger: ideTicketExchanger,
+		HTTPFallback:       h2cHandler,
+		Logger:             log,
 	})
 	if err != nil {
 		return fmt.Errorf("build gateway: %w", err)
