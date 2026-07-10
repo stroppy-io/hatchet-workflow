@@ -9116,6 +9116,32 @@ func SegmentFromOgen(src *rest.Segment) (*domain.Workload_Segment, error) {
 	return dst, nil
 }
 
+// SettingToOgen converts models.SharedDatabase_Setting (an imported type) to its ogen representation.
+func SettingToOgen(src *models.SharedDatabase_Setting) (*rest.Setting, error) {
+	var dst rest.Setting
+	if src == nil {
+		return &dst, nil
+	}
+	dst.Key.SetTo(string(src.GetKey()))
+	dst.Value.SetTo(string(src.GetValue()))
+	return &dst, nil
+}
+
+// SettingFromOgen converts the ogen representation back to SharedDatabase_Setting.
+func SettingFromOgen(src *rest.Setting) (*models.SharedDatabase_Setting, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &models.SharedDatabase_Setting{}
+	if v1, ok := src.Key.Get(); ok {
+		dst.Key = string(v1)
+	}
+	if v2, ok := src.Value.Get(); ok {
+		dst.Value = string(v2)
+	}
+	return dst, nil
+}
+
 // SettingsToOgen converts deployment.Yandex_Settings (an imported type) to its ogen representation.
 func SettingsToOgen(src *deployment.Yandex_Settings) (*rest.Settings, error) {
 	var dst rest.Settings
@@ -9327,6 +9353,50 @@ func ShareRecordFromOgen(src *rest.ShareRecord) (*models.ShareRecord, error) {
 		}
 		dst.Snapshot = m7
 	}
+	return dst, nil
+}
+
+// SharedDatabaseToOgen converts models.SharedDatabase (an imported type) to its ogen representation.
+func SharedDatabaseToOgen(src *models.SharedDatabase) (*rest.SharedDatabase, error) {
+	var dst rest.SharedDatabase
+	if src == nil {
+		return &dst, nil
+	}
+	dst.Version.SetTo(string(src.GetVersion()))
+	c1, err := convert.SliceErr(src.GetSettings(), func(e *models.SharedDatabase_Setting) (zero rest.Setting, _ error) {
+		o2, err := SettingToOgen(e)
+		if err != nil {
+			return zero, err
+		}
+		return *o2, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dst.Settings = c1
+	return &dst, nil
+}
+
+// SharedDatabaseFromOgen converts the ogen representation back to SharedDatabase.
+func SharedDatabaseFromOgen(src *rest.SharedDatabase) (*models.SharedDatabase, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &models.SharedDatabase{}
+	if v1, ok := src.Version.Get(); ok {
+		dst.Version = string(v1)
+	}
+	c2, err := convert.SliceErr(src.Settings, func(e rest.Setting) (zero *models.SharedDatabase_Setting, _ error) {
+		m3, err := SettingFromOgen(&e)
+		if err != nil {
+			return zero, err
+		}
+		return m3, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dst.Settings = c2
 	return dst, nil
 }
 
@@ -9673,6 +9743,24 @@ func SharedTestRunToOgen(src *models.SharedTestRun) (*rest.SharedTestRun, error)
 		}
 		dst.Metrics.SetTo(*o4)
 	}
+	c5, err := convert.SliceErr(src.GetWorkloadSegments(), func(e *models.SharedWorkloadSegment) (zero rest.SharedWorkloadSegment, _ error) {
+		o6, err := SharedWorkloadSegmentToOgen(e)
+		if err != nil {
+			return zero, err
+		}
+		return *o6, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dst.WorkloadSegments = c5
+	if src.Database != nil {
+		o7, err := SharedDatabaseToOgen(src.GetDatabase())
+		if err != nil {
+			return nil, err
+		}
+		dst.Database.SetTo(*o7)
+	}
 	return &dst, nil
 }
 
@@ -9796,6 +9884,102 @@ func SharedTestRunFromOgen(src *rest.SharedTestRun) (*models.SharedTestRun, erro
 			return nil, err
 		}
 		dst.Metrics = m18
+	}
+	c19, err := convert.SliceErr(src.WorkloadSegments, func(e rest.SharedWorkloadSegment) (zero *models.SharedWorkloadSegment, _ error) {
+		m20, err := SharedWorkloadSegmentFromOgen(&e)
+		if err != nil {
+			return zero, err
+		}
+		return m20, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dst.WorkloadSegments = c19
+	if v21, ok := src.Database.Get(); ok {
+		m22, err := SharedDatabaseFromOgen(&v21)
+		if err != nil {
+			return nil, err
+		}
+		dst.Database = m22
+	}
+	return dst, nil
+}
+
+// SharedWorkloadSegmentToOgen converts models.SharedWorkloadSegment (an imported type) to its ogen representation.
+func SharedWorkloadSegmentToOgen(src *models.SharedWorkloadSegment) (*rest.SharedWorkloadSegment, error) {
+	var dst rest.SharedWorkloadSegment
+	if src == nil {
+		return &dst, nil
+	}
+	dst.Name.SetTo(string(src.GetName()))
+	dst.Script.SetTo(string(src.GetScript()))
+	dst.Vus.SetTo(int32(src.GetVus()))
+	dst.Duration.SetTo(string(src.GetDuration()))
+	dst.Iterations.SetTo(int32(src.GetIterations()))
+	dst.PoolSize.SetTo(int32(src.GetPoolSize()))
+	dst.ScaleFactor.SetTo(float64(src.GetScaleFactor()))
+	dst.InsertMethod.SetTo(string(src.GetInsertMethod()))
+	dst.BulkSize.SetTo(int32(src.GetBulkSize()))
+	c1 := convert.Slice(src.GetSteps(), func(e string) string {
+		return string(e)
+	})
+	dst.Steps = c1
+	c2 := convert.Slice(src.GetNoSteps(), func(e string) string {
+		return string(e)
+	})
+	dst.NoSteps = c2
+	dst.Quiet.SetTo(bool(src.GetQuiet()))
+	dst.NoThresholds.SetTo(bool(src.GetNoThresholds()))
+	return &dst, nil
+}
+
+// SharedWorkloadSegmentFromOgen converts the ogen representation back to SharedWorkloadSegment.
+func SharedWorkloadSegmentFromOgen(src *rest.SharedWorkloadSegment) (*models.SharedWorkloadSegment, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &models.SharedWorkloadSegment{}
+	if v1, ok := src.Name.Get(); ok {
+		dst.Name = string(v1)
+	}
+	if v2, ok := src.Script.Get(); ok {
+		dst.Script = string(v2)
+	}
+	if v3, ok := src.Vus.Get(); ok {
+		dst.Vus = uint32(v3)
+	}
+	if v4, ok := src.Duration.Get(); ok {
+		dst.Duration = string(v4)
+	}
+	if v5, ok := src.Iterations.Get(); ok {
+		dst.Iterations = uint32(v5)
+	}
+	if v6, ok := src.PoolSize.Get(); ok {
+		dst.PoolSize = uint32(v6)
+	}
+	if v7, ok := src.ScaleFactor.Get(); ok {
+		dst.ScaleFactor = float64(v7)
+	}
+	if v8, ok := src.InsertMethod.Get(); ok {
+		dst.InsertMethod = string(v8)
+	}
+	if v9, ok := src.BulkSize.Get(); ok {
+		dst.BulkSize = uint32(v9)
+	}
+	c10 := convert.Slice(src.Steps, func(e string) string {
+		return string(e)
+	})
+	dst.Steps = c10
+	c11 := convert.Slice(src.NoSteps, func(e string) string {
+		return string(e)
+	})
+	dst.NoSteps = c11
+	if v12, ok := src.Quiet.Get(); ok {
+		dst.Quiet = bool(v12)
+	}
+	if v13, ok := src.NoThresholds.Get(); ok {
+		dst.NoThresholds = bool(v13)
 	}
 	return dst, nil
 }

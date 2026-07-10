@@ -5,8 +5,10 @@ import (
 	"crypto/rand"
 	"encoding/base64"
 	"fmt"
+	"strconv"
 
 	derrors "github.com/stroppy-io/stroppy-cloud/internal/domain/errors"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
 	"github.com/stroppy-io/stroppy-cloud/internal/services/share"
@@ -129,7 +131,128 @@ func (b *RunSnapshotBuilder) sharedTestRun(ctx context.Context, rec *models.Test
 			view.Metrics = m
 		}
 	}
+	view.WorkloadSegments = sharedWorkloadSegments(rec.GetSpec().GetWorkload())
+	view.Database = sharedDatabase(rec.GetSpec().GetDatabase())
 	return view
+}
+
+/*
+	Public projection of the run spec.
+
+	These helpers are an ALLOWLIST, never a redaction pass: a field reaches the
+	public view only because it is named here. The spec also holds `parameters.env`,
+	`segment.sql`, workload files, `execution.extra_args` and the engines'
+	free-form `*_options` maps — all author-supplied, all capable of carrying
+	credentials or private schemas — and none of them are read below. Adding a
+	field means deciding, by hand, that it is safe for a stranger with a link.
+*/
+
+// sharedWorkloadSegments projects the stroppy launch knobs that explain a
+// number: what ran, how hard, and how rows were written.
+func sharedWorkloadSegments(w *domain.Workload) []*models.SharedWorkloadSegment {
+	segments := w.GetSegments()
+	if len(segments) == 0 {
+		return nil
+	}
+	out := make([]*models.SharedWorkloadSegment, 0, len(segments))
+	for _, seg := range segments {
+		exec := seg.GetExecution()
+		params := seg.GetParameters()
+		out = append(out, &models.SharedWorkloadSegment{
+			Name:         seg.GetName(),
+			Script:       seg.GetScript(),
+			Vus:          exec.GetVus(),
+			Duration:     exec.GetDuration(),
+			Iterations:   exec.GetIterations(),
+			Quiet:        exec.GetQuiet(),
+			NoThresholds: exec.GetNoThresholds(),
+			PoolSize:     params.GetPoolSize(),
+			ScaleFactor:  params.GetScaleFactor(),
+			InsertMethod: params.GetDefaultInsertMethod(),
+			BulkSize:     params.GetBulkSize(),
+			Steps:        params.GetSteps(),
+			NoSteps:      params.GetNoSteps(),
+		})
+	}
+	return out
+}
+
+// sharedDatabase projects the database sizing + typed tuning. Every setting key
+// is chosen here and every value is rendered from a typed field, so no
+// author-supplied map entry can reach the public view.
+func sharedDatabase(db *domain.Database) *models.SharedDatabase {
+	params := db.GetParams()
+	if params == nil {
+		return nil
+	}
+	view := &models.SharedDatabase{Version: params.GetVersion()}
+
+	add := func(key, value string) {
+		if value == "" {
+			return
+		}
+		view.Settings = append(view.Settings, &models.SharedDatabase_Setting{Key: key, Value: value})
+	}
+	addNum := func(key string, n uint32) {
+		if n == 0 {
+			return
+		}
+		add(key, strconv.FormatUint(uint64(n), 10))
+	}
+	addBool := func(key string, on bool) {
+		if on {
+			add(key, "true")
+		}
+	}
+
+	switch engine := params.GetEngine().(type) {
+	case *domain.DatabaseParams_Postgres:
+		p := engine.Postgres
+		addNum("replicas", p.GetReplicas())
+		addNum("sync_replicas", p.GetSyncReplicas())
+		addNum("haproxy", p.GetHaproxy())
+		addBool("pgbouncer", p.GetPgbouncer())
+		addBool("patroni", p.GetPatroni())
+		addBool("etcd", p.GetEtcd())
+	case *domain.DatabaseParams_Orioledb:
+		p := engine.Orioledb
+		add("image", p.GetImage())
+		addNum("shared_buffers_mb", p.GetSharedBuffersMb())
+		addNum("replicas", p.GetReplicas())
+		addNum("haproxy", p.GetHaproxy())
+	case *domain.DatabaseParams_Mysql:
+		sharedMySQL(engine.Mysql, addNum, addBool)
+	case *domain.DatabaseParams_Mariadb:
+		sharedMySQL(engine.Mariadb, addNum, addBool)
+	case *domain.DatabaseParams_Picodata:
+		p := engine.Picodata
+		addNum("instances", p.GetInstances())
+		addNum("replication_factor", p.GetReplicationFactor())
+		addNum("shards", p.GetShards())
+		addNum("haproxy", p.GetHaproxy())
+	case *domain.DatabaseParams_Ydb:
+		p := engine.Ydb
+		addNum("storage_nodes", p.GetStorageNodes())
+		addNum("database_nodes", p.GetDatabaseNodes())
+		addNum("pdisks_per_storage_node", p.GetPdisksPerStorageNode())
+		addNum("storage_groups", p.GetStorageGroups())
+		addBool("auto_size_pdisks", p.GetAutoSizePdisks())
+		addNum("haproxy", p.GetHaproxy())
+	case *domain.DatabaseParams_Cockroach:
+		addNum("nodes", engine.Cockroach.GetNodes())
+	}
+
+	if view.GetVersion() == "" && len(view.GetSettings()) == 0 {
+		return nil
+	}
+	return view
+}
+
+func sharedMySQL(p *domain.MySqlParams, addNum func(string, uint32), addBool func(string, bool)) {
+	addNum("replicas", p.GetReplicas())
+	addNum("proxysql", p.GetProxysql())
+	addBool("group_replication", p.GetGroupReplication())
+	addBool("semi_sync", p.GetSemiSync())
 }
 
 // sharedSuiteRun projects a stored suite run into its limited public view.

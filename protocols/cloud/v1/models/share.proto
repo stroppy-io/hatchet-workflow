@@ -184,6 +184,79 @@ message SharedTestRun {
         metrics is our computed metrics snapshot (NOT a Grafana link).
      */
     monitor.RunMetrics metrics = 14;
+    /*
+        workload_segments are the stroppy launch knobs, so a shared result is
+        reproducible without handing over the run spec.
+     */
+    repeated SharedWorkloadSegment workload_segments = 15;
+    /*
+        database is the sizing + typed tuning of the database under test.
+     */
+    SharedDatabase database = 16;
+}
+
+/*
+    SharedWorkloadSegment is the SAFE projection of one stroppy workload segment:
+    the knobs that explain a number, and nothing else.
+
+    Deliberately absent, and never to be added: `parameters.env` (a map that
+    routinely carries PGPASSWORD and API tokens), `segment.sql` and
+    `segment.files` (private schemas and queries) and `execution.extra_args`
+    (arbitrary flags, e.g. `--token=`). Those are free-form: the system cannot
+    know they are safe, so a public view must not carry them.
+ */
+message SharedWorkloadSegment {
+    /* name is the segment's display name. */
+    string name = 1;
+    /* script is the stroppy script the segment ran (e.g. "tpcc/tx"). */
+    string script = 2;
+    /* vus is the k6 virtual-user count. */
+    uint32 vus = 3;
+    /* duration bounds a time-bounded segment (empty when iteration-bounded). */
+    string duration = 4 [(validate.rules).string.max_len = 32];
+    /* iterations bounds an iteration-bounded segment. */
+    uint32 iterations = 5;
+    /* pool_size is stroppy's DB connection pool size. */
+    uint32 pool_size = 6;
+    /* scale_factor is the dataset scale. */
+    double scale_factor = 7;
+    /* insert_method is the row-insertion mode ("native", "plain_bulk", …). */
+    string insert_method = 8 [(validate.rules).string.max_len = 64];
+    /* bulk_size is rows per bulk INSERT (only meaningful for plain_bulk). */
+    uint32 bulk_size = 9;
+    /* steps are the enabled stroppy steps; empty means all of them. */
+    repeated string steps = 10 [(validate.rules).repeated = {max_items: 64, items: {string: {max_len: 64}}}];
+    /* no_steps are the explicitly disabled steps. */
+    repeated string no_steps = 11 [(validate.rules).repeated = {max_items: 64, items: {string: {max_len: 64}}}];
+    /* quiet suppresses stroppy's per-iteration output. */
+    bool quiet = 12;
+    /* no_thresholds disables k6 threshold checks. */
+    bool no_thresholds = 13;
+}
+
+/*
+    SharedDatabase is the SAFE projection of the database under test.
+
+    `settings` carries engine-specific sizing and tuning, but every key is chosen
+    server-side from a TYPED field of the engine's params (replica counts, pdisk
+    counts, shared_buffers_mb, …). The free-form `*_options` maps — postgresql.conf,
+    haproxy.cfg, patroni.yml and friends — are deliberately NOT projected: they
+    are whatever the author typed, and may hold credentials.
+ */
+message SharedDatabase {
+    /* version is the engine version (e.g. "17", "pg17"). */
+    string version = 1 [(validate.rules).string.max_len = 64];
+    /* settings are typed, server-selected sizing/tuning knobs, in display order. */
+    repeated Setting settings = 2 [(validate.rules).repeated.max_items = 32];
+
+    /*
+        Setting is one server-selected knob. Both key and value originate from a
+        typed proto field — never from a user-supplied map entry.
+     */
+    message Setting {
+        string key = 1 [(validate.rules).string.max_len = 64];
+        string value = 2 [(validate.rules).string.max_len = 128];
+    }
 }
 
 /*

@@ -158,6 +158,33 @@ export interface SharedRunVM {
   finishedAt?: string;
   progressPct: number;
   metrics: MetricVM[];
+  /** Safe launch knobs, so a shared result is reproducible. Absent on old
+   *  snapshots captured before they were projected. */
+  workloadSegments: SharedSegmentVM[];
+  database?: SharedDatabaseVM;
+}
+
+/** One workload segment's public launch knobs (no env / sql / extra args). */
+export interface SharedSegmentVM {
+  name: string;
+  script: string;
+  vus?: number;
+  duration?: string;
+  iterations?: number;
+  poolSize?: number;
+  scaleFactor?: number;
+  insertMethod?: string;
+  bulkSize?: number;
+  steps: string[];
+  noSteps: string[];
+  quiet: boolean;
+  noThresholds: boolean;
+}
+
+/** Database sizing + typed tuning (no free-form engine option maps). */
+export interface SharedDatabaseVM {
+  version: string;
+  settings: Array<{ key: string; value: string }>;
 }
 
 const num = (v: number | "NaN" | "Infinity" | "-Infinity" | undefined): number =>
@@ -243,6 +270,22 @@ export async function getSharedRun(token: string): Promise<SharedRunVM | undefin
         finishedAt?: string;
         progressPct?: number;
         metrics?: { metrics?: RawMetric[] };
+        workloadSegments?: Array<{
+          name?: string;
+          script?: string;
+          vus?: number;
+          duration?: string;
+          iterations?: number;
+          poolSize?: number;
+          scaleFactor?: number;
+          insertMethod?: string;
+          bulkSize?: number;
+          steps?: string[];
+          noSteps?: string[];
+          quiet?: boolean;
+          noThresholds?: boolean;
+        }>;
+        database?: { version?: string; settings?: Array<{ key?: string; value?: string }> };
       };
       suiteRun?: { name?: string };
     };
@@ -267,6 +310,29 @@ export async function getSharedRun(token: string): Promise<SharedRunVM | undefin
       finishedAt: tr.finishedAt,
       progressPct: tr.progressPct ?? 0,
       metrics: (tr.metrics?.metrics ?? []).map(metricToVM),
+      workloadSegments: (tr.workloadSegments ?? []).map((s) => ({
+        name: s.name ?? "",
+        script: s.script ?? "",
+        vus: s.vus,
+        duration: s.duration,
+        iterations: s.iterations,
+        poolSize: s.poolSize,
+        scaleFactor: s.scaleFactor,
+        insertMethod: s.insertMethod,
+        bulkSize: s.bulkSize,
+        steps: s.steps ?? [],
+        noSteps: s.noSteps ?? [],
+        quiet: s.quiet ?? false,
+        noThresholds: s.noThresholds ?? false,
+      })),
+      database: tr.database
+        ? {
+            version: tr.database.version ?? "",
+            settings: (tr.database.settings ?? [])
+              .filter((s) => !!s.key)
+              .map((s) => ({ key: s.key as string, value: s.value ?? "" })),
+          }
+        : undefined,
     };
   }
   return {
@@ -283,5 +349,6 @@ export async function getSharedRun(token: string): Promise<SharedRunVM | undefin
     nodeCount: 0,
     progressPct: 0,
     metrics: [],
+    workloadSegments: [],
   };
 }

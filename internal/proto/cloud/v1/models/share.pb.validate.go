@@ -464,6 +464,69 @@ func (m *SharedTestRun) validate(all bool) error {
 		}
 	}
 
+	for idx, item := range m.GetWorkloadSegments() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, SharedTestRunValidationError{
+						field:  fmt.Sprintf("WorkloadSegments[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, SharedTestRunValidationError{
+						field:  fmt.Sprintf("WorkloadSegments[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return SharedTestRunValidationError{
+					field:  fmt.Sprintf("WorkloadSegments[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if all {
+		switch v := interface{}(m.GetDatabase()).(type) {
+		case interface{ ValidateAll() error }:
+			if err := v.ValidateAll(); err != nil {
+				errors = append(errors, SharedTestRunValidationError{
+					field:  "Database",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		case interface{ Validate() error }:
+			if err := v.Validate(); err != nil {
+				errors = append(errors, SharedTestRunValidationError{
+					field:  "Database",
+					reason: "embedded message failed validation",
+					cause:  err,
+				})
+			}
+		}
+	} else if v, ok := interface{}(m.GetDatabase()).(interface{ Validate() error }); ok {
+		if err := v.Validate(); err != nil {
+			return SharedTestRunValidationError{
+				field:  "Database",
+				reason: "embedded message failed validation",
+				cause:  err,
+			}
+		}
+	}
+
 	if len(errors) > 0 {
 		return SharedTestRunMultiError(errors)
 	}
@@ -541,6 +604,358 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = SharedTestRunValidationError{}
+
+// Validate checks the field values on SharedWorkloadSegment with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *SharedWorkloadSegment) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on SharedWorkloadSegment with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// SharedWorkloadSegmentMultiError, or nil if none found.
+func (m *SharedWorkloadSegment) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *SharedWorkloadSegment) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for Name
+
+	// no validation rules for Script
+
+	// no validation rules for Vus
+
+	if utf8.RuneCountInString(m.GetDuration()) > 32 {
+		err := SharedWorkloadSegmentValidationError{
+			field:  "Duration",
+			reason: "value length must be at most 32 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for Iterations
+
+	// no validation rules for PoolSize
+
+	// no validation rules for ScaleFactor
+
+	if utf8.RuneCountInString(m.GetInsertMethod()) > 64 {
+		err := SharedWorkloadSegmentValidationError{
+			field:  "InsertMethod",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for BulkSize
+
+	if len(m.GetSteps()) > 64 {
+		err := SharedWorkloadSegmentValidationError{
+			field:  "Steps",
+			reason: "value must contain no more than 64 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetSteps() {
+		_, _ = idx, item
+
+		if utf8.RuneCountInString(item) > 64 {
+			err := SharedWorkloadSegmentValidationError{
+				field:  fmt.Sprintf("Steps[%v]", idx),
+				reason: "value length must be at most 64 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	if len(m.GetNoSteps()) > 64 {
+		err := SharedWorkloadSegmentValidationError{
+			field:  "NoSteps",
+			reason: "value must contain no more than 64 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetNoSteps() {
+		_, _ = idx, item
+
+		if utf8.RuneCountInString(item) > 64 {
+			err := SharedWorkloadSegmentValidationError{
+				field:  fmt.Sprintf("NoSteps[%v]", idx),
+				reason: "value length must be at most 64 runes",
+			}
+			if !all {
+				return err
+			}
+			errors = append(errors, err)
+		}
+
+	}
+
+	// no validation rules for Quiet
+
+	// no validation rules for NoThresholds
+
+	if len(errors) > 0 {
+		return SharedWorkloadSegmentMultiError(errors)
+	}
+
+	return nil
+}
+
+// SharedWorkloadSegmentMultiError is an error wrapping multiple validation
+// errors returned by SharedWorkloadSegment.ValidateAll() if the designated
+// constraints aren't met.
+type SharedWorkloadSegmentMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m SharedWorkloadSegmentMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m SharedWorkloadSegmentMultiError) AllErrors() []error { return m }
+
+// SharedWorkloadSegmentValidationError is the validation error returned by
+// SharedWorkloadSegment.Validate if the designated constraints aren't met.
+type SharedWorkloadSegmentValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SharedWorkloadSegmentValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SharedWorkloadSegmentValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SharedWorkloadSegmentValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SharedWorkloadSegmentValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SharedWorkloadSegmentValidationError) ErrorName() string {
+	return "SharedWorkloadSegmentValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e SharedWorkloadSegmentValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSharedWorkloadSegment.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SharedWorkloadSegmentValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SharedWorkloadSegmentValidationError{}
+
+// Validate checks the field values on SharedDatabase with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *SharedDatabase) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on SharedDatabase with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in SharedDatabaseMultiError,
+// or nil if none found.
+func (m *SharedDatabase) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *SharedDatabase) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetVersion()) > 64 {
+		err := SharedDatabaseValidationError{
+			field:  "Version",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetSettings()) > 32 {
+		err := SharedDatabaseValidationError{
+			field:  "Settings",
+			reason: "value must contain no more than 32 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetSettings() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, SharedDatabaseValidationError{
+						field:  fmt.Sprintf("Settings[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, SharedDatabaseValidationError{
+						field:  fmt.Sprintf("Settings[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return SharedDatabaseValidationError{
+					field:  fmt.Sprintf("Settings[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return SharedDatabaseMultiError(errors)
+	}
+
+	return nil
+}
+
+// SharedDatabaseMultiError is an error wrapping multiple validation errors
+// returned by SharedDatabase.ValidateAll() if the designated constraints
+// aren't met.
+type SharedDatabaseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m SharedDatabaseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m SharedDatabaseMultiError) AllErrors() []error { return m }
+
+// SharedDatabaseValidationError is the validation error returned by
+// SharedDatabase.Validate if the designated constraints aren't met.
+type SharedDatabaseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SharedDatabaseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SharedDatabaseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SharedDatabaseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SharedDatabaseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SharedDatabaseValidationError) ErrorName() string { return "SharedDatabaseValidationError" }
+
+// Error satisfies the builtin error interface
+func (e SharedDatabaseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSharedDatabase.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SharedDatabaseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SharedDatabaseValidationError{}
 
 // Validate checks the field values on SharedSuiteRun with the rules defined in
 // the proto definition for this message. If any rules are violated, the first
@@ -1144,3 +1559,127 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ShareRecord_SnapshotValidationError{}
+
+// Validate checks the field values on SharedDatabase_Setting with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *SharedDatabase_Setting) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on SharedDatabase_Setting with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// SharedDatabase_SettingMultiError, or nil if none found.
+func (m *SharedDatabase_Setting) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *SharedDatabase_Setting) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetKey()) > 64 {
+		err := SharedDatabase_SettingValidationError{
+			field:  "Key",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetValue()) > 128 {
+		err := SharedDatabase_SettingValidationError{
+			field:  "Value",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return SharedDatabase_SettingMultiError(errors)
+	}
+
+	return nil
+}
+
+// SharedDatabase_SettingMultiError is an error wrapping multiple validation
+// errors returned by SharedDatabase_Setting.ValidateAll() if the designated
+// constraints aren't met.
+type SharedDatabase_SettingMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m SharedDatabase_SettingMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m SharedDatabase_SettingMultiError) AllErrors() []error { return m }
+
+// SharedDatabase_SettingValidationError is the validation error returned by
+// SharedDatabase_Setting.Validate if the designated constraints aren't met.
+type SharedDatabase_SettingValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SharedDatabase_SettingValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SharedDatabase_SettingValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SharedDatabase_SettingValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SharedDatabase_SettingValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SharedDatabase_SettingValidationError) ErrorName() string {
+	return "SharedDatabase_SettingValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e SharedDatabase_SettingValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSharedDatabase_Setting.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SharedDatabase_SettingValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SharedDatabase_SettingValidationError{}

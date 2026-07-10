@@ -12,6 +12,7 @@ import (
 	monitor "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
 	durationpb "google.golang.org/protobuf/types/known/durationpb"
 	timestamppb "google.golang.org/protobuf/types/known/timestamppb"
+	math "math"
 )
 
 func (m *ShareRecord) Encode(e *jx.Encoder) {
@@ -396,6 +397,18 @@ func (m *SharedTestRun) Encode(e *jx.Encoder) {
 		e.FieldStart("metrics")
 		jxpb.EncMessage(e, m.Metrics)
 	}
+	if len(m.WorkloadSegments) > 0 {
+		e.FieldStart("workloadSegments")
+		e.ArrStart()
+		for _, v := range m.WorkloadSegments {
+			v.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	if m.Database != nil {
+		e.FieldStart("database")
+		m.Database.Encode(e)
+	}
 	e.ObjEnd()
 }
 
@@ -640,6 +653,35 @@ func (m *SharedTestRun) Decode(d *jx.Decoder) error {
 				return err
 			}
 			return nil
+		case "workloadSegments", "workload_segments":
+			if seen["WorkloadSegments"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["WorkloadSegments"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &SharedWorkloadSegment{}
+				if err := el.Decode(d); err != nil {
+					return err
+				}
+				m.WorkloadSegments = append(m.WorkloadSegments, el)
+				return nil
+			})
+		case "database":
+			if seen["Database"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Database"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			m.Database = &SharedDatabase{}
+			if err := m.Database.Decode(d); err != nil {
+				return err
+			}
+			return nil
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}
@@ -653,6 +695,423 @@ func (m *SharedTestRun) MarshalJSON() ([]byte, error) {
 }
 
 func (m *SharedTestRun) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *SharedWorkloadSegment) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Name != "" {
+		e.FieldStart("name")
+		e.Str(m.Name)
+	}
+	if m.Script != "" {
+		e.FieldStart("script")
+		e.Str(m.Script)
+	}
+	if m.Vus != 0 {
+		e.FieldStart("vus")
+		e.UInt32(m.Vus)
+	}
+	if m.Duration != "" {
+		e.FieldStart("duration")
+		e.Str(m.Duration)
+	}
+	if m.Iterations != 0 {
+		e.FieldStart("iterations")
+		e.UInt32(m.Iterations)
+	}
+	if m.PoolSize != 0 {
+		e.FieldStart("poolSize")
+		e.UInt32(m.PoolSize)
+	}
+	if m.ScaleFactor != 0 || math.Signbit(float64(m.ScaleFactor)) {
+		e.FieldStart("scaleFactor")
+		jxpb.EncFloat64(e, m.ScaleFactor)
+	}
+	if m.InsertMethod != "" {
+		e.FieldStart("insertMethod")
+		e.Str(m.InsertMethod)
+	}
+	if m.BulkSize != 0 {
+		e.FieldStart("bulkSize")
+		e.UInt32(m.BulkSize)
+	}
+	if len(m.Steps) > 0 {
+		e.FieldStart("steps")
+		e.ArrStart()
+		for _, v := range m.Steps {
+			e.Str(v)
+		}
+		e.ArrEnd()
+	}
+	if len(m.NoSteps) > 0 {
+		e.FieldStart("noSteps")
+		e.ArrStart()
+		for _, v := range m.NoSteps {
+			e.Str(v)
+		}
+		e.ArrEnd()
+	}
+	if m.Quiet != false {
+		e.FieldStart("quiet")
+		e.Bool(m.Quiet)
+	}
+	if m.NoThresholds != false {
+		e.FieldStart("noThresholds")
+		e.Bool(m.NoThresholds)
+	}
+	e.ObjEnd()
+}
+
+func (m *SharedWorkloadSegment) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "name":
+			if seen["Name"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Name"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Name = v
+			return nil
+		case "script":
+			if seen["Script"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Script"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Script = v
+			return nil
+		case "vus":
+			if seen["Vus"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Vus"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint32(d)
+			if err != nil {
+				return err
+			}
+			m.Vus = v
+			return nil
+		case "duration":
+			if seen["Duration"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Duration"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Duration = v
+			return nil
+		case "iterations":
+			if seen["Iterations"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Iterations"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint32(d)
+			if err != nil {
+				return err
+			}
+			m.Iterations = v
+			return nil
+		case "poolSize", "pool_size":
+			if seen["PoolSize"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["PoolSize"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint32(d)
+			if err != nil {
+				return err
+			}
+			m.PoolSize = v
+			return nil
+		case "scaleFactor", "scale_factor":
+			if seen["ScaleFactor"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["ScaleFactor"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecFloat64(d)
+			if err != nil {
+				return err
+			}
+			m.ScaleFactor = v
+			return nil
+		case "insertMethod", "insert_method":
+			if seen["InsertMethod"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["InsertMethod"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.InsertMethod = v
+			return nil
+		case "bulkSize", "bulk_size":
+			if seen["BulkSize"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["BulkSize"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint32(d)
+			if err != nil {
+				return err
+			}
+			m.BulkSize = v
+			return nil
+		case "steps":
+			if seen["Steps"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Steps"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				v, err := d.Str()
+				if err != nil {
+					return err
+				}
+				m.Steps = append(m.Steps, v)
+				return nil
+			})
+		case "noSteps", "no_steps":
+			if seen["NoSteps"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["NoSteps"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				v, err := d.Str()
+				if err != nil {
+					return err
+				}
+				m.NoSteps = append(m.NoSteps, v)
+				return nil
+			})
+		case "quiet":
+			if seen["Quiet"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Quiet"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Bool()
+			if err != nil {
+				return err
+			}
+			m.Quiet = v
+			return nil
+		case "noThresholds", "no_thresholds":
+			if seen["NoThresholds"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["NoThresholds"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Bool()
+			if err != nil {
+				return err
+			}
+			m.NoThresholds = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *SharedWorkloadSegment) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *SharedWorkloadSegment) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *SharedDatabase) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Version != "" {
+		e.FieldStart("version")
+		e.Str(m.Version)
+	}
+	if len(m.Settings) > 0 {
+		e.FieldStart("settings")
+		e.ArrStart()
+		for _, v := range m.Settings {
+			v.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	e.ObjEnd()
+}
+
+func (m *SharedDatabase) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "version":
+			if seen["Version"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Version"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Version = v
+			return nil
+		case "settings":
+			if seen["Settings"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Settings"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &SharedDatabase_Setting{}
+				if err := el.Decode(d); err != nil {
+					return err
+				}
+				m.Settings = append(m.Settings, el)
+				return nil
+			})
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *SharedDatabase) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *SharedDatabase) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *SharedDatabase_Setting) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.Key != "" {
+		e.FieldStart("key")
+		e.Str(m.Key)
+	}
+	if m.Value != "" {
+		e.FieldStart("value")
+		e.Str(m.Value)
+	}
+	e.ObjEnd()
+}
+
+func (m *SharedDatabase_Setting) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "key":
+			if seen["Key"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Key"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Key = v
+			return nil
+		case "value":
+			if seen["Value"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Value"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Value = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *SharedDatabase_Setting) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *SharedDatabase_Setting) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return m.Decode(d)
 }

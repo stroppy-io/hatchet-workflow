@@ -15,8 +15,11 @@
   - [cloud.v1.models.ShareRecord.Snapshot](#cloud-v1-models-sharerecord-snapshot)
   - [cloud.v1.models.ShareRecord.Target](#cloud-v1-models-sharerecord-target)
   - [cloud.v1.models.ShareRecord.Target.Kind](#cloud-v1-models-sharerecord-target-kind)
+  - [cloud.v1.models.SharedDatabase](#cloud-v1-models-shareddatabase)
+  - [cloud.v1.models.SharedDatabase.Setting](#cloud-v1-models-shareddatabase-setting)
   - [cloud.v1.models.SharedSuiteRun](#cloud-v1-models-sharedsuiterun)
   - [cloud.v1.models.SharedTestRun](#cloud-v1-models-sharedtestrun)
+  - [cloud.v1.models.SharedWorkloadSegment](#cloud-v1-models-sharedworkloadsegment)
   - [cloud.v1.models.SuiteRecord](#cloud-v1-models-suiterecord)
   - [cloud.v1.models.SuiteRecord.Summary](#cloud-v1-models-suiterecord-summary)
   - [cloud.v1.models.SuiteRunRecord](#cloud-v1-models-suiterunrecord)
@@ -557,6 +560,77 @@ go_name: Kind</pre></td>
 </tr>
 </table>
 
+<a name="cloud-v1-models-shareddatabase"></a>
+### cloud.v1.models.SharedDatabase
+
+<pre>
+//SharedDatabase is the SAFE projection of the database under test.
+
+//`settings` carries engine-specific sizing and tuning, but every key is chosen
+//server-side from a TYPED field of the engine's params (replica counts, pdisk
+//counts, shared_buffers_mb, …). The free-form `*_options` maps — postgresql.conf,
+//haproxy.cfg, patroni.yml and friends — are deliberately NOT projected: they
+//are whatever the author typed, and may hold credentials.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>settings</td>
+<td><a href="#cloud-v1-models-shareddatabase-setting">cloud.v1.models.SharedDatabase.Setting</a></td>
+<td><pre>
+settings are typed, server-selected sizing/tuning knobs, in display order.<br>
+
+json_name: settings
+go_name: Settings</pre></td>
+</tr><tr>
+<td>version</td>
+<td>string</td>
+<td><pre>
+version is the engine version (e.g. "17", "pg17").<br>
+
+json_name: version
+go_name: Version</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-models-shareddatabase-setting"></a>
+### cloud.v1.models.SharedDatabase.Setting
+
+<pre>
+//Setting is one server-selected knob. Both key and value originate from a
+//typed proto field — never from a user-supplied map entry.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>key</td>
+<td>string</td>
+<td><pre>
+json_name: key
+go_name: Key</pre></td>
+</tr><tr>
+<td>value</td>
+<td>string</td>
+<td><pre>
+json_name: value
+go_name: Value</pre></td>
+</tr>
+</table>
+
+
+
 <a name="cloud-v1-models-sharedsuiterun"></a>
 ### cloud.v1.models.SharedSuiteRun
 
@@ -695,6 +769,14 @@ go_name: Total</pre></td>
 <th>Description</th>
 </tr>
 <tr>
+<td>database</td>
+<td><a href="#cloud-v1-models-shareddatabase">cloud.v1.models.SharedDatabase</a></td>
+<td><pre>
+//database is the sizing + typed tuning of the database under test.<br>
+
+json_name: database
+go_name: Database</pre></td>
+</tr><tr>
 <td>db_kind</td>
 <td><a href="../domain/README.md#cloud-v1-domain-database-kind">cloud.v1.domain.Database.Kind</a></td>
 <td><pre>
@@ -806,6 +888,144 @@ go_name: TopologyLabel</pre></td>
 
 json_name: workloadName
 go_name: WorkloadName</pre></td>
+</tr><tr>
+<td>workload_segments</td>
+<td><a href="#cloud-v1-models-sharedworkloadsegment">cloud.v1.models.SharedWorkloadSegment</a></td>
+<td><pre>
+//workload_segments are the stroppy launch knobs, so a shared result is
+//reproducible without handing over the run spec.<br>
+
+json_name: workloadSegments
+go_name: WorkloadSegments</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-models-sharedworkloadsegment"></a>
+### cloud.v1.models.SharedWorkloadSegment
+
+<pre>
+//SharedWorkloadSegment is the SAFE projection of one stroppy workload segment:
+//the knobs that explain a number, and nothing else.
+
+//Deliberately absent, and never to be added: `parameters.env` (a map that
+//routinely carries PGPASSWORD and API tokens), `segment.sql` and
+//`segment.files` (private schemas and queries) and `execution.extra_args`
+//(arbitrary flags, e.g. `--token=`). Those are free-form: the system cannot
+//know they are safe, so a public view must not carry them.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>bulk_size</td>
+<td>uint32</td>
+<td><pre>
+bulk_size is rows per bulk INSERT (only meaningful for plain_bulk).<br>
+
+json_name: bulkSize
+go_name: BulkSize</pre></td>
+</tr><tr>
+<td>duration</td>
+<td>string</td>
+<td><pre>
+duration bounds a time-bounded segment (empty when iteration-bounded).<br>
+
+json_name: duration
+go_name: Duration</pre></td>
+</tr><tr>
+<td>insert_method</td>
+<td>string</td>
+<td><pre>
+insert_method is the row-insertion mode ("native", "plain_bulk", …).<br>
+
+json_name: insertMethod
+go_name: InsertMethod</pre></td>
+</tr><tr>
+<td>iterations</td>
+<td>uint32</td>
+<td><pre>
+iterations bounds an iteration-bounded segment.<br>
+
+json_name: iterations
+go_name: Iterations</pre></td>
+</tr><tr>
+<td>name</td>
+<td>string</td>
+<td><pre>
+name is the segment's display name.<br>
+
+json_name: name
+go_name: Name</pre></td>
+</tr><tr>
+<td>no_steps</td>
+<td>string</td>
+<td><pre>
+no_steps are the explicitly disabled steps.<br>
+
+json_name: noSteps
+go_name: NoSteps</pre></td>
+</tr><tr>
+<td>no_thresholds</td>
+<td>bool</td>
+<td><pre>
+no_thresholds disables k6 threshold checks.<br>
+
+json_name: noThresholds
+go_name: NoThresholds</pre></td>
+</tr><tr>
+<td>pool_size</td>
+<td>uint32</td>
+<td><pre>
+pool_size is stroppy's DB connection pool size.<br>
+
+json_name: poolSize
+go_name: PoolSize</pre></td>
+</tr><tr>
+<td>quiet</td>
+<td>bool</td>
+<td><pre>
+quiet suppresses stroppy's per-iteration output.<br>
+
+json_name: quiet
+go_name: Quiet</pre></td>
+</tr><tr>
+<td>scale_factor</td>
+<td>double</td>
+<td><pre>
+scale_factor is the dataset scale.<br>
+
+json_name: scaleFactor
+go_name: ScaleFactor</pre></td>
+</tr><tr>
+<td>script</td>
+<td>string</td>
+<td><pre>
+script is the stroppy script the segment ran (e.g. "tpcc/tx").<br>
+
+json_name: script
+go_name: Script</pre></td>
+</tr><tr>
+<td>steps</td>
+<td>string</td>
+<td><pre>
+steps are the enabled stroppy steps; empty means all of them.<br>
+
+json_name: steps
+go_name: Steps</pre></td>
+</tr><tr>
+<td>vus</td>
+<td>uint32</td>
+<td><pre>
+vus is the k6 virtual-user count.<br>
+
+json_name: vus
+go_name: Vus</pre></td>
 </tr>
 </table>
 

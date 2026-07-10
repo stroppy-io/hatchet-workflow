@@ -6717,6 +6717,16 @@ components:
                     minLength: 1
                     type: string
             type: object
+        Setting:
+            additionalProperties: false
+            properties:
+                key:
+                    maxLength: 64
+                    type: string
+                value:
+                    maxLength: 128
+                    type: string
+            type: object
         Settings:
             additionalProperties: false
             properties:
@@ -6804,6 +6814,18 @@ components:
                 - entity
                 - target
             type: object
+        SharedDatabase:
+            additionalProperties: false
+            properties:
+                settings:
+                    items:
+                        $ref: '#/components/schemas/Setting'
+                    maxItems: 32
+                    type: array
+                version:
+                    maxLength: 64
+                    type: string
+            type: object
         SharedSuiteRun:
             additionalProperties: false
             properties:
@@ -6888,6 +6910,8 @@ components:
         SharedTestRun:
             additionalProperties: false
             properties:
+                database:
+                    $ref: '#/components/schemas/SharedDatabase'
                 dbKind:
                     enum:
                         - 0
@@ -6957,6 +6981,59 @@ components:
                     type: string
                 workloadName:
                     type: string
+                workloadSegments:
+                    items:
+                        $ref: '#/components/schemas/SharedWorkloadSegment'
+                    type: array
+            type: object
+        SharedWorkloadSegment:
+            additionalProperties: false
+            properties:
+                bulkSize:
+                    format: int32
+                    minimum: 0
+                    type: integer
+                duration:
+                    maxLength: 32
+                    type: string
+                insertMethod:
+                    maxLength: 64
+                    type: string
+                iterations:
+                    format: int32
+                    minimum: 0
+                    type: integer
+                name:
+                    type: string
+                noSteps:
+                    items:
+                        maxLength: 64
+                        type: string
+                    maxItems: 64
+                    type: array
+                noThresholds:
+                    type: boolean
+                poolSize:
+                    format: int32
+                    minimum: 0
+                    type: integer
+                quiet:
+                    type: boolean
+                scaleFactor:
+                    format: double
+                    type: number
+                script:
+                    type: string
+                steps:
+                    items:
+                        maxLength: 64
+                        type: string
+                    maxItems: 64
+                    type: array
+                vus:
+                    format: int32
+                    minimum: 0
+                    type: integer
             type: object
         Snapshot:
             additionalProperties: false

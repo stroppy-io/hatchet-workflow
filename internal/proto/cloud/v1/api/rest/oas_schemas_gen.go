@@ -21478,6 +21478,52 @@ func (o OptSettingsZone) Or(d SettingsZone) SettingsZone {
 	return d
 }
 
+// NewOptSharedDatabase returns new OptSharedDatabase with value set to v.
+func NewOptSharedDatabase(v SharedDatabase) OptSharedDatabase {
+	return OptSharedDatabase{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptSharedDatabase is optional SharedDatabase.
+type OptSharedDatabase struct {
+	Value SharedDatabase
+	Set   bool
+}
+
+// IsSet returns true if OptSharedDatabase was set.
+func (o OptSharedDatabase) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptSharedDatabase) Reset() {
+	var v SharedDatabase
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptSharedDatabase) SetTo(v SharedDatabase) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptSharedDatabase) Get() (v SharedDatabase, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptSharedDatabase) Or(d SharedDatabase) SharedDatabase {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptSharedSuiteRun returns new OptSharedSuiteRun with value set to v.
 func NewOptSharedSuiteRun(v SharedSuiteRun) OptSharedSuiteRun {
 	return OptSharedSuiteRun{
@@ -32018,6 +32064,32 @@ func (s *SetTenantProviderSettingsRequest) SetTenantId(val OptString) {
 	s.TenantId = val
 }
 
+// Ref: #/components/schemas/Setting
+type Setting struct {
+	Key   OptString `json:"key"`
+	Value OptString `json:"value"`
+}
+
+// GetKey returns the value of Key.
+func (s *Setting) GetKey() OptString {
+	return s.Key
+}
+
+// GetValue returns the value of Value.
+func (s *Setting) GetValue() OptString {
+	return s.Value
+}
+
+// SetKey sets the value of Key.
+func (s *Setting) SetKey(val OptString) {
+	s.Key = val
+}
+
+// SetValue sets the value of Value.
+func (s *Setting) SetValue(val OptString) {
+	s.Value = val
+}
+
 // Ref: #/components/schemas/Settings
 type Settings struct {
 	AssignPublicIp             OptBool               `json:"assignPublicIp"`
@@ -32280,6 +32352,32 @@ func (s *ShareRecord) SetToken(val OptString) {
 	s.Token = val
 }
 
+// Ref: #/components/schemas/SharedDatabase
+type SharedDatabase struct {
+	Settings []Setting `json:"settings"`
+	Version  OptString `json:"version"`
+}
+
+// GetSettings returns the value of Settings.
+func (s *SharedDatabase) GetSettings() []Setting {
+	return s.Settings
+}
+
+// GetVersion returns the value of Version.
+func (s *SharedDatabase) GetVersion() OptString {
+	return s.Version
+}
+
+// SetSettings sets the value of Settings.
+func (s *SharedDatabase) SetSettings(val []Setting) {
+	s.Settings = val
+}
+
+// SetVersion sets the value of Version.
+func (s *SharedDatabase) SetVersion(val OptString) {
+	s.Version = val
+}
+
 // Ref: #/components/schemas/SharedSuiteRun
 type SharedSuiteRun struct {
 	Completed   OptInt32                    `json:"completed"`
@@ -32516,20 +32614,27 @@ func (SharedSuiteRunStatus) AllValues() []SharedSuiteRunStatus {
 
 // Ref: #/components/schemas/SharedTestRun
 type SharedTestRun struct {
-	DbKind         OptSharedTestRunDbKind   `json:"dbKind"`
-	DbName         OptString                `json:"dbName"`
-	Duration       OptDuration              `json:"duration"`
-	FinishedAt     OptDateTime              `json:"finishedAt"`
-	Metrics        OptRunMetrics            `json:"metrics"`
-	Name           OptString                `json:"name"`
-	NodeCount      OptInt32                 `json:"nodeCount"`
-	ProgressPct    OptInt32                 `json:"progressPct"`
-	Provider       OptSharedTestRunProvider `json:"provider"`
-	StartedAt      OptDateTime              `json:"startedAt"`
-	Status         OptSharedTestRunStatus   `json:"status"`
-	StroppyVersion OptString                `json:"stroppyVersion"`
-	TopologyLabel  OptString                `json:"topologyLabel"`
-	WorkloadName   OptString                `json:"workloadName"`
+	Database         OptSharedDatabase        `json:"database"`
+	DbKind           OptSharedTestRunDbKind   `json:"dbKind"`
+	DbName           OptString                `json:"dbName"`
+	Duration         OptDuration              `json:"duration"`
+	FinishedAt       OptDateTime              `json:"finishedAt"`
+	Metrics          OptRunMetrics            `json:"metrics"`
+	Name             OptString                `json:"name"`
+	NodeCount        OptInt32                 `json:"nodeCount"`
+	ProgressPct      OptInt32                 `json:"progressPct"`
+	Provider         OptSharedTestRunProvider `json:"provider"`
+	StartedAt        OptDateTime              `json:"startedAt"`
+	Status           OptSharedTestRunStatus   `json:"status"`
+	StroppyVersion   OptString                `json:"stroppyVersion"`
+	TopologyLabel    OptString                `json:"topologyLabel"`
+	WorkloadName     OptString                `json:"workloadName"`
+	WorkloadSegments []SharedWorkloadSegment  `json:"workloadSegments"`
+}
+
+// GetDatabase returns the value of Database.
+func (s *SharedTestRun) GetDatabase() OptSharedDatabase {
+	return s.Database
 }
 
 // GetDbKind returns the value of DbKind.
@@ -32602,6 +32707,16 @@ func (s *SharedTestRun) GetWorkloadName() OptString {
 	return s.WorkloadName
 }
 
+// GetWorkloadSegments returns the value of WorkloadSegments.
+func (s *SharedTestRun) GetWorkloadSegments() []SharedWorkloadSegment {
+	return s.WorkloadSegments
+}
+
+// SetDatabase sets the value of Database.
+func (s *SharedTestRun) SetDatabase(val OptSharedDatabase) {
+	s.Database = val
+}
+
 // SetDbKind sets the value of DbKind.
 func (s *SharedTestRun) SetDbKind(val OptSharedTestRunDbKind) {
 	s.DbKind = val
@@ -32670,6 +32785,11 @@ func (s *SharedTestRun) SetTopologyLabel(val OptString) {
 // SetWorkloadName sets the value of WorkloadName.
 func (s *SharedTestRun) SetWorkloadName(val OptString) {
 	s.WorkloadName = val
+}
+
+// SetWorkloadSegments sets the value of WorkloadSegments.
+func (s *SharedTestRun) SetWorkloadSegments(val []SharedWorkloadSegment) {
+	s.WorkloadSegments = val
 }
 
 type SharedTestRunDbKind int32
@@ -32757,6 +32877,153 @@ func (SharedTestRunStatus) AllValues() []SharedTestRunStatus {
 		SharedTestRunStatus10,
 		SharedTestRunStatus11,
 	}
+}
+
+// Ref: #/components/schemas/SharedWorkloadSegment
+type SharedWorkloadSegment struct {
+	BulkSize     OptInt32   `json:"bulkSize"`
+	Duration     OptString  `json:"duration"`
+	InsertMethod OptString  `json:"insertMethod"`
+	Iterations   OptInt32   `json:"iterations"`
+	Name         OptString  `json:"name"`
+	NoSteps      []string   `json:"noSteps"`
+	NoThresholds OptBool    `json:"noThresholds"`
+	PoolSize     OptInt32   `json:"poolSize"`
+	Quiet        OptBool    `json:"quiet"`
+	ScaleFactor  OptFloat64 `json:"scaleFactor"`
+	Script       OptString  `json:"script"`
+	Steps        []string   `json:"steps"`
+	Vus          OptInt32   `json:"vus"`
+}
+
+// GetBulkSize returns the value of BulkSize.
+func (s *SharedWorkloadSegment) GetBulkSize() OptInt32 {
+	return s.BulkSize
+}
+
+// GetDuration returns the value of Duration.
+func (s *SharedWorkloadSegment) GetDuration() OptString {
+	return s.Duration
+}
+
+// GetInsertMethod returns the value of InsertMethod.
+func (s *SharedWorkloadSegment) GetInsertMethod() OptString {
+	return s.InsertMethod
+}
+
+// GetIterations returns the value of Iterations.
+func (s *SharedWorkloadSegment) GetIterations() OptInt32 {
+	return s.Iterations
+}
+
+// GetName returns the value of Name.
+func (s *SharedWorkloadSegment) GetName() OptString {
+	return s.Name
+}
+
+// GetNoSteps returns the value of NoSteps.
+func (s *SharedWorkloadSegment) GetNoSteps() []string {
+	return s.NoSteps
+}
+
+// GetNoThresholds returns the value of NoThresholds.
+func (s *SharedWorkloadSegment) GetNoThresholds() OptBool {
+	return s.NoThresholds
+}
+
+// GetPoolSize returns the value of PoolSize.
+func (s *SharedWorkloadSegment) GetPoolSize() OptInt32 {
+	return s.PoolSize
+}
+
+// GetQuiet returns the value of Quiet.
+func (s *SharedWorkloadSegment) GetQuiet() OptBool {
+	return s.Quiet
+}
+
+// GetScaleFactor returns the value of ScaleFactor.
+func (s *SharedWorkloadSegment) GetScaleFactor() OptFloat64 {
+	return s.ScaleFactor
+}
+
+// GetScript returns the value of Script.
+func (s *SharedWorkloadSegment) GetScript() OptString {
+	return s.Script
+}
+
+// GetSteps returns the value of Steps.
+func (s *SharedWorkloadSegment) GetSteps() []string {
+	return s.Steps
+}
+
+// GetVus returns the value of Vus.
+func (s *SharedWorkloadSegment) GetVus() OptInt32 {
+	return s.Vus
+}
+
+// SetBulkSize sets the value of BulkSize.
+func (s *SharedWorkloadSegment) SetBulkSize(val OptInt32) {
+	s.BulkSize = val
+}
+
+// SetDuration sets the value of Duration.
+func (s *SharedWorkloadSegment) SetDuration(val OptString) {
+	s.Duration = val
+}
+
+// SetInsertMethod sets the value of InsertMethod.
+func (s *SharedWorkloadSegment) SetInsertMethod(val OptString) {
+	s.InsertMethod = val
+}
+
+// SetIterations sets the value of Iterations.
+func (s *SharedWorkloadSegment) SetIterations(val OptInt32) {
+	s.Iterations = val
+}
+
+// SetName sets the value of Name.
+func (s *SharedWorkloadSegment) SetName(val OptString) {
+	s.Name = val
+}
+
+// SetNoSteps sets the value of NoSteps.
+func (s *SharedWorkloadSegment) SetNoSteps(val []string) {
+	s.NoSteps = val
+}
+
+// SetNoThresholds sets the value of NoThresholds.
+func (s *SharedWorkloadSegment) SetNoThresholds(val OptBool) {
+	s.NoThresholds = val
+}
+
+// SetPoolSize sets the value of PoolSize.
+func (s *SharedWorkloadSegment) SetPoolSize(val OptInt32) {
+	s.PoolSize = val
+}
+
+// SetQuiet sets the value of Quiet.
+func (s *SharedWorkloadSegment) SetQuiet(val OptBool) {
+	s.Quiet = val
+}
+
+// SetScaleFactor sets the value of ScaleFactor.
+func (s *SharedWorkloadSegment) SetScaleFactor(val OptFloat64) {
+	s.ScaleFactor = val
+}
+
+// SetScript sets the value of Script.
+func (s *SharedWorkloadSegment) SetScript(val OptString) {
+	s.Script = val
+}
+
+// SetSteps sets the value of Steps.
+func (s *SharedWorkloadSegment) SetSteps(val []string) {
+	s.Steps = val
+}
+
+// SetVus sets the value of Vus.
+func (s *SharedWorkloadSegment) SetVus(val OptInt32) {
+	s.Vus = val
 }
 
 // Ref: #/components/schemas/Snapshot

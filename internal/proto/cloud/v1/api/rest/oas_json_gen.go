@@ -41275,6 +41275,39 @@ func (s *OptSettingsZone) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes SharedDatabase as json.
+func (o OptSharedDatabase) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	o.Value.Encode(e)
+}
+
+// Decode decodes SharedDatabase from json.
+func (o *OptSharedDatabase) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptSharedDatabase to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptSharedDatabase) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptSharedDatabase) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode encodes SharedSuiteRun as json.
 func (o OptSharedSuiteRun) Encode(e *jx.Encoder) {
 	if !o.Set {
@@ -58585,6 +58618,86 @@ func (s *SetTenantProviderSettingsRequest) UnmarshalJSON(data []byte) error {
 }
 
 // Encode implements json.Marshaler.
+func (s *Setting) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *Setting) encodeFields(e *jx.Encoder) {
+	{
+		if s.Key.Set {
+			e.FieldStart("key")
+			s.Key.Encode(e)
+		}
+	}
+	{
+		if s.Value.Set {
+			e.FieldStart("value")
+			s.Value.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfSetting = [2]string{
+	0: "key",
+	1: "value",
+}
+
+// Decode decodes Setting from json.
+func (s *Setting) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode Setting to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "key":
+			if err := func() error {
+				s.Key.Reset()
+				if err := s.Key.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"key\"")
+			}
+		case "value":
+			if err := func() error {
+				s.Value.Reset()
+				if err := s.Value.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"value\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode Setting")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *Setting) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *Setting) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
 func (s *Settings) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
@@ -59137,6 +59250,97 @@ func (s *ShareRecord) UnmarshalJSON(data []byte) error {
 }
 
 // Encode implements json.Marshaler.
+func (s *SharedDatabase) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *SharedDatabase) encodeFields(e *jx.Encoder) {
+	{
+		if s.Settings != nil {
+			e.FieldStart("settings")
+			e.ArrStart()
+			for _, elem := range s.Settings {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.Version.Set {
+			e.FieldStart("version")
+			s.Version.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfSharedDatabase = [2]string{
+	0: "settings",
+	1: "version",
+}
+
+// Decode decodes SharedDatabase from json.
+func (s *SharedDatabase) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SharedDatabase to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "settings":
+			if err := func() error {
+				s.Settings = make([]Setting, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem Setting
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Settings = append(s.Settings, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"settings\"")
+			}
+		case "version":
+			if err := func() error {
+				s.Version.Reset()
+				if err := s.Version.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"version\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode SharedDatabase")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *SharedDatabase) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SharedDatabase) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
 func (s *SharedSuiteRun) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
@@ -59531,6 +59735,12 @@ func (s *SharedTestRun) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *SharedTestRun) encodeFields(e *jx.Encoder) {
 	{
+		if s.Database.Set {
+			e.FieldStart("database")
+			s.Database.Encode(e)
+		}
+	}
+	{
 		if s.DbKind.Set {
 			e.FieldStart("dbKind")
 			s.DbKind.Encode(e)
@@ -59614,23 +59824,35 @@ func (s *SharedTestRun) encodeFields(e *jx.Encoder) {
 			s.WorkloadName.Encode(e)
 		}
 	}
+	{
+		if s.WorkloadSegments != nil {
+			e.FieldStart("workloadSegments")
+			e.ArrStart()
+			for _, elem := range s.WorkloadSegments {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
 }
 
-var jsonFieldsNameOfSharedTestRun = [14]string{
-	0:  "dbKind",
-	1:  "dbName",
-	2:  "duration",
-	3:  "finishedAt",
-	4:  "metrics",
-	5:  "name",
-	6:  "nodeCount",
-	7:  "progressPct",
-	8:  "provider",
-	9:  "startedAt",
-	10: "status",
-	11: "stroppyVersion",
-	12: "topologyLabel",
-	13: "workloadName",
+var jsonFieldsNameOfSharedTestRun = [16]string{
+	0:  "database",
+	1:  "dbKind",
+	2:  "dbName",
+	3:  "duration",
+	4:  "finishedAt",
+	5:  "metrics",
+	6:  "name",
+	7:  "nodeCount",
+	8:  "progressPct",
+	9:  "provider",
+	10: "startedAt",
+	11: "status",
+	12: "stroppyVersion",
+	13: "topologyLabel",
+	14: "workloadName",
+	15: "workloadSegments",
 }
 
 // Decode decodes SharedTestRun from json.
@@ -59641,6 +59863,16 @@ func (s *SharedTestRun) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
+		case "database":
+			if err := func() error {
+				s.Database.Reset()
+				if err := s.Database.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"database\"")
+			}
 		case "dbKind":
 			if err := func() error {
 				s.DbKind.Reset()
@@ -59781,6 +60013,23 @@ func (s *SharedTestRun) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"workloadName\"")
 			}
+		case "workloadSegments":
+			if err := func() error {
+				s.WorkloadSegments = make([]SharedWorkloadSegment, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem SharedWorkloadSegment
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.WorkloadSegments = append(s.WorkloadSegments, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"workloadSegments\"")
+			}
 		default:
 			return errors.Errorf("unexpected field %q", k)
 		}
@@ -59897,6 +60146,299 @@ func (s SharedTestRunStatus) MarshalJSON() ([]byte, error) {
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
 func (s *SharedTestRunStatus) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
+func (s *SharedWorkloadSegment) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *SharedWorkloadSegment) encodeFields(e *jx.Encoder) {
+	{
+		if s.BulkSize.Set {
+			e.FieldStart("bulkSize")
+			s.BulkSize.Encode(e)
+		}
+	}
+	{
+		if s.Duration.Set {
+			e.FieldStart("duration")
+			s.Duration.Encode(e)
+		}
+	}
+	{
+		if s.InsertMethod.Set {
+			e.FieldStart("insertMethod")
+			s.InsertMethod.Encode(e)
+		}
+	}
+	{
+		if s.Iterations.Set {
+			e.FieldStart("iterations")
+			s.Iterations.Encode(e)
+		}
+	}
+	{
+		if s.Name.Set {
+			e.FieldStart("name")
+			s.Name.Encode(e)
+		}
+	}
+	{
+		if s.NoSteps != nil {
+			e.FieldStart("noSteps")
+			e.ArrStart()
+			for _, elem := range s.NoSteps {
+				e.Str(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.NoThresholds.Set {
+			e.FieldStart("noThresholds")
+			s.NoThresholds.Encode(e)
+		}
+	}
+	{
+		if s.PoolSize.Set {
+			e.FieldStart("poolSize")
+			s.PoolSize.Encode(e)
+		}
+	}
+	{
+		if s.Quiet.Set {
+			e.FieldStart("quiet")
+			s.Quiet.Encode(e)
+		}
+	}
+	{
+		if s.ScaleFactor.Set {
+			e.FieldStart("scaleFactor")
+			s.ScaleFactor.Encode(e)
+		}
+	}
+	{
+		if s.Script.Set {
+			e.FieldStart("script")
+			s.Script.Encode(e)
+		}
+	}
+	{
+		if s.Steps != nil {
+			e.FieldStart("steps")
+			e.ArrStart()
+			for _, elem := range s.Steps {
+				e.Str(elem)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.Vus.Set {
+			e.FieldStart("vus")
+			s.Vus.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfSharedWorkloadSegment = [13]string{
+	0:  "bulkSize",
+	1:  "duration",
+	2:  "insertMethod",
+	3:  "iterations",
+	4:  "name",
+	5:  "noSteps",
+	6:  "noThresholds",
+	7:  "poolSize",
+	8:  "quiet",
+	9:  "scaleFactor",
+	10: "script",
+	11: "steps",
+	12: "vus",
+}
+
+// Decode decodes SharedWorkloadSegment from json.
+func (s *SharedWorkloadSegment) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SharedWorkloadSegment to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "bulkSize":
+			if err := func() error {
+				s.BulkSize.Reset()
+				if err := s.BulkSize.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"bulkSize\"")
+			}
+		case "duration":
+			if err := func() error {
+				s.Duration.Reset()
+				if err := s.Duration.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"duration\"")
+			}
+		case "insertMethod":
+			if err := func() error {
+				s.InsertMethod.Reset()
+				if err := s.InsertMethod.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"insertMethod\"")
+			}
+		case "iterations":
+			if err := func() error {
+				s.Iterations.Reset()
+				if err := s.Iterations.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"iterations\"")
+			}
+		case "name":
+			if err := func() error {
+				s.Name.Reset()
+				if err := s.Name.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "noSteps":
+			if err := func() error {
+				s.NoSteps = make([]string, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem string
+					v, err := d.Str()
+					elem = string(v)
+					if err != nil {
+						return err
+					}
+					s.NoSteps = append(s.NoSteps, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"noSteps\"")
+			}
+		case "noThresholds":
+			if err := func() error {
+				s.NoThresholds.Reset()
+				if err := s.NoThresholds.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"noThresholds\"")
+			}
+		case "poolSize":
+			if err := func() error {
+				s.PoolSize.Reset()
+				if err := s.PoolSize.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"poolSize\"")
+			}
+		case "quiet":
+			if err := func() error {
+				s.Quiet.Reset()
+				if err := s.Quiet.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"quiet\"")
+			}
+		case "scaleFactor":
+			if err := func() error {
+				s.ScaleFactor.Reset()
+				if err := s.ScaleFactor.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"scaleFactor\"")
+			}
+		case "script":
+			if err := func() error {
+				s.Script.Reset()
+				if err := s.Script.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"script\"")
+			}
+		case "steps":
+			if err := func() error {
+				s.Steps = make([]string, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem string
+					v, err := d.Str()
+					elem = string(v)
+					if err != nil {
+						return err
+					}
+					s.Steps = append(s.Steps, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"steps\"")
+			}
+		case "vus":
+			if err := func() error {
+				s.Vus.Reset()
+				if err := s.Vus.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"vus\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode SharedWorkloadSegment")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *SharedWorkloadSegment) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SharedWorkloadSegment) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }

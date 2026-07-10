@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useParams } from "react-router-dom";
-import { Activity, BarChart3, LineChart } from "lucide-react";
+import { Activity, BarChart3, Gauge, LineChart, Settings2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { MetricsPanel } from "@/components/run/MetricsPanel";
@@ -10,11 +10,88 @@ import {
   getSharedRun,
   startSharedSession,
   type SharedRunVM,
+  type SharedSegmentVM,
   type SharedSessionVM,
 } from "@/services/shares";
 
 const isoOrUndefined = (millis?: number): string | undefined =>
   millis ? new Date(millis).toISOString() : undefined;
+
+/**
+ * The launch knobs behind the numbers: what ran, how hard, against what shape of
+ * database. Everything here is a typed field the server explicitly allowlisted —
+ * the run's env, inline SQL, workload files, extra CLI args and free-form engine
+ * option maps are never projected into a share.
+ */
+function SharedConfig({ run }: { run: SharedRunVM }) {
+  const segments = run.workloadSegments;
+  const db = run.database;
+  if (segments.length === 0 && !db) return null;
+
+  const segFacts = (s: SharedSegmentVM) =>
+    [
+      s.script,
+      s.vus !== undefined && `vus=${s.vus}`,
+      s.duration ? `dur=${s.duration}` : s.iterations !== undefined && `iters=${s.iterations}`,
+      s.insertMethod && `insert=${s.insertMethod}`,
+      s.bulkSize ? `bulk=${s.bulkSize}` : false,
+      s.poolSize !== undefined && `pool=${s.poolSize}`,
+      s.scaleFactor !== undefined && `scale=${s.scaleFactor}`,
+      s.steps.length > 0 && `steps=${s.steps.join(",")}`,
+      s.noSteps.length > 0 && `no-steps=${s.noSteps.join(",")}`,
+      s.quiet && "quiet",
+      s.noThresholds && "no-thresholds",
+    ]
+      .filter(Boolean)
+      .join(" · ");
+
+  return (
+    <section className="overflow-hidden border border-border bg-background">
+      <div className="flex items-center gap-2 border-b border-border bg-muted/20 px-3 py-2">
+        <Settings2 className="h-4 w-4 text-primary" />
+        <h3 className="text-sm font-semibold">Configuration</h3>
+      </div>
+      <div className="grid gap-3 p-3 md:grid-cols-2">
+        {segments.length > 0 && (
+          <div className="flex flex-col gap-2">
+            <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Workload</div>
+            {segments.map((s, i) => (
+              <div key={i} className="rounded border border-border/60 p-2">
+                <div className="flex items-center gap-1.5">
+                  <Gauge className="h-3.5 w-3.5 text-primary" />
+                  <span className="font-mono text-xs font-semibold">{s.name || `segment ${i + 1}`}</span>
+                </div>
+                <div className="mt-1 break-words font-mono text-[11px] text-muted-foreground">{segFacts(s)}</div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {db && (
+          <div className="flex flex-col gap-2">
+            <div className="text-[10px] font-medium uppercase tracking-wider text-muted-foreground">Database</div>
+            <div className="rounded border border-border/60 bg-black/20 p-2 font-mono text-[11px]">
+              {db.version && (
+                <div className="flex gap-2 py-px">
+                  <span className="shrink-0 text-primary/80">version</span>
+                  <span className="text-muted-foreground">=</span>
+                  <span className="text-foreground">{db.version}</span>
+                </div>
+              )}
+              {db.settings.map((s) => (
+                <div key={s.key} className="flex gap-2 py-px">
+                  <span className="shrink-0 text-primary/80">{s.key}</span>
+                  <span className="text-muted-foreground">=</span>
+                  <span className="break-all text-foreground">{s.value}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+      </div>
+    </section>
+  );
+}
 
 /**
  * Live Grafana for a share link.
@@ -169,6 +246,8 @@ export function SharedRun() {
                 <MetricsPanel metrics={run.metrics} />
               </div>
             </section>
+
+            {run.kind === "test_run" && <SharedConfig run={run} />}
 
             {session && run.kind === "test_run" && (
               <SharedGrafana session={session} dbKind={run.dbKind} />

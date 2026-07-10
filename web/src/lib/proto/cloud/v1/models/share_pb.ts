@@ -24,7 +24,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/models/share.proto.
  */
 export const file_cloud_v1_models_share: GenFile = /*@__PURE__*/
-  fileDesc("ChtjbG91ZC92MS9tb2RlbHMvc2hhcmUucHJvdG8SD2Nsb3VkLnYxLm1vZGVscyL3BAoLU2hhcmVSZWNvcmQSMQoGZW50aXR5GAEgASgLMhcuY2xvdWQudjEuY29tbW9uLkVudGl0eUII+kIFigECEAESPQoGdGFyZ2V0GAIgASgLMiMuY2xvdWQudjEubW9kZWxzLlNoYXJlUmVjb3JkLlRhcmdldEII+kIFigECEAESGQoFdG9rZW4YAyABKAlCCvpCB3IFEBAYgAESLgoKZXhwaXJlc19hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDwoHcmV2b2tlZBgFIAEoCBI3CghzbmFwc2hvdBgGIAEoCzIlLmNsb3VkLnYxLm1vZGVscy5TaGFyZVJlY29yZC5TbmFwc2hvdBqoAQoGVGFyZ2V0EkIKBGtpbmQYASABKA4yKC5jbG91ZC52MS5tb2RlbHMuU2hhcmVSZWNvcmQuVGFyZ2V0LktpbmRCCvpCB4IBBBABIAASFQoCaWQYAiABKAlCCfpCBnIEEAEYQCJDCgRLaW5kEhQKEEtJTkRfVU5TUEVDSUZJRUQQABIRCg1LSU5EX1RFU1RfUlVOEAESEgoOS0lORF9TVUlURV9SVU4QAhq1AQoIU25hcHNob3QSLwoLY2FwdHVyZWRfYXQYASABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjIKCHRlc3RfcnVuGAIgASgLMh4uY2xvdWQudjEubW9kZWxzLlNoYXJlZFRlc3RSdW5IABI0CglzdWl0ZV9ydW4YAyABKAsyHy5jbG91ZC52MS5tb2RlbHMuU2hhcmVkU3VpdGVSdW5IAEIOCgR2aWV3Egbypx0CCAMi8QMKDVNoYXJlZFRlc3RSdW4SDAoEbmFtZRgBIAEoCRInCgZzdGF0dXMYAiABKA4yFy5jbG91ZC52MS5jb21tb24uU3RhdHVzEi8KB2RiX2tpbmQYAyABKA4yHi5jbG91ZC52MS5kb21haW4uRGF0YWJhc2UuS2luZBIPCgdkYl9uYW1lGAQgASgJEhUKDXdvcmtsb2FkX25hbWUYBSABKAkSFwoPc3Ryb3BweV92ZXJzaW9uGAYgASgJEi8KCHByb3ZpZGVyGAcgASgOMh0uY2xvdWQudjEuZGVwbG95bWVudC5Qcm92aWRlchIWCg50b3BvbG9neV9sYWJlbBgIIAEoCRISCgpub2RlX2NvdW50GAkgASgNEi4KCnN0YXJ0ZWRfYXQYCiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC2ZpbmlzaGVkX2F0GAsgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIrCghkdXJhdGlvbhgMIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbhIdCgxwcm9ncmVzc19wY3QYDSABKA1CB/pCBCoCGGQSLQoHbWV0cmljcxgOIAEoCzIcLmNsb3VkLnYxLm1vbml0b3IuUnVuTWV0cmljcyLJAwoOU2hhcmVkU3VpdGVSdW4SDAoEbmFtZRgBIAEoCRInCgZzdGF0dXMYAiABKA4yFy5jbG91ZC52MS5jb21tb24uU3RhdHVzEi8KCHByb3ZpZGVyGAMgASgOMh0uY2xvdWQudjEuZGVwbG95bWVudC5Qcm92aWRlchIwCghkYl9raW5kcxgEIAMoDjIeLmNsb3VkLnYxLmRvbWFpbi5EYXRhYmFzZS5LaW5kEg0KBXRvdGFsGAUgASgNEhEKCWNvbXBsZXRlZBgGIAEoDRIOCgZmYWlsZWQYByABKA0SDwoHcnVubmluZxgIIAEoDRIdCgxwcm9ncmVzc19wY3QYCSABKA1CB/pCBCoCGGQSLgoKc3RhcnRlZF9hdBgKIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASLwoLZmluaXNoZWRfYXQYCyABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEisKCGR1cmF0aW9uGAwgASgLMhkuZ29vZ2xlLnByb3RvYnVmLkR1cmF0aW9uEi0KBXRlc3RzGA0gAygLMh4uY2xvdWQudjEubW9kZWxzLlNoYXJlZFRlc3RSdW5CRFpCZ2l0aHViLmNvbS9zdHJvcHB5LWlvL3N0cm9wcHktY2xvdWQvaW50ZXJuYWwvcHJvdG8vY2xvdWQvdjEvbW9kZWxzYgZwcm90bzM", [file_cloud_v1_common_entity, file_cloud_v1_common_status, file_cloud_v1_deployment_provider, file_cloud_v1_domain_database, file_cloud_v1_monitor_metrics, file_google_protobuf_duration, file_google_protobuf_timestamp, file_validate_validate, file_ogen_ogen]);
+  fileDesc("ChtjbG91ZC92MS9tb2RlbHMvc2hhcmUucHJvdG8SD2Nsb3VkLnYxLm1vZGVscyL3BAoLU2hhcmVSZWNvcmQSMQoGZW50aXR5GAEgASgLMhcuY2xvdWQudjEuY29tbW9uLkVudGl0eUII+kIFigECEAESPQoGdGFyZ2V0GAIgASgLMiMuY2xvdWQudjEubW9kZWxzLlNoYXJlUmVjb3JkLlRhcmdldEII+kIFigECEAESGQoFdG9rZW4YAyABKAlCCvpCB3IFEBAYgAESLgoKZXhwaXJlc19hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDwoHcmV2b2tlZBgFIAEoCBI3CghzbmFwc2hvdBgGIAEoCzIlLmNsb3VkLnYxLm1vZGVscy5TaGFyZVJlY29yZC5TbmFwc2hvdBqoAQoGVGFyZ2V0EkIKBGtpbmQYASABKA4yKC5jbG91ZC52MS5tb2RlbHMuU2hhcmVSZWNvcmQuVGFyZ2V0LktpbmRCCvpCB4IBBCAAEAESFQoCaWQYAiABKAlCCfpCBnIEGEAQASJDCgRLaW5kEhQKEEtJTkRfVU5TUEVDSUZJRUQQABIRCg1LSU5EX1RFU1RfUlVOEAESEgoOS0lORF9TVUlURV9SVU4QAhq1AQoIU25hcHNob3QSLwoLY2FwdHVyZWRfYXQYASABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjIKCHRlc3RfcnVuGAIgASgLMh4uY2xvdWQudjEubW9kZWxzLlNoYXJlZFRlc3RSdW5IABI0CglzdWl0ZV9ydW4YAyABKAsyHy5jbG91ZC52MS5tb2RlbHMuU2hhcmVkU3VpdGVSdW5IAEIOCgR2aWV3Egbypx0CCAMi5wQKDVNoYXJlZFRlc3RSdW4SDAoEbmFtZRgBIAEoCRInCgZzdGF0dXMYAiABKA4yFy5jbG91ZC52MS5jb21tb24uU3RhdHVzEi8KB2RiX2tpbmQYAyABKA4yHi5jbG91ZC52MS5kb21haW4uRGF0YWJhc2UuS2luZBIPCgdkYl9uYW1lGAQgASgJEhUKDXdvcmtsb2FkX25hbWUYBSABKAkSFwoPc3Ryb3BweV92ZXJzaW9uGAYgASgJEi8KCHByb3ZpZGVyGAcgASgOMh0uY2xvdWQudjEuZGVwbG95bWVudC5Qcm92aWRlchIWCg50b3BvbG9neV9sYWJlbBgIIAEoCRISCgpub2RlX2NvdW50GAkgASgNEi4KCnN0YXJ0ZWRfYXQYCiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC2ZpbmlzaGVkX2F0GAsgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIrCghkdXJhdGlvbhgMIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbhIdCgxwcm9ncmVzc19wY3QYDSABKA1CB/pCBCoCGGQSLQoHbWV0cmljcxgOIAEoCzIcLmNsb3VkLnYxLm1vbml0b3IuUnVuTWV0cmljcxJBChF3b3JrbG9hZF9zZWdtZW50cxgPIAMoCzImLmNsb3VkLnYxLm1vZGVscy5TaGFyZWRXb3JrbG9hZFNlZ21lbnQSMQoIZGF0YWJhc2UYECABKAsyHy5jbG91ZC52MS5tb2RlbHMuU2hhcmVkRGF0YWJhc2UitAIKFVNoYXJlZFdvcmtsb2FkU2VnbWVudBIMCgRuYW1lGAEgASgJEg4KBnNjcmlwdBgCIAEoCRILCgN2dXMYAyABKA0SGQoIZHVyYXRpb24YBCABKAlCB/pCBHICGCASEgoKaXRlcmF0aW9ucxgFIAEoDRIRCglwb29sX3NpemUYBiABKA0SFAoMc2NhbGVfZmFjdG9yGAcgASgBEh4KDWluc2VydF9tZXRob2QYCCABKAlCB/pCBHICGEASEQoJYnVsa19zaXplGAkgASgNEh0KBXN0ZXBzGAogAygJQg76QguSAQgQQCIEcgIYQBIgCghub19zdGVwcxgLIAMoCUIO+kILkgEIEEAiBHICGEASDQoFcXVpZXQYDCABKAgSFQoNbm9fdGhyZXNob2xkcxgNIAEoCCKpAQoOU2hhcmVkRGF0YWJhc2USGAoHdmVyc2lvbhgBIAEoCUIH+kIEcgIYQBJDCghzZXR0aW5ncxgCIAMoCzInLmNsb3VkLnYxLm1vZGVscy5TaGFyZWREYXRhYmFzZS5TZXR0aW5nQgj6QgWSAQIQIBo4CgdTZXR0aW5nEhQKA2tleRgBIAEoCUIH+kIEcgIYQBIXCgV2YWx1ZRgCIAEoCUII+kIFcgMYgAEiyQMKDlNoYXJlZFN1aXRlUnVuEgwKBG5hbWUYASABKAkSJwoGc3RhdHVzGAIgASgOMhcuY2xvdWQudjEuY29tbW9uLlN0YXR1cxIvCghwcm92aWRlchgDIAEoDjIdLmNsb3VkLnYxLmRlcGxveW1lbnQuUHJvdmlkZXISMAoIZGJfa2luZHMYBCADKA4yHi5jbG91ZC52MS5kb21haW4uRGF0YWJhc2UuS2luZBINCgV0b3RhbBgFIAEoDRIRCgljb21wbGV0ZWQYBiABKA0SDgoGZmFpbGVkGAcgASgNEg8KB3J1bm5pbmcYCCABKA0SHQoMcHJvZ3Jlc3NfcGN0GAkgASgNQgf6QgQqAhhkEi4KCnN0YXJ0ZWRfYXQYCiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC2ZpbmlzaGVkX2F0GAsgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIrCghkdXJhdGlvbhgMIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbhItCgV0ZXN0cxgNIAMoCzIeLmNsb3VkLnYxLm1vZGVscy5TaGFyZWRUZXN0UnVuQkRaQmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL21vZGVsc2IGcHJvdG8z", [file_cloud_v1_common_entity, file_cloud_v1_common_status, file_cloud_v1_deployment_provider, file_cloud_v1_domain_database, file_cloud_v1_monitor_metrics, file_google_protobuf_duration, file_google_protobuf_timestamp, file_validate_validate, file_ogen_ogen]);
 
 /**
  *
@@ -489,6 +489,23 @@ export type SharedTestRun = Message<"cloud.v1.models.SharedTestRun"> & {
    * @generated from field: cloud.v1.monitor.RunMetrics metrics = 14;
    */
   metrics?: RunMetrics;
+
+  /**
+   *
+   * workload_segments are the stroppy launch knobs, so a shared result is
+   * reproducible without handing over the run spec.
+   *
+   * @generated from field: repeated cloud.v1.models.SharedWorkloadSegment workload_segments = 15;
+   */
+  workloadSegments: SharedWorkloadSegment[];
+
+  /**
+   *
+   * database is the sizing + typed tuning of the database under test.
+   *
+   * @generated from field: cloud.v1.models.SharedDatabase database = 16;
+   */
+  database?: SharedDatabase;
 };
 
 /**
@@ -610,6 +627,23 @@ export type SharedTestRunJson = {
    * @generated from field: cloud.v1.monitor.RunMetrics metrics = 14;
    */
   metrics?: RunMetricsJson;
+
+  /**
+   *
+   * workload_segments are the stroppy launch knobs, so a shared result is
+   * reproducible without handing over the run spec.
+   *
+   * @generated from field: repeated cloud.v1.models.SharedWorkloadSegment workload_segments = 15;
+   */
+  workloadSegments?: SharedWorkloadSegmentJson[];
+
+  /**
+   *
+   * database is the sizing + typed tuning of the database under test.
+   *
+   * @generated from field: cloud.v1.models.SharedDatabase database = 16;
+   */
+  database?: SharedDatabaseJson;
 };
 
 export type SharedTestRunValid = SharedTestRun;
@@ -620,6 +654,339 @@ export type SharedTestRunValid = SharedTestRun;
  */
 export const SharedTestRunSchema: GenMessage<SharedTestRun, {jsonType: SharedTestRunJson, validType: SharedTestRunValid}> = /*@__PURE__*/
   messageDesc(file_cloud_v1_models_share, 1);
+
+/**
+ *
+ * SharedWorkloadSegment is the SAFE projection of one stroppy workload segment:
+ * the knobs that explain a number, and nothing else.
+ *
+ * Deliberately absent, and never to be added: `parameters.env` (a map that
+ * routinely carries PGPASSWORD and API tokens), `segment.sql` and
+ * `segment.files` (private schemas and queries) and `execution.extra_args`
+ * (arbitrary flags, e.g. `--token=`). Those are free-form: the system cannot
+ * know they are safe, so a public view must not carry them.
+ *
+ * @generated from message cloud.v1.models.SharedWorkloadSegment
+ */
+export type SharedWorkloadSegment = Message<"cloud.v1.models.SharedWorkloadSegment"> & {
+  /**
+   * name is the segment's display name. 
+   *
+   * @generated from field: string name = 1;
+   */
+  name: string;
+
+  /**
+   * script is the stroppy script the segment ran (e.g. "tpcc/tx"). 
+   *
+   * @generated from field: string script = 2;
+   */
+  script: string;
+
+  /**
+   * vus is the k6 virtual-user count. 
+   *
+   * @generated from field: uint32 vus = 3;
+   */
+  vus: number;
+
+  /**
+   * duration bounds a time-bounded segment (empty when iteration-bounded). 
+   *
+   * @generated from field: string duration = 4;
+   */
+  duration: string;
+
+  /**
+   * iterations bounds an iteration-bounded segment. 
+   *
+   * @generated from field: uint32 iterations = 5;
+   */
+  iterations: number;
+
+  /**
+   * pool_size is stroppy's DB connection pool size. 
+   *
+   * @generated from field: uint32 pool_size = 6;
+   */
+  poolSize: number;
+
+  /**
+   * scale_factor is the dataset scale. 
+   *
+   * @generated from field: double scale_factor = 7;
+   */
+  scaleFactor: number;
+
+  /**
+   * insert_method is the row-insertion mode ("native", "plain_bulk", …). 
+   *
+   * @generated from field: string insert_method = 8;
+   */
+  insertMethod: string;
+
+  /**
+   * bulk_size is rows per bulk INSERT (only meaningful for plain_bulk). 
+   *
+   * @generated from field: uint32 bulk_size = 9;
+   */
+  bulkSize: number;
+
+  /**
+   * steps are the enabled stroppy steps; empty means all of them. 
+   *
+   * @generated from field: repeated string steps = 10;
+   */
+  steps: string[];
+
+  /**
+   * no_steps are the explicitly disabled steps. 
+   *
+   * @generated from field: repeated string no_steps = 11;
+   */
+  noSteps: string[];
+
+  /**
+   * quiet suppresses stroppy's per-iteration output. 
+   *
+   * @generated from field: bool quiet = 12;
+   */
+  quiet: boolean;
+
+  /**
+   * no_thresholds disables k6 threshold checks. 
+   *
+   * @generated from field: bool no_thresholds = 13;
+   */
+  noThresholds: boolean;
+};
+
+/**
+ *
+ * SharedWorkloadSegment is the SAFE projection of one stroppy workload segment:
+ * the knobs that explain a number, and nothing else.
+ *
+ * Deliberately absent, and never to be added: `parameters.env` (a map that
+ * routinely carries PGPASSWORD and API tokens), `segment.sql` and
+ * `segment.files` (private schemas and queries) and `execution.extra_args`
+ * (arbitrary flags, e.g. `--token=`). Those are free-form: the system cannot
+ * know they are safe, so a public view must not carry them.
+ *
+ * @generated from message cloud.v1.models.SharedWorkloadSegment
+ */
+export type SharedWorkloadSegmentJson = {
+  /**
+   * name is the segment's display name. 
+   *
+   * @generated from field: string name = 1;
+   */
+  name?: string;
+
+  /**
+   * script is the stroppy script the segment ran (e.g. "tpcc/tx"). 
+   *
+   * @generated from field: string script = 2;
+   */
+  script?: string;
+
+  /**
+   * vus is the k6 virtual-user count. 
+   *
+   * @generated from field: uint32 vus = 3;
+   */
+  vus?: number;
+
+  /**
+   * duration bounds a time-bounded segment (empty when iteration-bounded). 
+   *
+   * @generated from field: string duration = 4;
+   */
+  duration?: string;
+
+  /**
+   * iterations bounds an iteration-bounded segment. 
+   *
+   * @generated from field: uint32 iterations = 5;
+   */
+  iterations?: number;
+
+  /**
+   * pool_size is stroppy's DB connection pool size. 
+   *
+   * @generated from field: uint32 pool_size = 6;
+   */
+  poolSize?: number;
+
+  /**
+   * scale_factor is the dataset scale. 
+   *
+   * @generated from field: double scale_factor = 7;
+   */
+  scaleFactor?: number | "NaN" | "Infinity" | "-Infinity";
+
+  /**
+   * insert_method is the row-insertion mode ("native", "plain_bulk", …). 
+   *
+   * @generated from field: string insert_method = 8;
+   */
+  insertMethod?: string;
+
+  /**
+   * bulk_size is rows per bulk INSERT (only meaningful for plain_bulk). 
+   *
+   * @generated from field: uint32 bulk_size = 9;
+   */
+  bulkSize?: number;
+
+  /**
+   * steps are the enabled stroppy steps; empty means all of them. 
+   *
+   * @generated from field: repeated string steps = 10;
+   */
+  steps?: string[];
+
+  /**
+   * no_steps are the explicitly disabled steps. 
+   *
+   * @generated from field: repeated string no_steps = 11;
+   */
+  noSteps?: string[];
+
+  /**
+   * quiet suppresses stroppy's per-iteration output. 
+   *
+   * @generated from field: bool quiet = 12;
+   */
+  quiet?: boolean;
+
+  /**
+   * no_thresholds disables k6 threshold checks. 
+   *
+   * @generated from field: bool no_thresholds = 13;
+   */
+  noThresholds?: boolean;
+};
+
+export type SharedWorkloadSegmentValid = SharedWorkloadSegment;
+
+/**
+ * Describes the message cloud.v1.models.SharedWorkloadSegment.
+ * Use `create(SharedWorkloadSegmentSchema)` to create a new message.
+ */
+export const SharedWorkloadSegmentSchema: GenMessage<SharedWorkloadSegment, {jsonType: SharedWorkloadSegmentJson, validType: SharedWorkloadSegmentValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_models_share, 2);
+
+/**
+ *
+ * SharedDatabase is the SAFE projection of the database under test.
+ *
+ * `settings` carries engine-specific sizing and tuning, but every key is chosen
+ * server-side from a TYPED field of the engine's params (replica counts, pdisk
+ * counts, shared_buffers_mb, …). The free-form `*_options` maps — postgresql.conf,
+ * haproxy.cfg, patroni.yml and friends — are deliberately NOT projected: they
+ * are whatever the author typed, and may hold credentials.
+ *
+ * @generated from message cloud.v1.models.SharedDatabase
+ */
+export type SharedDatabase = Message<"cloud.v1.models.SharedDatabase"> & {
+  /**
+   * version is the engine version (e.g. "17", "pg17"). 
+   *
+   * @generated from field: string version = 1;
+   */
+  version: string;
+
+  /**
+   * settings are typed, server-selected sizing/tuning knobs, in display order. 
+   *
+   * @generated from field: repeated cloud.v1.models.SharedDatabase.Setting settings = 2;
+   */
+  settings: SharedDatabase_Setting[];
+};
+
+/**
+ *
+ * SharedDatabase is the SAFE projection of the database under test.
+ *
+ * `settings` carries engine-specific sizing and tuning, but every key is chosen
+ * server-side from a TYPED field of the engine's params (replica counts, pdisk
+ * counts, shared_buffers_mb, …). The free-form `*_options` maps — postgresql.conf,
+ * haproxy.cfg, patroni.yml and friends — are deliberately NOT projected: they
+ * are whatever the author typed, and may hold credentials.
+ *
+ * @generated from message cloud.v1.models.SharedDatabase
+ */
+export type SharedDatabaseJson = {
+  /**
+   * version is the engine version (e.g. "17", "pg17"). 
+   *
+   * @generated from field: string version = 1;
+   */
+  version?: string;
+
+  /**
+   * settings are typed, server-selected sizing/tuning knobs, in display order. 
+   *
+   * @generated from field: repeated cloud.v1.models.SharedDatabase.Setting settings = 2;
+   */
+  settings?: SharedDatabase_SettingJson[];
+};
+
+export type SharedDatabaseValid = SharedDatabase;
+
+/**
+ * Describes the message cloud.v1.models.SharedDatabase.
+ * Use `create(SharedDatabaseSchema)` to create a new message.
+ */
+export const SharedDatabaseSchema: GenMessage<SharedDatabase, {jsonType: SharedDatabaseJson, validType: SharedDatabaseValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_models_share, 3);
+
+/**
+ *
+ * Setting is one server-selected knob. Both key and value originate from a
+ * typed proto field — never from a user-supplied map entry.
+ *
+ * @generated from message cloud.v1.models.SharedDatabase.Setting
+ */
+export type SharedDatabase_Setting = Message<"cloud.v1.models.SharedDatabase.Setting"> & {
+  /**
+   * @generated from field: string key = 1;
+   */
+  key: string;
+
+  /**
+   * @generated from field: string value = 2;
+   */
+  value: string;
+};
+
+/**
+ *
+ * Setting is one server-selected knob. Both key and value originate from a
+ * typed proto field — never from a user-supplied map entry.
+ *
+ * @generated from message cloud.v1.models.SharedDatabase.Setting
+ */
+export type SharedDatabase_SettingJson = {
+  /**
+   * @generated from field: string key = 1;
+   */
+  key?: string;
+
+  /**
+   * @generated from field: string value = 2;
+   */
+  value?: string;
+};
+
+export type SharedDatabase_SettingValid = SharedDatabase_Setting;
+
+/**
+ * Describes the message cloud.v1.models.SharedDatabase.Setting.
+ * Use `create(SharedDatabase_SettingSchema)` to create a new message.
+ */
+export const SharedDatabase_SettingSchema: GenMessage<SharedDatabase_Setting, {jsonType: SharedDatabase_SettingJson, validType: SharedDatabase_SettingValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_models_share, 3, 0);
 
 /**
  *
@@ -854,5 +1221,5 @@ export type SharedSuiteRunValid = SharedSuiteRun;
  * Use `create(SharedSuiteRunSchema)` to create a new message.
  */
 export const SharedSuiteRunSchema: GenMessage<SharedSuiteRun, {jsonType: SharedSuiteRunJson, validType: SharedSuiteRunValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_models_share, 2);
+  messageDesc(file_cloud_v1_models_share, 4);
 
