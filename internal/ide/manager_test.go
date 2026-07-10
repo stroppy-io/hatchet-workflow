@@ -219,3 +219,38 @@ func TestManager_CrossTenantAndInstanceIsolation(t *testing.T) {
 		t.Fatalf("instance owner = %q, want fixed instance org %q", instOwner, gitrepo.InstanceOrg)
 	}
 }
+
+// TestManager_RecipeCrossTenantIsolationAndNoInstanceLevel is the recipe
+// analogue of TestManager_CrossTenantAndInstanceIsolation above: two
+// tenants' identically-named recipe scopes must resolve to distinct owning
+// orgs (never able to reach each other's recipe repo), and a
+// ScopeInstance+EntryKindRecipe scope — which has no legitimate meaning,
+// see EntryKindRecipe's own doc — must be rejected by giteaOwnerRepo itself
+// (defense in depth; Authorizer.CanAuthor already rejects it one layer up,
+// see TestAuthorizer_RecipeScope_InstanceLevelRejectedEvenForAdmin).
+func TestManager_RecipeCrossTenantIsolationAndNoInstanceLevel(t *testing.T) {
+	ensurer := newFakeRepoEnsurer()
+	m := NewManager(Config{Gitea: ensurer})
+
+	orgAOwner, orgARepo, err := m.giteaOwnerRepo(context.Background(), Scope{Kind: ScopeOrg, OrgSlug: "tenant-a", EntryKind: EntryKindRecipe, EntrySlug: "pg-ha"})
+	if err != nil {
+		t.Fatalf("org a recipe: %v", err)
+	}
+	orgBOwner, orgBRepo, err := m.giteaOwnerRepo(context.Background(), Scope{Kind: ScopeOrg, OrgSlug: "tenant-b", EntryKind: EntryKindRecipe, EntrySlug: "pg-ha"})
+	if err != nil {
+		t.Fatalf("org b recipe: %v", err)
+	}
+	if orgAOwner == orgBOwner {
+		t.Fatalf("tenant-a and tenant-b recipe scopes resolved to the SAME owner %q — cross-tenant repo collision", orgAOwner)
+	}
+	if orgARepo != orgBRepo {
+		// The repo NAME is expected to be identical (same slug, same
+		// KindStr) — isolation comes from the owning ORG differing, exactly
+		// like every other tenant-scoped entry repo in this codebase.
+		t.Fatalf("recipe repo names differ (%q vs %q) though both name the same slug — unexpected", orgARepo, orgBRepo)
+	}
+
+	if _, _, err := m.giteaOwnerRepo(context.Background(), Scope{Kind: ScopeInstance, EntryKind: EntryKindRecipe, EntrySlug: "pg-ha"}); err == nil {
+		t.Fatal("expected an error for ScopeInstance+EntryKindRecipe — a recipe has no instance level")
+	}
+}

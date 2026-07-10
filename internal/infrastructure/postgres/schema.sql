@@ -39,6 +39,16 @@ CREATE TABLE recipe_records (
   version    integer NOT NULL,
   created_at timestamptz NOT NULL DEFAULT now(),
   updated_at timestamptz NOT NULL DEFAULT now(),
+  -- source_ref is the git-backed BundleStore ref (see
+  -- internal/services/catalog.EncodeGitCommitRef) this row's file bytes
+  -- actually live at — "" for a pre-migration legacy row whose bytes are
+  -- still embedded in data.bundle.files (healed lazily on read, mirroring
+  -- catalog_entries; see internal/services/recipe's healRecipeSourceRef).
+  -- A plain column, not part of data: unlike catalog_entries.source_ref
+  -- (a real CatalogEntry proto field the API surfaces for fork lineage),
+  -- RecipeRecord carries no such field — no client needs to see this ref,
+  -- so no proto/wire change was needed to add it.
+  source_ref text NOT NULL DEFAULT '',
   data       jsonb NOT NULL
 );
 CREATE INDEX idx_recipe_records_tenant ON recipe_records (tenant_id);

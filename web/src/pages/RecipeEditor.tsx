@@ -1,38 +1,48 @@
-// RecipeEditor — multi-file bundle editor for cloud.v1.api.RecipeService.
+// RecipeEditor — cloud.v1.api.RecipeService's editor.
 //
-// Serves BOTH create (/recipes/new) and edit (/recipes/:id): with no :id the
-// page seeds a minimal cluster.yaml/workflow.yaml template; with an :id it
-// loads the persisted bundle via getRecipe. Mirrors DatabasePresetForm.tsx's
-// header (back button + name + Save/Cancel) and page chrome, but the body is
-// a file-list + DslEditor + bundle-wide diagnostics layout instead of a form.
+// EDIT (isEdit === true, /recipes/:id): renders the embedded code-server IDE
+// for the recipe's own git repo (SP-C: "рецепт = тоже репозиторий" — recipes
+// get the same one-repo-per-item model providers/workflows already have, see
+// internal/services/recipe.recipeBundleIdentity's doc). A row's file bytes
+// live in that repo now (source_ref, resolved server-side — see
+// internal/services/recipe/recipe.go's resolveBundle), so the IDE opens the
+// SAME physical repo GetRecipe would resolve, and edits made there are the
+// recipe's real content going forward. There is no in-page Save anymore for
+// an existing recipe: the IDE (code-server's LSP, backed by DslService.Check)
+// is the one editing+diagnostics surface, mirroring CatalogEntryEditor.tsx's
+// EDIT branch exactly (see ide.ts's recipeIdeUrl for the scope-string
+// construction and @/components/ide/EmbeddedIde for the shared
+// ticket->iframe handshake).
 //
-// VERSIONING: RecipeService has no update RPC (see recipe.ts / recipe.proto —
-// CreateRecipeRequest carries no id). Every Save calls createRecipe(slug,
-// {name, files}), which the backend treats as a brand-new row: a fresh
-// entity.id, and version = (latest existing version for that `name`) + 1 (see
-// internal/services/recipe/recipe.go nextVersion). So "editing" a recipe is
-// really "author a new version under the same name" — Save always produces a
-// NEW id, and the page navigates to that new id's route afterward (matching
-// DatabasePresetForm's post-save navigate-to-the-saved-entity pattern). Run is
-// gated on the CURRENTLY LOADED saved version having no unsaved edits, since
-// starting a run against `id` runs exactly that stored bundle — running while
-// dirty would silently launch a stale version.
+// CREATE (isEdit === false, /recipes/new): a brand-new recipe has no repo
+// yet, so there is nothing for an IDE to open until the first Create call
+// makes one. This path keeps the original file-tabs + DslEditor +
+// check-as-you-type form, then navigates straight into the (now-real)
+// recipe's edit route, landing in the IDE — exactly CatalogEntryEditor.tsx's
+// CREATE branch, generalized from a slug to a name (a recipe has no slug
+// field; RecipeRecord's identity is entity.name, mirrored 1:1 into the repo
+// path via recipeBundleIdentity).
 //
-// RUN NAVIGATION TARGET: Run no longer calls startRun directly — it navigates
-// to the generated launch form at `/recipes/:id/launch` (LaunchForm.tsx),
-// which fetches the composed schemapb form schema (RecipeService.
-// LaunchFormSchema) and calls startRun itself once the form is submitted
-// (BakeForm seals a Baked snapshot even when the form composes to zero
-// required fields). LaunchForm then navigates to `/runs/${runId}` —
-// router.tsx's tenant-prefixing turns this into `/t/:slug/runs/${runId}`,
-// landing on the existing RunDetail page.
+// VERSIONING: creating "again" under the same name is still how a new
+// version is authored server-side (nextVersion = latest-for-name + 1) — but
+// now that editing goes through the IDE (a real git repo, real commits),
+// there is no more separate "Save new version" action from this page: once a
+// recipe exists, its repo IS the editable surface, and its version history
+// lives in that repo's own commits, mirroring what the catalog redesign
+// already did for providers/workflows.
+//
+// RUN NAVIGATION TARGET: Run navigates to the generated launch form at
+// `/recipes/:id/launch` (LaunchForm.tsx), which fetches the composed
+// schemapb form schema (RecipeService.LaunchFormSchema) and calls startRun
+// itself once the form is submitted. LaunchForm then navigates to
+// `/runs/${runId}` — router.tsx's tenant-prefixing turns this into
+// `/t/:slug/runs/${runId}`, landing on the existing RunDetail page.
 
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import {
   AlertCircle,
   AlertTriangle,
   ArrowLeft,
-  Eye,
   FileCode2,
   Loader2,
   Play,
@@ -46,17 +56,10 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useConfirm } from "@/components/ui/confirm-dialog";
 import { DslEditor } from "@/components/ui/dsl-editor";
-import {
-  checkBundle,
-  createRecipe,
-  getRecipe,
-  previewBundle,
-  type DiagnosticVM,
-  type PreviewPlanVM,
-} from "@/services/recipe";
+import { EmbeddedIde } from "@/components/ide/EmbeddedIde";
+import { checkBundle, createRecipe, getRecipe, type DiagnosticVM, type RecipeVM } from "@/services/recipe";
+import { recipeIdeUrl } from "@/services/ide";
 
 // A minimal, intentionally-not-guaranteed-to-compile starting point for a
 // brand-new recipe. It gives the user two real files to edit rather than a
@@ -84,80 +87,137 @@ function firstPath(files: Record<string, string>): string {
   return Object.keys(files).sort()[0] ?? "";
 }
 
-/** Cheap dirty-check: compares the current name+files against a JSON snapshot
- * taken at load / after the last successful save. Bundles are small text
- * files, so stringify-compare is fine — no need for a diff. */
-function snapshotOf(name: string, files: Record<string, string>): string {
-  return JSON.stringify({ name, files });
-}
-
 export function RecipeEditor() {
   const slug = useTenantSlug() ?? "";
   const { id } = useParams();
   const navigate = useNavigate();
-  const confirm = useConfirm();
   const isEdit = !!id;
 
-  const [name, setName] = useState("");
-  const [files, setFiles] = useState<Record<string, string>>(() =>
-    isEdit ? {} : { ...NEW_RECIPE_TEMPLATE },
-  );
-  const [activePath, setActivePath] = useState(() => (isEdit ? "" : firstPath(NEW_RECIPE_TEMPLATE)));
+  useBreadcrumbLabel("id", isEdit ? id : undefined);
 
-  const [loading, setLoading] = useState(isEdit);
+  if (isEdit && id) {
+    return <RecipeIdeView slug={slug} id={id} navigate={navigate} />;
+  }
+  return <RecipeCreateForm slug={slug} navigate={navigate} />;
+}
+
+// --- EDIT: the embedded IDE -------------------------------------------------
+
+interface RecipeIdeViewProps {
+  slug: string;
+  id: string;
+  navigate: (path: string, opts?: { replace?: boolean }) => void;
+}
+
+function RecipeIdeView({ slug, id, navigate }: RecipeIdeViewProps) {
+  const [recipe, setRecipe] = useState<RecipeVM | null>(null);
+  const [loading, setLoading] = useState(true);
   const [loadError, setLoadError] = useState<string | null>(null);
 
-  const [saving, setSaving] = useState(false);
-  const [saveError, setSaveError] = useState<string | null>(null);
+  useBreadcrumbLabel("id", recipe?.name || id);
 
-  const [diagnostics, setDiagnostics] = useState<DiagnosticVM[]>([]);
-  const [checking, setChecking] = useState(false);
-
-  // Compile-plan preview: on-demand (a "Preview" button), NOT debounced —
-  // Check already re-runs on every edit for the diagnostics panel above; a
-  // full compile-to-plan on every keystroke would be redundant work for a
-  // panel the user only consults right before Run.
-  const [previewPlan, setPreviewPlan] = useState<PreviewPlanVM | null>(null);
-  const [previewDiagnostics, setPreviewDiagnostics] = useState<DiagnosticVM[]>([]);
-  const [previewing, setPreviewing] = useState(false);
-  const [previewError, setPreviewError] = useState<string | null>(null);
-  const [previewRequested, setPreviewRequested] = useState(false);
-  const previewSnapshotRef = useRef<string | null>(null);
-
-  const [newFileName, setNewFileName] = useState("");
-
-  // Snapshot of the last-saved (or last-loaded) state, used to gate Run on
-  // "no unsaved edits since the currently-loaded id was stored".
-  const savedSnapshotRef = useRef<string | null>(null);
-
-  useBreadcrumbLabel("id", isEdit ? name || id : undefined);
-
-  // Load the persisted bundle in edit mode.
   useEffect(() => {
-    if (!isEdit || !slug || !id) return;
+    if (!slug) return undefined;
     let cancelled = false;
     setLoading(true);
     setLoadError(null);
     getRecipe(slug, id)
-      .then((recipe) => {
-        if (cancelled) return;
-        setName(recipe.name);
-        setFiles(recipe.files);
-        setActivePath(firstPath(recipe.files));
-        savedSnapshotRef.current = snapshotOf(recipe.name, recipe.files);
+      .then((r) => {
+        if (!cancelled) setRecipe(r);
       })
       .catch((e) => !cancelled && setLoadError(e instanceof Error ? e.message : String(e)))
       .finally(() => !cancelled && setLoading(false));
     return () => {
       cancelled = true;
     };
-  }, [isEdit, slug, id]);
+  }, [slug, id]);
 
-  // Bundle-wide diagnostics panel: debounced ~500ms re-check on any file
-  // edit. Separate from DslEditor's own per-file linter (400ms), which only
-  // ever shows the diagnostics belonging to the currently-open file inline.
+  if (loading) {
+    return (
+      <div className="flex h-full items-center justify-center text-sm text-zinc-500">
+        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading recipe…
+      </div>
+    );
+  }
+  if (loadError || !recipe) {
+    return (
+      <div className="p-5">
+        <div className="flex items-center gap-2 border border-red-900/50 bg-red-950/30 px-3 py-2 text-xs text-red-400">
+          <AlertCircle className="h-4 w-4" /> {loadError ?? "recipe not found"}
+        </div>
+      </div>
+    );
+  }
+
+  const ideTarget = recipeIdeUrl(slug, recipe.name);
+
+  return (
+    <div className="flex h-full flex-col">
+      <div className="flex items-center justify-between border-b border-zinc-800/80 px-5 py-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <button
+            type="button"
+            onClick={() => navigate("/recipes")}
+            className="flex h-7 w-7 shrink-0 items-center justify-center border border-zinc-800 text-zinc-500 transition-colors hover:border-zinc-700 hover:text-zinc-300"
+            aria-label="Back"
+          >
+            <ArrowLeft className="h-4 w-4" />
+          </button>
+          <div className="min-w-0">
+            <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">Edit recipe</div>
+            <div className="mt-0.5 truncate text-base font-semibold tracking-tight text-foreground">
+              {recipe.name}
+            </div>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <Badge variant="outline">v{recipe.version}</Badge>
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => navigate(`/recipes/${id}/launch`)}
+          >
+            <Play className="h-3.5 w-3.5" />
+            Run
+          </Button>
+          <Button variant="outline" size="sm" onClick={() => navigate("/recipes")}>
+            Close
+          </Button>
+        </div>
+      </div>
+      <div className="min-h-0 flex-1">
+        <EmbeddedIde targetUrl={ideTarget} entryLabel={recipe.name} />
+      </div>
+    </div>
+  );
+}
+
+// --- CREATE: file-tabs + DslEditor form -------------------------------------
+
+interface RecipeCreateFormProps {
+  slug: string;
+  navigate: (path: string, opts?: { replace?: boolean }) => void;
+}
+
+function RecipeCreateForm({ slug, navigate }: RecipeCreateFormProps) {
+  const [name, setName] = useState("");
+  const [files, setFiles] = useState<Record<string, string>>(() => ({ ...NEW_RECIPE_TEMPLATE }));
+  const [activePath, setActivePath] = useState(() => firstPath(NEW_RECIPE_TEMPLATE));
+
+  const [creating, setCreating] = useState(false);
+  const [createError, setCreateError] = useState<string | null>(null);
+
+  const [diagnostics, setDiagnostics] = useState<DiagnosticVM[]>([]);
+  const [checking, setChecking] = useState(false);
+
+  const [newFileName, setNewFileName] = useState("");
+
+  // Bundle-wide diagnostics: debounced re-check on any edit. CREATE only —
+  // once a recipe exists, the IDE's own LSP (DslService.Check under the
+  // hood) is the one diagnostics surface; a parallel checker here would
+  // drift from the compiler.
   useEffect(() => {
-    if (loading || Object.keys(files).length === 0) return;
+    if (Object.keys(files).length === 0) return undefined;
     let cancelled = false;
     setChecking(true);
     const t = setTimeout(() => {
@@ -174,41 +234,10 @@ export function RecipeEditor() {
       cancelled = true;
       clearTimeout(t);
     };
-  }, [files, loading, slug]);
-
-  const dirty = useMemo(() => {
-    if (savedSnapshotRef.current === null) return true; // never saved yet
-    return snapshotOf(name, files) !== savedSnapshotRef.current;
-  }, [name, files]);
-
-  // Has the bundle changed since the last Preview run? Compared against
-  // savedSnapshotRef's sibling (previewSnapshotRef), so an edit after
-  // previewing flags the shown plan as stale without re-running the compile.
-  const previewStale = useMemo(() => {
-    if (!previewRequested || previewSnapshotRef.current === null) return false;
-    return snapshotOf(name, files) !== previewSnapshotRef.current;
-  }, [name, files, previewRequested]);
-
-  const onPreview = useCallback(async () => {
-    setPreviewing(true);
-    setPreviewError(null);
-    setPreviewRequested(true);
-    try {
-      const { plan, diagnostics: previewDiags } = await previewBundle(files, slug);
-      setPreviewPlan(plan);
-      setPreviewDiagnostics(previewDiags);
-      previewSnapshotRef.current = snapshotOf(name, files);
-    } catch (e) {
-      setPreviewError(e instanceof Error ? e.message : String(e));
-      setPreviewPlan(null);
-    } finally {
-      setPreviewing(false);
-    }
-  }, [files, name, slug]);
+  }, [files, slug]);
 
   const nameMissing = !name.trim();
-  const canSave = !saving && !nameMissing && Object.keys(files).length > 0;
-  const canRun = !!id && !dirty;
+  const canCreate = !creating && !nameMissing && Object.keys(files).length > 0;
 
   const updateFileContent = useCallback((path: string, value: string) => {
     setFiles((cur) => ({ ...cur, [path]: value }));
@@ -223,16 +252,9 @@ export function RecipeEditor() {
   }, [newFileName, files]);
 
   const removeFile = useCallback(
-    async (path: string) => {
+    (path: string) => {
       const remaining = Object.keys(files).filter((p) => p !== path);
       if (remaining.length === 0) return; // never remove the last file
-      const ok = await confirm({
-        title: "Remove file?",
-        description: `"${path}" will be removed from the bundle.`,
-        danger: true,
-        confirmLabel: "Remove",
-      });
-      if (!ok) return;
       setFiles((cur) => {
         const next = { ...cur };
         delete next[path];
@@ -240,50 +262,26 @@ export function RecipeEditor() {
       });
       if (activePath === path) setActivePath(remaining.sort()[0]);
     },
-    [files, activePath, confirm],
+    [files, activePath],
   );
 
-  const onSave = useCallback(async () => {
+  const onCreate = useCallback(async () => {
     if (!slug) return;
-    setSaving(true);
-    setSaveError(null);
+    setCreating(true);
+    setCreateError(null);
     try {
       const saved = await createRecipe(slug, { name: name.trim(), files });
-      savedSnapshotRef.current = snapshotOf(saved.name, saved.files);
-      // TODO: post-save reflash is minor: could update local state from saved instead of forcing reload.
       navigate(`/recipes/${saved.id}`);
     } catch (e) {
-      setSaveError(e instanceof Error ? e.message : String(e));
+      setCreateError(e instanceof Error ? e.message : String(e));
     } finally {
-      setSaving(false);
+      setCreating(false);
     }
   }, [slug, name, files, navigate]);
-
-  const onRun = useCallback(() => {
-    if (!slug || !id) return;
-    navigate(`/recipes/${id}/launch`);
-  }, [slug, id, navigate]);
 
   const paths = useMemo(() => Object.keys(files).sort(), [files]);
   const errorCount = diagnostics.filter((d) => d.severity === "error").length;
   const warningCount = diagnostics.filter((d) => d.severity === "warning").length;
-
-  if (loading) {
-    return (
-      <div className="flex h-full items-center justify-center text-sm text-zinc-500">
-        <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Loading recipe…
-      </div>
-    );
-  }
-  if (loadError) {
-    return (
-      <div className="p-5">
-        <div className="flex items-center gap-2 border border-red-900/50 bg-red-950/30 px-3 py-2 text-xs text-red-400">
-          <AlertCircle className="h-4 w-4" /> {loadError}
-        </div>
-      </div>
-    );
-  }
 
   return (
     <div className="flex h-full flex-col">
@@ -299,9 +297,7 @@ export function RecipeEditor() {
             <ArrowLeft className="h-4 w-4" />
           </button>
           <div className="min-w-0">
-            <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">
-              {isEdit ? `Edit recipe${dirty ? " — unsaved changes" : ""}` : "New recipe"}
-            </div>
+            <div className="text-[10px] font-mono uppercase tracking-wider text-zinc-600">New recipe</div>
             <Input
               className="mt-0.5 h-7 max-w-xs border-none bg-transparent px-0 text-base font-semibold tracking-tight shadow-none focus-visible:ring-0"
               value={name}
@@ -313,26 +309,12 @@ export function RecipeEditor() {
         <div className="flex items-center gap-2">
           {errorCount > 0 && <Badge variant="destructive">{errorCount} error{errorCount === 1 ? "" : "s"}</Badge>}
           {warningCount > 0 && <Badge variant="warning">{warningCount} warning{warningCount === 1 ? "" : "s"}</Badge>}
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => navigate("/recipes")}
-          >
+          <Button variant="outline" size="sm" onClick={() => navigate("/recipes")}>
             Cancel
           </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            disabled={!canRun}
-            title={!id ? "Save the recipe before running it" : dirty ? "Save changes before running" : undefined}
-            onClick={onRun}
-          >
-            <Play className="h-3.5 w-3.5" />
-            Run
-          </Button>
-          <Button size="sm" disabled={!canSave} onClick={() => void onSave()}>
-            {saving ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
-            {isEdit ? "Save new version" : "Create recipe"}
+          <Button size="sm" disabled={!canCreate} onClick={() => void onCreate()}>
+            {creating ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <Save className="h-3.5 w-3.5" />}
+            Create recipe
           </Button>
         </div>
       </div>
@@ -340,12 +322,12 @@ export function RecipeEditor() {
       {nameMissing && (
         <div className="mx-5 mt-4 flex items-center gap-2 border border-amber-900/50 bg-amber-950/20 px-3 py-2 text-xs text-amber-400">
           <AlertTriangle className="h-3.5 w-3.5 shrink-0" />
-          A recipe needs a name before it can be saved.
+          A recipe needs a name before it can be created.
         </div>
       )}
-      {saveError && (
+      {createError && (
         <div className="mx-5 mt-4 flex items-center gap-2 border border-red-900/50 bg-red-950/30 px-3 py-2 text-xs text-red-400">
-          <AlertCircle className="h-4 w-4 shrink-0" /> {saveError}
+          <AlertCircle className="h-4 w-4 shrink-0" /> {createError}
         </div>
       )}
       <div className="min-h-0 flex-1 overflow-hidden px-5 py-5">
@@ -376,7 +358,7 @@ export function RecipeEditor() {
                   {paths.length > 1 && (
                     <button
                       type="button"
-                      onClick={() => void removeFile(path)}
+                      onClick={() => removeFile(path)}
                       className="shrink-0 text-zinc-600 opacity-0 transition-colors hover:text-red-400 group-hover:opacity-100"
                       aria-label={`Remove ${path}`}
                     >
@@ -436,162 +418,38 @@ export function RecipeEditor() {
             </div>
           </div>
 
-          {/* Right: diagnostics + compile-plan preview panel */}
+          {/* Right: diagnostics panel */}
           <Card className="flex min-h-0 flex-col overflow-hidden">
-            <Tabs defaultValue="diagnostics" className="flex min-h-0 flex-1 flex-col">
-              <TabsList className="h-8 shrink-0 justify-start gap-1 border-b border-zinc-800/80 bg-transparent p-1">
-                <TabsTrigger
-                  value="diagnostics"
-                  className="h-6 px-2 text-[10px] font-mono uppercase tracking-wider data-[state=active]:bg-zinc-900 data-[state=active]:text-zinc-200"
-                >
-                  Diagnostics{diagnostics.length > 0 && ` (${diagnostics.length})`}
-                </TabsTrigger>
-                <TabsTrigger
-                  value="preview"
-                  className="h-6 px-2 text-[10px] font-mono uppercase tracking-wider data-[state=active]:bg-zinc-900 data-[state=active]:text-zinc-200"
-                >
-                  Preview
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent
-                value="diagnostics"
-                className="mt-0 flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto p-2"
-              >
-                {diagnostics.length === 0 ? (
-                  <div className="px-1 py-2 text-xs text-zinc-600">
-                    {checking ? "Checking…" : "No issues found."}
-                  </div>
-                ) : (
-                  diagnostics.map((d, i) => (
-                    <button
-                      key={`${d.path}:${d.line}:${d.col}:${i}`}
-                      type="button"
-                      onClick={() => files[d.path] !== undefined && setActivePath(d.path)}
-                      className="flex items-start gap-1.5 border border-zinc-800 bg-[#0a0a0a] px-2 py-1.5 text-left text-xs transition-colors hover:border-zinc-700"
-                    >
-                      {d.severity === "error" ? (
-                        <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-400" />
-                      ) : (
-                        <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-400" />
-                      )}
-                      <span className="min-w-0 flex-1">
-                        <span className="block truncate font-mono text-[10px] text-zinc-500">
-                          {d.path}:{d.line}:{d.col}
-                          {d.module && ` · ${d.module}`}
-                        </span>
-                        <span className="block text-zinc-300">{d.message}</span>
-                      </span>
-                    </button>
-                  ))
-                )}
-              </TabsContent>
-
-              <TabsContent
-                value="preview"
-                className="mt-0 flex min-h-0 flex-1 flex-col gap-2 overflow-y-auto p-2"
-              >
-                <div className="flex items-center gap-2 px-1">
-                  <Button
+            <div className="flex h-8 shrink-0 items-center border-b border-zinc-800/80 px-2 text-[10px] font-mono uppercase tracking-wider text-zinc-500">
+              Diagnostics{diagnostics.length > 0 && ` (${diagnostics.length})`}
+            </div>
+            <div className="flex min-h-0 flex-1 flex-col gap-1.5 overflow-y-auto p-2">
+              {diagnostics.length === 0 ? (
+                <div className="px-1 py-2 text-xs text-zinc-600">{checking ? "Checking…" : "No issues found."}</div>
+              ) : (
+                diagnostics.map((d, i) => (
+                  <button
+                    key={`${d.path}:${d.line}:${d.col}:${i}`}
                     type="button"
-                    size="sm"
-                    variant="outline"
-                    className="h-7 flex-1"
-                    disabled={previewing || Object.keys(files).length === 0}
-                    onClick={() => void onPreview()}
+                    onClick={() => files[d.path] !== undefined && setActivePath(d.path)}
+                    className="flex items-start gap-1.5 border border-zinc-800 bg-[#0a0a0a] px-2 py-1.5 text-left text-xs transition-colors hover:border-zinc-700"
                   >
-                    {previewing ? (
-                      <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                    {d.severity === "error" ? (
+                      <AlertCircle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-red-400" />
                     ) : (
-                      <Eye className="h-3.5 w-3.5" />
+                      <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0 text-amber-400" />
                     )}
-                    {previewRequested ? "Refresh preview" : "Preview plan"}
-                  </Button>
-                  {previewStale && !previewing && (
-                    <Badge variant="warning" className="shrink-0">stale</Badge>
-                  )}
-                </div>
-
-                {previewError && (
-                  <div className="mx-1 flex items-center gap-1.5 border border-red-900/50 bg-red-950/30 px-2 py-1.5 text-xs text-red-400">
-                    <AlertCircle className="h-3.5 w-3.5 shrink-0" /> {previewError}
-                  </div>
-                )}
-
-                {!previewRequested && !previewError && (
-                  <div className="px-1 py-2 text-xs text-zinc-600">
-                    Compile the bundle to see what will be provisioned before running it.
-                  </div>
-                )}
-
-                {previewRequested && !previewing && !previewError && !previewPlan && (
-                  <div className="px-1 py-2 text-xs text-zinc-600">
-                    {previewDiagnostics.some((d) => d.severity === "error")
-                      ? "The bundle has compile errors — fix them (see Diagnostics) to preview a plan."
-                      : "No plan available."}
-                  </div>
-                )}
-
-                {previewPlan && (
-                  <div className="flex flex-col gap-3 px-1">
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-zinc-500">Provider</span>
-                      <span className="font-mono text-zinc-200">{previewPlan.provider || "—"}</span>
-                    </div>
-                    <div className="flex items-center justify-between text-xs">
-                      <span className="text-zinc-500">Nodes</span>
-                      <span className="font-mono text-zinc-200">
-                        {previewPlan.nodeTotal} across {previewPlan.machineGroups.length} group
-                        {previewPlan.machineGroups.length === 1 ? "" : "s"}
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate font-mono text-[10px] text-zinc-500">
+                        {d.path}:{d.line}:{d.col}
+                        {d.module && ` · ${d.module}`}
                       </span>
-                    </div>
-
-                    <div>
-                      <div className="mb-1 text-[10px] font-mono uppercase tracking-wider text-zinc-600">
-                        Machine groups
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        {previewPlan.machineGroups.map((g) => (
-                          <div
-                            key={g.name}
-                            className="border border-zinc-800 bg-[#0a0a0a] px-2 py-1.5 text-xs"
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="font-mono text-zinc-200">{g.name}</span>
-                              <span className="text-zinc-500">×{g.count}</span>
-                            </div>
-                            <div className="text-[10px] text-zinc-500">
-                              {g.cpu} vCPU · {(g.ramMb / 1024).toFixed(1)} GB RAM
-                              {g.diskGb > 0 && ` · ${g.diskGb} GB disk`}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div>
-                      <div className="mb-1 text-[10px] font-mono uppercase tracking-wider text-zinc-600">
-                        Services
-                      </div>
-                      <div className="flex flex-col gap-1">
-                        {previewPlan.services.map((s) => (
-                          <div
-                            key={s.name}
-                            className="border border-zinc-800 bg-[#0a0a0a] px-2 py-1.5 text-xs"
-                          >
-                            <div className="flex items-center justify-between">
-                              <span className="font-mono text-zinc-200">{s.name}</span>
-                              <span className="text-zinc-500">on {s.onGroup}</span>
-                            </div>
-                            <div className="truncate text-[10px] text-zinc-500">{s.image}</div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </TabsContent>
-            </Tabs>
+                      <span className="block text-zinc-300">{d.message}</span>
+                    </span>
+                  </button>
+                ))
+              )}
+            </div>
           </Card>
         </div>
       </div>

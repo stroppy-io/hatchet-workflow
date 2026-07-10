@@ -13,7 +13,7 @@ import { describe, it, expect, vi, beforeEach } from "vitest";
 const { getAccessToken } = vi.hoisted(() => ({ getAccessToken: vi.fn() }));
 vi.mock("@/services/client", () => ({ getAccessToken }));
 
-import { instanceIdeUrl, mintIdeTicket, openInIde, orgIdeUrl } from "./ide";
+import { instanceIdeUrl, mintIdeTicket, openInIde, orgIdeUrl, recipeIdeUrl } from "./ide";
 
 describe("instanceIdeUrl / orgIdeUrl — scope-string construction", () => {
   it("uses the singular entry-kind segment for a provider, never the plural tab name", () => {
@@ -37,6 +37,16 @@ describe("instanceIdeUrl / orgIdeUrl — scope-string construction", () => {
   it("orgIdeUrl for a workflow also stays singular in the scope segment", () => {
     expect(orgIdeUrl("acme", "workflows", "smoke-test")).toBe(
       "/ide/org/acme/workflow/smoke-test?folder=%2Fhome%2Fcoder%2Fproject%2Fworkflows%2Fsmoke-test",
+    );
+  });
+
+  // recipeIdeUrl is org-only (a recipe has no LEVEL_INSTANCE equivalent —
+  // see internal/ide.EntryKindRecipe's doc): there is no
+  // instanceRecipeIdeUrl for the same reason instanceIdeUrl's tab param
+  // excludes "recipes" at compile time.
+  it("recipeIdeUrl builds an org-scoped /ide/org/<slug>/recipe/<name> URL", () => {
+    expect(recipeIdeUrl("acme", "pg-ha")).toBe(
+      "/ide/org/acme/recipe/pg-ha?folder=%2Fhome%2Fcoder%2Fproject%2Frecipes%2Fpg-ha",
     );
   });
 });

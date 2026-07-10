@@ -55,21 +55,29 @@ export async function openInIde(targetUrl: string): Promise<void> {
   window.open(url, "_blank", "noreferrer");
 }
 
-/** The two catalog-entry list tabs — matches AdminCatalog/OrgCatalog's tab
- * param, always plural (it also names the on-disk providers/<slug> |
- * workflows/<slug> folder path below). */
-export type IdeEntryTab = "providers" | "workflows";
+/** The catalog-entry/recipe list tabs — matches AdminCatalog/OrgCatalog's
+ * tab param, always plural (it also names the on-disk providers/<slug> |
+ * workflows/<slug> | recipes/<name> folder path below). "recipes" is
+ * ORG-ONLY (see internal/ide.EntryKindRecipe's doc — a recipe has no
+ * LEVEL_INSTANCE equivalent): instanceIdeUrl's tab param is typed to
+ * exclude it, so a "recipes" scope can never even be constructed as an
+ * instance URL — the singular/plural bug this file already guards against
+ * (see entryKindSegment's doc) plus a compile-time guard against the newer
+ * "recipe has no instance level" invariant. */
+export type IdeEntryTab = "providers" | "workflows" | "recipes";
 
 // entryKindSegment maps the plural list-tab name to the singular scope
 // segment internal/ide.ParseScope requires (EntryKindProvider/
-// EntryKindWorkflow — "provider"/"workflow", never "providers"/"workflows").
-// This is the one place that translation happens; every URL builder below
-// funnels through it so a future third kind can't reintroduce the
-// singular/plural mismatch bug fixed in commit 09f390e4 (a prior version of
-// these builders passed the plural tab name straight into the scope segment
-// and 404'd at the gateway).
-function entryKindSegment(tab: IdeEntryTab): "provider" | "workflow" {
-  return tab === "providers" ? "provider" : "workflow";
+// EntryKindWorkflow/EntryKindRecipe — "provider"/"workflow"/"recipe", never
+// "providers"/"workflows"/"recipes"). This is the one place that
+// translation happens; every URL builder below funnels through it so a
+// future kind can't reintroduce the singular/plural mismatch bug fixed in
+// commit 09f390e4 (a prior version of these builders passed the plural tab
+// name straight into the scope segment and 404'd at the gateway).
+function entryKindSegment(tab: IdeEntryTab): "provider" | "workflow" | "recipe" {
+  if (tab === "providers") return "provider";
+  if (tab === "workflows") return "workflow";
+  return "recipe";
 }
 
 // instanceIdeUrl builds the gateway /ide/instance/* URL for an entry's
@@ -77,8 +85,11 @@ function entryKindSegment(tab: IdeEntryTab): "provider" | "workflow" {
 // deep link so the IDE lands on the entry's own files rather than the whole
 // repo root. Requires the instance-admin IdeAuthorizer grant
 // (internal/ide.Authorizer.CanAuthor) — a non-admin's request 403s at the
-// gateway, same as every other LEVEL_INSTANCE write path.
-export function instanceIdeUrl(tab: IdeEntryTab, slug: string): string {
+// gateway, same as every other LEVEL_INSTANCE write path. tab excludes
+// "recipes" (see IdeEntryTab's doc — no LEVEL_INSTANCE recipe exists; the
+// server-side Authorizer/Manager reject that scope shape unconditionally
+// even if a caller somehow still constructed it).
+export function instanceIdeUrl(tab: Exclude<IdeEntryTab, "recipes">, slug: string): string {
   const entryKind = entryKindSegment(tab);
   const folder = encodeURIComponent(`/home/coder/project/${tab}/${slug}`);
   return `/ide/instance/${entryKind}/${slug}?folder=${folder}`;
@@ -86,12 +97,24 @@ export function instanceIdeUrl(tab: IdeEntryTab, slug: string): string {
 
 // orgIdeUrl builds the gateway /ide/org/<slug>/* URL for an entry's on-disk
 // location in this org's own repo. Only meaningful for a NATIVE/FORKED
-// entry — a LINKED entry has no files of its own yet (org repos start
-// empty, spec's read-through model; see internal/services/catalog.
+// catalog entry — a LINKED entry has no files of its own yet (org repos
+// start empty, spec's read-through model; see internal/services/catalog.
 // GitBundleStore's package doc) until it is forked, so the caller must gate
-// this behind origin !== "ORIGIN_LINKED".
+// this behind origin !== "ORIGIN_LINKED". A recipe is never LINKED (that
+// origin concept does not apply to recipes at all), so recipeIdeUrl below
+// reuses this same builder unconditionally.
 export function orgIdeUrl(orgSlug: string, tab: IdeEntryTab, slug: string): string {
   const entryKind = entryKindSegment(tab);
   const folder = encodeURIComponent(`/home/coder/project/${tab}/${slug}`);
   return `/ide/org/${orgSlug}/${entryKind}/${slug}?folder=${folder}`;
+}
+
+// recipeIdeUrl builds the gateway /ide/org/<slug>/recipe/<name>* URL for a
+// recipe's own repo — the recipe analogue of orgIdeUrl(orgSlug,
+// "recipes", name). A recipe is identified by NAME (not a slug field — see
+// internal/services/recipe.recipeBundleIdentity's doc: "name" plays the
+// role "slug" plays for a catalog item), and is always org-scoped (there is
+// no instanceIdeUrl equivalent — see EntryKindRecipe's doc).
+export function recipeIdeUrl(orgSlug: string, name: string): string {
+  return orgIdeUrl(orgSlug, "recipes", name);
 }

@@ -17,6 +17,7 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/api"
 	dslpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dsl"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
+	catalogsvc "github.com/stroppy-io/stroppy-cloud/internal/services/catalog"
 	"github.com/stroppy-io/stroppy-cloud/internal/services/utils"
 )
 
@@ -36,16 +37,35 @@ import (
 // derrors.ErrNotFound when the (tenantID,id) pair has no row; Create returns
 // derrors.ErrConflict on a duplicate (tenantID, name, version). This is the
 // port the postgres RecipeRepo (Task 3) satisfies.
+//
+// A row's file bytes live in git, not in this repo (see recipe.go's
+// resolveBundle / recipeBundleIdentity doc): every read method returns a
+// source_ref string alongside the record — "" for a pre-git-migration
+// legacy row, non-"" once healed (see healRecipeSourceRef) — and the
+// service layer, never this port, resolves that ref into actual file bytes
+// via a BundleStore. This mirrors internal/services/catalog's
+// CatalogEntryRepo/BundleStore split exactly, generalized to recipe's own
+// (tenantID, name, version) scoping instead of catalog's (level, tenant,
+// kind, slug, version).
 type RecipeRepo interface {
-	Create(ctx context.Context, rec *models.RecipeRecord) error
-	Get(ctx context.Context, tenantID, id string) (*models.RecipeRecord, error)
-	List(ctx context.Context, tenantID string) ([]*models.RecipeRecord, error)
+	// Create persists rec (with rec.Bundle.Files left however the caller set
+	// it — the postgres impl never re-derives sourceRef from it) plus
+	// sourceRef, the ref its bundle bytes were already written under via
+	// BundleStore.Write.
+	Create(ctx context.Context, rec *models.RecipeRecord, sourceRef string) error
+	Get(ctx context.Context, tenantID, id string) (*models.RecipeRecord, string, error)
+	List(ctx context.Context, tenantID string) ([]*models.RecipeRecord, []string, error)
 	// GetLatestByName returns the highest-version row for (tenantID, name),
 	// or derrors.ErrNotFound when the tenant has no recipe of that name yet
 	// — CreateRecipe uses this to compute the next version (latest+1, or 1
 	// on NotFound).
-	GetLatestByName(ctx context.Context, tenantID, name string) (*models.RecipeRecord, error)
+	GetLatestByName(ctx context.Context, tenantID, name string) (*models.RecipeRecord, string, error)
 	Delete(ctx context.Context, tenantID, id string) error
+	// UpdateSourceRef persists a healed sourceRef (and rec's refreshed
+	// envelope, Bundle.Files already stripped by the caller) onto an
+	// existing row — the lazy-migration write path, never called on a
+	// freshly Created row.
+	UpdateSourceRef(ctx context.Context, rec *models.RecipeRecord, sourceRef string) error
 }
 
 // RunRepo persists the models.Run StartRun mints for a recipe run — SP-E
@@ -105,6 +125,26 @@ type RecipeWorkflows interface {
 type Deps struct {
 	Repo  RecipeRepo
 	Authn utils.Authn
+	// Bundles is the SP-C seam's BundleStore (see catalogsvc.BundleStore's
+	// doc) recipe bundle bytes are written to and read from — the SAME
+	// wiring seam catalogsvc.Deps.Bundles uses (FSBundleStore by default,
+	// GitEntryBundleStore once GITEA_TOKEN is provisioned — see
+	// internal/app/run.go). Recipes reuse this store rather than inventing a
+	// second one: one repo per (tenant, recipe name), addressed via
+	// catalogsvc.BundleIdentity{KindStr: recipeKindStr, ...} exactly like a
+	// catalog item, just never IsInstanceLevel (a recipe is always
+	// tenant-owned — there is no LEVEL_INSTANCE recipe). Required for every
+	// handler that touches a bundle (Create/Get/List/Check/LaunchFormSchema/
+	// StartRun).
+	Bundles catalogsvc.BundleStore
+	// Unlike catalog_entries (which had two superseded pre-current storage
+	// shapes: a bare content hash, then a retired single-monorepo git
+	// store — see catalogsvc.Deps.LegacyBundles's doc), a recipe_records
+	// row has only ever had ONE pre-migration shape: its bundle bytes
+	// embedded directly in data.bundle.files, decoded for free by
+	// RecipeRepo.Get/List/GetLatestByName's normal protojson unmarshal. So
+	// there is no separate LegacyBundles seam here — healRecipeSourceRef
+	// heals straight from the already-loaded rec.Bundle.Files.
 	// Checker runs the DSL check-mode compile pipeline over a bundle's files
 	// and returns wire-shaped diagnostics. In production this is
 	// internal/services/dsl.CheckBundle, injected so this package reuses the
@@ -137,7 +177,17 @@ type Service struct {
 
 var _ api.RecipeServiceServer = (*Service)(nil)
 
-// NewService constructs the RecipeService connect handler.
+// NewService constructs the RecipeService connect handler. A nil d.Bundles
+// defaults to a fresh catalogsvc.MemoryBundleStore — every existing unit
+// test in this package constructs Deps without a Bundles value (they only
+// ever cared about RecipeRepo/RunRepo/RecipeWorkflows), and requiring every
+// one of them to wire a store just to keep compiling would test nothing
+// beyond "a store was provided". Production wiring (internal/app/run.go)
+// always sets Deps.Bundles explicitly to the shared catalogBundles instance,
+// so this default is never reached outside tests.
 func NewService(d Deps) *Service {
+	if d.Bundles == nil {
+		d.Bundles = catalogsvc.NewMemoryBundleStore()
+	}
 	return &Service{UnimplementedRecipeServiceServer: &api.UnimplementedRecipeServiceServer{}, d: d}
 }

@@ -9,6 +9,7 @@ import (
 	"github.com/stroppy-io/schemapb/schemapb"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
+	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/durationpb"
 	"google.golang.org/protobuf/types/known/timestamppb"
 	"gopkg.in/yaml.v3"
@@ -21,8 +22,96 @@ import (
 	dslpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dsl"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
+	catalogsvc "github.com/stroppy-io/stroppy-cloud/internal/services/catalog"
 	"github.com/stroppy-io/stroppy-cloud/internal/services/utils"
 )
+
+// recipeKindStr is the KindStr recipe bundles use for
+// catalogsvc.BundleIdentity / internal/gitrepo.EntryRepoName — distinct from
+// catalog's own "provider"/"workflow" kind strings so a recipe's repo can
+// never collide with (or be mistaken for) a catalog entry repo of the same
+// slug, even though both can land in the same tenant Gitea org
+// (gitrepo.TenantOrg). A recipe is ALWAYS tenant-owned (IsInstanceLevel is
+// always false below) — there is no LEVEL_INSTANCE recipe, mirroring
+// requireTenant's own invariant one layer up.
+const recipeKindStr = "recipe"
+
+// recipeBundleIdentity builds the catalogsvc.BundleIdentity a recipe's
+// Write/Read/heal call is scoped to: one Gitea repo per (tenantID, name),
+// versions are commits on it — exactly the product decision this task
+// implements, generalized from catalog's own (level, tenant, kind, slug)
+// scoping to recipe's (tenant, name) scoping (a recipe has no level/kind
+// facet, and "name" plays the role "slug" plays for a catalog item).
+func recipeBundleIdentity(tenantID, name string) catalogsvc.BundleIdentity {
+	return catalogsvc.BundleIdentity{
+		IsInstanceLevel: false,
+		TenantID:        tenantID,
+		KindStr:         recipeKindStr,
+		Slug:            name,
+	}
+}
+
+// resolveBundle returns rec's actual file bytes: reads through s.d.Bundles
+// at sourceRef when the row has already been migrated (sourceRef != "" —
+// note this is s.d.Bundles.Read, the CURRENTLY configured store, whatever
+// shape its refs are: a git-commit ref once GITEA_TOKEN is provisioned, a
+// bare content hash otherwise — see recipeKindStr's doc on how Bundles is
+// selected), or heals a legacy row (sourceRef == "", bytes still embedded in
+// rec.Bundle.Files from the old plain-blob storage model) into that same
+// store first — see healRecipeSourceRef's doc for why this is lazy-on-read
+// rather than a boot-time migration pass. This is the ONLY function in this
+// package that produces bundle bytes for CheckRecipe/LaunchFormSchema/
+// StartRun: the compiler never reads rec.Bundle.Files directly off a
+// freshly-Get-ed row, only through here, so there is exactly one path from
+// "a stored recipe" to "bytes the DSL compiler sees" — never two.
+func (s *Service) resolveBundle(ctx context.Context, rec *models.RecipeRecord, sourceRef string) (map[string][]byte, error) {
+	if sourceRef != "" {
+		return s.d.Bundles.Read(ctx, sourceRef)
+	}
+	return s.healRecipeSourceRef(ctx, rec, sourceRef)
+}
+
+// healRecipeSourceRef repairs a recipe_records row that predates the
+// repo-per-recipe git backing: it writes the row's own already-loaded
+// rec.Bundle.Files (the pre-migration storage model — the full bundle was
+// simply embedded in the row's protojson blob) into a brand-new git repo via
+// s.d.Bundles.Write, persists the resulting ref onto the row via
+// s.d.Repo.UpdateSourceRef (which also strips Bundle.Files from the
+// persisted blob, so from this point on the row's protojson stops
+// duplicating what git now owns), and returns the files it just wrote.
+//
+// Deliberately lazy-on-read, exactly like catalog.healSourceRef: no separate
+// migration command to remember to run, only rows a caller actually still
+// reads are ever touched, and it is safe under a concurrent double-heal race
+// — s.d.Bundles.Write's EnsureOrg/EnsureRepo are idempotent (see
+// GitEntryBundleStore's own doc) and a second heal of the same row simply
+// adds a second (empty-diff) commit and a second (also correct)
+// UpdateSourceRef rather than corrupting anything.
+//
+// A sourceRef that is non-empty but NOT git-backed (should not happen in
+// practice — recipe_records has never had any OTHER post-blob pre-git
+// shape) is treated the same as "" : the row's own Bundle.Files, not the
+// unrecognized ref, is trusted as the legacy source.
+func (s *Service) healRecipeSourceRef(ctx context.Context, rec *models.RecipeRecord, _ string) (map[string][]byte, error) {
+	files := rec.GetBundle().GetFiles()
+	if len(files) == 0 {
+		return nil, status.Error(codes.NotFound, "recipe bundle has no files to migrate")
+	}
+	id := recipeBundleIdentity(rec.GetEntity().GetTenantId(), rec.GetEntity().GetName())
+	newRef, err := s.d.Bundles.Write(ctx, id, "", files)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "heal recipe bundle: migrate into git store: %v", err)
+	}
+	healed, ok := proto.Clone(rec).(*models.RecipeRecord)
+	if !ok {
+		return nil, status.Error(codes.Internal, "heal recipe bundle: cloned record has unexpected type")
+	}
+	healed.Bundle = &models.RecipeBundle{}
+	if err := s.d.Repo.UpdateSourceRef(ctx, healed, newRef); err != nil {
+		return nil, status.Errorf(codes.Internal, "heal recipe bundle: persist migrated ref: %v", err)
+	}
+	return files, nil
+}
 
 // clusterFile is the bundle-relative path of the DSL cluster document,
 // matching internal/services/dsl's own constant (unexported there, so
@@ -91,9 +180,29 @@ func (s *Service) CreateRecipe(ctx context.Context, req *api.CreateRecipeRequest
 	}
 	rec.Summary = deriveSummary(rec.GetBundle(), diags)
 
-	if err := s.d.Repo.Create(ctx, rec); err != nil {
+	// The bundle's bytes are written to git FIRST — the single canonical
+	// store from here on (see resolveBundle's doc) — and only the resulting
+	// ref, never the bytes themselves, is persisted onto the row: stored is
+	// a clone with Bundle.Files stripped, so a fresh Create never
+	// duplicates what git now owns (unlike a pre-migration legacy row,
+	// which this Create path can no longer produce).
+	bundleID := recipeBundleIdentity(req.GetTenantId(), name)
+	sourceRef, err := s.d.Bundles.Write(ctx, bundleID, "", rec.GetBundle().GetFiles())
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "store recipe bundle: %v", err)
+	}
+	stored, ok := proto.Clone(rec).(*models.RecipeRecord)
+	if !ok {
+		return nil, status.Error(codes.Internal, "create recipe: cloned record has unexpected type")
+	}
+	stored.Bundle = &models.RecipeBundle{}
+	if err := s.d.Repo.Create(ctx, stored, sourceRef); err != nil {
 		return nil, utils.MapErr(err)
 	}
+	// rec (NOT stored) is returned to the caller — it still carries the
+	// bundle it was just created with, exactly the same response shape as
+	// before this task, even though nothing byte-for-byte-identical is kept
+	// in the row's own protojson anymore.
 	return &api.CreateRecipeResponse{Recipe: rec}, nil
 }
 
@@ -104,21 +213,43 @@ func (s *Service) GetRecipe(ctx context.Context, req *api.GetRecipeRequest) (*ap
 	if err := requireTenant(req.GetTenantId()); err != nil {
 		return nil, err
 	}
-	rec, err := s.d.Repo.Get(ctx, req.GetTenantId(), req.GetId())
+	rec, sourceRef, err := s.d.Repo.Get(ctx, req.GetTenantId(), req.GetId())
 	if err != nil {
 		return nil, utils.MapErr(err)
 	}
+	files, err := s.resolveBundle(ctx, rec, sourceRef)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "resolve recipe bundle: %v", err)
+	}
+	rec.Bundle = &models.RecipeBundle{Files: files}
 	return &api.GetRecipeResponse{Recipe: rec}, nil
 }
 
-// ListRecipes returns every recipe record for the tenant.
+// ListRecipes returns every recipe record for the tenant. The table view
+// this feeds renders off Summary (denormalized at Create time), not the raw
+// bundle, so — unlike GetRecipe — this does not pay a git Read per row for
+// an already-migrated recipe; it only heals a legacy row still carrying its
+// bundle inline (a heal here is a Write of bytes already in hand, no extra
+// Read needed either — see healRecipeSourceRef). An already-migrated row's
+// Bundle comes back empty, exactly like an already-migrated CatalogEntry's
+// bundle is never inlined into a List response.
 func (s *Service) ListRecipes(ctx context.Context, req *api.ListRecipesRequest) (*api.ListRecipesResponse, error) {
 	if err := requireTenant(req.GetTenantId()); err != nil {
 		return nil, err
 	}
-	recs, err := s.d.Repo.List(ctx, req.GetTenantId())
+	recs, refs, err := s.d.Repo.List(ctx, req.GetTenantId())
 	if err != nil {
 		return nil, utils.MapErr(err)
+	}
+	for i, rec := range recs {
+		if refs[i] != "" {
+			rec.Bundle = &models.RecipeBundle{}
+			continue
+		}
+		if _, err := s.healRecipeSourceRef(ctx, rec, refs[i]); err != nil {
+			return nil, status.Errorf(codes.Internal, "heal recipe bundle %q: %v", rec.GetEntity().GetId(), err)
+		}
+		rec.Bundle = &models.RecipeBundle{}
 	}
 	return &api.ListRecipesResponse{Recipes: recs}, nil
 }
@@ -145,11 +276,15 @@ func (s *Service) CheckRecipe(ctx context.Context, req *api.CheckRecipeRequest) 
 	if err := requireTenant(req.GetTenantId()); err != nil {
 		return nil, err
 	}
-	rec, err := s.d.Repo.Get(ctx, req.GetTenantId(), req.GetId())
+	rec, sourceRef, err := s.d.Repo.Get(ctx, req.GetTenantId(), req.GetId())
 	if err != nil {
 		return nil, utils.MapErr(err)
 	}
-	diags, err := s.d.Checker(ctx, rec.GetBundle().GetFiles())
+	files, err := s.resolveBundle(ctx, rec, sourceRef)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "resolve recipe bundle: %v", err)
+	}
+	diags, err := s.d.Checker(ctx, files)
 	if err != nil {
 		return nil, utils.MapErr(err)
 	}
@@ -166,11 +301,15 @@ func (s *Service) LaunchFormSchema(ctx context.Context, req *api.LaunchFormSchem
 	if err := requireTenant(req.GetTenantId()); err != nil {
 		return nil, err
 	}
-	rec, err := s.d.Repo.Get(ctx, req.GetTenantId(), req.GetRecipeId())
+	rec, sourceRef, err := s.d.Repo.Get(ctx, req.GetTenantId(), req.GetRecipeId())
 	if err != nil {
 		return nil, utils.MapErr(err)
 	}
-	form, diags, err := s.d.FormSchema(ctx, rec.GetBundle().GetFiles())
+	files, err := s.resolveBundle(ctx, rec, sourceRef)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "resolve recipe bundle: %v", err)
+	}
+	form, diags, err := s.d.FormSchema(ctx, files)
 	if err != nil {
 		return nil, status.Errorf(codes.InvalidArgument, "compose launch form schema: %v", err)
 	}
@@ -224,14 +363,25 @@ func (s *Service) StartRun(ctx context.Context, req *api.StartRunRequest) (*api.
 		return nil, err
 	}
 
-	recipeRec, err := s.d.Repo.Get(ctx, req.GetTenantId(), req.GetRecipeId())
+	recipeRec, sourceRef, err := s.d.Repo.Get(ctx, req.GetTenantId(), req.GetRecipeId())
 	if err != nil {
 		return nil, utils.MapErr(err)
+	}
+	// resolveBundle is the ONLY path from a stored recipe row to compiler-
+	// facing bytes (see its own doc) — StartRun, like CheckRecipe/
+	// LaunchFormSchema above, never reads recipeRec.GetBundle().GetFiles()
+	// directly off the just-Get-ed row, so the launch it mints and the
+	// FormSchema/Bake step immediately below it are guaranteed to compile
+	// the exact same bytes, resolved through the exact same single storage
+	// model, every time.
+	bundleFiles, err := s.resolveBundle(ctx, recipeRec, sourceRef)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, "resolve recipe bundle: %v", err)
 	}
 
 	var baked *schemapb.Baked
 	if filled := req.GetFilled(); filled != nil {
-		form, diags, ferr := s.d.FormSchema(ctx, recipeRec.GetBundle().GetFiles())
+		form, diags, ferr := s.d.FormSchema(ctx, bundleFiles)
 		if ferr != nil {
 			return nil, status.Errorf(codes.InvalidArgument, "compose launch form schema: %v", ferr)
 		}
@@ -320,7 +470,7 @@ func (s *Service) StartRun(ctx context.Context, req *api.StartRunRequest) (*api.
 	// launch fails, close the already-visible record as FAILED so
 	// list/overview do not expose an unrecoverable PENDING run forever —
 	// mirrors test_run.StartTestRun's finishFailedRun.
-	if err := s.d.Workflows.LaunchRecipeRun(ctx, run, recipeRec.GetBundle().GetFiles(), baked); err != nil {
+	if err := s.d.Workflows.LaunchRecipeRun(ctx, run, bundleFiles, baked); err != nil {
 		markRunFailed(run, s.now())
 		if uerr := s.d.Runs.Update(ctx, run); uerr != nil {
 			return nil, utils.MapErr(uerr)
@@ -493,7 +643,7 @@ func requireTenant(tenantID string) error {
 // past the tenant's latest existing version for name, or 1 when the tenant
 // has no recipe of that name yet (GetLatestByName returns NotFound).
 func (s *Service) nextVersion(ctx context.Context, tenantID, name string) (uint32, error) {
-	latest, err := s.d.Repo.GetLatestByName(ctx, tenantID, name)
+	latest, _, err := s.d.Repo.GetLatestByName(ctx, tenantID, name)
 	if err != nil {
 		if derrors.IgnoreNotFound(err) == nil {
 			return 1, nil

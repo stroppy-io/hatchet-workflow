@@ -21,16 +21,27 @@ const (
 	ScopeOrg
 )
 
-// EntryKindProvider/EntryKindWorkflow are the only two values an /ide/*
-// path's kind segment may name — the same "provider"/"workflow" strings
-// internal/services/catalog.BundleIdentity.KindStr and
-// internal/gitrepo.EntryRepoName use, so a Scope's (EntryKind, EntrySlug)
-// pair names EXACTLY the same repo the catalog storage layer would compute
-// for the equivalent CatalogEntry — the IDE opens the identical physical
-// repo a GetOrgProviderFiles/GetOrgWorkflowFiles call would read.
+// EntryKindProvider/EntryKindWorkflow/EntryKindRecipe are the only three
+// values an /ide/* path's kind segment may name — the same "provider"/
+// "workflow" strings internal/services/catalog.BundleIdentity.KindStr and
+// internal/gitrepo.EntryRepoName use, plus "recipe"
+// (internal/services/recipe's own recipeKindStr), so a Scope's (EntryKind,
+// EntrySlug) pair names EXACTLY the same repo the corresponding storage
+// layer would compute — the IDE opens the identical physical repo a
+// GetOrgProviderFiles/GetOrgWorkflowFiles call, or a recipe GetRecipe call,
+// would read from.
+//
+// EntryKindRecipe is ORG-ONLY: a recipe is always tenant-owned (see
+// recipe.recipeBundleIdentity's doc — there is no LEVEL_INSTANCE recipe),
+// so ParseScope accepts "instance/recipe/..." syntactically (kind
+// validation alone can't see which org a path names) but Authorizer.
+// CanAuthor and Manager.giteaOwnerRepo both reject ScopeInstance+
+// EntryKindRecipe explicitly — see their own docs — so an instance-level
+// recipe repo can never be reached or authorized, even by an admin.
 const (
 	EntryKindProvider = "provider"
 	EntryKindWorkflow = "workflow"
+	EntryKindRecipe   = "recipe"
 )
 
 // Scope is the single catalog-entry repo an /ide/* request targets, decoded
@@ -132,8 +143,8 @@ func splitEntryPath(rest string) (kind, slug, restPath string, err error) {
 		return "", "", "", fmt.Errorf("missing entry kind/slug (want \"<provider|workflow>/<slug>\")")
 	}
 	kind = segments[0]
-	if kind != EntryKindProvider && kind != EntryKindWorkflow {
-		return "", "", "", fmt.Errorf("unrecognized entry kind %q (want %q or %q)", kind, EntryKindProvider, EntryKindWorkflow)
+	if kind != EntryKindProvider && kind != EntryKindWorkflow && kind != EntryKindRecipe {
+		return "", "", "", fmt.Errorf("unrecognized entry kind %q (want %q, %q or %q)", kind, EntryKindProvider, EntryKindWorkflow, EntryKindRecipe)
 	}
 	slug = segments[1]
 	restPath = restOf(segments, 2)

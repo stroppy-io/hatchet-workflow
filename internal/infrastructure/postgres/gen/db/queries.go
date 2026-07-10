@@ -1147,23 +1147,24 @@ func (q *Queries) UpdateRegistrationRequest(ctx context.Context, arg UpdateRegis
 	return tag.RowsAffected(), err
 }
 
-const createRecipeRecordSQL = `insert into recipe_records (id, tenant_id, name, version, created_at, updated_at, data)
-values ($1, $2, $3, $4, now(), now(), $5);`
+const createRecipeRecordSQL = `insert into recipe_records (id, tenant_id, name, version, created_at, updated_at, source_ref, data)
+values ($1, $2, $3, $4, now(), now(), $5, $6);`
 
 type CreateRecipeRecordParams struct {
-	ID       any
-	TenantID any
-	Name     any
-	Version  any
-	Data     any
+	ID        any
+	TenantID  any
+	Name      any
+	Version   any
+	SourceRef any
+	Data      any
 }
 
 func (q *Queries) CreateRecipeRecord(ctx context.Context, arg CreateRecipeRecordParams) error {
-	_, err := q.db.Exec(ctx, createRecipeRecordSQL, arg.ID, arg.TenantID, arg.Name, arg.Version, arg.Data)
+	_, err := q.db.Exec(ctx, createRecipeRecordSQL, arg.ID, arg.TenantID, arg.Name, arg.Version, arg.SourceRef, arg.Data)
 	return err
 }
 
-const getRecipeRecordSQL = `select data from recipe_records where tenant_id = $1 and id = $2;`
+const getRecipeRecordSQL = `select source_ref, data from recipe_records where tenant_id = $1 and id = $2;`
 
 type GetRecipeRecordParams struct {
 	TenantID string
@@ -1171,20 +1172,22 @@ type GetRecipeRecordParams struct {
 }
 
 type GetRecipeRecordRow struct {
-	Data json.RawMessage
+	SourceRef string
+	Data      json.RawMessage
 }
 
 func (q *Queries) GetRecipeRecord(ctx context.Context, arg GetRecipeRecordParams) (GetRecipeRecordRow, error) {
 	row := q.db.QueryRow(ctx, getRecipeRecordSQL, arg.TenantID, arg.ID)
 	var i GetRecipeRecordRow
-	err := row.Scan(&i.Data)
+	err := row.Scan(&i.SourceRef, &i.Data)
 	return i, err
 }
 
-const listRecipeRecordsSQL = `select data from recipe_records where tenant_id = $1 order by name, version;`
+const listRecipeRecordsSQL = `select source_ref, data from recipe_records where tenant_id = $1 order by name, version;`
 
 type ListRecipeRecordsRow struct {
-	Data json.RawMessage
+	SourceRef string
+	Data      json.RawMessage
 }
 
 func (q *Queries) ListRecipeRecords(ctx context.Context, tenantID string) ([]ListRecipeRecordsRow, error) {
@@ -1196,7 +1199,7 @@ func (q *Queries) ListRecipeRecords(ctx context.Context, tenantID string) ([]Lis
 	var items []ListRecipeRecordsRow
 	for rows.Next() {
 		var i ListRecipeRecordsRow
-		if err := rows.Scan(&i.Data); err != nil {
+		if err := rows.Scan(&i.SourceRef, &i.Data); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -1207,7 +1210,7 @@ func (q *Queries) ListRecipeRecords(ctx context.Context, tenantID string) ([]Lis
 	return items, nil
 }
 
-const getLatestRecipeRecordByNameSQL = `select data from recipe_records where tenant_id = $1 and name = $2
+const getLatestRecipeRecordByNameSQL = `select source_ref, data from recipe_records where tenant_id = $1 and name = $2
 order by version desc limit 1;`
 
 type GetLatestRecipeRecordByNameParams struct {
@@ -1216,13 +1219,14 @@ type GetLatestRecipeRecordByNameParams struct {
 }
 
 type GetLatestRecipeRecordByNameRow struct {
-	Data json.RawMessage
+	SourceRef string
+	Data      json.RawMessage
 }
 
 func (q *Queries) GetLatestRecipeRecordByName(ctx context.Context, arg GetLatestRecipeRecordByNameParams) (GetLatestRecipeRecordByNameRow, error) {
 	row := q.db.QueryRow(ctx, getLatestRecipeRecordByNameSQL, arg.TenantID, arg.Name)
 	var i GetLatestRecipeRecordByNameRow
-	err := row.Scan(&i.Data)
+	err := row.Scan(&i.SourceRef, &i.Data)
 	return i, err
 }
 
@@ -1235,6 +1239,26 @@ type DeleteRecipeRecordParams struct {
 
 func (q *Queries) DeleteRecipeRecord(ctx context.Context, arg DeleteRecipeRecordParams) (int64, error) {
 	tag, err := q.db.Exec(ctx, deleteRecipeRecordSQL, arg.TenantID, arg.ID)
+	return tag.RowsAffected(), err
+}
+
+const updateRecipeRecordSourceRefSQL = `-- Persists a healed/materialized source_ref onto an existing row, and
+-- refreshes data (the caller passes rec with Bundle.Files already stripped)
+-- so the row's git ref and its protojson blob change atomically — see
+-- healRecipeSourceRef's doc for why data must stop embedding file bytes the
+-- moment a row's ref is healed.
+update recipe_records set source_ref = $1, data = $2, updated_at = now()
+where tenant_id = $3 and id = $4;`
+
+type UpdateRecipeRecordSourceRefParams struct {
+	SourceRef string
+	Data      json.RawMessage
+	TenantID  string
+	ID        string
+}
+
+func (q *Queries) UpdateRecipeRecordSourceRef(ctx context.Context, arg UpdateRecipeRecordSourceRefParams) (int64, error) {
+	tag, err := q.db.Exec(ctx, updateRecipeRecordSourceRefSQL, arg.SourceRef, arg.Data, arg.TenantID, arg.ID)
 	return tag.RowsAffected(), err
 }
 

@@ -21,6 +21,7 @@ import (
 	dslpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/dsl"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/iam"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
+	catalogsvc "github.com/stroppy-io/stroppy-cloud/internal/services/catalog"
 	dslservice "github.com/stroppy-io/stroppy-cloud/internal/services/dsl"
 )
 
@@ -178,6 +179,111 @@ func TestGetRecipeMissingTenantIsInvalidArgument(t *testing.T) {
 	_, err := svc.GetRecipe(context.Background(), &api.GetRecipeRequest{Id: "some-id"})
 	if status.Code(err) != codes.InvalidArgument {
 		t.Fatalf("status = %s, want %s; err=%v", status.Code(err), codes.InvalidArgument, err)
+	}
+}
+
+// TestGetRecipeHealsLegacyRowIntoBundleStore is the lazy-migration
+// regression test for this task's "2 existing rows" requirement: a row
+// written before source_ref existed (files embedded in the row's own
+// Bundle, source_ref == "" — exactly recipe_records' pre-migration shape on
+// the live stand) must still resolve correctly on GetRecipe AND get healed
+// in place, so a second read never touches the legacy path again. Mirrors
+// catalog's TestXxxHealsLegacyRef-style coverage for healSourceRef.
+func TestGetRecipeHealsLegacyRowIntoBundleStore(t *testing.T) {
+	repo := newFakeRecipeRepo()
+	bundles := catalogsvc.NewMemoryBundleStore()
+	svc := NewService(Deps{Repo: repo, Authn: fakeAuthn{}, Checker: stubChecker(nil), Bundles: bundles})
+
+	// Seed a legacy row directly into the repo — bypassing CreateRecipe (which
+	// always writes through Bundles today) — to reproduce the pre-migration
+	// on-disk shape: Bundle.Files populated, source_ref empty.
+	legacy := &models.RecipeRecord{
+		Entity:  &common.Entity{Id: "legacy-1", TenantId: "tenant-1", Name: "legacy-pg"},
+		Bundle:  newBundle(),
+		Version: 1,
+	}
+	if err := repo.Create(context.Background(), legacy, ""); err != nil {
+		t.Fatalf("seed legacy row: %v", err)
+	}
+
+	resp, err := svc.GetRecipe(context.Background(), &api.GetRecipeRequest{TenantId: "tenant-1", Id: "legacy-1"})
+	if err != nil {
+		t.Fatalf("get legacy recipe: %v", err)
+	}
+	if string(resp.GetRecipe().GetBundle().GetFiles()["cluster.yaml"]) != clusterYAML {
+		t.Fatal("healed recipe bundle bytes do not match the legacy row's original files")
+	}
+
+	healedRef := repo.sourceRefByID["legacy-1"]
+	if healedRef == "" {
+		t.Fatal("source_ref was not persisted onto the row after healing")
+	}
+	// The row's own persisted envelope must no longer duplicate the bytes
+	// git (Bundles) now owns — the single-storage-model invariant.
+	if len(repo.byTenantID["tenant-1"]["legacy-1"].GetBundle().GetFiles()) != 0 {
+		t.Fatal("legacy row's stored Bundle.Files was not stripped after healing")
+	}
+	// The healed ref must actually be readable from Bundles — proof the
+	// migration really landed the bytes in the (now) canonical store, not
+	// just a ref string.
+	healedFiles, err := bundles.Read(context.Background(), healedRef)
+	if err != nil {
+		t.Fatalf("read healed ref from bundle store: %v", err)
+	}
+	if string(healedFiles["cluster.yaml"]) != clusterYAML {
+		t.Fatal("healed ref in bundle store does not contain the legacy bundle's bytes")
+	}
+
+	// A second read must go straight through the now-healed ref — it must
+	// not fail even if the row's in-memory legacy fallback (Bundle.Files) is
+	// now empty, proving resolveBundle never falls back to it once healed.
+	second, err := svc.GetRecipe(context.Background(), &api.GetRecipeRequest{TenantId: "tenant-1", Id: "legacy-1"})
+	if err != nil {
+		t.Fatalf("get healed recipe (second read): %v", err)
+	}
+	if string(second.GetRecipe().GetBundle().GetFiles()["cluster.yaml"]) != clusterYAML {
+		t.Fatal("second read after healing returned different bytes")
+	}
+}
+
+// TestStartRunHealsLegacyRowAndLaunches proves StartRun — the product's
+// core path — still works end-to-end for a pre-migration legacy row: it
+// must heal the row's bundle into Bundles and launch the workflow with the
+// exact same bytes, with no behavior difference visible to the caller.
+func TestStartRunHealsLegacyRowAndLaunches(t *testing.T) {
+	repo := newFakeRecipeRepo()
+	bundles := catalogsvc.NewMemoryBundleStore()
+	runs := newFakeRunRepo()
+	workflows := newFakeRecipeWorkflows(nil)
+	svc := NewService(Deps{
+		Repo: repo, Authn: fakeAuthn{}, Checker: stubChecker(nil),
+		Bundles: bundles, Runs: runs, Workflows: workflows,
+	})
+
+	legacy := &models.RecipeRecord{
+		Entity:  &common.Entity{Id: "legacy-1", TenantId: "tenant-1", Name: "legacy-pg"},
+		Bundle:  newBundle(),
+		Version: 1,
+	}
+	if err := repo.Create(context.Background(), legacy, ""); err != nil {
+		t.Fatalf("seed legacy row: %v", err)
+	}
+
+	resp, err := svc.StartRun(context.Background(), &api.StartRunRequest{TenantId: "tenant-1", RecipeId: "legacy-1"})
+	if err != nil {
+		t.Fatalf("start run: %v", err)
+	}
+	if resp.GetRun() == nil {
+		t.Fatal("expected a minted run")
+	}
+	if len(workflows.launched) != 1 {
+		t.Fatalf("workflows launched %d times, want 1", len(workflows.launched))
+	}
+	if string(workflows.launched[0].bundle["cluster.yaml"]) != clusterYAML {
+		t.Fatal("workflow was launched with different bytes than the legacy row's bundle")
+	}
+	if repo.sourceRefByID["legacy-1"] == "" {
+		t.Fatal("legacy row was not healed as a side effect of StartRun")
 	}
 }
 
@@ -1178,41 +1284,52 @@ func (fakeAuthn) Caller(context.Context) (*iam.AccessClaims, error) {
 }
 
 // fakeRecipeRepo is an in-memory RecipeRepo keyed by (tenantID, id), with a
-// name index for GetLatestByName.
+// name index for GetLatestByName. sourceRefByID mirrors the postgres
+// RecipeRepo's separate source_ref column (see recipe.go's package doc): a
+// row's stored *models.RecipeRecord itself no longer carries Bundle.Files
+// once created through the service (CreateRecipe strips it before Create),
+// exactly matching production behavior.
 type fakeRecipeRepo struct {
-	byTenantID map[string]map[string]*models.RecipeRecord
+	byTenantID    map[string]map[string]*models.RecipeRecord
+	sourceRefByID map[string]string
 }
 
 func newFakeRecipeRepo() *fakeRecipeRepo {
-	return &fakeRecipeRepo{byTenantID: map[string]map[string]*models.RecipeRecord{}}
+	return &fakeRecipeRepo{
+		byTenantID:    map[string]map[string]*models.RecipeRecord{},
+		sourceRefByID: map[string]string{},
+	}
 }
 
-func (r *fakeRecipeRepo) Create(_ context.Context, rec *models.RecipeRecord) error {
+func (r *fakeRecipeRepo) Create(_ context.Context, rec *models.RecipeRecord, sourceRef string) error {
 	tenantID := rec.GetEntity().GetTenantId()
 	if r.byTenantID[tenantID] == nil {
 		r.byTenantID[tenantID] = map[string]*models.RecipeRecord{}
 	}
 	r.byTenantID[tenantID][rec.GetEntity().GetId()] = rec
+	r.sourceRefByID[rec.GetEntity().GetId()] = sourceRef
 	return nil
 }
 
-func (r *fakeRecipeRepo) Get(_ context.Context, tenantID, id string) (*models.RecipeRecord, error) {
+func (r *fakeRecipeRepo) Get(_ context.Context, tenantID, id string) (*models.RecipeRecord, string, error) {
 	rec, ok := r.byTenantID[tenantID][id]
 	if !ok {
-		return nil, derrors.NotFound("recipe", "recipe not found")
+		return nil, "", derrors.NotFound("recipe", "recipe not found")
 	}
-	return rec, nil
+	return rec, r.sourceRefByID[id], nil
 }
 
-func (r *fakeRecipeRepo) List(_ context.Context, tenantID string) ([]*models.RecipeRecord, error) {
+func (r *fakeRecipeRepo) List(_ context.Context, tenantID string) ([]*models.RecipeRecord, []string, error) {
 	out := make([]*models.RecipeRecord, 0, len(r.byTenantID[tenantID]))
+	refs := make([]string, 0, len(r.byTenantID[tenantID]))
 	for _, rec := range r.byTenantID[tenantID] {
 		out = append(out, rec)
+		refs = append(refs, r.sourceRefByID[rec.GetEntity().GetId()])
 	}
-	return out, nil
+	return out, refs, nil
 }
 
-func (r *fakeRecipeRepo) GetLatestByName(_ context.Context, tenantID, name string) (*models.RecipeRecord, error) {
+func (r *fakeRecipeRepo) GetLatestByName(_ context.Context, tenantID, name string) (*models.RecipeRecord, string, error) {
 	var latest *models.RecipeRecord
 	for _, rec := range r.byTenantID[tenantID] {
 		if rec.GetEntity().GetName() != name {
@@ -1223,9 +1340,9 @@ func (r *fakeRecipeRepo) GetLatestByName(_ context.Context, tenantID, name strin
 		}
 	}
 	if latest == nil {
-		return nil, derrors.NotFound("recipe", "recipe not found")
+		return nil, "", derrors.NotFound("recipe", "recipe not found")
 	}
-	return latest, nil
+	return latest, r.sourceRefByID[latest.GetEntity().GetId()], nil
 }
 
 func (r *fakeRecipeRepo) Delete(_ context.Context, tenantID, id string) error {
@@ -1233,6 +1350,20 @@ func (r *fakeRecipeRepo) Delete(_ context.Context, tenantID, id string) error {
 		return derrors.NotFound("recipe", "recipe not found")
 	}
 	delete(r.byTenantID[tenantID], id)
+	delete(r.sourceRefByID, id)
+	return nil
+}
+
+// UpdateSourceRef persists a healed sourceRef (and rec's refreshed
+// envelope) onto an existing row — the lazy-migration write path.
+func (r *fakeRecipeRepo) UpdateSourceRef(_ context.Context, rec *models.RecipeRecord, sourceRef string) error {
+	tenantID := rec.GetEntity().GetTenantId()
+	id := rec.GetEntity().GetId()
+	if _, ok := r.byTenantID[tenantID][id]; !ok {
+		return derrors.NotFound("recipe", "recipe not found")
+	}
+	r.byTenantID[tenantID][id] = rec
+	r.sourceRefByID[id] = sourceRef
 	return nil
 }
 

@@ -66,6 +66,54 @@ func TestAuthorizer_InstanceScope_RequiresPlatformAdmin(t *testing.T) {
 	}
 }
 
+// TestAuthorizer_RecipeScope_InstanceLevelRejectedEvenForAdmin asserts
+// EntryKindRecipe's documented invariant: unlike provider/workflow (where a
+// platform admin CAN author the instance repo — see the test above), a
+// recipe is always tenant-owned and has NO instance level at all — not even
+// a platform admin credential may open "/ide/instance/recipe/...". This is
+// the requirement, not merely today's behavior: a future refactor that
+// accidentally let IsAdmin's short-circuit cover this path (the way it does
+// for org scopes) would silently open a repo namespace this product
+// decision says must not exist.
+func TestAuthorizer_RecipeScope_InstanceLevelRejectedEvenForAdmin(t *testing.T) {
+	a := &Authorizer{
+		Tokens: fakeTokenVerifier{claims: map[string]*iampb.AccessClaims{
+			"admin-tok": {AccountId: "acc-1", IsAdmin: true},
+		}},
+	}
+	if a.CanAuthor(req("/ide/instance/recipe/pg-ha/", "admin-tok")) {
+		t.Fatal("even a platform admin must NOT be able to author an instance-level recipe scope — recipes have no instance level")
+	}
+}
+
+// TestAuthorizer_RecipeScope_CrossTenantDenied is the recipe analogue of
+// TestAuthorizer_OrgScope_RequiresAuthoringPermissionInThatTenant: a caller
+// holding RESOURCE_RECIPE authoring rights in tenant-acme must not be able
+// to open tenant-beta's recipe repo by swapping the URL's org slug.
+func TestAuthorizer_RecipeScope_CrossTenantDenied(t *testing.T) {
+	tenants := fakeTenantResolver{bySlug: map[string]*iampb.Tenant{
+		"acme": {Id: "tenant-acme"},
+		"beta": {Id: "tenant-beta"},
+	}}
+	perms := fakePermResolver{perms: map[string][]*iampb.Permission{
+		"acc-1|tenant-acme": {{Resource: iampb.Resource_RESOURCE_RECIPE, Action: iampb.Action_ACTION_UPDATE}},
+		// acc-1 has NO permissions in tenant-beta.
+	}}
+	a := &Authorizer{
+		Tokens: fakeTokenVerifier{claims: map[string]*iampb.AccessClaims{
+			"acc-1-tok": {AccountId: "acc-1"},
+		}},
+		Perms:   perms,
+		Tenants: tenants,
+	}
+	if !a.CanAuthor(req("/ide/org/acme/recipe/pg-ha/", "acc-1-tok")) {
+		t.Fatal("caller with RESOURCE_RECIPE UPDATE in tenant-acme must be able to author acme's recipe entry")
+	}
+	if a.CanAuthor(req("/ide/org/beta/recipe/pg-ha/", "acc-1-tok")) {
+		t.Fatal("caller with no membership/permission in tenant-beta must NOT be able to author beta's recipe repo — cross-tenant leak")
+	}
+}
+
 func TestAuthorizer_OrgScope_RequiresAuthoringPermissionInThatTenant(t *testing.T) {
 	tenants := fakeTenantResolver{bySlug: map[string]*iampb.Tenant{
 		"acme": {Id: "tenant-acme"},

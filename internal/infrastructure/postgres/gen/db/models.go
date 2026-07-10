@@ -37,6 +37,7 @@ type RecipeRecords struct {
 	Version   int32
 	CreatedAt time.Time
 	UpdatedAt time.Time
+	SourceRef string
 	Data      json.RawMessage
 }
 

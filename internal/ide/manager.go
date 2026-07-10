@@ -166,6 +166,14 @@ func (m *Manager) giteaOwnerRepo(ctx context.Context, scope Scope) (owner, repo 
 	if scope.EntryKind == "" || scope.EntrySlug == "" {
 		return "", "", fmt.Errorf("ide: scope %q names no catalog entry (missing kind/slug)", scope.Key())
 	}
+	if scope.EntryKind == EntryKindRecipe && scope.Kind == ScopeInstance {
+		// Defense in depth: Authorizer.CanAuthor already rejects this scope
+		// shape unconditionally (see its own doc — a recipe is always
+		// tenant-owned), but EnsureRunning must never materialize an
+		// "instance recipe repo" even if some future caller reached here
+		// without going through the authorizer.
+		return "", "", fmt.Errorf("ide: recipe scope has no instance level")
+	}
 	switch scope.Kind {
 	case ScopeInstance:
 		owner = gitrepo.InstanceOrg

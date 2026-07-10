@@ -333,7 +333,7 @@ func Run(ctx context.Context, cfg Config) error {
 		// recipe is tenant-partitioned — pass tenantID through so the lookup
 		// scopes to the caller's tenant.
 		Recipes: adapters.EntityGetterFunc(func(ctx context.Context, tenantID, id string) (*commonEntity, error) {
-			rec, err := store.Recipes().Get(ctx, tenantID, id)
+			rec, _, err := store.Recipes().Get(ctx, tenantID, id)
 			if err != nil {
 				return nil, err
 			}
@@ -649,6 +649,16 @@ func Run(ctx context.Context, cfg Config) error {
 	recipeService := recipesvc.NewService(recipesvc.Deps{
 		Repo:  store.Recipes(),
 		Authn: authn,
+		// Bundles is the SAME BundleStore instance catalogService is wired
+		// with above (catalogBundles: FSBundleStore by default,
+		// GitEntryBundleStore once GITEA_TOKEN is provisioned) — recipes
+		// reuse the exact same repo-per-item git backing catalog entries do,
+		// keyed by (tenant, recipe name) rather than (level, tenant, kind,
+		// slug) — see recipe.recipeBundleIdentity's doc. One shared store,
+		// one shared toggle: GITEA_TOKEN unset means both catalog and
+		// recipe bundles fall back to the filesystem store identically, and
+		// provisioning it later switches both over together.
+		Bundles: catalogBundles,
 		// dslService.CheckBundle (the *DslService method), not the package-level
 		// dslsvc.CheckBundle function: the method applies the same advisory
 		// stroppy-version diagnostic (Task 7's validateStroppyVersion, via the

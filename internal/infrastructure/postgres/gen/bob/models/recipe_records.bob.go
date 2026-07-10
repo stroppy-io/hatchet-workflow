@@ -26,6 +26,7 @@ type RecipeRecord struct {
 	Version   int32           `db:"version" `
 	CreatedAt time.Time       `db:"created_at" `
 	UpdatedAt time.Time       `db:"updated_at" `
+	SourceRef string          `db:"source_ref" `
 	Data      json.RawMessage `db:"data" `
 }
 
@@ -41,7 +42,7 @@ type RecipeRecordsQuery = *psql.ViewQuery[*RecipeRecord, RecipeRecordSlice]
 
 func buildRecipeRecordColumns(tableName string) recipeRecordColumns {
 	columnsExpr := expr.NewColumnsExpr(
-		"id", "tenant_id", "name", "version", "created_at", "updated_at", "data",
+		"id", "tenant_id", "name", "version", "created_at", "updated_at", "source_ref", "data",
 	)
 
 	if tableName != "" {
@@ -57,6 +58,7 @@ func buildRecipeRecordColumns(tableName string) recipeRecordColumns {
 		Version:     buildRecipeRecordColumn(tableName, "version"),
 		CreatedAt:   buildRecipeRecordColumn(tableName, "created_at"),
 		UpdatedAt:   buildRecipeRecordColumn(tableName, "updated_at"),
+		SourceRef:   buildRecipeRecordColumn(tableName, "source_ref"),
 		Data:        buildRecipeRecordColumn(tableName, "data"),
 	}
 }
@@ -70,6 +72,7 @@ type recipeRecordColumns struct {
 	Version    recipeRecordColumn
 	CreatedAt  recipeRecordColumn
 	UpdatedAt  recipeRecordColumn
+	SourceRef  recipeRecordColumn
 	Data       recipeRecordColumn
 }
 
@@ -122,11 +125,12 @@ type RecipeRecordSetter struct {
 	Version   *int32           `db:"version" `
 	CreatedAt *time.Time       `db:"created_at" `
 	UpdatedAt *time.Time       `db:"updated_at" `
+	SourceRef *string          `db:"source_ref" `
 	Data      *json.RawMessage `db:"data" `
 }
 
 func (s RecipeRecordSetter) SetColumns() []string {
-	vals := make([]string, 0, 7)
+	vals := make([]string, 0, 8)
 	if s.ID != nil {
 		vals = append(vals, "id")
 	}
@@ -144,6 +148,9 @@ func (s RecipeRecordSetter) SetColumns() []string {
 	}
 	if s.UpdatedAt != nil {
 		vals = append(vals, "updated_at")
+	}
+	if s.SourceRef != nil {
+		vals = append(vals, "source_ref")
 	}
 	if s.Data != nil {
 		vals = append(vals, "data")
@@ -200,6 +207,14 @@ func (s RecipeRecordSetter) Overwrite(t *RecipeRecord) {
 			return *s.UpdatedAt
 		}()
 	}
+	if s.SourceRef != nil {
+		t.SourceRef = func() string {
+			if s.SourceRef == nil {
+				return *new(string)
+			}
+			return *s.SourceRef
+		}()
+	}
 	if s.Data != nil {
 		t.Data = func() json.RawMessage {
 			if s.Data == nil {
@@ -216,7 +231,7 @@ func (s *RecipeRecordSetter) Apply(q *dialect.InsertQuery) {
 	})
 
 	q.AppendValues(bob.ExpressionFunc(func(ctx context.Context, w io.StringWriter, d bob.Dialect, start int) ([]any, error) {
-		vals := make([]bob.Expression, 7)
+		vals := make([]bob.Expression, 8)
 		if s.ID != nil {
 			vals[0] = psql.Arg(func() string {
 				if s.ID == nil {
@@ -283,15 +298,26 @@ func (s *RecipeRecordSetter) Apply(q *dialect.InsertQuery) {
 			vals[5] = psql.Raw("DEFAULT")
 		}
 
+		if s.SourceRef != nil {
+			vals[6] = psql.Arg(func() string {
+				if s.SourceRef == nil {
+					return *new(string)
+				}
+				return *s.SourceRef
+			}())
+		} else {
+			vals[6] = psql.Raw("DEFAULT")
+		}
+
 		if s.Data != nil {
-			vals[6] = psql.Arg(func() json.RawMessage {
+			vals[7] = psql.Arg(func() json.RawMessage {
 				if s.Data == nil {
 					return *new(json.RawMessage)
 				}
 				return *s.Data
 			}())
 		} else {
-			vals[6] = psql.Raw("DEFAULT")
+			vals[7] = psql.Raw("DEFAULT")
 		}
 
 		return bob.ExpressSlice(ctx, w, d, start, vals, "", ", ", "")
@@ -303,7 +329,7 @@ func (s RecipeRecordSetter) UpdateMod() bob.Mod[*dialect.UpdateQuery] {
 }
 
 func (s RecipeRecordSetter) Expressions(prefix ...string) []bob.Expression {
-	exprs := make([]bob.Expression, 0, 7)
+	exprs := make([]bob.Expression, 0, 8)
 
 	if s.ID != nil {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
@@ -344,6 +370,13 @@ func (s RecipeRecordSetter) Expressions(prefix ...string) []bob.Expression {
 		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
 			psql.Quote(append(prefix, "updated_at")...),
 			psql.Arg(s.UpdatedAt),
+		}})
+	}
+
+	if s.SourceRef != nil {
+		exprs = append(exprs, expr.Join{Sep: " = ", Exprs: []bob.Expression{
+			psql.Quote(append(prefix, "source_ref")...),
+			psql.Arg(s.SourceRef),
 		}})
 	}
 
@@ -618,6 +651,7 @@ type recipeRecordWhere[Q psql.Filterable] struct {
 	Version   psql.WhereMod[Q, int32]
 	CreatedAt psql.WhereMod[Q, time.Time]
 	UpdatedAt psql.WhereMod[Q, time.Time]
+	SourceRef psql.WhereMod[Q, string]
 	Data      psql.WhereMod[Q, json.RawMessage]
 }
 
@@ -633,6 +667,7 @@ func buildRecipeRecordWhere[Q psql.Filterable](cols recipeRecordColumns) recipeR
 		Version:   psql.Where[Q, int32](cols.Version.Expression),
 		CreatedAt: psql.Where[Q, time.Time](cols.CreatedAt.Expression),
 		UpdatedAt: psql.Where[Q, time.Time](cols.UpdatedAt.Expression),
+		SourceRef: psql.Where[Q, string](cols.SourceRef.Expression),
 		Data:      psql.Where[Q, json.RawMessage](cols.Data.Expression),
 	}
 }

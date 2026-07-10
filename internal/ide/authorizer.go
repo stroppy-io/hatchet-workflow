@@ -104,6 +104,15 @@ func (a *Authorizer) CanAuthor(r *http.Request) bool {
 	if a.Tokens == nil {
 		return false
 	}
+	if scope.EntryKind == EntryKindRecipe && scope.Kind == ScopeInstance {
+		// A recipe is always tenant-owned (see recipe.recipeBundleIdentity's
+		// doc — there is no LEVEL_INSTANCE recipe): reject BEFORE the
+		// IsAdmin short-circuit below, so even a platform admin cannot open
+		// an instance-level recipe scope — unlike provider/workflow, there
+		// is no legitimate "instance recipe repo" for any credential to
+		// open, admin or not.
+		return false
+	}
 	claims, ok := a.verifiedClaims(r)
 	if !ok {
 		return false
@@ -164,6 +173,8 @@ func resourceForEntryKind(entryKind string) (iampb.Resource, bool) {
 		return iampb.Resource_RESOURCE_PROVIDER, true
 	case EntryKindWorkflow:
 		return iampb.Resource_RESOURCE_WORKFLOW, true
+	case EntryKindRecipe:
+		return iampb.Resource_RESOURCE_RECIPE, true
 	default:
 		return iampb.Resource_RESOURCE_UNSPECIFIED, false
 	}
