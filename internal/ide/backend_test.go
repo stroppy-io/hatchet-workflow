@@ -21,7 +21,7 @@ func newFakeRunner() *fakeRunner { return &fakeRunner{byKey: map[string]string{}
 
 func (f *fakeRunner) EnsureRunning(_ context.Context, scope Scope) (string, error) {
 	f.calls = append(f.calls, scope)
-	addr := "http://stroppy-ide-" + scope.Key() + ":8443"
+	addr := "http://stroppy-ide-" + scope.Key() + ":" + codeServerPort
 	f.byKey[scope.Key()] = addr
 	return addr, nil
 }
@@ -103,5 +103,35 @@ func TestBackendResolver_NilManagerFailsClosed(t *testing.T) {
 	b := &BackendResolver{}
 	if _, err := b.Backend(httptest.NewRequest(http.MethodGet, "/ide/instance/provider/docker/", nil)); err == nil {
 		t.Fatal("expected an error with no Manager configured")
+	}
+}
+
+// TestBackendResolver_RewritesPathToScopeRest guards the wiring: code-server
+// serves from its own root, so the /ide/<scope>/… prefix must be peeled off
+// before the gateway proxies. Leaving it on made every request reach the
+// editor as an unknown path.
+func TestBackendResolver_RewritesPathToScopeRest(t *testing.T) {
+	runner := newFakeRunner()
+	b := &BackendResolver{Manager: runner}
+
+	req := httptest.NewRequest(http.MethodGet, "/ide/instance/provider/yandex/stable/manifest.json", nil)
+	if _, err := b.Backend(req); err != nil {
+		t.Fatalf("backend: %v", err)
+	}
+	if got, want := req.URL.Path, "/stable/manifest.json"; got != want {
+		t.Fatalf("proxied path = %q, want %q", got, want)
+	}
+}
+
+func TestBackendResolver_RewritesBareScopePathToRoot(t *testing.T) {
+	runner := newFakeRunner()
+	b := &BackendResolver{Manager: runner}
+
+	req := httptest.NewRequest(http.MethodGet, "/ide/instance/provider/yandex/", nil)
+	if _, err := b.Backend(req); err != nil {
+		t.Fatalf("backend: %v", err)
+	}
+	if got, want := req.URL.Path, "/"; got != want {
+		t.Fatalf("proxied path = %q, want %q", got, want)
 	}
 }

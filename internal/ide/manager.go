@@ -258,7 +258,7 @@ func (m *Manager) EnsureRunning(ctx context.Context, scope Scope) (string, error
 		// catalog entry's repo root instead of an empty $HOME.
 		Cmd: []string{
 			"--auth", "none",
-			"--bind-addr", "0.0.0.0:8080",
+			"--bind-addr", "0.0.0.0:" + codeServerPort,
 			workspaceContainerPath,
 		},
 	}
@@ -291,8 +291,13 @@ func (m *Manager) Stop(ctx context.Context, scope Scope) error {
 	return nil
 }
 
+// codeServerPort is the port EnsureRunning tells code-server to bind
+// (--bind-addr above). The gateway proxies to the container by name on this
+// port; nothing is published to the host.
+const codeServerPort = "8080"
+
 func containerBaseURL(name string) string {
-	return "http://" + name + ":8443"
+	return "http://" + name + ":" + codeServerPort
 }
 
 // workspaceMount builds the mount.Mount for scope's code-server container's

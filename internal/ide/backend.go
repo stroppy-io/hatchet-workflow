@@ -54,5 +54,13 @@ func (b *BackendResolver) Backend(r *http.Request) (string, error) {
 		}
 		scope.OrgSlug = tenant.GetId()
 	}
-	return b.Manager.EnsureRunning(r.Context(), scope)
+	target, err := b.Manager.EnsureRunning(r.Context(), scope)
+	if err != nil {
+		return "", err
+	}
+	// code-server serves from its own root, not from /ide/<scope>/…. Rewrite
+	// the request onto the scope-relative remainder ParseScope already peeled
+	// off, or every proxied request reaches the editor as an unknown path.
+	r.URL.Path = scope.Rest
+	return target, nil
 }
