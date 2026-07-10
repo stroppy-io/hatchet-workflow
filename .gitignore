@@ -23,6 +23,7 @@ tests/e2e/test-results
 extensions/stroppy-yaml-lsp-client/node_modules
 extensions/stroppy-yaml-lsp-client/out
 extensions/stroppy-yaml-lsp-client/dist
+/build/ide-image
 protocols/easyp_vendor
 /cli
 .superpowers/

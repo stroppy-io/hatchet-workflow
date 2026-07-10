@@ -3,7 +3,7 @@
         agent-image test-unit test-db test-full smoke smoke-clean \
         tools proto-tools db-gen migrate-generate migrate-clear \
         lint fmt docker-build docker-push docker-up docker-down docker-logs ide-token \
-        lsp-binary ide-extension ide-image \
+        lsp-binary ide-extension ide-terraform-extension ide-image \
         serve docs-install docs-dev docs-build web-install web-dev web-build \
         clean release
 
@@ -209,6 +209,18 @@ ide-token: ## Provision the Gitea service account + IDE access token (prints .en
 # Embedded IDE: stroppy-yaml LSP + code-server extension
 # ============================================================
 IDE_IMAGE_TAG ?= stroppy-ide:latest
+IDE_IMAGE_BUILD_DIR ?= build/ide-image
+
+# Pinned Terraform extension: HashiCorp publishes hashicorp.terraform to
+# Open VSX (code-server's extension registry -- it does not use the
+# Microsoft Marketplace), MPL-2.0 licensed. The linux-x64 build bundles its
+# own terraform-ls binary (no runtime download), verified byte-for-byte
+# against HashiCorp's official terraform-ls release -- see
+# .superpowers/sdd/ide-terraform-report.md.
+IDE_TERRAFORM_EXT_VERSION ?= 2.39.4
+IDE_TERRAFORM_EXT_PLATFORM ?= linux-x64
+IDE_TERRAFORM_EXT_URL := https://open-vsx.org/api/hashicorp/terraform/$(IDE_TERRAFORM_EXT_PLATFORM)/$(IDE_TERRAFORM_EXT_VERSION)/file/hashicorp.terraform-$(IDE_TERRAFORM_EXT_VERSION)@$(IDE_TERRAFORM_EXT_PLATFORM).vsix
+IDE_TERRAFORM_EXT_SHA256 ?= e919cb091d479e3cc26c8d990531421824f121d34f1a487b7b83b565039ee790
 
 lsp-binary: ## Build the stroppy-yaml-lsp binary (bind-mounted into code-server via IDE_LSP_BINARY_PATH)
 	@mkdir -p bin
@@ -217,8 +229,15 @@ lsp-binary: ## Build the stroppy-yaml-lsp binary (bind-mounted into code-server 
 ide-extension: ## Compile + package the stroppy-yaml code-server extension (.vsix under extensions/stroppy-yaml-lsp-client/dist)
 	cd extensions/stroppy-yaml-lsp-client && npm ci && npm run compile && mkdir -p dist && npm run package
 
-ide-image: ide-extension ## Build a code-server image with the stroppy-yaml extension baked in (point IDE_IMAGE at $(IDE_IMAGE_TAG))
-	docker build -f deployments/docker/stroppy-ide.Dockerfile -t $(IDE_IMAGE_TAG) extensions/stroppy-yaml-lsp-client/dist
+ide-terraform-extension: ## Download + checksum-verify the pinned hashicorp.terraform VSIX (Open VSX) into $(IDE_IMAGE_BUILD_DIR)
+	@mkdir -p $(IDE_IMAGE_BUILD_DIR)
+	curl -fsSL -o $(IDE_IMAGE_BUILD_DIR)/hashicorp.terraform.vsix $(IDE_TERRAFORM_EXT_URL)
+	echo "$(IDE_TERRAFORM_EXT_SHA256)  $(IDE_IMAGE_BUILD_DIR)/hashicorp.terraform.vsix" | sha256sum -c -
+
+ide-image: ide-extension ide-terraform-extension ## Build a code-server image with the stroppy-yaml + terraform extensions baked in (point IDE_IMAGE at $(IDE_IMAGE_TAG))
+	@mkdir -p $(IDE_IMAGE_BUILD_DIR)
+	cp extensions/stroppy-yaml-lsp-client/dist/*.vsix $(IDE_IMAGE_BUILD_DIR)/stroppy-yaml-lsp-client.vsix
+	docker build -f deployments/docker/stroppy-ide.Dockerfile -t $(IDE_IMAGE_TAG) $(IDE_IMAGE_BUILD_DIR)
 
 # ============================================================
 # Smoke — full local stack + minimal docker run end-to-end
