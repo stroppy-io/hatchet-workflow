@@ -5,6 +5,8 @@ import (
 	"testing"
 
 	"github.com/docker/docker/client"
+
+	"github.com/stroppy-io/stroppy-cloud/internal/gitrepo"
 )
 
 type fakeRepoEnsurer struct {
@@ -40,10 +42,26 @@ func TestContainerName_SanitizesScopeKey(t *testing.T) {
 	}
 }
 
-func TestManager_GiteaOwnerRepo_InstanceRequiresInstanceOwner(t *testing.T) {
+func TestManager_GiteaOwnerRepo_InstanceRequiresRepoEnsurer(t *testing.T) {
 	m := NewManager(Config{})
-	if _, _, err := m.giteaOwnerRepo(context.Background(), Scope{Kind: ScopeInstance}); err == nil {
-		t.Fatal("expected error when InstanceOwner is unconfigured")
+	if _, _, err := m.giteaOwnerRepo(context.Background(), Scope{Kind: ScopeInstance, EntryKind: EntryKindProvider, EntrySlug: "docker"}); err == nil {
+		t.Fatal("expected error when Manager has no RepoEnsurer")
+	}
+}
+
+func TestManager_GiteaOwnerRepo_InstanceUsesFixedInstanceOrg(t *testing.T) {
+	ensurer := newFakeRepoEnsurer()
+	m := NewManager(Config{Gitea: ensurer})
+
+	owner, repo, err := m.giteaOwnerRepo(context.Background(), Scope{Kind: ScopeInstance, EntryKind: EntryKindProvider, EntrySlug: "docker"})
+	if err != nil {
+		t.Fatalf("instance: %v", err)
+	}
+	if owner != gitrepo.InstanceOrg {
+		t.Fatalf("owner = %q, want fixed instance org %q", owner, gitrepo.InstanceOrg)
+	}
+	if repo != gitrepo.EntryRepoName(EntryKindProvider, "docker") {
+		t.Fatalf("repo = %q, want %q", repo, gitrepo.EntryRepoName(EntryKindProvider, "docker"))
 	}
 }
 
@@ -51,11 +69,11 @@ func TestManager_GiteaOwnerRepo_OrgEnsuresOrgAndRepoAreDistinctPerTenant(t *test
 	ensurer := newFakeRepoEnsurer()
 	m := NewManager(Config{Gitea: ensurer})
 
-	ownerA, repoA, err := m.giteaOwnerRepo(context.Background(), Scope{Kind: ScopeOrg, OrgSlug: "org-a"})
+	ownerA, repoA, err := m.giteaOwnerRepo(context.Background(), Scope{Kind: ScopeOrg, OrgSlug: "org-a", EntryKind: EntryKindProvider, EntrySlug: "docker"})
 	if err != nil {
 		t.Fatalf("org a: %v", err)
 	}
-	ownerB, repoB, err := m.giteaOwnerRepo(context.Background(), Scope{Kind: ScopeOrg, OrgSlug: "org-b"})
+	ownerB, repoB, err := m.giteaOwnerRepo(context.Background(), Scope{Kind: ScopeOrg, OrgSlug: "org-b", EntryKind: EntryKindProvider, EntrySlug: "docker"})
 	if err != nil {
 		t.Fatalf("org b: %v", err)
 	}
@@ -63,20 +81,49 @@ func TestManager_GiteaOwnerRepo_OrgEnsuresOrgAndRepoAreDistinctPerTenant(t *test
 		t.Fatalf("two different org scopes resolved to the same gitea owner %q", ownerA)
 	}
 	if repoA != repoB {
-		t.Fatalf("expected same repo NAME (%q vs %q) under different owners — isolation is per-owner, not per-repo-name", repoA, repoB)
+		t.Fatalf("expected same repo NAME (%q vs %q) under different owners for the same (kind,slug) — isolation is per-owner, not per-repo-name", repoA, repoB)
 	}
-	if !ensurer.orgs["org-a"] || !ensurer.orgs["org-b"] {
+	if !ensurer.orgs[ownerA] || !ensurer.orgs[ownerB] {
 		t.Fatalf("expected both orgs to be ensured: %+v", ensurer.orgs)
 	}
-	if !ensurer.repos["org-a/"+OrgRepoName] || !ensurer.repos["org-b/"+OrgRepoName] {
-		t.Fatalf("expected both org repos to be ensured: %+v", ensurer.repos)
+	if !ensurer.repos[ownerA+"/"+repoA] || !ensurer.repos[ownerB+"/"+repoB] {
+		t.Fatalf("expected both entry repos to be ensured: %+v", ensurer.repos)
+	}
+}
+
+// TestManager_GiteaOwnerRepo_DifferentKindsGetDifferentRepos proves a
+// provider entry and a workflow entry of the SAME slug, in the SAME org,
+// still resolve to two distinct repos — the IDE must never let a
+// workflow-authoring caller land in a provider's repo just because the
+// slugs happen to match.
+func TestManager_GiteaOwnerRepo_DifferentKindsGetDifferentRepos(t *testing.T) {
+	ensurer := newFakeRepoEnsurer()
+	m := NewManager(Config{Gitea: ensurer})
+
+	_, repoProvider, err := m.giteaOwnerRepo(context.Background(), Scope{Kind: ScopeOrg, OrgSlug: "acme", EntryKind: EntryKindProvider, EntrySlug: "shared-slug"})
+	if err != nil {
+		t.Fatalf("provider: %v", err)
+	}
+	_, repoWorkflow, err := m.giteaOwnerRepo(context.Background(), Scope{Kind: ScopeOrg, OrgSlug: "acme", EntryKind: EntryKindWorkflow, EntrySlug: "shared-slug"})
+	if err != nil {
+		t.Fatalf("workflow: %v", err)
+	}
+	if repoProvider == repoWorkflow {
+		t.Fatalf("provider and workflow entries of the same slug collided onto repo %q", repoProvider)
 	}
 }
 
 func TestManager_GiteaOwnerRepo_OrgWithoutRepoEnsurerFails(t *testing.T) {
 	m := NewManager(Config{})
-	if _, _, err := m.giteaOwnerRepo(context.Background(), Scope{Kind: ScopeOrg, OrgSlug: "acme"}); err == nil {
+	if _, _, err := m.giteaOwnerRepo(context.Background(), Scope{Kind: ScopeOrg, OrgSlug: "acme", EntryKind: EntryKindProvider, EntrySlug: "docker"}); err == nil {
 		t.Fatal("expected error when Manager has no RepoEnsurer for an org scope")
+	}
+}
+
+func TestManager_GiteaOwnerRepo_MissingEntryIdentityFails(t *testing.T) {
+	m := NewManager(Config{Gitea: newFakeRepoEnsurer()})
+	if _, _, err := m.giteaOwnerRepo(context.Background(), Scope{Kind: ScopeInstance}); err == nil {
+		t.Fatal("expected error when scope names no entry kind/slug")
 	}
 }
 
@@ -126,4 +173,49 @@ func TestManager_EnsureRunning_IsIdempotent(t *testing.T) {
 	// needs one. See internal/ide/worktree_test.go for the git-shell-out
 	// logic tested against a local remote instead.
 	t.Skip("requires a live Gitea instance for RemoteURL — see docker compose up -d gitea; not exercised in unit CI")
+}
+
+// TestManager_CrossTenantAndInstanceIsolation is the end-to-end proof this
+// task's hard rule demands: "An org must never reach another tenant's repo
+// or write the instance repo." It drives giteaOwnerRepo (the function
+// EnsureRunning uses to pick the physical repo a code-server container is
+// bind-mounted to) across two tenants and the instance scope, for the
+// SAME (kind, slug) pair, and asserts all three resolve to three distinct
+// (owner, repo) pairs with no overlap.
+func TestManager_CrossTenantAndInstanceIsolation(t *testing.T) {
+	ensurer := newFakeRepoEnsurer()
+	m := NewManager(Config{Gitea: ensurer})
+
+	instOwner, instRepo, err := m.giteaOwnerRepo(context.Background(), Scope{Kind: ScopeInstance, EntryKind: EntryKindProvider, EntrySlug: "docker"})
+	if err != nil {
+		t.Fatalf("instance: %v", err)
+	}
+	orgAOwner, orgARepo, err := m.giteaOwnerRepo(context.Background(), Scope{Kind: ScopeOrg, OrgSlug: "tenant-a", EntryKind: EntryKindProvider, EntrySlug: "docker"})
+	if err != nil {
+		t.Fatalf("org a: %v", err)
+	}
+	orgBOwner, orgBRepo, err := m.giteaOwnerRepo(context.Background(), Scope{Kind: ScopeOrg, OrgSlug: "tenant-b", EntryKind: EntryKindProvider, EntrySlug: "docker"})
+	if err != nil {
+		t.Fatalf("org b: %v", err)
+	}
+
+	type ownerRepo struct{ owner, repo string }
+	seen := map[ownerRepo]string{}
+	for name, or := range map[string]ownerRepo{
+		"instance": {instOwner, instRepo},
+		"org-a":    {orgAOwner, orgARepo},
+		"org-b":    {orgBOwner, orgBRepo},
+	} {
+		if prev, ok := seen[or]; ok {
+			t.Fatalf("%s and %s resolved to the SAME (owner,repo) = %+v — cross-scope repo collision", name, prev, or)
+		}
+		seen[or] = name
+	}
+	// The instance repo lives in the fixed instance org, never a tenant org.
+	if instOwner == orgAOwner || instOwner == orgBOwner {
+		t.Fatalf("instance owner %q collided with a tenant org", instOwner)
+	}
+	if instOwner != gitrepo.InstanceOrg {
+		t.Fatalf("instance owner = %q, want fixed instance org %q", instOwner, gitrepo.InstanceOrg)
+	}
 }

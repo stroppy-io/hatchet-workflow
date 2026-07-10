@@ -63,6 +63,19 @@ var instanceLayout = map[string][]byte{
 // this change actually ships: Bootstrap is only invoked when GiteaBackend/
 // GiteaToken are both set, so existing deployments without Gitea provisioned
 // yet are unaffected).
+//
+// # Post repo-per-entry redesign: this repo is now LEGACY-ONLY
+//
+// Since the repo-per-entry catalog storage redesign ("каждый провайдер или
+// воркфлоу подготовленый это отдельный репозиторий полностью" — see
+// internal/services/catalog.GitEntryBundleStore), no new catalog write ever
+// lands here: every catalog item gets its own repo under gitrepo.InstanceOrg
+// or gitrepo.TenantOrg(tenantID) instead. Bootstrap is still called at boot
+// so this repo continues to exist for
+// internal/services/catalog.GitMonorepoBundleStore, the read-only reader
+// healSourceRef uses to migrate any catalog_entries row whose source_ref
+// still names this repo's old "git:owner/repo/branch/hash" layout into its
+// own brand-new per-entry repo on first read.
 func Bootstrap(ctx context.Context, c *Client) error {
 	if err := c.EnsureRepo(ctx, InstanceRepoOwner, InstanceRepoName, true); err != nil {
 		return fmt.Errorf("gitrepo: ensure instance repo: %w", err)

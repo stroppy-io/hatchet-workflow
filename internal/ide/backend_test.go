@@ -32,7 +32,7 @@ func TestBackendResolver_ResolvesOrgSlugToTenantIdBeforeCallingManager(t *testin
 		Manager: runner,
 		Tenants: fakeTenantResolver{bySlug: map[string]*iampb.Tenant{"acme": {Id: "tenant-acme-id"}}},
 	}
-	addr, err := b.Backend(httptest.NewRequest(http.MethodGet, "/ide/org/acme/file.yaml", nil))
+	addr, err := b.Backend(httptest.NewRequest(http.MethodGet, "/ide/org/acme/provider/docker/file.yaml", nil))
 	if err != nil {
 		t.Fatalf("backend: %v", err)
 	}
@@ -51,7 +51,7 @@ func TestBackendResolver_ResolvesOrgSlugToTenantIdBeforeCallingManager(t *testin
 func TestBackendResolver_InstanceScope_NeedsNoTenantResolution(t *testing.T) {
 	runner := newFakeRunner()
 	b := &BackendResolver{Manager: runner}
-	if _, err := b.Backend(httptest.NewRequest(http.MethodGet, "/ide/instance/", nil)); err != nil {
+	if _, err := b.Backend(httptest.NewRequest(http.MethodGet, "/ide/instance/provider/docker/", nil)); err != nil {
 		t.Fatalf("backend: %v", err)
 	}
 	if len(runner.calls) != 1 || runner.calls[0].Kind != ScopeInstance {
@@ -65,7 +65,7 @@ func TestBackendResolver_UnknownOrgSlugFailsClosed(t *testing.T) {
 		Manager: runner,
 		Tenants: fakeTenantResolver{bySlug: map[string]*iampb.Tenant{}},
 	}
-	if _, err := b.Backend(httptest.NewRequest(http.MethodGet, "/ide/org/nonexistent/", nil)); err == nil {
+	if _, err := b.Backend(httptest.NewRequest(http.MethodGet, "/ide/org/nonexistent/provider/docker/", nil)); err == nil {
 		t.Fatal("expected an error for an unknown org slug")
 	}
 	if len(runner.calls) != 0 {
@@ -86,11 +86,11 @@ func TestBackendResolver_TwoOrgsNeverShareAScope(t *testing.T) {
 			"beta": {Id: "tenant-b"},
 		}},
 	}
-	addrA, err := b.Backend(httptest.NewRequest(http.MethodGet, "/ide/org/acme/", nil))
+	addrA, err := b.Backend(httptest.NewRequest(http.MethodGet, "/ide/org/acme/provider/docker/", nil))
 	if err != nil {
 		t.Fatalf("acme: %v", err)
 	}
-	addrB, err := b.Backend(httptest.NewRequest(http.MethodGet, "/ide/org/beta/", nil))
+	addrB, err := b.Backend(httptest.NewRequest(http.MethodGet, "/ide/org/beta/provider/docker/", nil))
 	if err != nil {
 		t.Fatalf("beta: %v", err)
 	}
@@ -101,7 +101,7 @@ func TestBackendResolver_TwoOrgsNeverShareAScope(t *testing.T) {
 
 func TestBackendResolver_NilManagerFailsClosed(t *testing.T) {
 	b := &BackendResolver{}
-	if _, err := b.Backend(httptest.NewRequest(http.MethodGet, "/ide/instance/", nil)); err == nil {
+	if _, err := b.Backend(httptest.NewRequest(http.MethodGet, "/ide/instance/provider/docker/", nil)); err == nil {
 		t.Fatal("expected an error with no Manager configured")
 	}
 }

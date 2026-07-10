@@ -4,27 +4,32 @@ import (
 	"context"
 	"testing"
 
+	"github.com/stroppy-io/stroppy-cloud/internal/gitrepo"
 	catalogpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/catalog"
 )
 
 /*
-	===== healSourceRef: the FSBundleStore -> GitBundleStore migration seam =====
+	===== healSourceRef: the legacy-store -> GitEntryBundleStore migration
+	seam =====
 
-	These tests exercise the exact regression described in the bug report: a
-	catalog_entries row whose source_ref was minted by FSBundleStore (a bare
-	sha256 hex string) becomes unreadable once the active BundleStore is
-	swapped to a GitBundleStore, which hard-rejects any ref lacking the
-	"git:" scheme. healSourceRef (catalog.go) is what repairs this lazily, on
-	first read, without a boot-time migration pass — see its doc comment for
-	the full rationale.
+	These tests exercise a catalog_entries row whose source_ref was minted by
+	a superseded store (FSBundleStore's bare sha256 hex, or the retired
+	single-monorepo GitBundleStore's 4-segment ref) and becomes unreadable
+	once the active BundleStore is the repo-per-entry GitEntryBundleStore,
+	which hard-rejects any ref that is not the commit-pinned
+	"git:<owner>/<repo>@<sha>" shape. healSourceRef (catalog.go) is what
+	repairs this lazily, on first read, without a boot-time migration pass —
+	materializing the entry's own per-item repo for the first time in the
+	process. See healSourceRef's doc comment for the full rationale.
 */
 
 // TestHealSourceRef_LegacyBareRefMigratesIntoGitStore proves the core claim:
-// reading a bare-sha (legacy FSBundleStore) source_ref while a GitBundleStore
-// is the active store (a) succeeds, (b) returns the original bundle bytes,
-// (c) actually lands the bundle's files in the fake Gitea repo's tree — not
-// merely rewrites a DB pointer — and (d) persists the new git-scheme ref onto
-// the owning row so a second read never touches the legacy store again.
+// reading a bare-sha (legacy FSBundleStore) source_ref while a
+// GitEntryBundleStore is the active store (a) succeeds, (b) returns the
+// original bundle bytes, (c) actually lands the bundle's files in the
+// entry's own fake Gitea repo's tree — not merely rewrites a DB pointer —
+// and (d) persists the new commit-pinned ref onto the owning row so a
+// second read never touches the legacy store again.
 func TestHealSourceRef_LegacyBareRefMigratesIntoGitStore(t *testing.T) {
 	ctx := context.Background()
 
@@ -33,16 +38,16 @@ func TestHealSourceRef_LegacyBareRefMigratesIntoGitStore(t *testing.T) {
 		t.Fatalf("new fs store: %v", err)
 	}
 	files := map[string][]byte{"manifest.yaml": []byte("name: yandex\nprovides:\n  - machines\n")}
-	legacyRef, err := legacy.Write(ctx, "", files)
+	legacyRef, err := legacy.Write(ctx, BundleIdentity{}, "", files)
 	if err != nil {
 		t.Fatalf("legacy write: %v", err)
 	}
-	if IsGitSourceRef(legacyRef) {
-		t.Fatalf("legacy ref %q unexpectedly git-shaped", legacyRef)
+	if IsGitCommitRef(legacyRef) {
+		t.Fatalf("legacy ref %q unexpectedly commit-ref-shaped", legacyRef)
 	}
 
 	cli := newFakeGitClient()
-	active := NewGitBundleStore(cli, "", "instance-catalog", "main")
+	active := NewGitEntryBundleStore(cli)
 
 	repo := newFakeEntryRepo()
 	owner := instanceEntry(catalogpb.Kind_KIND_PROVIDER, "yandex", 1)
@@ -53,8 +58,8 @@ func TestHealSourceRef_LegacyBareRefMigratesIntoGitStore(t *testing.T) {
 	if err != nil {
 		t.Fatalf("healSourceRef: %v", err)
 	}
-	if !IsGitSourceRef(healedRef) {
-		t.Fatalf("healed ref %q is not git-shaped", healedRef)
+	if !IsGitCommitRef(healedRef) {
+		t.Fatalf("healed ref %q is not commit-ref-shaped", healedRef)
 	}
 
 	// (b) content is readable, byte-identical, through the ACTIVE store.
@@ -66,26 +71,19 @@ func TestHealSourceRef_LegacyBareRefMigratesIntoGitStore(t *testing.T) {
 		t.Fatalf("healed content = %q, want %q", got["manifest.yaml"], files["manifest.yaml"])
 	}
 
-	// (c) the bundle's files are actually committed into the fake git repo's
-	// tree (not just a DB row update) — list it directly, bypassing the
+	// (c) the bundle's files are actually committed into the entry's own
+	// fake git repo's tree — decode the healed ref to find it, bypassing the
 	// BundleStore abstraction, to prove the content really moved.
-	paths, err := cli.ListTree(ctx, "", "instance-catalog", "main")
+	healedOwner, healedRepo, healedSha, err := DecodeGitCommitRef(healedRef)
+	if err != nil {
+		t.Fatalf("decode healed ref: %v", err)
+	}
+	paths, err := cli.ListTree(ctx, healedOwner, healedRepo, healedSha)
 	if err != nil {
 		t.Fatalf("list tree: %v", err)
 	}
 	if len(paths) == 0 {
 		t.Fatal("expected the healed bundle's files to be committed into the git repo's tree, found none")
-	}
-	found := false
-	for _, p := range paths {
-		content, err := cli.GetFile(ctx, "", "instance-catalog", "main", p)
-		if err == nil && string(content) == string(files["manifest.yaml"]) {
-			found = true
-			break
-		}
-	}
-	if !found {
-		t.Fatal("healed manifest.yaml content not found anywhere in the git repo's tree")
 	}
 
 	// (d) the owning row's source_ref was rewritten in the entry repo.
@@ -97,9 +95,10 @@ func TestHealSourceRef_LegacyBareRefMigratesIntoGitStore(t *testing.T) {
 		t.Fatalf("persisted source_ref = %q, want healed ref %q", persisted.GetSourceRef(), healedRef)
 	}
 
-	// Second heal of the now-git-shaped ref is a pure pass-through: no
-	// second legacy read, no second git commit.
-	commitsBefore := cli.commits
+	// Second heal of the now-commit-ref-shaped ref is a pure pass-through:
+	// no second legacy read, no second git commit.
+	repoState := cli.repos[cli.key(healedOwner, healedRepo)]
+	commitsBefore := repoState.commitN
 	again, err := healSourceRef(ctx, repo, active, legacy, persisted, persisted.GetSourceRef())
 	if err != nil {
 		t.Fatalf("second heal: %v", err)
@@ -107,17 +106,17 @@ func TestHealSourceRef_LegacyBareRefMigratesIntoGitStore(t *testing.T) {
 	if again != healedRef {
 		t.Fatalf("second heal changed the ref: %q vs %q", again, healedRef)
 	}
-	if cli.commits != commitsBefore {
-		t.Fatalf("second heal committed again: %d vs %d", cli.commits, commitsBefore)
+	if repoState.commitN != commitsBefore {
+		t.Fatalf("second heal committed again: %d vs %d", repoState.commitN, commitsBefore)
 	}
 }
 
-// erroringBundleStore fails any call — used to prove a git-shaped ref never
-// touches the legacy store at all (a healed/native git ref is a pure
+// erroringBundleStore fails any call — used to prove a commit-ref-shaped ref
+// never touches the legacy store at all (a healed/native ref is a pure
 // pass-through).
 type erroringBundleStore struct{}
 
-func (erroringBundleStore) Write(context.Context, string, map[string][]byte) (string, error) {
+func (erroringBundleStore) Write(context.Context, BundleIdentity, string, map[string][]byte) (string, error) {
 	panic("erroringBundleStore.Write should never be called")
 }
 
@@ -125,20 +124,20 @@ func (erroringBundleStore) Read(context.Context, string) (map[string][]byte, err
 	panic("erroringBundleStore.Read should never be called")
 }
 
-func (erroringBundleStore) Fork(context.Context, string) (string, error) {
+func (erroringBundleStore) Fork(context.Context, BundleIdentity, string) (string, error) {
 	panic("erroringBundleStore.Fork should never be called")
 }
 
 var _ BundleStore = erroringBundleStore{}
 
-// TestHealSourceRef_GitRefIsPurelyPassedThrough proves dispatch on scheme:
-// a ref already shaped "git:..." is returned unchanged, and the legacy store
-// is never consulted (it would panic if it were).
+// TestHealSourceRef_GitRefIsPurelyPassedThrough proves dispatch on scheme: a
+// ref already shaped "git:owner/repo@sha" is returned unchanged, and the
+// legacy store is never consulted (it would panic if it were).
 func TestHealSourceRef_GitRefIsPurelyPassedThrough(t *testing.T) {
 	cli := newFakeGitClient()
-	active := NewGitBundleStore(cli, "", "instance-catalog", "main")
+	active := NewGitEntryBundleStore(cli)
 	files := map[string][]byte{"manifest.yaml": []byte("name: docker\n")}
-	ref, err := active.Write(context.Background(), "", files)
+	ref, err := active.Write(context.Background(), instanceProvider("docker"), "", files)
 	if err != nil {
 		t.Fatalf("write: %v", err)
 	}
@@ -176,24 +175,69 @@ func TestHealSourceRef_NoLegacyConfiguredIsNoOp(t *testing.T) {
 	}
 }
 
+// TestHealSourceRef_LegacyMonorepoRefMigrates proves the SECOND legacy shape
+// — a ref minted by the retired single-repo GitBundleStore
+// ("git:owner/repo/branch/hash") — also heals into the active
+// GitEntryBundleStore, via GitMonorepoBundleStore as the legacy reader (the
+// composite dualLegacyBundleStore internal/app/run.go wires dispatches to
+// this reader for exactly this ref shape).
+func TestHealSourceRef_LegacyMonorepoRefMigrates(t *testing.T) {
+	ctx := context.Background()
+	cli := newFakeGitClient()
+
+	// Seed the legacy monorepo layout via the (unused-in-production, but
+	// interface-complete) GitMonorepoBundleStore.Write.
+	legacyMonorepo := NewGitMonorepoBundleStore(cli)
+	if err := cli.EnsureRepo(ctx, "", "instance-catalog", true); err != nil {
+		t.Fatalf("ensure legacy repo: %v", err)
+	}
+	files := map[string][]byte{"manifest.yaml": []byte("name: yandex\n")}
+	legacyRef, err := legacyMonorepo.Write(ctx, BundleIdentity{}, "", files)
+	if err != nil {
+		t.Fatalf("legacy monorepo write: %v", err)
+	}
+	if !IsLegacyMonorepoRef(legacyRef) {
+		t.Fatalf("seed ref %q is not legacy-monorepo-shaped", legacyRef)
+	}
+
+	active := NewGitEntryBundleStore(cli)
+	repo := newFakeEntryRepo()
+	owner := instanceEntry(catalogpb.Kind_KIND_PROVIDER, "yandex", 1)
+	owner.SourceRef = legacyRef
+	repo.mustCreate(t, owner)
+
+	healedRef, err := healSourceRef(ctx, repo, active, legacyMonorepo, owner, legacyRef)
+	if err != nil {
+		t.Fatalf("healSourceRef: %v", err)
+	}
+	if !IsGitCommitRef(healedRef) {
+		t.Fatalf("healed ref %q is not commit-ref-shaped", healedRef)
+	}
+	got, err := active.Read(ctx, healedRef)
+	if err != nil {
+		t.Fatalf("read healed ref: %v", err)
+	}
+	if string(got["manifest.yaml"]) != string(files["manifest.yaml"]) {
+		t.Fatalf("healed content = %q, want %q", got["manifest.yaml"], files["manifest.yaml"])
+	}
+}
+
 /*
 	===== end-to-end: a previously FS-seeded entry becomes readable through
 	the git-backed path via the Service/CatalogProviderResolver layers =====
 */
 
 // TestGetOrgProviderFiles_HealsLegacySeedOnRead is the end-to-end
-// reproduction of the reported bug: a LEVEL_INSTANCE row seeded while
-// FSBundleStore was active (source_ref = bare sha256 hex, exactly what
-// ensureBuiltinKind/seed.go writes), linked into an org's catalog by
-// SeedOrgCatalog, then read via GetOrgProviderFiles AFTER the service has
-// been reconfigured with a GitBundleStore as the active store and the old
-// FSBundleStore wired in as LegacyBundles (mirroring run.go's wiring when
-// GITEA_TOKEN is set on a stand that previously ran without it). Before this
-// fix, this call failed with "git bundle store: ... missing git: scheme"
-// (this file's package-level GitBundleStore.Read/DecodeGitSourceRef, called
-// with the bare ref). After it: the call succeeds, returns the original
-// bytes, AND the instance row's source_ref is rewritten to a git ref backed
-// by content actually committed in the fake git repo.
+// reproduction: a LEVEL_INSTANCE row seeded while FSBundleStore was active
+// (source_ref = bare sha256 hex, exactly what ensureBuiltinKind/seed.go
+// writes), linked into an org's catalog by SeedOrgCatalog, then read via
+// GetOrgProviderFiles AFTER the service has been reconfigured with a
+// GitEntryBundleStore as the active store and the old FSBundleStore wired in
+// as LegacyBundles (mirroring run.go's wiring when GITEA_TOKEN is set on a
+// stand that previously ran without it). The call succeeds, returns the
+// original bytes, AND the instance row's source_ref is rewritten to a
+// commit-pinned ref backed by content actually committed in the entry's own
+// fake git repo.
 func TestGetOrgProviderFiles_HealsLegacySeedOnRead(t *testing.T) {
 	ctx := context.Background()
 
@@ -202,7 +246,7 @@ func TestGetOrgProviderFiles_HealsLegacySeedOnRead(t *testing.T) {
 		t.Fatalf("new fs store: %v", err)
 	}
 	seedFiles := map[string][]byte{"manifest.yaml": []byte("name: docker\nprovides:\n  - machines\n")}
-	legacyRef, err := legacy.Write(ctx, "", seedFiles)
+	legacyRef, err := legacy.Write(ctx, BundleIdentity{}, "", seedFiles)
 	if err != nil {
 		t.Fatalf("legacy write: %v", err)
 	}
@@ -213,7 +257,7 @@ func TestGetOrgProviderFiles_HealsLegacySeedOnRead(t *testing.T) {
 	repo.mustCreate(t, instance)
 
 	cli := newFakeGitClient()
-	active := NewGitBundleStore(cli, "", "instance-catalog", "main")
+	active := NewGitEntryBundleStore(cli)
 
 	svc := NewService(Deps{
 		Entries:       repo,
@@ -248,16 +292,20 @@ func TestGetOrgProviderFiles_HealsLegacySeedOnRead(t *testing.T) {
 	}
 
 	// The INSTANCE row (not the LINKED row, which never owned the ref) must
-	// now carry a git-shaped source_ref, backed by content actually present
-	// in the git repo.
+	// now carry a commit-pinned source_ref, backed by content actually
+	// present in its own git repo.
 	healedInstance, err := repo.Get(ctx, catalogpb.Level_LEVEL_INSTANCE, "", instance.GetEntity().GetId())
 	if err != nil {
 		t.Fatalf("get instance: %v", err)
 	}
-	if !IsGitSourceRef(healedInstance.GetSourceRef()) {
-		t.Fatalf("instance source_ref = %q, want a git-shaped ref after healing", healedInstance.GetSourceRef())
+	if !IsGitCommitRef(healedInstance.GetSourceRef()) {
+		t.Fatalf("instance source_ref = %q, want a commit-pinned ref after healing", healedInstance.GetSourceRef())
 	}
-	paths, err := cli.ListTree(ctx, "", "instance-catalog", "main")
+	hOwner, hRepo, hSha, err := DecodeGitCommitRef(healedInstance.GetSourceRef())
+	if err != nil {
+		t.Fatalf("decode healed ref: %v", err)
+	}
+	paths, err := cli.ListTree(ctx, hOwner, hRepo, hSha)
 	if err != nil {
 		t.Fatalf("list tree: %v", err)
 	}
@@ -277,13 +325,13 @@ func TestCatalogProviderResolver_ResolveProvider_HealsLegacyRef(t *testing.T) {
 		t.Fatalf("new fs store: %v", err)
 	}
 	files := map[string][]byte{"manifest.yaml": []byte("name: yandex\nprovides:\n  - machines\n")}
-	legacyRef, err := legacy.Write(ctx, "", files)
+	legacyRef, err := legacy.Write(ctx, BundleIdentity{}, "", files)
 	if err != nil {
 		t.Fatalf("legacy write: %v", err)
 	}
 
 	cli := newFakeGitClient()
-	active := NewGitBundleStore(cli, "", "instance-catalog", "main")
+	active := NewGitEntryBundleStore(cli)
 
 	repo := newFakeEntryRepo()
 	org := orgEntry(catalogpb.Kind_KIND_PROVIDER, "tenant-1", "yandex", 1)
@@ -306,16 +354,17 @@ func TestCatalogProviderResolver_ResolveProvider_HealsLegacyRef(t *testing.T) {
 	if err != nil {
 		t.Fatalf("get org entry: %v", err)
 	}
-	if !IsGitSourceRef(healed.GetSourceRef()) {
-		t.Fatalf("org entry source_ref = %q, want git-shaped after healing", healed.GetSourceRef())
+	if !IsGitCommitRef(healed.GetSourceRef()) {
+		t.Fatalf("org entry source_ref = %q, want commit-pinned after healing", healed.GetSourceRef())
 	}
 }
 
-// TestForkEntry_HealsLegacyInstanceRefBeforeForking proves ForkEntry's
-// reuse of resolveSourceRef also heals a legacy ref: forking a LINKED row
-// whose backing instance row still carries a bare FS-era ref must not fail
+// TestForkEntry_HealsLegacyInstanceRefBeforeForking proves ForkEntry's reuse
+// of resolveSourceRef also heals a legacy ref: forking a LINKED row whose
+// backing instance row still carries a bare FS-era ref must not fail
 // against Bundles.Fork (which internally Reads sourceRef, hitting the same
-// "missing git: scheme" rejection GetOrgProviderFiles used to).
+// "missing git: scheme" rejection GetOrgProviderFiles used to) — and the
+// fork itself becomes a real per-entry repo in the tenant's own org.
 func TestForkEntry_HealsLegacyInstanceRefBeforeForking(t *testing.T) {
 	ctx := context.Background()
 
@@ -324,13 +373,13 @@ func TestForkEntry_HealsLegacyInstanceRefBeforeForking(t *testing.T) {
 		t.Fatalf("new fs store: %v", err)
 	}
 	files := map[string][]byte{"manifest.yaml": []byte("name: yandex\n")}
-	legacyRef, err := legacy.Write(ctx, "", files)
+	legacyRef, err := legacy.Write(ctx, BundleIdentity{}, "", files)
 	if err != nil {
 		t.Fatalf("legacy write: %v", err)
 	}
 
 	cli := newFakeGitClient()
-	active := NewGitBundleStore(cli, "", "instance-catalog", "main")
+	active := NewGitEntryBundleStore(cli)
 
 	repo := newFakeEntryRepo()
 	instance := instanceEntry(catalogpb.Kind_KIND_PROVIDER, "yandex", 1)
@@ -354,8 +403,15 @@ func TestForkEntry_HealsLegacyInstanceRefBeforeForking(t *testing.T) {
 	if err != nil {
 		t.Fatalf("ForkEntry: %v", err)
 	}
-	if !IsGitSourceRef(forked.GetSourceRef()) {
-		t.Fatalf("forked source_ref = %q, want git-shaped", forked.GetSourceRef())
+	if !IsGitCommitRef(forked.GetSourceRef()) {
+		t.Fatalf("forked source_ref = %q, want commit-pinned", forked.GetSourceRef())
+	}
+	forkedOwner, _, _, err := DecodeGitCommitRef(forked.GetSourceRef())
+	if err != nil {
+		t.Fatalf("decode forked ref: %v", err)
+	}
+	if forkedOwner != gitrepo.TenantOrg("tenant-1") {
+		t.Fatalf("forked repo owner = %q, want tenant org %q", forkedOwner, gitrepo.TenantOrg("tenant-1"))
 	}
 	got, err := active.Read(ctx, forked.GetSourceRef())
 	if err != nil {

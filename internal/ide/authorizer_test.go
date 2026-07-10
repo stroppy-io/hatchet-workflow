@@ -58,10 +58,10 @@ func TestAuthorizer_InstanceScope_RequiresPlatformAdmin(t *testing.T) {
 			"user-tok":  {AccountId: "acc-2", IsAdmin: false},
 		}},
 	}
-	if !a.CanAuthor(req("/ide/instance/", "admin-tok")) {
+	if !a.CanAuthor(req("/ide/instance/provider/docker/", "admin-tok")) {
 		t.Fatal("platform admin must be able to author the instance repo")
 	}
-	if a.CanAuthor(req("/ide/instance/", "user-tok")) {
+	if a.CanAuthor(req("/ide/instance/provider/docker/", "user-tok")) {
 		t.Fatal("non-admin must NOT be able to author the instance repo")
 	}
 }
@@ -82,11 +82,35 @@ func TestAuthorizer_OrgScope_RequiresAuthoringPermissionInThatTenant(t *testing.
 		Perms:   perms,
 		Tenants: tenants,
 	}
-	if !a.CanAuthor(req("/ide/org/acme/", "acc-1-tok")) {
-		t.Fatal("caller with RESOURCE_PROVIDER UPDATE in tenant-acme must be able to author org acme")
+	if !a.CanAuthor(req("/ide/org/acme/provider/docker/", "acc-1-tok")) {
+		t.Fatal("caller with RESOURCE_PROVIDER UPDATE in tenant-acme must be able to author org acme's provider entry")
 	}
-	if a.CanAuthor(req("/ide/org/beta/", "acc-1-tok")) {
+	if a.CanAuthor(req("/ide/org/beta/provider/docker/", "acc-1-tok")) {
 		t.Fatal("caller with no membership/permission in tenant-beta must NOT be able to author org beta — cross-tenant leak")
+	}
+}
+
+// TestAuthorizer_OrgScope_KindGrantDoesNotCrossOver proves the per-entry
+// tightening this redesign makes: a caller who only holds RESOURCE_WORKFLOW
+// authoring rights must NOT be able to open a RESOURCE_PROVIDER entry's
+// repo (and vice versa) — the pre-redesign Authorizer granted either
+// resource access to the whole shared org worktree; now a Scope names one
+// specific entry, so the kind actually requested must match the grant.
+func TestAuthorizer_OrgScope_KindGrantDoesNotCrossOver(t *testing.T) {
+	tenants := fakeTenantResolver{bySlug: map[string]*iampb.Tenant{"acme": {Id: "tenant-acme"}}}
+	perms := fakePermResolver{perms: map[string][]*iampb.Permission{
+		"acc-1|tenant-acme": {{Resource: iampb.Resource_RESOURCE_WORKFLOW, Action: iampb.Action_ACTION_UPDATE}},
+	}}
+	a := &Authorizer{
+		Tokens:  fakeTokenVerifier{claims: map[string]*iampb.AccessClaims{"tok": {AccountId: "acc-1"}}},
+		Perms:   perms,
+		Tenants: tenants,
+	}
+	if !a.CanAuthor(req("/ide/org/acme/workflow/oltp/", "tok")) {
+		t.Fatal("caller with RESOURCE_WORKFLOW UPDATE must be able to author a workflow entry")
+	}
+	if a.CanAuthor(req("/ide/org/acme/provider/docker/", "tok")) {
+		t.Fatal("caller with only RESOURCE_WORKFLOW UPDATE must NOT be able to author a provider entry")
 	}
 }
 
@@ -100,7 +124,7 @@ func TestAuthorizer_OrgScope_ReadOnlyPermissionIsNotSufficient(t *testing.T) {
 		Perms:   perms,
 		Tenants: tenants,
 	}
-	if a.CanAuthor(req("/ide/org/acme/", "tok")) {
+	if a.CanAuthor(req("/ide/org/acme/provider/docker/", "tok")) {
 		t.Fatal("read-only permission must not grant IDE authoring access")
 	}
 }
@@ -112,17 +136,17 @@ func TestAuthorizer_PlatformAdmin_CanAuthorAnyOrg(t *testing.T) {
 		Perms:   fakePermResolver{},
 		Tenants: tenants,
 	}
-	if !a.CanAuthor(req("/ide/org/acme/", "admin-tok")) {
+	if !a.CanAuthor(req("/ide/org/acme/provider/docker/", "admin-tok")) {
 		t.Fatal("platform admin must be able to author any org")
 	}
 }
 
 func TestAuthorizer_FailsClosedOnMissingOrInvalidToken(t *testing.T) {
 	a := &Authorizer{Tokens: fakeTokenVerifier{claims: map[string]*iampb.AccessClaims{}}}
-	if a.CanAuthor(req("/ide/instance/", "")) {
+	if a.CanAuthor(req("/ide/instance/provider/docker/", "")) {
 		t.Fatal("missing bearer token must be rejected")
 	}
-	if a.CanAuthor(req("/ide/instance/", "garbage")) {
+	if a.CanAuthor(req("/ide/instance/provider/docker/", "garbage")) {
 		t.Fatal("invalid bearer token must be rejected")
 	}
 }
@@ -132,6 +156,9 @@ func TestAuthorizer_FailsClosedOnUnparsableScope(t *testing.T) {
 	if a.CanAuthor(req("/ide/", "tok")) {
 		t.Fatal("an unparsable scope must be rejected even for an admin token")
 	}
+	if a.CanAuthor(req("/ide/instance/", "tok")) {
+		t.Fatal("a scope missing its entry kind/slug must be rejected even for an admin token")
+	}
 }
 
 func TestAuthorizer_FailsClosedOnUnknownOrgSlug(t *testing.T) {
@@ -140,7 +167,7 @@ func TestAuthorizer_FailsClosedOnUnknownOrgSlug(t *testing.T) {
 		Perms:   fakePermResolver{},
 		Tenants: fakeTenantResolver{bySlug: map[string]*iampb.Tenant{}},
 	}
-	if a.CanAuthor(req("/ide/org/nonexistent/", "tok")) {
+	if a.CanAuthor(req("/ide/org/nonexistent/provider/docker/", "tok")) {
 		t.Fatal("an unknown org slug must be rejected")
 	}
 }

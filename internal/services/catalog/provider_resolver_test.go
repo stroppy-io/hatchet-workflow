@@ -10,8 +10,8 @@ import (
 func TestCatalogProviderResolver_Unpinned_ResolvesLatest(t *testing.T) {
 	repo := newFakeEntryRepo()
 	store := NewMemoryBundleStore()
-	ref1, _ := store.Write(context.Background(), "", map[string][]byte{"manifest.yaml": []byte("name: yandex\nv: 1\n")})
-	ref2, _ := store.Write(context.Background(), "", map[string][]byte{"manifest.yaml": []byte("name: yandex\nv: 2\n")})
+	ref1, _ := store.Write(context.Background(), BundleIdentity{}, "", map[string][]byte{"manifest.yaml": []byte("name: yandex\nv: 1\n")})
+	ref2, _ := store.Write(context.Background(), BundleIdentity{}, "", map[string][]byte{"manifest.yaml": []byte("name: yandex\nv: 2\n")})
 	e1 := orgEntry(catalogpb.Kind_KIND_PROVIDER, "tenant-1", "yandex", 1)
 	e1.SourceRef = ref1
 	e2 := orgEntry(catalogpb.Kind_KIND_PROVIDER, "tenant-1", "yandex", 2)
@@ -35,8 +35,8 @@ func TestCatalogProviderResolver_Unpinned_ResolvesLatest(t *testing.T) {
 func TestCatalogProviderResolver_Pinned_ResolvesExactVersion(t *testing.T) {
 	repo := newFakeEntryRepo()
 	store := NewMemoryBundleStore()
-	ref1, _ := store.Write(context.Background(), "", map[string][]byte{"manifest.yaml": []byte("name: yandex\nv: 1\n")})
-	ref2, _ := store.Write(context.Background(), "", map[string][]byte{"manifest.yaml": []byte("name: yandex\nv: 2\n")})
+	ref1, _ := store.Write(context.Background(), BundleIdentity{}, "", map[string][]byte{"manifest.yaml": []byte("name: yandex\nv: 1\n")})
+	ref2, _ := store.Write(context.Background(), BundleIdentity{}, "", map[string][]byte{"manifest.yaml": []byte("name: yandex\nv: 2\n")})
 	e1 := orgEntry(catalogpb.Kind_KIND_PROVIDER, "tenant-1", "yandex", 1)
 	e1.SourceRef = ref1
 	e2 := orgEntry(catalogpb.Kind_KIND_PROVIDER, "tenant-1", "yandex", 2)

@@ -125,7 +125,7 @@ func (s *Service) ensureBuiltinKind(ctx context.Context, kind catalogpb.Kind, so
 		if err != nil {
 			return err
 		}
-		ref, err := s.d.Bundles.Write(ctx, "", files)
+		ref, err := s.d.Bundles.Write(ctx, identityFor(catalogpb.Level_LEVEL_INSTANCE, "", kind, slug), "", files)
 		if err != nil {
 			return err
 		}

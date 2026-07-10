@@ -10,7 +10,7 @@ import (
 func TestForkEntry_LinkedRowForks(t *testing.T) {
 	repo := newFakeEntryRepo()
 	store := NewMemoryBundleStore()
-	instanceRef, _ := store.Write(context.Background(), "", map[string][]byte{"manifest.yaml": []byte("name: yandex\n")})
+	instanceRef, _ := store.Write(context.Background(), BundleIdentity{}, "", map[string][]byte{"manifest.yaml": []byte("name: yandex\n")})
 	instance := instanceEntry(catalogpb.Kind_KIND_PROVIDER, "yandex", 1)
 	instance.SourceRef = instanceRef
 	repo.mustCreate(t, instance)
@@ -55,7 +55,7 @@ func TestForkEntry_LinkedRowForks(t *testing.T) {
 func TestForkEntry_SkipsExistingVersion(t *testing.T) {
 	repo := newFakeEntryRepo()
 	store := NewMemoryBundleStore()
-	instanceRef, _ := store.Write(context.Background(), "", map[string][]byte{"manifest.yaml": []byte("name: yandex\n")})
+	instanceRef, _ := store.Write(context.Background(), BundleIdentity{}, "", map[string][]byte{"manifest.yaml": []byte("name: yandex\n")})
 	instance := instanceEntry(catalogpb.Kind_KIND_PROVIDER, "yandex", 1)
 	instance.SourceRef = instanceRef
 	repo.mustCreate(t, instance)
@@ -89,7 +89,7 @@ func TestForkEntry_OtherTenantsLinkedRowUntouched(t *testing.T) {
 	repo := newFakeEntryRepo()
 	store := NewMemoryBundleStore()
 	instance := instanceEntry(catalogpb.Kind_KIND_PROVIDER, "yandex", 1)
-	instanceRef, _ := store.Write(context.Background(), "", map[string][]byte{"manifest.yaml": []byte("name: yandex\n")})
+	instanceRef, _ := store.Write(context.Background(), BundleIdentity{}, "", map[string][]byte{"manifest.yaml": []byte("name: yandex\n")})
 	instance.SourceRef = instanceRef
 	repo.mustCreate(t, instance)
 
@@ -111,7 +111,7 @@ func TestForkEntry_NativeRowIsNoOp(t *testing.T) {
 	store := NewMemoryBundleStore()
 	svc := NewService(Deps{Entries: repo, Bundles: store, Check: stubChecker(nil), Authn: fakeAuthn{}})
 
-	ref, _ := store.Write(context.Background(), "", map[string][]byte{"manifest.yaml": []byte("name: native\n")})
+	ref, _ := store.Write(context.Background(), BundleIdentity{}, "", map[string][]byte{"manifest.yaml": []byte("name: native\n")})
 	native := &catalogpb.CatalogEntry{
 		Entity:    instanceEntry(catalogpb.Kind_KIND_PROVIDER, "native", 1).GetEntity(),
 		Level:     catalogpb.Level_LEVEL_ORG,
@@ -140,7 +140,7 @@ func TestForkEntry_NativeRowIsNoOp(t *testing.T) {
 func TestUpdateOrgProvider_ForksLinkedRow(t *testing.T) {
 	repo := newFakeEntryRepo()
 	store := NewMemoryBundleStore()
-	instanceRef, _ := store.Write(context.Background(), "", map[string][]byte{"manifest.yaml": []byte("name: yandex\n")})
+	instanceRef, _ := store.Write(context.Background(), BundleIdentity{}, "", map[string][]byte{"manifest.yaml": []byte("name: yandex\n")})
 	instance := instanceEntry(catalogpb.Kind_KIND_PROVIDER, "yandex", 1)
 	instance.SourceRef = instanceRef
 	repo.mustCreate(t, instance)
@@ -182,7 +182,7 @@ func TestUpdateOrgProvider_ForksLinkedRow(t *testing.T) {
 func TestUpdateOrgProvider_EditingForkedRowCreatesAnotherNewVersion(t *testing.T) {
 	repo := newFakeEntryRepo()
 	store := NewMemoryBundleStore()
-	instanceRef, _ := store.Write(context.Background(), "", map[string][]byte{"manifest.yaml": []byte("name: yandex\n")})
+	instanceRef, _ := store.Write(context.Background(), BundleIdentity{}, "", map[string][]byte{"manifest.yaml": []byte("name: yandex\n")})
 	instance := instanceEntry(catalogpb.Kind_KIND_PROVIDER, "yandex", 1)
 	instance.SourceRef = instanceRef
 	repo.mustCreate(t, instance)

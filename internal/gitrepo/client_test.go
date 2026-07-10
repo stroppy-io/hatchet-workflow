@@ -2,6 +2,7 @@ package gitrepo
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -292,5 +293,116 @@ func TestCommitFiles_EmptyOwnerResolvesToTokenOwnerViaWhoami(t *testing.T) {
 	}
 	if want := "/api/v1/repos/stroppy-bot/instance-catalog/contents/README.md"; gotContentsPath != want {
 		t.Fatalf("contents path = %q, want %q", gotContentsPath, want)
+	}
+}
+
+func TestForkRepo_Success202(t *testing.T) {
+	// VERIFIED against a live gitea/gitea:1.23 instance: fork success is 202.
+	var gotPath, gotMethod string
+	var gotBody map[string]string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath, gotMethod = r.URL.Path, r.Method
+		_ = json.NewDecoder(r.Body).Decode(&gotBody)
+		w.WriteHeader(http.StatusAccepted)
+	}))
+	defer server.Close()
+
+	c, err := NewClient(Config{BaseURL: server.URL, Token: "t"})
+	if err != nil {
+		t.Fatalf("new client: %v", err)
+	}
+	if err := c.ForkRepo(context.Background(), "stroppy-instance", "provider-docker-abc", "tenant-xyz", "provider-docker-abc"); err != nil {
+		t.Fatalf("fork repo: %v", err)
+	}
+	if want := "/api/v1/repos/stroppy-instance/provider-docker-abc/forks"; gotPath != want {
+		t.Fatalf("path = %q, want %q", gotPath, want)
+	}
+	if gotMethod != http.MethodPost {
+		t.Fatalf("method = %s, want POST", gotMethod)
+	}
+	if gotBody["organization"] != "tenant-xyz" || gotBody["name"] != "provider-docker-abc" {
+		t.Fatalf("body = %v", gotBody)
+	}
+}
+
+func TestForkRepo_AlreadyForked409IsNotAnError(t *testing.T) {
+	// VERIFIED against a live gitea/gitea:1.23 instance: re-forking the same
+	// (src, dst) pair returns 409 with a body containing "already forked".
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusConflict)
+		_, _ = w.Write([]byte(`{"message":"repository is already forked by user [uname: tenant-xyz, repo path: stroppy-instance/provider-docker-abc, fork path: tenant-xyz/provider-docker-abc]"}`))
+	}))
+	defer server.Close()
+
+	c, err := NewClient(Config{BaseURL: server.URL, Token: "t"})
+	if err != nil {
+		t.Fatalf("new client: %v", err)
+	}
+	if err := c.ForkRepo(context.Background(), "stroppy-instance", "provider-docker-abc", "tenant-xyz", "provider-docker-abc"); err != nil {
+		t.Fatalf("fork repo should be idempotent, got: %v", err)
+	}
+}
+
+func TestForkRepo_GenuineErrorSurfaces(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusForbidden)
+		_, _ = w.Write([]byte(`{"message":"forbidden"}`))
+	}))
+	defer server.Close()
+
+	c, err := NewClient(Config{BaseURL: server.URL, Token: "t"})
+	if err != nil {
+		t.Fatalf("new client: %v", err)
+	}
+	if err := c.ForkRepo(context.Background(), "a", "b", "c", "d"); err == nil {
+		t.Fatalf("expected error for 403")
+	}
+}
+
+func TestRepoExists(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path == "/api/v1/repos/acme/exists" {
+			w.WriteHeader(http.StatusOK)
+			return
+		}
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer server.Close()
+
+	c, err := NewClient(Config{BaseURL: server.URL, Token: "t"})
+	if err != nil {
+		t.Fatalf("new client: %v", err)
+	}
+	ok, err := c.RepoExists(context.Background(), "acme", "exists")
+	if err != nil || !ok {
+		t.Fatalf("exists = %v, %v, want true, nil", ok, err)
+	}
+	ok, err = c.RepoExists(context.Background(), "acme", "missing")
+	if err != nil || ok {
+		t.Fatalf("exists = %v, %v, want false, nil", ok, err)
+	}
+}
+
+func TestLatestCommit(t *testing.T) {
+	// VERIFIED against a live gitea/gitea:1.23 instance:
+	// GET /repos/{owner}/{repo}/branches/{branch} -> 200, body.commit.id.
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Path != "/api/v1/repos/acme/repo1/branches/main" {
+			t.Fatalf("unexpected path %q", r.URL.Path)
+		}
+		_, _ = w.Write([]byte(`{"name":"main","commit":{"id":"86fb7a503f0da601ee3ea46bbd4922f6bf5f7c0c"}}`))
+	}))
+	defer server.Close()
+
+	c, err := NewClient(Config{BaseURL: server.URL, Token: "t"})
+	if err != nil {
+		t.Fatalf("new client: %v", err)
+	}
+	sha, err := c.LatestCommit(context.Background(), "acme", "repo1", "main")
+	if err != nil {
+		t.Fatalf("latest commit: %v", err)
+	}
+	if want := "86fb7a503f0da601ee3ea46bbd4922f6bf5f7c0c"; sha != want {
+		t.Fatalf("sha = %q, want %q", sha, want)
 	}
 }

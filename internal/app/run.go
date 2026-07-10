@@ -260,32 +260,39 @@ func Run(ctx context.Context, cfg Config) error {
 	// filesystem tree rooted under cfg.CatalogBundleDir, mirroring
 	// blobStore's local-filesystem convention above. When Gitea is
 	// provisioned (giteaClient != nil, same GiteaToken gate as the
-	// instance-repo bootstrap above) it is swapped for a GitBundleStore over
-	// the singleton instance repo instead — selectable, defaulting OFF, so
-	// every existing deployment (including the live dev stand, which does
-	// not have GITEA_TOKEN set) keeps behaving exactly as before. Neither
-	// catalogService nor dslService's provider resolver below change either
-	// way — both depend only on the catalogsvc.BundleStore interface.
-	// catalogLegacyBundles is set only when the switch to GitBundleStore
-	// happens (giteaClient != nil): it reopens cfg.CatalogBundleDir — the
-	// SAME root FSBundleStore always wrote under, never deleted by this
-	// switch — read-only from the healing path's perspective, so any
-	// catalog_entries row whose source_ref still names a bare (pre-git)
-	// content hash (e.g. this dev stand's 3 builtin instance rows, seeded
-	// before GITEA_TOKEN was set) can be transparently migrated into the git
-	// store on first read instead of staying permanently unreadable. See
-	// internal/services/catalog.healSourceRef's doc for the full mechanism.
-	// Left nil when catalogBundles is itself the FS store (no swap has
-	// happened), making every healing check downstream a no-op.
+	// instance-repo bootstrap above) it is swapped for a
+	// GitEntryBundleStore instead — the repo-per-catalog-item store (spec:
+	// "каждый провайдер или воркфлоу подготовленый это отдельный репозиторий
+	// полностью") — selectable, defaulting OFF, so every existing deployment
+	// (including the live dev stand, which does not have GITEA_TOKEN set)
+	// keeps behaving exactly as before. Neither catalogService nor
+	// dslService's provider resolver below change either way — both depend
+	// only on the catalogsvc.BundleStore interface.
+	// catalogLegacyBundles is set only when the switch to GitEntryBundleStore
+	// happens (giteaClient != nil): a CompositeLegacyBundleStore over BOTH
+	// superseded shapes a pre-existing deployment's rows might still carry —
+	// (a) cfg.CatalogBundleDir, the SAME root FSBundleStore always wrote
+	// under, never deleted by this switch, for bare (pre-any-git) content
+	// hashes, and (b) a GitMonorepoBundleStore reading the retired
+	// single-repo GitBundleStore's layout (gitrepo.InstanceRepoName), for
+	// rows written during this codebase's brief single-monorepo git era.
+	// Either shape is transparently migrated into its own brand-new
+	// per-entry repo on first read instead of staying permanently unreadable
+	// — see internal/services/catalog.healSourceRef's doc for the full
+	// mechanism. Left nil when catalogBundles is itself the FS store (no
+	// swap has happened), making every healing check downstream a no-op.
 	var catalogBundles catalogsvc.BundleStore
 	var catalogLegacyBundles catalogsvc.BundleStore
 	if giteaClient != nil {
-		catalogBundles = catalogsvc.NewGitBundleStore(giteaClient, gitrepo.InstanceRepoOwner, gitrepo.InstanceRepoName, gitrepo.InstanceRepoBranch)
+		catalogBundles = catalogsvc.NewGitEntryBundleStore(giteaClient)
 		legacyFSBundles, err := catalogsvc.NewFSBundleStore(cfg.CatalogBundleDir)
 		if err != nil {
 			return fmt.Errorf("catalog legacy bundle store: %w", err)
 		}
-		catalogLegacyBundles = legacyFSBundles
+		catalogLegacyBundles = &catalogsvc.CompositeLegacyBundleStore{
+			FS:       legacyFSBundles,
+			Monorepo: catalogsvc.NewGitMonorepoBundleStore(giteaClient),
+		}
 	} else {
 		fsBundles, err := catalogsvc.NewFSBundleStore(cfg.CatalogBundleDir)
 		if err != nil {
@@ -872,10 +879,6 @@ func Run(ctx context.Context, cfg Config) error {
 		log.Error("ide manager enabled but gitea is unavailable; /ide/* disabled")
 	}
 	if cfg.IdeManagerEnabled && giteaClient != nil {
-		instanceOwner, err := giteaClient.Whoami(ctx)
-		if err != nil {
-			return fmt.Errorf("ide manager: resolve instance repo owner: %w", err)
-		}
 		dockerCli, err := dockerclient.NewClientWithOpts(dockerclient.FromEnv, dockerclient.WithAPIVersionNegotiation())
 		if err != nil {
 			return fmt.Errorf("ide manager: docker client: %w", err)
@@ -893,7 +896,6 @@ func Run(ctx context.Context, cfg Config) error {
 			WorktreeVolume: cfg.IdeWorktreeVolume,
 			Image:          cfg.IdeImage,
 			Network:        ideNetwork,
-			InstanceOwner:  instanceOwner,
 			LSPBinaryPath:  cfg.IdeLSPBinaryPath,
 		})
 		ideBackends = &ide.BackendResolver{Manager: ideManager, Tenants: store.Tenants()}

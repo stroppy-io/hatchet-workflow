@@ -15,19 +15,13 @@ import (
 )
 
 // RepoEnsurer is the subset of *internal/gitrepo.Client Manager needs to
-// guarantee an org's repo exists before cloning it — a narrow interface for
-// the same reason catalog.GitClient is (testable with a fake; *gitrepo.
+// guarantee an entry's repo exists before cloning it — a narrow interface
+// for the same reason catalog.GitClient is (testable with a fake; *gitrepo.
 // Client already satisfies it structurally).
 type RepoEnsurer interface {
 	EnsureOrg(ctx context.Context, org string) error
 	EnsureRepo(ctx context.Context, owner, name string, private bool) error
 }
-
-// OrgRepoName is the fixed repo name inside each org's own Gitea org — one
-// physical Gitea org per tenant (spec §3 C1: "Org-репо — один на каждый
-// tenant"), one fixed-named repo inside it, mirroring
-// internal/gitrepo.InstanceRepoName's role for the singleton instance repo.
-const OrgRepoName = "org-catalog"
 
 // containerNameRe matches the characters Docker allows in a container name;
 // scope keys are turned into container names by substituting anything else,
@@ -58,7 +52,6 @@ type Manager struct {
 	worktreeVolume string
 	image          string
 	network        string
-	instanceOwner  string
 	lspBinaryPath  string
 }
 
@@ -103,13 +96,6 @@ type Config struct {
 	// gateway's server container can reach them by container name — same
 	// network agent containers attach to (AGENT_ATTACH_NETWORK).
 	Network string
-	// InstanceOwner is the real Gitea username gitrepo.InstanceRepoOwner's
-	// owner="" convention resolves to (via gitrepo.Client.Whoami), resolved
-	// once by the caller at boot — RemoteURL (unlike the Gitea contents API)
-	// has no owner="" shorthand, so a real username is required to clone the
-	// instance repo. Required whenever Manager will ever see a ScopeInstance
-	// request.
-	InstanceOwner string
 	// LSPBinaryPath, when set, is a HOST path (as seen by whatever process
 	// runs dockerd — see the WorktreeVolume doc for the same
 	// docker-outside-of-docker caveat) to the compiled cmd/stroppy-yaml-lsp
@@ -143,7 +129,6 @@ func NewManager(cfg Config) *Manager {
 		worktreeVolume: cfg.WorktreeVolume,
 		image:          cfg.Image,
 		network:        cfg.Network,
-		instanceOwner:  cfg.InstanceOwner,
 		lspBinaryPath:  cfg.LSPBinaryPath,
 	}
 }
@@ -166,35 +151,45 @@ func (m *Manager) worktreeDir(key string) string {
 }
 
 // giteaOwnerRepo returns the (owner, repo) EnsureRunning materializes for
-// scope, and ensures the org repo exists first (instance repo existence is
-// Bootstrap's job, already run at server startup — see internal/app/run.go).
+// scope — the SAME (owner, repo) internal/services/catalog.GitEntryBundleStore
+// would compute for the equivalent CatalogEntry (gitrepo.OwnerFor +
+// gitrepo.EntryRepoName), so the IDE opens exactly the entry's one real
+// catalog repo, never an org-wide directory — and ensures it exists first
+// (an instance entry may already exist via a prior catalog Write; an org
+// entry's repo is created here on first IDE open too, mirroring
+// GitEntryBundleStore.ensureEntryRepo).
 func (m *Manager) giteaOwnerRepo(ctx context.Context, scope Scope) (owner, repo string, err error) {
+	if scope.EntryKind == "" || scope.EntrySlug == "" {
+		return "", "", fmt.Errorf("ide: scope %q names no catalog entry (missing kind/slug)", scope.Key())
+	}
 	switch scope.Kind {
 	case ScopeInstance:
-		if m.instanceOwner == "" {
-			return "", "", fmt.Errorf("ide: manager has no InstanceOwner configured, cannot materialize the instance worktree")
-		}
-		return m.instanceOwner, gitrepo.InstanceRepoName, nil
+		owner = gitrepo.InstanceOrg
 	case ScopeOrg:
-		if m.gitea == nil {
-			return "", "", fmt.Errorf("ide: manager has no RepoEnsurer, cannot materialize an org worktree")
+		if scope.OrgSlug == "" {
+			return "", "", fmt.Errorf("ide: org scope has no tenant id")
 		}
-		// scope.OrgSlug here is whatever the caller (the IdeAuthorizer's
+		// scope.OrgSlug here is whatever the caller (the IdeBackendResolver's
 		// resolved tenant id, NOT the raw URL slug — see backend.go) passed
 		// through as the scope; EnsureRunning's caller is responsible for
 		// having already turned an untrusted URL slug into a real tenant id
-		// before it ever reaches Manager.
-		owner = scope.OrgSlug
-		if err := m.gitea.EnsureOrg(ctx, owner); err != nil {
-			return "", "", fmt.Errorf("ide: ensure org %q: %w", owner, err)
-		}
-		if err := m.gitea.EnsureRepo(ctx, owner, OrgRepoName, true); err != nil {
-			return "", "", fmt.Errorf("ide: ensure org repo %q/%q: %w", owner, OrgRepoName, err)
-		}
-		return owner, OrgRepoName, nil
+		// before it ever reaches Manager. gitrepo.TenantOrg further sanitizes
+		// it defensively (see its own doc).
+		owner = gitrepo.TenantOrg(scope.OrgSlug)
 	default:
 		return "", "", fmt.Errorf("ide: unrecognized scope kind %v", scope.Kind)
 	}
+	if m.gitea == nil {
+		return "", "", fmt.Errorf("ide: manager has no RepoEnsurer, cannot materialize an entry worktree")
+	}
+	repo = gitrepo.EntryRepoName(scope.EntryKind, scope.EntrySlug)
+	if err := m.gitea.EnsureOrg(ctx, owner); err != nil {
+		return "", "", fmt.Errorf("ide: ensure org %q: %w", owner, err)
+	}
+	if err := m.gitea.EnsureRepo(ctx, owner, repo, true); err != nil {
+		return "", "", fmt.Errorf("ide: ensure entry repo %q/%q: %w", owner, repo, err)
+	}
+	return owner, repo, nil
 }
 
 // EnsureRunning materializes scope's worktree (clone-or-pull) and starts (or

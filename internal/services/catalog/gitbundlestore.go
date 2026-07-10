@@ -6,206 +6,362 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
+
+	"github.com/stroppy-io/stroppy-cloud/internal/gitrepo"
 )
 
-// GitClient is the narrow subset of *internal/gitrepo.Client GitBundleStore
-// needs (CommitFiles/GetFile/ListTree — the same three primitives T1/T2
-// built and documented as "the primitives a future GitBundleStore
-// implementing this interface would call", see bundlestore.go's BundleStore
-// doc). Declaring it here (rather than importing *gitrepo.Client directly)
-// keeps this file trivially testable with a fake, exactly like Checker/
-// CatalogEntryRepo above are narrow interfaces rather than concrete types.
-// *gitrepo.Client already satisfies this interface structurally (method
-// signatures match byte-for-byte) — no change to internal/gitrepo was
-// needed or made.
+// GitClient is the subset of *internal/gitrepo.Client GitEntryBundleStore
+// (and the legacy GitBundleStore reader below) need. Declaring it here
+// (rather than importing *gitrepo.Client directly) keeps this file trivially
+// testable with a fake — *gitrepo.Client already satisfies it structurally.
 type GitClient interface {
+	EnsureOrg(ctx context.Context, org string) error
+	EnsureRepo(ctx context.Context, owner, name string, private bool) error
 	CommitFiles(ctx context.Context, owner, repo, branch string, files map[string][]byte, author, email, message string) error
 	GetFile(ctx context.Context, owner, repo, ref, path string) ([]byte, error)
 	ListTree(ctx context.Context, owner, repo, ref string) ([]string, error)
+	RepoExists(ctx context.Context, owner, repo string) (bool, error)
+	ForkRepo(ctx context.Context, srcOwner, srcRepo, dstOwner, dstName string) error
+	LatestCommit(ctx context.Context, owner, repo, branch string) (string, error)
 }
 
-// GitBundleStore is a BundleStore backed by a single Gitea repo
-// (owner/repo/branch), content-addressed the same way FSBundleStore is:
-// every distinct (sorted-name, content) set of files hashes to one ref, and
-// identical bundles collapse onto the same git path instead of growing the
-// repo's history on every write.
-//
-// # source_ref encoding
-//
-// A ref returned by Write/Fork has the form:
-//
-//	git:<owner>/<repo>/<branch>/<sha256-hex>
-//
-// It is fully self-describing (owner, repo, branch, and the content hash are
-// all recoverable from the string alone via DecodeGitSourceRef) — but Read
-// and Fork DELIBERATELY refuse to honor a ref naming any (owner, repo,
-// branch) other than this store's own: decoding is used only to validate
-// the ref and extract the content hash, never to redirect the underlying
-// GitClient call to a different repo. This is the multi-tenancy enforcement
-// point (see the package-level test TestGitBundleStore_CrossRepoIsolation):
-// a GitBundleStore constructed for org-a's repo cannot be tricked into
-// reading org-b's repo by handing it a ref that merely names org-b — every
-// call is pinned to the (owner, repo, branch) passed to NewGitBundleStore,
-// full stop. (An earlier version of this file let Read follow whatever
-// owner/repo a ref named, on the theory that "the ref is self-describing" —
-// that is wrong for a multi-tenant store: the ref is caller-suppliable data
-// once it round-trips through GetOrgProviderFiles/GetOrgWorkflowFiles, and
-// trusting caller-suppliable data to pick which repo a shared Gitea token
-// reads is exactly the kind of cross-tenant hole this task's hard rules
-// call out. Pinning to the constructed scope closes it.) Write is likewise
-// pinned to this store's own (owner, repo, branch); the BundleStore
-// interface's Write(ctx, ref, files) receives no tenant/scope hint anyway
-// (see bundlestore.go's doc: "ref is currently unused by both
-// implementations (reserved for a future ... backend); callers pass \"\"
-// today").
-//
-// # Why this is a single-repo store, not "one repo per org"
-//
-// The spec's product decision (an org repo per tenant, empty until forked,
-// live-linked to the instance repo otherwise) is a property of
-// CatalogEntry rows, not of BundleStore: a LINKED row simply carries no
-// SourceRef of its own and falls back to its source instance row's ref
-// (service.go's resolveSourceRef) — no bytes are copied, so nothing needs
-// to exist in an "org repo" yet. A fork (newVersion) always calls
-// Write(ctx, "", files) and gets back a brand-new ref pointing at
-// content the original row's ref never referenced — that is the
-// "diverges independently" property, satisfied by content-addressing
-// alone, regardless of how many physical git repos back the store.
-//
-// Wiring ONE GitBundleStore per tenant (each pointed at that tenant's own
-// Gitea repo) *would* additionally get the literal "org's own git repo
-// holds only that org's forked bundles" property — but catalog.Deps.Bundles
-// today is a single field shared by every CreateOrgEntry/UpdateOrgEntry
-// call across every tenant (internal/app/run.go wires exactly one
-// catalogBundles for the whole server), and neither Write nor the RPCs that
-// call it thread a tenant ID down to BundleStore. Giving BundleStore that
-// tenant-scoping would mean widening the interface T2 shipped (and every
-// call site) — out of this task's authorized surface ("slot beneath
-// service.go, do NOT duplicate or bypass the RBAC those RPCs enforce").
-// GitBundleStore is therefore wired as ONE store over the instance repo
-// (see internal/app/run.go) exactly where FSBundleStore was: it is a
-// drop-in, content-addressed, git-backed replacement for FS storage, not a
-// per-tenant repo router. The literal "org has its own real git
-// repository" requirement is met one layer up, by internal/ide's per-org
-// worktrees (see internal/ide/worktree.go) — those are real Gitea repos a
-// human edits directly via code-server, entirely separate from this
-// content-addressed bundle cache the catalog RPCs read/write through.
-type GitBundleStore struct {
-	client                  GitClient
-	owner, repo, branch     string
-	authorName, authorEmail string
+// gitCommitRefPrefix distinguishes a repo-per-entry, commit-pinned ref
+// (GitEntryBundleStore's format, "git:<owner>/<repo>@<sha>") from every
+// other ref shape a catalog_entries row's source_ref might still carry: a
+// bare content hash (FSBundleStore/MemoryBundleStore, pre-git), or the
+// retired single-monorepo "git:<owner>/<repo>/<branch>/<hash>" shape the
+// original GitBundleStore (now kept only as a legacy reader, below) minted.
+const gitCommitRefPrefix = "git:"
+
+// EncodeGitCommitRef builds the source_ref string for a commit-pinned,
+// repo-per-entry bundle: owner and repo identify the entry's own Gitea repo
+// (see gitrepo.OwnerFor/EntryRepoName), sha is the immutable commit that
+// version's files were committed as. Self-describing: every field is
+// recoverable from the string alone via DecodeGitCommitRef.
+func EncodeGitCommitRef(owner, repo, sha string) string {
+	return fmt.Sprintf("%s%s/%s@%s", gitCommitRefPrefix, owner, repo, sha)
 }
 
-var _ BundleStore = (*GitBundleStore)(nil)
-
-// NewGitBundleStore returns a GitBundleStore that writes into owner/repo on
-// branch. The repo must already exist (gitrepo.Client.EnsureRepo /
-// gitrepo.Bootstrap is the caller's responsibility, mirroring how
-// FSBundleStore's caller MkdirAlls its root before use).
-func NewGitBundleStore(client GitClient, owner, repo, branch string) *GitBundleStore {
-	return &GitBundleStore{
-		client:      client,
-		owner:       owner,
-		repo:        repo,
-		branch:      branch,
-		authorName:  "stroppy-bot",
-		authorEmail: "bot@stroppy.local",
+// DecodeGitCommitRef parses a ref minted by EncodeGitCommitRef. Every field
+// must be non-empty; owner/repo must not themselves contain "@" or a second
+// "/"-delimited path segment (a malformed or hostile ref is rejected rather
+// than guessed at).
+func DecodeGitCommitRef(ref string) (owner, repo, sha string, err error) {
+	if !strings.HasPrefix(ref, gitCommitRefPrefix) {
+		return "", "", "", fmt.Errorf("git commit ref %q: missing %q scheme", ref, gitCommitRefPrefix)
 	}
+	rest := strings.TrimPrefix(ref, gitCommitRefPrefix)
+	at := strings.LastIndex(rest, "@")
+	if at < 0 {
+		return "", "", "", fmt.Errorf("git commit ref %q: expected owner/repo@sha", ref)
+	}
+	ownerRepo, sha := rest[:at], rest[at+1:]
+	parts := strings.Split(ownerRepo, "/")
+	if len(parts) != 2 {
+		return "", "", "", fmt.Errorf("git commit ref %q: expected owner/repo@sha", ref)
+	}
+	owner, repo = parts[0], parts[1]
+	if owner == "" || repo == "" || sha == "" {
+		return "", "", "", fmt.Errorf("git commit ref %q: owner, repo and sha must be non-empty", ref)
+	}
+	return owner, repo, sha, nil
 }
 
-// gitSourceRefPrefix distinguishes a git-backed ref from a plain
-// content-hash ref (FSBundleStore/MemoryBundleStore's format) so a caller
-// holding an opaque ref string can never confuse the two.
-const gitSourceRefPrefix = "git:"
-
-// EncodeGitSourceRef builds the source_ref string for (owner, repo, branch,
-// hash). Exported so callers that need to construct/inspect a git-backed ref
-// outside this package (e.g. internal/ide, tests) do not have to
-// hand-format the scheme.
-func EncodeGitSourceRef(owner, repo, branch, hash string) string {
-	return fmt.Sprintf("%s%s/%s/%s/%s", gitSourceRefPrefix, owner, repo, branch, hash)
+// IsGitCommitRef reports whether ref was minted by GitEntryBundleStore (the
+// active, repo-per-entry shape) — as opposed to a legacy bare content hash
+// or the retired monorepo "git:owner/repo/branch/hash" shape, both of which
+// healSourceRef (catalog.go) migrates on first read.
+func IsGitCommitRef(ref string) bool {
+	_, _, _, err := DecodeGitCommitRef(ref)
+	return err == nil
 }
 
-// DecodeGitSourceRef parses a ref produced by EncodeGitSourceRef. owner may
-// legitimately be empty (the instance repo's owner, gitrepo.
-// InstanceRepoOwner) — repo, branch and hash must not be.
-func DecodeGitSourceRef(ref string) (owner, repo, branch, hash string, err error) {
-	if !strings.HasPrefix(ref, gitSourceRefPrefix) {
-		return "", "", "", "", fmt.Errorf("git bundle ref %q: missing %q scheme", ref, gitSourceRefPrefix)
+// gitEntryAuthorName/Email stamp every commit GitEntryBundleStore makes —
+// distinct from any real end-user, so bot-authored commits (bundle writes,
+// fork-content-sync) read as infrastructure in `git log`, matching
+// gitrepo.Bootstrap's bootstrapAuthorName convention.
+const (
+	gitEntryAuthorName  = "stroppy-bot"
+	gitEntryAuthorEmail = "bot@stroppy.local"
+)
+
+// gitEntryBranch is the fixed default branch every entry repo this store
+// creates uses — mirrors gitrepo.InstanceRepoBranch, generalized to every
+// per-entry repo (not just the retired singleton instance-catalog repo).
+const gitEntryBranch = "main"
+
+// GitEntryBundleStore is the repo-per-entry BundleStore: every catalog item
+// (one BundleIdentity — level/tenant/kind/slug) gets its OWN Gitea repo, and
+// every version of that item is a commit on that repo's default branch —
+// exactly the product decision this task implements ("каждый провайдер или
+// воркфлоу подготовленый это отдельный репозиторий полностью"). This
+// replaces the old single-monorepo GitBundleStore (kept below, renamed
+// GitMonorepoBundleStore, purely as a read-only LegacyBundles source for
+// migrating rows written before this redesign).
+//
+// # Repo naming and isolation
+//
+// gitrepo.OwnerFor(id.IsInstanceLevel, id.TenantID) picks the Gitea org
+// (gitrepo.InstanceOrg, fixed, for LEVEL_INSTANCE; gitrepo.TenantOrg
+// (tenantID), one org per tenant, for LEVEL_ORG) and
+// gitrepo.EntryRepoName(id.KindStr, id.Slug) picks the repo name within it —
+// both pure, sanitizing functions of their inputs (see their own docs for
+// how a hostile slug is contained: sanitized + hashed, never able to escape
+// its own org or collide with another entry's repo name).
+//
+// # Multi-tenant read trust model
+//
+// This store, like the old single-repo GitBundleStore before it, is wired
+// as ONE shared instance across every tenant (catalog.Deps.Bundles). Unlike
+// the old store, Read here does NOT (cannot, now that there are
+// unboundedly many repos) pin itself to one owner/repo — it decodes
+// whatever ref it is given and reads that repo. This is safe because a ref
+// is never accepted from a client directly: every ref this package's
+// service.go hands to Read came from a catalog_entries row already fetched
+// through CatalogEntryRepo.Get(level, tenantID, id), which is itself scoped
+// to the caller's authorized tenant. BundleStore remains, as documented in
+// bundlestore.go, a dumb bytes-behind-a-ref cache — cross-tenant
+// authorization is enforced by the DB row scoping one layer up in
+// service.go, exactly as it always has been. (The one place a physical
+// repo IS reachable directly, bypassing that row-scoping — the IDE's
+// code-server worktrees — enforces isolation itself via
+// internal/ide.Scope/Authorizer; see that package's docs.)
+type GitEntryBundleStore struct {
+	client GitClient
+}
+
+var _ BundleStore = (*GitEntryBundleStore)(nil)
+
+// NewGitEntryBundleStore returns a GitEntryBundleStore backed by client.
+func NewGitEntryBundleStore(client GitClient) *GitEntryBundleStore {
+	return &GitEntryBundleStore{client: client}
+}
+
+// repoFor resolves id's own (owner, repo) — the one Gitea repo every
+// version of this catalog item lives in.
+func repoFor(id BundleIdentity) (owner, repo string) {
+	return gitrepo.OwnerFor(id.IsInstanceLevel, id.TenantID), gitrepo.EntryRepoName(id.KindStr, id.Slug)
+}
+
+// Write ensures id's own repo exists (creating its org/repo if this is the
+// item's first version) and commits files onto its default branch as a new
+// commit — NOT a content-addressed no-op the way the old monorepo store's
+// Write was: every version is meant to be its own real commit in the
+// entry's history (spec: "История, ветки, диффы — нативные git-примитивы"),
+// so a byte-identical re-save still produces a (empty-diff, but real) commit
+// rather than being suppressed. The returned ref pins the resulting commit.
+func (s *GitEntryBundleStore) Write(ctx context.Context, id BundleIdentity, _ string, files map[string][]byte) (string, error) {
+	owner, repo := repoFor(id)
+	if err := s.ensureEntryRepo(ctx, owner, repo); err != nil {
+		return "", err
 	}
-	rest := strings.TrimPrefix(ref, gitSourceRefPrefix)
-	parts := strings.Split(rest, "/")
-	if len(parts) != 4 {
-		return "", "", "", "", fmt.Errorf("git bundle ref %q: expected owner/repo/branch/hash", ref)
+	msg := fmt.Sprintf("chore: store %s catalog bundle", id.KindStr)
+	if err := s.client.CommitFiles(ctx, owner, repo, gitEntryBranch, files, gitEntryAuthorName, gitEntryAuthorEmail, msg); err != nil {
+		return "", fmt.Errorf("git entry bundle store: commit %s/%s: %w", owner, repo, err)
 	}
+	sha, err := s.client.LatestCommit(ctx, owner, repo, gitEntryBranch)
+	if err != nil {
+		return "", fmt.Errorf("git entry bundle store: latest commit %s/%s: %w", owner, repo, err)
+	}
+	return EncodeGitCommitRef(owner, repo, sha), nil
+}
+
+// ensureEntryRepo idempotently creates owner (an org) and owner/repo,
+// private, auto-initialized — the same EnsureOrg+EnsureRepo pair
+// internal/ide.Manager.giteaOwnerRepo already calls for an org's IDE
+// worktree repo, called here too since a catalog write can be this item's
+// very first version.
+func (s *GitEntryBundleStore) ensureEntryRepo(ctx context.Context, owner, repo string) error {
+	if err := s.client.EnsureOrg(ctx, owner); err != nil {
+		return fmt.Errorf("git entry bundle store: ensure org %q: %w", owner, err)
+	}
+	if err := s.client.EnsureRepo(ctx, owner, repo, true); err != nil {
+		return fmt.Errorf("git entry bundle store: ensure repo %s/%s: %w", owner, repo, err)
+	}
+	return nil
+}
+
+// Read decodes ref (owner/repo@sha) and reads every file at that commit back
+// into a map keyed by its repo-relative path — files live at the repo
+// ROOT now (no bundles/<hash>/ sharding prefix: that was the monorepo
+// store's content-addressing scheme; a repo-per-entry store has no sibling
+// bundles to shard away from).
+func (s *GitEntryBundleStore) Read(ctx context.Context, ref string) (map[string][]byte, error) {
+	owner, repo, sha, err := DecodeGitCommitRef(ref)
+	if err != nil {
+		return nil, fmt.Errorf("git entry bundle store: %w", err)
+	}
+	paths, err := s.client.ListTree(ctx, owner, repo, sha)
+	if err != nil {
+		return nil, fmt.Errorf("git entry bundle store: list %q: %w", ref, err)
+	}
+	files := make(map[string][]byte, len(paths))
+	for _, p := range paths {
+		content, err := s.client.GetFile(ctx, owner, repo, sha, p)
+		if err != nil {
+			return nil, fmt.Errorf("git entry bundle store: read %q at %q: %w", p, ref, err)
+		}
+		files[p] = content
+	}
+	if len(files) == 0 {
+		return nil, fmt.Errorf("git commit ref %q not found (empty tree)", ref)
+	}
+	return files, nil
+}
+
+// Fork materializes id's OWN repo as a real Gitea fork of sourceRef's repo
+// (satisfying the product decision's ORIGIN_FORKED semantics: "реальный
+// форк в гитею тенанта"), then commits sourceRef's exact files onto it —
+// the explicit commit (rather than trusting Gitea's fork to have copied the
+// right branch state) guarantees the fork's tip is exactly the pinned
+// version being forked, independent of whatever Gitea forked from
+// (typically the source repo's CURRENT default-branch tip, which may have
+// moved past sourceRef's commit by the time this fork happens).
+//
+// Idempotent: if id's repo already exists (a previous fork, or a second
+// edit after the first fork), the real-fork step is skipped (RepoExists
+// check) and only the content-sync commit runs — re-forking the same (src,
+// dst) pair is itself idempotent at the Gitea API level too (see
+// gitrepo.Client.ForkRepo's doc: 409 "already forked" is swallowed), so this
+// is doubly safe under a race.
+func (s *GitEntryBundleStore) Fork(ctx context.Context, id BundleIdentity, sourceRef string) (string, error) {
+	srcOwner, srcRepo, _, err := DecodeGitCommitRef(sourceRef)
+	if err != nil {
+		return "", fmt.Errorf("git entry bundle store: fork: %w", err)
+	}
+	files, err := s.Read(ctx, sourceRef)
+	if err != nil {
+		return "", fmt.Errorf("git entry bundle store: fork: read source: %w", err)
+	}
+	dstOwner, dstRepo := repoFor(id)
+	if err := s.client.EnsureOrg(ctx, dstOwner); err != nil {
+		return "", fmt.Errorf("git entry bundle store: fork: ensure dest org %q: %w", dstOwner, err)
+	}
+	exists, err := s.client.RepoExists(ctx, dstOwner, dstRepo)
+	if err != nil {
+		return "", fmt.Errorf("git entry bundle store: fork: check dest repo %s/%s: %w", dstOwner, dstRepo, err)
+	}
+	if !exists {
+		if err := s.client.ForkRepo(ctx, srcOwner, srcRepo, dstOwner, dstRepo); err != nil {
+			return "", fmt.Errorf("git entry bundle store: fork %s/%s -> %s/%s: %w", srcOwner, srcRepo, dstOwner, dstRepo, err)
+		}
+	}
+	msg := fmt.Sprintf("chore: fork %s catalog bundle from %s/%s", id.KindStr, srcOwner, srcRepo)
+	// A fork-salt marker file is unnecessary here (unlike the old
+	// content-addressed stores' forkRef trick): a real git fork is a
+	// distinct repo by construction, so the returned ref (a different
+	// owner/repo than sourceRef) is already guaranteed to differ from it,
+	// even before considering the commit sha.
+	if err := s.client.CommitFiles(ctx, dstOwner, dstRepo, gitEntryBranch, files, gitEntryAuthorName, gitEntryAuthorEmail, msg); err != nil {
+		return "", fmt.Errorf("git entry bundle store: fork: sync content into %s/%s: %w", dstOwner, dstRepo, err)
+	}
+	sha, err := s.client.LatestCommit(ctx, dstOwner, dstRepo, gitEntryBranch)
+	if err != nil {
+		return "", fmt.Errorf("git entry bundle store: fork: latest commit %s/%s: %w", dstOwner, dstRepo, err)
+	}
+	return EncodeGitCommitRef(dstOwner, dstRepo, sha), nil
+}
+
+/*
+	===== legacy monorepo reader (pre-redesign) =====
+
+	GitMonorepoBundleStore is NOT the active store anywhere post-redesign —
+	it exists purely so Deps.LegacyBundles can still Read() a source_ref
+	minted by the ORIGINAL single-repo GitBundleStore (content-addressed
+	under bundles/<sha[:2]>/<sha>/... in the singleton instance-catalog repo,
+	gitrepo.InstanceRepoName) during the lazy migration healSourceRef
+	performs — see catalog.go's healSourceRef doc. Write/Fork are
+	implemented (BundleStore requires them) but are never called on a
+	LegacyBundles value in practice; they preserve the original monorepo
+	scheme only for completeness/testability.
+*/
+
+// legacyGitSourceRefPrefix matches the retired monorepo ref shape
+// ("git:<owner>/<repo>/<branch>/<hash>", 4 slash-delimited segments) as
+// opposed to IsGitCommitRef's 2-segment "owner/repo@sha" shape — used by
+// healSourceRef to decide whether a "git:"-prefixed legacy ref should be
+// read via GitMonorepoBundleStore rather than treated as already-current.
+const legacyGitSourceRefPrefix = "git:"
+
+// IsLegacyMonorepoRef reports whether ref is the retired
+// "git:<owner>/<repo>/<branch>/<hash>" monorepo shape (4 slash segments
+// after the scheme) — distinct from IsGitCommitRef's "owner/repo@sha" shape
+// (no "@", 4 "/"-segments instead of the commit-pinned form's 1).
+func IsLegacyMonorepoRef(ref string) bool {
+	if !strings.HasPrefix(ref, legacyGitSourceRefPrefix) {
+		return false
+	}
+	if strings.Contains(ref, "@") {
+		return false // that's IsGitCommitRef's shape, not this one.
+	}
+	rest := strings.TrimPrefix(ref, legacyGitSourceRefPrefix)
+	return len(strings.Split(rest, "/")) == 4
+}
+
+// decodeLegacyMonorepoRef parses the retired 4-segment shape.
+func decodeLegacyMonorepoRef(ref string) (owner, repo, branch, hash string, err error) {
+	if !IsLegacyMonorepoRef(ref) {
+		return "", "", "", "", fmt.Errorf("legacy monorepo ref %q: unrecognized shape", ref)
+	}
+	parts := strings.Split(strings.TrimPrefix(ref, legacyGitSourceRefPrefix), "/")
 	owner, repo, branch, hash = parts[0], parts[1], parts[2], parts[3]
 	if repo == "" || branch == "" || hash == "" {
-		return "", "", "", "", fmt.Errorf("git bundle ref %q: repo, branch and hash must be non-empty", ref)
+		return "", "", "", "", fmt.Errorf("legacy monorepo ref %q: repo, branch and hash must be non-empty", ref)
 	}
 	return owner, repo, branch, hash, nil
 }
 
-// IsGitSourceRef reports whether ref was minted by a GitBundleStore, so a
-// caller juggling multiple BundleStore backends (e.g. during a migration)
-// can branch on ref shape without a type assertion on the store itself.
-func IsGitSourceRef(ref string) bool {
-	return strings.HasPrefix(ref, gitSourceRefPrefix)
-}
-
-// gitBundleDir is the repo-relative directory a bundle's files live under,
-// sharded by the hash's first two hex characters (same fan-out convention
-// FSBundleStore's flat root would benefit from at scale; done here upfront
-// since a git tree listing is O(entries in the ref) whereas a directory scan
-// is not free the way a local filesystem's is).
-func gitBundleDir(hash string) string {
+func legacyGitBundleDir(hash string) string {
 	if len(hash) < 2 {
 		return "bundles/" + hash
 	}
 	return "bundles/" + hash[:2] + "/" + hash
 }
 
-// Write stores files content-addressed under this store's own (owner, repo,
-// branch) — see the type doc for why Write cannot honor an arbitrary
-// destination the way Read/Fork can. Re-writing byte-identical content is a
-// no-op against Gitea (checked via ListTree before committing) so repeated
-// saves of unchanged bundles do not spam the repo's commit history.
-func (s *GitBundleStore) Write(ctx context.Context, _ string, files map[string][]byte) (string, error) {
+// GitMonorepoBundleStore reads (only) the retired single-repo, content
+// addressed bundle layout — see the section doc above.
+type GitMonorepoBundleStore struct {
+	client GitClient
+}
+
+var _ BundleStore = (*GitMonorepoBundleStore)(nil)
+
+// NewGitMonorepoBundleStore returns a GitMonorepoBundleStore backed by
+// client, for reading legacy refs only.
+func NewGitMonorepoBundleStore(client GitClient) *GitMonorepoBundleStore {
+	return &GitMonorepoBundleStore{client: client}
+}
+
+// Write is unused in practice (see the type doc) but implemented to satisfy
+// BundleStore: it mirrors the original GitBundleStore.Write's
+// content-addressing exactly, for test parity.
+func (s *GitMonorepoBundleStore) Write(ctx context.Context, id BundleIdentity, _ string, files map[string][]byte) (string, error) {
+	owner, repo := gitrepo.InstanceRepoOwner, gitrepo.InstanceRepoName
 	hash := contentRef(files)
-	ref := EncodeGitSourceRef(s.owner, s.repo, s.branch, hash)
-	exists, err := s.hasBundle(ctx, s.owner, s.repo, s.branch, hash)
-	if err != nil {
-		return "", fmt.Errorf("git bundle store: check existing %q: %w", ref, err)
-	}
-	if exists {
-		return ref, nil
-	}
-	dir := gitBundleDir(hash)
+	ref := legacyGitSourceRefPrefix + fmt.Sprintf("%s/%s/%s/%s", owner, repo, gitrepo.InstanceRepoBranch, hash)
+	dir := legacyGitBundleDir(hash)
 	prefixed := make(map[string][]byte, len(files))
 	for name, content := range files {
 		prefixed[dir+"/"+name] = content
 	}
-	msg := fmt.Sprintf("chore: store catalog bundle %s", hash[:min(12, len(hash))])
-	if err := s.client.CommitFiles(ctx, s.owner, s.repo, s.branch, prefixed, s.authorName, s.authorEmail, msg); err != nil {
-		return "", fmt.Errorf("git bundle store: commit %q: %w", ref, err)
+	msg := fmt.Sprintf("chore: store legacy catalog bundle %s", hash[:min(12, len(hash))])
+	if err := s.client.CommitFiles(ctx, owner, repo, gitrepo.InstanceRepoBranch, prefixed, gitEntryAuthorName, gitEntryAuthorEmail, msg); err != nil {
+		return "", fmt.Errorf("git monorepo bundle store: commit %q: %w", ref, err)
 	}
+	_ = id // unused: legacy layout has no per-entry repo.
 	return ref, nil
 }
 
-// Read decodes ref, verifies it names THIS store's own (owner, repo,
-// branch) — see the type doc's isolation note — and reads every file under
-// its bundle directory back into a map keyed by the original relative path.
-func (s *GitBundleStore) Read(ctx context.Context, ref string) (map[string][]byte, error) {
-	owner, repo, branch, hash, err := DecodeGitSourceRef(ref)
+// Read reads a legacy monorepo ref's files back.
+func (s *GitMonorepoBundleStore) Read(ctx context.Context, ref string) (map[string][]byte, error) {
+	owner, repo, branch, hash, err := decodeLegacyMonorepoRef(ref)
 	if err != nil {
-		return nil, fmt.Errorf("git bundle store: %w", err)
+		return nil, fmt.Errorf("git monorepo bundle store: %w", err)
 	}
-	if owner != s.owner || repo != s.repo || branch != s.branch {
-		return nil, fmt.Errorf("git bundle ref %q: names a different repo than this store owns (%s/%s/%s)", ref, s.owner, s.repo, s.branch)
-	}
-	dir := gitBundleDir(hash)
+	dir := legacyGitBundleDir(hash)
 	paths, err := s.client.ListTree(ctx, owner, repo, branch)
 	if err != nil {
-		return nil, fmt.Errorf("git bundle store: list %q: %w", ref, err)
+		return nil, fmt.Errorf("git monorepo bundle store: list %q: %w", ref, err)
 	}
 	prefix := dir + "/"
 	files := make(map[string][]byte)
@@ -216,69 +372,42 @@ func (s *GitBundleStore) Read(ctx context.Context, ref string) (map[string][]byt
 		}
 		content, err := s.client.GetFile(ctx, owner, repo, branch, p)
 		if err != nil {
-			return nil, fmt.Errorf("git bundle store: read %q: %w", p, err)
+			return nil, fmt.Errorf("git monorepo bundle store: read %q: %w", p, err)
 		}
 		files[rel] = content
 	}
 	if len(files) == 0 {
-		return nil, fmt.Errorf("git bundle ref %q not found", ref)
+		return nil, fmt.Errorf("legacy monorepo ref %q not found", ref)
 	}
 	return files, nil
 }
 
-// Fork reads sourceRef's files and re-Writes them under a freshly salted
-// hash into THIS store's own (owner, repo, branch) — so Fork(x) always
-// yields a ref distinct from x, exactly like MemoryBundleStore/
-// FSBundleStore.Fork guarantee, but salted with a uuid rather than a
-// store-size counter (a git-backed store keeps no in-process index to size).
-func (s *GitBundleStore) Fork(ctx context.Context, sourceRef string) (string, error) {
+// Fork is unused in practice (see the type doc); implemented for interface
+// completeness only, salted with a uuid exactly like the original
+// GitBundleStore.Fork — the salt picks a distinct destination directory
+// (so Fork(x) != x even for byte-identical content) but is never itself
+// persisted into the stored bundle.
+func (s *GitMonorepoBundleStore) Fork(ctx context.Context, _ BundleIdentity, sourceRef string) (string, error) {
 	files, err := s.Read(ctx, sourceRef)
 	if err != nil {
-		return "", fmt.Errorf("git bundle store: fork: %w", err)
+		return "", fmt.Errorf("git monorepo bundle store: fork: %w", err)
 	}
+	owner, repo := gitrepo.InstanceRepoOwner, gitrepo.InstanceRepoName
 	salted := make(map[string][]byte, len(files)+1)
 	for k, v := range files {
 		salted[k] = v
 	}
 	salted["\x00fork-salt"] = []byte(sourceRef + "#" + uuid.NewString())
-	// Compute the salted hash to decide the destination directory, but store
-	// the UNSALTED files there (the salt must never leak into the persisted
-	// bundle content) — same two-step Write MemoryBundleStore/FSBundleStore.
-	// Fork perform via forkRef, done inline here since GitBundleStore's Write
-	// re-derives its own hash from files and must not see the salt key.
 	hash := contentRef(salted)
-	ref := EncodeGitSourceRef(s.owner, s.repo, s.branch, hash)
-	exists, err := s.hasBundle(ctx, s.owner, s.repo, s.branch, hash)
-	if err != nil {
-		return "", fmt.Errorf("git bundle store: fork: check existing %q: %w", ref, err)
-	}
-	if exists {
-		return ref, nil
-	}
-	dir := gitBundleDir(hash)
+	ref := legacyGitSourceRefPrefix + fmt.Sprintf("%s/%s/%s/%s", owner, repo, gitrepo.InstanceRepoBranch, hash)
+	dir := legacyGitBundleDir(hash)
 	prefixed := make(map[string][]byte, len(files))
 	for name, content := range files {
 		prefixed[dir+"/"+name] = content
 	}
-	msg := fmt.Sprintf("chore: fork catalog bundle %s", hash[:min(12, len(hash))])
-	if err := s.client.CommitFiles(ctx, s.owner, s.repo, s.branch, prefixed, s.authorName, s.authorEmail, msg); err != nil {
-		return "", fmt.Errorf("git bundle store: fork commit %q: %w", ref, err)
+	msg := fmt.Sprintf("chore: fork legacy catalog bundle %s", hash[:min(12, len(hash))])
+	if err := s.client.CommitFiles(ctx, owner, repo, gitrepo.InstanceRepoBranch, prefixed, gitEntryAuthorName, gitEntryAuthorEmail, msg); err != nil {
+		return "", fmt.Errorf("git monorepo bundle store: fork commit %q: %w", ref, err)
 	}
 	return ref, nil
-}
-
-// hasBundle reports whether a bundle directory for hash already has at
-// least one file committed on branch.
-func (s *GitBundleStore) hasBundle(ctx context.Context, owner, repo, branch, hash string) (bool, error) {
-	paths, err := s.client.ListTree(ctx, owner, repo, branch)
-	if err != nil {
-		return false, err
-	}
-	prefix := gitBundleDir(hash) + "/"
-	for _, p := range paths {
-		if strings.HasPrefix(p, prefix) {
-			return true, nil
-		}
-	}
-	return false, nil
 }

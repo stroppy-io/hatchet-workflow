@@ -82,14 +82,29 @@ func (a *Authorizer) CanAuthor(r *http.Request) bool {
 		// LEVEL_INSTANCE write path in this codebase.
 		return false
 	case ScopeOrg:
-		return a.canAuthorOrg(r.Context(), claims.GetAccountId(), scope.OrgSlug)
+		return a.canAuthorOrg(r.Context(), claims.GetAccountId(), scope.OrgSlug, scope.EntryKind)
 	default:
 		return false
 	}
 }
 
-func (a *Authorizer) canAuthorOrg(ctx context.Context, accountID, orgSlug string) bool {
+// canAuthorOrg checks the caller's permission against the resource matching
+// entryKind SPECIFICALLY (RESOURCE_PROVIDER for EntryKindProvider,
+// RESOURCE_WORKFLOW for EntryKindWorkflow) — tighter than the pre-redesign
+// version, which granted access to the whole shared org worktree (covering
+// both providers/ and workflows/) to a caller holding EITHER resource's
+// grant. Now that a Scope names one specific entry repo, a caller who only
+// holds RESOURCE_WORKFLOW's grant must not be able to open a
+// RESOURCE_PROVIDER entry's repo (and vice versa) — this is what "IDE
+// authoring permission == the identical RBAC UpdateOrgProvider/
+// UpdateOrgWorkflow enforce" now means at the per-entry granularity those
+// RPCs already had.
+func (a *Authorizer) canAuthorOrg(ctx context.Context, accountID, orgSlug, entryKind string) bool {
 	if a.Tenants == nil || a.Perms == nil {
+		return false
+	}
+	resource, ok := resourceForEntryKind(entryKind)
+	if !ok {
 		return false
 	}
 	tenant, err := a.Tenants.GetBySlug(ctx, orgSlug)
@@ -100,26 +115,36 @@ func (a *Authorizer) canAuthorOrg(ctx context.Context, accountID, orgSlug string
 	if err != nil {
 		return false
 	}
-	return hasAuthoringPermission(perms)
+	return hasAuthoringPermission(perms, resource)
 }
 
-// hasAuthoringPermission reports whether perms grants write access to the
-// org catalog — RESOURCE_PROVIDER or RESOURCE_WORKFLOW at ACTION_UPDATE or
-// ACTION_MANAGE, the same resource pair catalog.Service's
-// UpdateOrgProvider/UpdateOrgWorkflow RPCs require (see service.go's
-// package doc: "so all_of can gate RESOURCE_PROVIDER separately from
-// RESOURCE_WORKFLOW"). Either resource alone is sufficient here — the IDE
-// is a single shared workspace covering both providers/ and workflows/, so
-// requiring both would deny a caller who e.g. only has workflow-authoring
-// rights from opening the IDE at all, even to edit only workflows/.
-func hasAuthoringPermission(perms []*iampb.Permission) bool {
+// resourceForEntryKind maps a Scope.EntryKind string to the iampb.Resource
+// catalog.Service's UpdateOrgProvider/UpdateOrgWorkflow RPCs are gated on
+// for that same kind — the single place this string<->enum mapping is made,
+// so the IDE and the catalog RPC surface can never silently drift apart.
+func resourceForEntryKind(entryKind string) (iampb.Resource, bool) {
+	switch entryKind {
+	case EntryKindProvider:
+		return iampb.Resource_RESOURCE_PROVIDER, true
+	case EntryKindWorkflow:
+		return iampb.Resource_RESOURCE_WORKFLOW, true
+	default:
+		return iampb.Resource_RESOURCE_UNSPECIFIED, false
+	}
+}
+
+// hasAuthoringPermission reports whether perms grants write access to
+// resource specifically, at ACTION_UPDATE/ACTION_MANAGE/ACTION_CREATE — the
+// same actions catalog.Service's UpdateOrgProvider/UpdateOrgWorkflow RPCs
+// require.
+func hasAuthoringPermission(perms []*iampb.Permission, resource iampb.Resource) bool {
 	for _, p := range perms {
-		switch p.GetResource() {
-		case iampb.Resource_RESOURCE_PROVIDER, iampb.Resource_RESOURCE_WORKFLOW:
-			switch p.GetAction() {
-			case iampb.Action_ACTION_UPDATE, iampb.Action_ACTION_MANAGE, iampb.Action_ACTION_CREATE:
-				return true
-			}
+		if p.GetResource() != resource {
+			continue
+		}
+		switch p.GetAction() {
+		case iampb.Action_ACTION_UPDATE, iampb.Action_ACTION_MANAGE, iampb.Action_ACTION_CREATE:
+			return true
 		}
 	}
 	return false

@@ -672,7 +672,7 @@ func TestGetOrgWorkflowFiles_LinkedRowWithNoOwnRefResolvesViaSourceEntry(t *test
 	// source_entry_id -> the instance row's ref.
 	repo := newFakeEntryRepo()
 	bundles := NewMemoryBundleStore()
-	ref, err := bundles.Write(context.Background(), "", map[string][]byte{"cluster.yaml": clusterYAML()})
+	ref, err := bundles.Write(context.Background(), BundleIdentity{}, "", map[string][]byte{"cluster.yaml": clusterYAML()})
 	if err != nil {
 		t.Fatalf("bundle write: %v", err)
 	}

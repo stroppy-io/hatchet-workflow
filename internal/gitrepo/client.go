@@ -124,6 +124,114 @@ func (c *Client) postIdempotent(ctx context.Context, path string, body any) erro
 	return fmt.Errorf("gitea %s %s: %s: %s", http.MethodPost, path, resp.Status, strings.TrimSpace(string(respBody)))
 }
 
+// RepoExists reports whether owner/repo exists, via Gitea's GET
+// /repos/{owner}/{repo} (200) vs (404) — used by the repo-per-entry fork path
+// to decide whether ForkRepo still needs to run or a previous fork (or a
+// concurrent racing request) already created the destination repo.
+func (c *Client) RepoExists(ctx context.Context, owner, repo string) (bool, error) {
+	url := fmt.Sprintf("%s/api/v1/repos/%s/%s", c.baseURL, owner, repo)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return false, err
+	}
+	req.Header.Set("Authorization", "token "+c.token)
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return false, err
+	}
+	defer resp.Body.Close()
+	switch resp.StatusCode {
+	case http.StatusOK:
+		return true, nil
+	case http.StatusNotFound:
+		return false, nil
+	default:
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
+		return false, fmt.Errorf("gitea get repo %s/%s: %s: %s", owner, repo, resp.Status, strings.TrimSpace(string(body)))
+	}
+}
+
+// ForkRepo creates a real Gitea fork of srcOwner/srcRepo into dstOwner (an
+// org, per this codebase's org-per-tenant convention), named dstName, via
+// Gitea's POST /repos/{owner}/{repo}/forks.
+//
+// VERIFIED against a live gitea/gitea:1.23 instance: a successful fork
+// returns 202 Accepted (not 201 — Gitea forks are queued/near-synchronous,
+// unlike EnsureRepo's plain create). Re-forking the same (src, dst) pair
+// returns 409 Conflict with a body containing "already forked" — swallowed
+// here for the same idempotency reason postIdempotent swallows EnsureOrg/
+// EnsureRepo's create-conflict, so a caller can call ForkRepo unconditionally
+// without a RepoExists check first (though the caller in
+// internal/services/catalog does check first, to avoid the extra round trip
+// on the common "not yet forked" path).
+func (c *Client) ForkRepo(ctx context.Context, srcOwner, srcRepo, dstOwner, dstName string) error {
+	body := map[string]string{"organization": dstOwner, "name": dstName}
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return err
+	}
+	url := fmt.Sprintf("%s/api/v1/repos/%s/%s/forks", c.baseURL, srcOwner, srcRepo)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, url, bytes.NewReader(buf))
+	if err != nil {
+		return err
+	}
+	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Authorization", "token "+c.token)
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode == http.StatusAccepted || resp.StatusCode == http.StatusCreated || resp.StatusCode == http.StatusOK {
+		return nil
+	}
+	respBody, _ := io.ReadAll(io.LimitReader(resp.Body, 4096))
+	if resp.StatusCode == http.StatusConflict && strings.Contains(string(respBody), "already forked") {
+		return nil
+	}
+	return fmt.Errorf("gitea fork %s/%s -> %s/%s: %s: %s", srcOwner, srcRepo, dstOwner, dstName, resp.Status, strings.TrimSpace(string(respBody)))
+}
+
+// branchResponse is the subset of Gitea's GET .../branches/{branch} response
+// LatestCommit needs.
+type branchResponse struct {
+	Commit struct {
+		ID string `json:"id"`
+	} `json:"commit"`
+}
+
+// LatestCommit returns the current tip commit sha of owner/repo's branch —
+// VERIFIED against a live gitea/gitea:1.23 instance
+// (GET /api/v1/repos/{owner}/{repo}/branches/{branch} -> 200, body's
+// commit.id). Called right after CommitFiles to mint the immutable,
+// commit-pinned source_ref (git:<owner>/<repo>@<sha>) a repo-per-entry
+// BundleStore write returns.
+func (c *Client) LatestCommit(ctx context.Context, owner, repo, branch string) (string, error) {
+	url := fmt.Sprintf("%s/api/v1/repos/%s/%s/branches/%s", c.baseURL, owner, repo, branch)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
+	if err != nil {
+		return "", err
+	}
+	req.Header.Set("Authorization", "token "+c.token)
+	resp, err := c.http.Do(req)
+	if err != nil {
+		return "", err
+	}
+	defer resp.Body.Close()
+	if resp.StatusCode != http.StatusOK {
+		body, _ := io.ReadAll(io.LimitReader(resp.Body, 2048))
+		return "", fmt.Errorf("gitea get branch %s/%s@%s: %s: %s", owner, repo, branch, resp.Status, strings.TrimSpace(string(body)))
+	}
+	var out branchResponse
+	if err := json.NewDecoder(resp.Body).Decode(&out); err != nil {
+		return "", err
+	}
+	if out.Commit.ID == "" {
+		return "", fmt.Errorf("gitea get branch %s/%s@%s: empty commit id in response", owner, repo, branch)
+	}
+	return out.Commit.ID, nil
+}
+
 // selfUser is the subset of Gitea's GET /api/v1/user response resolveOwner
 // needs.
 type selfUser struct {

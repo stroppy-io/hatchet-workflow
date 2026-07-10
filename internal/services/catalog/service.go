@@ -270,7 +270,7 @@ func (s *Service) createEntry(ctx context.Context, level catalogpb.Level, tenant
 	if err != nil {
 		return nil, err
 	}
-	ref, err := s.d.Bundles.Write(ctx, "", files)
+	ref, err := s.d.Bundles.Write(ctx, identityFor(level, tenantID, kind, slug), "", files)
 	if err != nil {
 		return nil, utils.MapErr(err)
 	}
@@ -401,12 +401,12 @@ func (s *Service) newVersion(ctx context.Context, base *catalogpb.CatalogEntry, 
 	if err != nil {
 		return nil, utils.MapErr(err)
 	}
-	ref, err := s.d.Bundles.Write(ctx, "", files)
+	level := base.GetLevel()
+	tenantID := base.GetEntity().GetTenantId()
+	ref, err := s.d.Bundles.Write(ctx, identityFor(level, tenantID, base.GetKind(), base.GetSlug()), "", files)
 	if err != nil {
 		return nil, utils.MapErr(err)
 	}
-	level := base.GetLevel()
-	tenantID := base.GetEntity().GetTenantId()
 	nextVer, err := s.nextVersion(ctx, level, tenantID, base.GetKind(), base.GetSlug())
 	if err != nil {
 		return nil, err
