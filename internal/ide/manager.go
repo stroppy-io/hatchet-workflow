@@ -118,6 +118,10 @@ type Config struct {
 // path is used).
 const lspBinaryContainerPath = "/usr/local/bin/stroppy-yaml-lsp"
 
+// workspaceContainerPath is where a scope's worktree is mounted inside its
+// code-server container, and the folder code-server is told to open.
+const workspaceContainerPath = "/home/coder/project"
+
 // NewManager builds a Manager from cfg.
 func NewManager(cfg Config) *Manager {
 	return &Manager{
@@ -245,6 +249,18 @@ func (m *Manager) EnsureRunning(ctx context.Context, scope Scope) (string, error
 			// public internet.
 			"PASSWORD=",
 		},
+		// An empty PASSWORD does NOT disable code-server's login: it falls back
+		// to the password in its own generated ~/.config/code-server/config.yaml
+		// and 302s every request to ./login, which the gateway then proxies as a
+		// broken redirect. `--auth none` is the actual off switch.
+		//
+		// The worktree is passed as the folder to open, so a session lands on the
+		// catalog entry's repo root instead of an empty $HOME.
+		Cmd: []string{
+			"--auth", "none",
+			"--bind-addr", "0.0.0.0:8080",
+			workspaceContainerPath,
+		},
 	}
 	var netCfg *network.NetworkingConfig
 	if m.network != "" {
@@ -288,7 +304,7 @@ func (m *Manager) workspaceMount(scopeKey, dest string) mount.Mount {
 		return mount.Mount{
 			Type:   mount.TypeVolume,
 			Source: m.worktreeVolume,
-			Target: "/home/coder/project",
+			Target: workspaceContainerPath,
 			VolumeOptions: &mount.VolumeOptions{
 				Subpath: worktreeSubpath(scopeKey),
 			},
@@ -297,7 +313,7 @@ func (m *Manager) workspaceMount(scopeKey, dest string) mount.Mount {
 	return mount.Mount{
 		Type:   mount.TypeBind,
 		Source: dest,
-		Target: "/home/coder/project",
+		Target: workspaceContainerPath,
 	}
 }
 
