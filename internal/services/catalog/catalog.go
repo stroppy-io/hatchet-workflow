@@ -85,10 +85,15 @@ type Deps struct {
 	// context.
 	Authn utils.Authn
 	// BuiltinProviders is slug -> files for the providers shipped with the
-	// platform, seeded as LEVEL_INSTANCE rows on first SeedOrgCatalog call
-	// (a later task — this task only declares the field so Deps' shape is
-	// stable for callers that construct it).
+	// platform (e.g. "docker", "yandex"), seeded as LEVEL_INSTANCE
+	// KIND_PROVIDER rows by ensureBuiltinInstanceEntries.
 	BuiltinProviders map[string]map[string][]byte
+	// BuiltinWorkflows is slug -> files for the example/starter workflow
+	// bundles shipped with the platform (e.g. "postgres-ha", sourced from
+	// examples/dsl/**), seeded as LEVEL_INSTANCE KIND_WORKFLOW rows by
+	// ensureBuiltinInstanceEntries so a fresh install has at least one
+	// launchable recipe in its catalog.
+	BuiltinWorkflows map[string]map[string][]byte
 }
 
 // Service implements catalogpb.CatalogServiceServer: the connect-RPC surface

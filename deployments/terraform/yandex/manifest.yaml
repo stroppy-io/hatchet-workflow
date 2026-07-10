@@ -1,0 +1,6 @@
+name: yandex
+provides: [machines, disk.network-ssd, disk.network-hdd, network.private]
+lowering:
+  disk.type:
+    ssd: network-ssd
+    hdd: network-hdd

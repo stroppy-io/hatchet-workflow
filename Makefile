@@ -2,7 +2,7 @@
 .PHONY: help configure build build-all protocols test test-integration test-e2e test-e2e-core test-coverage \
         agent-image test-unit test-db test-full smoke smoke-clean \
         tools proto-tools db-gen migrate-generate migrate-clear \
-        lint fmt docker-build docker-push docker-up docker-down docker-logs \
+        lint fmt docker-build docker-push docker-up docker-down docker-logs ide-token \
         serve docs-install docs-dev docs-build web-install web-dev web-build \
         clean release
 
@@ -200,6 +200,9 @@ docker-down: ## Stop test stack
 
 docker-logs: ## Show server logs
 	docker compose -f docker-compose.yaml logs -f server
+
+ide-token: ## Provision the Gitea service account + IDE access token (prints .env lines; never persists the token)
+	./deployments/gitea/bootstrap-ide-token.sh
 
 # ============================================================
 # Smoke — full local stack + minimal docker run end-to-end

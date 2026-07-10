@@ -1,3 +1,34 @@
+locals {
+  # stroppy_machines_disk_device maps each VM name to its first secondary
+  # disk's device_name (empty string when a VM has none), so
+  # stroppy_machines below can report the same convention the provider
+  # contract (internal/infrastructure/provider/terraform.go's
+  # tfMachineOutput.DiskDevice / defaultDiskDevice) expects: an empty
+  # disk_device lets the Go side fall back to its own default rather than
+  # this module inventing one.
+  stroppy_machines_disk_device = {
+    for vm_name, vm in var.compute.vms :
+    vm_name => length(vm.secondary_disks) > 0 ? vm.secondary_disks[0].device_name : ""
+  }
+}
+
+# stroppy_machines is the provider contract output every terraform module
+# behind internal/infrastructure/provider.NewTerraform must export (see
+# terraform.go's stroppyMachinesOutputKey/tfMachineOutput): one entry per
+# provisioned VM, id matching the stroppy_nodes id this module was given
+# (== the vms map key == yandex_compute_instance.vms's resource "name",
+# since vm.tf sets `name = each.key`).
+output "stroppy_machines" {
+  value = [
+    for vm_name, vm in yandex_compute_instance.vms : {
+      id          = vm_name
+      private_ip  = vm.network_interface[0].ip_address
+      public_ip   = vm.network_interface[0].nat_ip_address
+      disk_device = local.stroppy_machines_disk_device[vm_name]
+    }
+  ]
+}
+
 output "vm_ips" {
   value = {
     for _, vm in yandex_compute_instance.vms :

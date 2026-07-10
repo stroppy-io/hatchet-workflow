@@ -28,6 +28,7 @@ import (
 	"google.golang.org/protobuf/reflect/protoregistry"
 
 	yandextf "github.com/stroppy-io/stroppy-cloud/deployments/terraform/yandex"
+	dslexamples "github.com/stroppy-io/stroppy-cloud/examples/dsl"
 	agentdomain "github.com/stroppy-io/stroppy-cloud/internal/domain/agent"
 	domsettings "github.com/stroppy-io/stroppy-cloud/internal/domain/settings"
 	"github.com/stroppy-io/stroppy-cloud/internal/dsl/diag"
@@ -342,15 +343,35 @@ func Run(ctx context.Context, cfg Config) error {
 		dslsvc.WithProviderResolver(providerResolver),
 	)
 
-	// catalogService is the SP-B catalog domain (dark-launched until this
-	// wiring): provider/workflow objects promoted to first-class catalog
-	// entries at LEVEL_INSTANCE/LEVEL_ORG. BuiltinProviders seeds the docker
-	// builtin (no tf module — see dslsvc.BuiltinDockerManifest) as a
-	// LEVEL_INSTANCE row on first SeedOrgCatalog call, so day-one tenants link
-	// against it like any other catalog provider. Check reuses dslService's
-	// own check-mode compile pipeline for KIND_WORKFLOW bundles, and a
+	// catalogService is the SP-B catalog domain: provider/workflow objects
+	// promoted to first-class catalog entries at LEVEL_INSTANCE/LEVEL_ORG.
+	// BuiltinProviders seeds the docker builtin (no tf module — see
+	// dslsvc.BuiltinDockerManifest) and the yandex builtin (real terraform
+	// module, deployments/terraform/yandex — see yandextf.BuiltinCatalogFiles)
+	// as LEVEL_INSTANCE rows; BuiltinWorkflows seeds the postgres-ha example
+	// bundle as a launchable LEVEL_INSTANCE KIND_WORKFLOW row. Both are seeded
+	// unconditionally at boot via SeedBuiltinCatalog below (P1), and again,
+	// idempotently, whenever SeedOrgCatalog links a new tenant's org catalog.
+	// Check reuses dslService's own check-mode compile pipeline for
+	// KIND_WORKFLOW bundles, and a
 	// manifest-only decode for KIND_PROVIDER bundles (see newCatalogChecker's
 	// doc).
+	// yandexCatalogFiles is the "yandex" builtin provider's catalog bundle
+	// (manifest.yaml + module/*.tf), embedded independently of yandexTfFiles
+	// below (that embed feeds the live terraform.Actor's moduleDir instead —
+	// see its own doc comment) so it is available here, ahead of
+	// catalogService's construction (P2/P3).
+	yandexCatalogFiles, err := yandextf.BuiltinCatalogFiles()
+	if err != nil {
+		return fmt.Errorf("load embedded yandex catalog manifest: %w", err)
+	}
+	// postgresHABundle is the only example DSL bundle shipped today
+	// (examples/dsl/postgres-ha) — seeded as the catalog's first launchable
+	// KIND_WORKFLOW entry (P5) so a fresh install has something to launch.
+	postgresHABundle, err := dslexamples.PostgresHABundle()
+	if err != nil {
+		return fmt.Errorf("load embedded postgres-ha example bundle: %w", err)
+	}
 	catalogService := catalogsvc.NewService(catalogsvc.Deps{
 		Entries: catalogEntries,
 		Bundles: catalogBundles,
@@ -358,8 +379,21 @@ func Run(ctx context.Context, cfg Config) error {
 		Authn:   authn,
 		BuiltinProviders: map[string]map[string][]byte{
 			"docker": {"manifest.yaml": []byte(dslsvc.BuiltinDockerManifest)},
+			"yandex": yandexCatalogFiles,
+		},
+		BuiltinWorkflows: map[string]map[string][]byte{
+			dslexamples.PostgresHABundleName: postgresHABundle,
 		},
 	})
+	// SeedBuiltinCatalog (P1): a stand whose tenant predates SeedOrgCatalog's
+	// per-tenant-create wiring (internal/services/iam.Service's account
+	// creation path) never gets its catalog seeded otherwise — this call is
+	// idempotent and independent of any tenant existing, so it is safe (and
+	// simplest) to run unconditionally on every boot, in addition to (not
+	// instead of) SeedOrgCatalog's own seeding on new-tenant creation.
+	if err := catalogService.SeedBuiltinCatalog(ctx); err != nil {
+		return fmt.Errorf("seed builtin catalog: %w", err)
+	}
 
 	iamService := iamsvc.NewIamService(iamsvc.IamDeps{
 		Authn:                authn,
