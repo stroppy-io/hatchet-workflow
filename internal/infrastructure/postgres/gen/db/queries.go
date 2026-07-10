@@ -465,6 +465,32 @@ func (q *Queries) ListIamTenantsByMember(ctx context.Context, accountID string) 
 	return items, nil
 }
 
+const listIamTenantsSQL = `select data from iam_tenants;`
+
+type ListIamTenantsRow struct {
+	Data json.RawMessage
+}
+
+func (q *Queries) ListIamTenants(ctx context.Context) ([]ListIamTenantsRow, error) {
+	rows, err := q.db.Query(ctx, listIamTenantsSQL)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListIamTenantsRow
+	for rows.Next() {
+		var i ListIamTenantsRow
+		if err := rows.Scan(&i.Data); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const countIamTenantsOwnedBySQL = `select count(*) from iam_tenants where owner_account_id = $1;`
 
 type CountIamTenantsOwnedByRow struct {

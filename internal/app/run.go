@@ -428,6 +428,30 @@ func Run(ctx context.Context, cfg Config) error {
 	if err := catalogService.SeedBuiltinCatalog(ctx); err != nil {
 		return fmt.Errorf("seed builtin catalog: %w", err)
 	}
+	// Org-catalog backfill: SeedOrgCatalog (the LEVEL_ORG link) was, until
+	// now, only ever called from iamService's tenant-creation path below, so
+	// any tenant that predates that wiring — e.g. the default tenant on a
+	// stand seeded before the catalog existed — never gets its org catalog
+	// linked, forever. This mirrors SeedBuiltinCatalog's own P1 fix for the
+	// instance level. Backfill every existing tenant unconditionally on every
+	// boot; safe because SeedOrgCatalog is idempotent per (tenant, instance
+	// entry) and a no-op once everything is linked. A per-tenant failure is
+	// logged and skipped rather than aborting Run or the remaining tenants
+	// (posture from 1c8ad7f5: gitea/catalog problems degrade, they do not
+	// crash-loop the control plane) — a failed tenant is retried automatically
+	// on the next boot since nothing about the failure is persisted.
+	if tenants, err := store.Tenants().List(ctx); err != nil {
+		log.Error("list tenants for org catalog backfill failed; skipping backfill this boot", "err", err)
+	} else {
+		tenantIDs := make([]string, 0, len(tenants))
+		for _, t := range tenants {
+			tenantIDs = append(tenantIDs, t.GetId())
+		}
+		catalogService.BackfillOrgCatalogs(ctx, tenantIDs, func(tenantID string, err error) {
+			log.Error("org catalog backfill failed for tenant; will retry next boot",
+				"tenant_id", tenantID, "err", err)
+		})
+	}
 
 	iamService := iamsvc.NewIamService(iamsvc.IamDeps{
 		Authn:                authn,

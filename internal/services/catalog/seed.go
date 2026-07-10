@@ -76,6 +76,31 @@ func (s *Service) SeedOrgCatalog(ctx context.Context, tenantID string) error {
 	return nil
 }
 
+// BackfillOrgCatalogs calls SeedOrgCatalog for every id in tenantIDs, linking
+// the instance catalog into any org catalog that predates it (or is
+// otherwise missing entries) — the same defect class ensureBuiltinInstanceEntries
+// had before SeedBuiltinCatalog (P1) fixed it for the instance level: a
+// tenant created before this wiring existed never gets a LINKED row
+// otherwise, because SeedOrgCatalog was previously only reachable from
+// account creation (internal/services/iam.Service). internal/app.Run calls
+// this once at boot, right after SeedBuiltinCatalog, over every tenant
+// store.Tenants().List returns.
+//
+// A per-tenant failure is reported to onError (if non-nil) rather than
+// aborting the loop, mirroring the posture 1c8ad7f5 established for the
+// gitea bootstrap: one bad tenant must not block catalog seeding for the
+// rest, and the whole control plane must not crash-loop over it. Nothing
+// needs to be tracked about which tenant failed — SeedOrgCatalog is
+// idempotent, so a failed tenant is simply retried, and made whole, on the
+// next boot.
+func (s *Service) BackfillOrgCatalogs(ctx context.Context, tenantIDs []string, onError func(tenantID string, err error)) {
+	for _, tenantID := range tenantIDs {
+		if err := s.SeedOrgCatalog(ctx, tenantID); err != nil && onError != nil {
+			onError(tenantID, err)
+		}
+	}
+}
+
 // alreadyLinkedForTenant reports whether linked (the rows already sourced
 // from one instance entry, as returned by ListBySource) contains a row
 // scoped to tenantID — SeedOrgCatalog's idempotency check.

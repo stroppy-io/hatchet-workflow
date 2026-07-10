@@ -346,6 +346,27 @@ func (r *TenantRepo) ListByMember(ctx context.Context, accountID string) ([]*iam
 	return out, nil
 }
 
+// List returns every tenant in the store, regardless of ownership or
+// membership. Unlike ListByMember (scoped to one account) this has no
+// caller-identity filter, so it is used only by trusted, boot-time paths
+// (internal/app.Run's catalog backfill iterates every tenant to link the
+// instance catalog into ones that predate it) — never exposed over an API.
+func (r *TenantRepo) List(ctx context.Context) ([]*iam.Tenant, error) {
+	rows, err := r.db.q().ListIamTenants(ctx)
+	if err != nil {
+		return nil, err
+	}
+	out := make([]*iam.Tenant, 0, len(rows))
+	for _, row := range rows {
+		t, err := decodeTenant(row.Data)
+		if err != nil {
+			return nil, err
+		}
+		out = append(out, t)
+	}
+	return out, nil
+}
+
 func (r *TenantRepo) CountOwnedBy(ctx context.Context, accountID string) (int, error) {
 	row, err := r.db.q().CountIamTenantsOwnedBy(ctx, accountID)
 	if err != nil {

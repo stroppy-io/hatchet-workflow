@@ -68,6 +68,9 @@ select data from iam_tenants
 where owner_account_id = @account_id
    or id in (select tenant_id from iam_memberships where account_id = @account_id);
 
+-- name: ListIamTenants :many
+select data from iam_tenants;
+
 -- name: CountIamTenantsOwnedBy :one
 select count(*) from iam_tenants where owner_account_id = @account_id;
 
