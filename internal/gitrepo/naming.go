@@ -30,6 +30,15 @@ var slugSanitizeRe = regexp.MustCompile(`[^a-z0-9._-]+`)
 // user-supplied slug is.
 const maxSanitizedSlugLen = 60
 
+// maxOrgNameLen is Gitea's hard limit on an org/user name — beyond it, org
+// creation fails with 422 "[UserName]: MaxSize". It is far tighter than the
+// repo-name limit maxSanitizedSlugLen was sized against. shortHashLen is the
+// width shortHash returns.
+const (
+	maxOrgNameLen = 40
+	shortHashLen  = 8
+)
+
 // SanitizeSlug lower-cases raw and replaces every character outside
 // [a-z0-9._-] with "-", trims leading/trailing separator noise, and falls
 // back to "entry" for a raw slug that sanitizes to nothing (e.g. all
@@ -72,7 +81,16 @@ func shortHash(raw string) string {
 // or collide with another tenant's org (the hash is keyed on the exact
 // tenantID string).
 func TenantOrg(tenantID string) string {
-	return tenantOrgPrefix + SanitizeSlug(tenantID) + "-" + shortHash(tenantID)
+	// Gitea caps an org/user name at maxOrgNameLen. A tenant id is a 36-char
+	// UUID, so prefix+uuid+"-"+hash is 52 and Gitea rejects it outright with
+	// 422 "[UserName]: MaxSize" — the org, and therefore every repo under it,
+	// simply never gets created. Truncate the human-readable half; the hash
+	// keyed on the FULL tenantID still makes the result unique and stable.
+	body := SanitizeSlug(tenantID)
+	if room := maxOrgNameLen - len(tenantOrgPrefix) - 1 - shortHashLen; len(body) > room {
+		body = strings.TrimRight(body[:room], "-._")
+	}
+	return tenantOrgPrefix + body + "-" + shortHash(tenantID)
 }
 
 // EntryRepoName returns the repo name for one catalog entry "item" — a

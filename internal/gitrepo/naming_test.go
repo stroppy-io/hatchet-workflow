@@ -1,6 +1,9 @@
 package gitrepo
 
-import "testing"
+import (
+	"strings"
+	"testing"
+)
 
 func TestSanitizeSlug_HostileInputContained(t *testing.T) {
 	cases := []string{
@@ -68,5 +71,40 @@ func TestOwnerFor(t *testing.T) {
 	}
 	if got := OwnerFor(false, "tenant-1"); got != TenantOrg("tenant-1") {
 		t.Fatalf("OwnerFor(org) = %q, want %q", got, TenantOrg("tenant-1"))
+	}
+}
+
+// TestTenantOrg_FitsGiteaNameLimit is the regression guard for a live 422:
+// a tenant id is a 36-char UUID, so the pre-fix name was 52 characters and
+// Gitea refused to create the org at all ("[UserName]: MaxSize"). Every org
+// repo under it — catalog forks and recipes alike — was therefore
+// unreachable.
+func TestTenantOrg_FitsGiteaNameLimit(t *testing.T) {
+	for _, tenantID := range []string{
+		"6efd731f-5f81-4b1d-8ab4-7915341d5eff",
+		"00000000-0000-0000-0000-000000000000",
+		strings.Repeat("x", 200),
+		"Ünicode/../hostile name with spaces",
+		"",
+	} {
+		got := TenantOrg(tenantID)
+		if len(got) > maxOrgNameLen {
+			t.Errorf("TenantOrg(%q) = %q (%d chars), exceeds Gitea's %d limit",
+				tenantID, got, len(got), maxOrgNameLen)
+		}
+		if !strings.HasPrefix(got, tenantOrgPrefix) {
+			t.Errorf("TenantOrg(%q) = %q, lost its prefix", tenantID, got)
+		}
+	}
+}
+
+// TestTenantOrg_TruncationKeepsTenantsDistinct proves the length cap cannot
+// collide two tenants whose ids share a long prefix: the hash is keyed on the
+// full id, not the truncated body.
+func TestTenantOrg_TruncationKeepsTenantsDistinct(t *testing.T) {
+	a := TenantOrg("6efd731f-5f81-4b1d-8ab4-7915341d5eff")
+	b := TenantOrg("6efd731f-5f81-4b1d-8ab4-7915341d5ef0")
+	if a == b {
+		t.Fatalf("two distinct tenants collided onto the same org name: %q", a)
 	}
 }
