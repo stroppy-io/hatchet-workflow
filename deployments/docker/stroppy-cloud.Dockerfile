@@ -49,8 +49,12 @@ FROM ubuntu:22.04
 
 ARG STROPPY_VERSION=5.1.2
 
+# git is a runtime dependency, not a build one: internal/ide.EnsureWorktree
+# shells out to the system git binary to clone/pull a catalog entry's repo
+# into the worktree code-server mounts (internal/gitrepo is REST-only, and
+# code-server's own git UI needs a real .git dir anyway).
 RUN apt-get update && apt-get install -y --no-install-recommends \
-	bash curl ca-certificates wget sudo gnupg lsb-release \
+	bash curl ca-certificates wget sudo gnupg lsb-release git \
 	&& rm -rf /var/lib/apt/lists/*
 
 # Install stroppy CLI (needed for probe API).
