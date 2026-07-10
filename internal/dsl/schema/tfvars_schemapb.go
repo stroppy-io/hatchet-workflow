@@ -31,6 +31,22 @@ import (
 // few functions in internal/dsl that performs filesystem I/O (via
 // tfconfig.LoadModule and reading the variables.tf source for validation
 // blocks); every other dsl package/function is pure.
+// providerContractNodesVarName is the well-known variables.tf variable name
+// a terraform module declares to receive the standard provider-contract
+// machine list (see docs/superpowers/specs/2026-07-03-yaml-dsl-pivot-design.md
+// §3 and internal/infrastructure/provider/terraform.go's tfNode/
+// tfNodesForGroup). Unlike every other declared variable, its value is never
+// user-supplied: terraform.go's Provision always computes and overwrites it
+// from the DSL's MachineGroups after decoding provider params, so it must
+// not appear in the derived provider.params form schema (a user filling out
+// a launch form has no correct value to give it, and any value they did
+// give would be silently discarded) -- excluded here the same way
+// machineExtVarName is excluded, just skipped rather than routed to a
+// second return value since it has no schema of its own to expose (its
+// per-node ext shape is what stroppy_machine_ext/machineExtVarName already
+// captures).
+const providerContractNodesVarName = "stroppy_nodes"
+
 func DeriveProviderParamsSchemapb(moduleDir, providerName string) (params, ext *schemapb.Schema, diags diag.List) {
 	mod, loadDiags := tfconfig.LoadModule(moduleDir)
 	if err := loadDiags.Err(); err != nil {
@@ -54,6 +70,9 @@ func DeriveProviderParamsSchemapb(moduleDir, providerName string) (params, ext *
 
 		if name == machineExtVarName {
 			extFields = objectFieldsOf(f)
+			continue
+		}
+		if name == providerContractNodesVarName {
 			continue
 		}
 		paramFields = append(paramFields, f)

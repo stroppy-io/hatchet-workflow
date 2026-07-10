@@ -17,6 +17,13 @@ import (
 type CatalogProviderResolver struct {
 	Entries CatalogEntryRepo
 	Bundles BundleStore
+	// Legacy is the bundle store a resolved entry's source_ref may still be
+	// shaped for if it predates a Bundles backend swap (e.g. FS-era rows
+	// after GitBundleStore takes over) — see Deps.LegacyBundles's doc in
+	// catalog.go and healSourceRef, which this uses identically to
+	// Service.resolveSourceRef. Nil is a valid, common value (no swap has
+	// happened) and makes the healing step a no-op.
+	Legacy BundleStore
 }
 
 // ResolveProvider looks up tenantID's org-catalog KIND_PROVIDER entry named
@@ -40,6 +47,7 @@ func (r *CatalogProviderResolver) ResolveProvider(ctx context.Context, tenantID,
 		return nil, 0, err
 	}
 
+	owner := entry
 	ref := entry.GetSourceRef()
 	if ref == "" {
 		// LINKED, never forked — files live under the instance row it points at.
@@ -47,7 +55,15 @@ func (r *CatalogProviderResolver) ResolveProvider(ctx context.Context, tenantID,
 		if err != nil {
 			return nil, 0, fmt.Errorf("provider %q: resolve linked source: %w", slug, err)
 		}
+		owner = src
 		ref = src.GetSourceRef()
+	}
+	if ref != "" {
+		healed, err := healSourceRef(ctx, r.Entries, r.Bundles, r.Legacy, owner, ref)
+		if err != nil {
+			return nil, 0, fmt.Errorf("provider %q: heal legacy bundle ref: %w", slug, err)
+		}
+		ref = healed
 	}
 
 	files, err := r.Bundles.Read(ctx, ref)

@@ -1,14 +1,16 @@
 locals {
-  # stroppy_machines_disk_device maps each VM name to its first secondary
-  # disk's device_name (empty string when a VM has none), so
-  # stroppy_machines below can report the same convention the provider
-  # contract (internal/infrastructure/provider/terraform.go's
-  # tfMachineOutput.DiskDevice / defaultDiskDevice) expects: an empty
-  # disk_device lets the Go side fall back to its own default rather than
-  # this module inventing one.
+  # stroppy_machines_disk_device is always "" (empty), regardless of
+  # whether a VM has a secondary/data disk: this module's secondary disk
+  # `device_name` is a Yandex Compute API label, not the guest OS device
+  # path a recipe's `mkfs ${{ machine.disks[0].path }}` step needs -- so
+  # reporting it as disk_device would be actively wrong. Leaving it empty
+  # lets the Go side fall back to its own defaultDiskDevice ("/dev/vdb",
+  # the cloud-image convention for a single extra block device -- see
+  # internal/infrastructure/provider/terraform.go's tfMachineOutput.
+  # DiskDevice / defaultDiskDevice and machineState's doc comment) rather
+  # than this module inventing a path from a label that isn't one.
   stroppy_machines_disk_device = {
-    for vm_name, vm in var.compute.vms :
-    vm_name => length(vm.secondary_disks) > 0 ? vm.secondary_disks[0].device_name : ""
+    for vm_name, vm in local.vms : vm_name => ""
   }
 }
 

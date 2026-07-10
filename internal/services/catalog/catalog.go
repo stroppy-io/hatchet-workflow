@@ -6,6 +6,7 @@ package catalog
 
 import (
 	"context"
+	"fmt"
 	"strconv"
 	"strings"
 
@@ -77,8 +78,18 @@ type Deps struct {
 	// Entries persists catalogpb.CatalogEntry rows.
 	Entries CatalogEntryRepo
 	// Bundles stores/reads/forks a catalog entry's raw files (SP-C seam — see
-	// bundlestore.go's BundleStore doc).
+	// bundlestore.go's BundleStore doc). This is always the CURRENTLY ACTIVE
+	// store — the one every new Write/Fork lands in.
 	Bundles BundleStore
+	// LegacyBundles is the store a catalog_entries row's source_ref was
+	// written against BEFORE Bundles was switched to a different backend —
+	// e.g. the FSBundleStore a dev stand used while GITEA_TOKEN was unset,
+	// now that GitBundleStore has taken over Bundles. Nil when Bundles has
+	// never been swapped (the common case: a fresh install, or one that has
+	// always run with the same backend), in which case every source_ref in
+	// the DB is already shaped for Bundles and healSourceRef (service.go) is
+	// a no-op. See healSourceRef's doc for the migration this enables.
+	LegacyBundles BundleStore
 	// Check runs the DSL check-mode compile pipeline over a bundle's files.
 	Check Checker
 	// Authn resolves the caller's verified access claims from the request
@@ -240,14 +251,15 @@ func (s *Service) ForkEntry(ctx context.Context, tenantID, orgEntryID string) (*
 	if entry.GetOrigin() != OriginLinked {
 		return entry, nil
 	}
-	sourceRef := entry.GetSourceRef()
-	if sourceRef == "" {
-		// LINKED row with no own source_ref yet — read the instance row's ref.
-		src, err := s.d.Entries.Get(ctx, LevelInstance, "", entry.GetSourceEntryId())
-		if err != nil {
-			return nil, utils.MapErr(err)
-		}
-		sourceRef = src.GetSourceRef()
+	// resolveSourceRef (service.go) resolves the same LINKED-row fallback
+	// this used to duplicate inline (own source_ref, else the instance row's
+	// via source_entry_id) AND, as of the git-bundle-store migration, heals a
+	// legacy bare-sha ref into a git-backed one before Bundles.Fork ever sees
+	// it — Fork calls Read internally, which would otherwise hit the exact
+	// "missing git: scheme" rejection GetXFiles used to.
+	sourceRef, err := s.resolveSourceRef(ctx, entry)
+	if err != nil {
+		return nil, utils.MapErr(err)
 	}
 	forkedRef, err := s.d.Bundles.Fork(ctx, sourceRef)
 	if err != nil {
@@ -274,4 +286,88 @@ func (s *Service) ForkEntry(ctx context.Context, tenantID, orgEntryID string) (*
 		return nil, utils.MapErr(err)
 	}
 	return forked, nil
+}
+
+// healSourceRef repairs a source_ref that predates the active bundles
+// store: it is called with ref already resolved from owner's own SourceRef
+// field (owner may be the entry being read, or — for a LINKED row with no
+// source_ref of its own — the LEVEL_INSTANCE row it points at, exactly as
+// resolveSourceRef/ForkEntry compute it).
+//
+// # Why this exists
+//
+// GitBundleStore.Read/Fork hard-reject any ref that does not start with
+// "git:" (see gitbundlestore.go's DecodeGitSourceRef). Every source_ref
+// written while FSBundleStore (or MemoryBundleStore) was the active store —
+// including the three builtin instance rows seeded on a dev stand before
+// GITEA_TOKEN was set — is a bare, unprefixed sha256 hex string with no
+// scheme at all. Once bundles is swapped to GitBundleStore (run.go, gated on
+// GITEA_TOKEN), those existing rows become permanently unreadable: "[internal]
+// git bundle store: git bundle ref ... missing git: scheme". Re-seeding does
+// not repair this either — ensureBuiltinKind (seed.go) skips any slug that
+// already has a row, by design (idempotent boot seeding), so a broken
+// pre-existing row is never touched by seeding again.
+//
+// # The chosen scheme: bare = legacy "fs", "git:..." = current
+//
+// A ref is now unambiguously one of two shapes: has the "git:" prefix
+// (IsGitSourceRef), or is a bare content hash — which is, by construction,
+// exactly what FSBundleStore/MemoryBundleStore.Write always returned and
+// still return today. Rather than retrofitting an "fs:" prefix onto every
+// FSBundleStore/MemoryBundleStore ref (which would require rewriting
+// refDir/contentRef and every existing row, in-flight or already persisted,
+// for a backend this fix does not otherwise touch), the bare shape is kept
+// AS the "fs" scheme's spelling — every dispatch point in this package
+// (here, resolveSourceRef, ForkEntry, CatalogProviderResolver.ResolveProvider)
+// now treats "does IsGitSourceRef say yes?" as the actual scheme check, and
+// anything else — necessarily a legacy bare ref, since no third shape is
+// ever minted — falls through to this healing path instead of being handed
+// straight to the (potentially git-backed) active store.
+//
+// # Lazy migration on read, not a boot-time pass
+//
+// healRef fires exactly when a caller resolves a ref that (a) is not
+// git-shaped and (b) a LegacyBundles store is configured to fall back to
+// (see Deps.LegacyBundles's doc — nil when Bundles has never been swapped,
+// making this whole function a no-op). It reads the bundle's bytes from
+// LegacyBundles, re-Writes them into the CURRENT bundles store — which is
+// what actually lands the content in the real git repo, not merely rewrites
+// a pointer — and persists the freshly minted ref onto owner's row so every
+// later read of that same row goes straight through the fast git path
+// without touching LegacyBundles again. This is deliberately lazy-on-read
+// (option (a) in the task) rather than a one-shot boot migration (option
+// (b)): it needs no separate migration command/flag/flow to remember to run,
+// it only ever touches rows a caller actually still reads (a boot pass would
+// have to enumerate and rewrite every row up front, including rows nobody
+// asks for again), and it is safe under concurrent traffic — GitBundleStore.
+// Write is content-addressed and checks for an existing bundle before
+// committing (see its own doc), so two requests racing to heal the same ref
+// converge on the same resulting git ref rather than double-committing.
+func healSourceRef(ctx context.Context, entries CatalogEntryRepo, bundles, legacy BundleStore, owner *catalogpb.CatalogEntry, ref string) (string, error) {
+	if ref == "" || IsGitSourceRef(ref) || legacy == nil {
+		return ref, nil
+	}
+	files, err := legacy.Read(ctx, ref)
+	if err != nil {
+		return "", fmt.Errorf("heal legacy bundle ref %q: read from legacy store: %w", ref, err)
+	}
+	newRef, err := bundles.Write(ctx, "", files)
+	if err != nil {
+		return "", fmt.Errorf("heal legacy bundle ref %q: migrate into active store: %w", ref, err)
+	}
+	if newRef == ref {
+		// The active store is itself the legacy one (Bundles == LegacyBundles,
+		// or two distinct FS/Memory stores that happen to be content-identical)
+		// — nothing to persist.
+		return newRef, nil
+	}
+	healed, ok := proto.Clone(owner).(*catalogpb.CatalogEntry)
+	if !ok {
+		return "", status.Error(codes.Internal, "heal legacy bundle ref: cloned entry has unexpected type")
+	}
+	healed.SourceRef = newRef
+	if err := entries.Update(ctx, healed); err != nil {
+		return "", fmt.Errorf("heal legacy bundle ref %q: persist migrated ref: %w", ref, err)
+	}
+	return newRef, nil
 }

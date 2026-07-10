@@ -29,28 +29,19 @@ variable "network" {
   }
 }
 
+// compute carries settings shared by every VM this module provisions --
+// image/platform defaults and boot disk sizing. Per-VM data (which
+// machines to create, how many, their sizing) comes from the standard
+// provider-contract input `stroppy_nodes` below, not from this variable;
+// see stroppy_nodes' own doc comment for why the split is drawn there.
 variable "compute" {
-  description = "VMs to create."
+  description = "Global compute defaults shared by every stroppy_nodes VM (image, platform, boot disk). Per-VM sizing comes from stroppy_nodes."
   type = object({
     platform_id        = string
     image_id           = string
-    serial_port_enable = bool
-    vms = map(object({
-      cores                = number
-      memory_gb            = number
-      boot_disk_gb         = number
-      boot_disk_type       = string
-      zone                 = optional(string, "")
-      internal_ip          = string
-      public_ip            = bool
-      user_data            = string
-      network_acceleration = optional(string, "standard")
-      secondary_disks = optional(list(object({
-        device_name = string
-        size_gb     = number
-        type        = string
-      })), [])
-    }))
+    serial_port_enable = optional(bool, false)
+    boot_disk_gb       = optional(number, 20)
+    boot_disk_type     = optional(string, "network-hdd")
   })
   validation {
     condition     = var.compute.platform_id != ""
@@ -60,17 +51,74 @@ variable "compute" {
     condition     = var.compute.image_id != ""
     error_message = "compute.image_id must be set"
   }
-  validation {
-    condition     = length(keys(var.compute.vms)) > 0
-    error_message = "compute.vms must contain at least one VM"
-  }
+}
+
+// stroppy_nodes is the standard provider-contract input every terraform
+// module behind internal/infrastructure/provider.NewTerraform is given (see
+// docs/superpowers/specs/2026-07-03-yaml-dsl-pivot-design.md §3 and
+// terraform.go's tfNode/tfNodesForGroup): one entry per requested machine,
+// already expanded from the DSL's provider-agnostic MachineGroup list and
+// already lowered (disk.type is yandex's own "network-ssd"/"network-hdd"
+// strings, per manifest.yaml's lowering table) -- this module never sees
+// MachineGroup, cpu/ram_mb, or the DSL's disk-type domain vocabulary
+// directly, only this already-lowered shape.
+//
+// `ext` is this module's per-node escape hatch (cluster.yaml's
+// `machines.<name>.yandex: {...}` block, see the stroppy_machine_ext
+// variable below for its declared shape): a node may override
+// platform_id/image_id/zone/public_ip/user_data/network_acceleration for
+// itself, falling back to `compute`'s module-wide defaults (see
+// locals.vms in vm.tf). ext is intentionally typed `any` here -- the DSL
+// compiler enforces its real shape against stroppy_machine_ext's schema at
+// compile time (internal/dsl/schema/tfvars_schemapb.go), so re-typing it
+// here would only duplicate that check less precisely.
+//
+// default = [] so `terraform destroy` (which never sets stroppy_nodes --
+// see terraform.go's Destroy, which only spreads provider params) still
+// validates.
+variable "stroppy_nodes" {
+  description = "Standard provider-contract input: machines requested by the DSL compiler."
+  type = list(object({
+    id     = string
+    group  = string
+    cpu    = number
+    ram_gb = number
+    disk = optional(object({
+      size_gb = number
+      type    = string
+    }))
+    ext = optional(any, {})
+  }))
+  default = []
   validation {
     condition = alltrue([
-      for vm in var.compute.vms :
-      contains(["standard", "software_accelerated"], vm.network_acceleration)
+      for n in var.stroppy_nodes :
+      contains(["standard", "software_accelerated"], try(n.ext.network_acceleration, "standard"))
     ])
-    error_message = "compute.vms[*].network_acceleration must be 'standard' or 'software_accelerated'"
+    error_message = "stroppy_nodes[*].ext.network_acceleration must be 'standard' or 'software_accelerated'"
   }
+}
+
+// stroppy_machine_ext declares the shape of stroppy_nodes[*].ext purely for
+// schema derivation (internal/dsl/schema/tfvars_schemapb.go's
+// machineExtVarName convention splits a variable with this exact name out
+// of provider.params and into $defs.machineExt, so cluster.yaml's
+// `machines.<name>.yandex: {...}` block gets validated at compile time).
+// It is never itself set as a tfvar -- terraform.go passes each node's ext
+// inline inside stroppy_nodes[*].ext, not as a separate top-level var --
+// so `default = {}` only keeps `terraform validate`/apply happy for an
+// unused input.
+variable "stroppy_machine_ext" {
+  description = "Schema-only: shape of stroppy_nodes[*].ext (cluster.yaml's machines.<name>.yandex: block). Never itself passed as a tfvar."
+  type = object({
+    platform_id          = optional(string, "")
+    image_id             = optional(string, "")
+    zone                 = optional(string, "")
+    public_ip            = optional(bool, false)
+    user_data            = optional(string, "")
+    network_acceleration = optional(string, "standard")
+  })
+  default = {}
 }
 
 variable "managed_ydb" {

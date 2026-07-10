@@ -581,19 +581,30 @@ func (s *Service) getEntryFiles(ctx context.Context, level catalogpb.Level, tena
 
 // resolveSourceRef returns entry's bundle ref, falling back to its source
 // instance row's ref when entry itself carries none — the same fallback
-// ForkEntry (catalog.go) uses for a LINKED row seeded by SeedOrgCatalog.
+// ForkEntry (catalog.go) uses for a LINKED row seeded by SeedOrgCatalog. The
+// resolved ref is then run through healSourceRef (catalog.go), which
+// transparently migrates a legacy, pre-git-bundle-store ref into the active
+// store and rewrites it onto whichever row actually owns it (entry itself,
+// or the instance row it fell back to) — see healSourceRef's doc for why
+// this is done lazily here rather than as a boot-time pass.
 func (s *Service) resolveSourceRef(ctx context.Context, entry *catalogpb.CatalogEntry) (string, error) {
-	if ref := entry.GetSourceRef(); ref != "" {
-		return ref, nil
+	owner := entry
+	ref := entry.GetSourceRef()
+	if ref == "" {
+		if entry.GetSourceEntryId() == "" {
+			return "", nil
+		}
+		src, err := s.d.Entries.Get(ctx, catalogpb.Level_LEVEL_INSTANCE, "", entry.GetSourceEntryId())
+		if err != nil {
+			return "", err
+		}
+		owner = src
+		ref = src.GetSourceRef()
 	}
-	if entry.GetSourceEntryId() == "" {
+	if ref == "" {
 		return "", nil
 	}
-	src, err := s.d.Entries.Get(ctx, catalogpb.Level_LEVEL_INSTANCE, "", entry.GetSourceEntryId())
-	if err != nil {
-		return "", err
-	}
-	return src.GetSourceRef(), nil
+	return healSourceRef(ctx, s.d.Entries, s.d.Bundles, s.d.LegacyBundles, owner, ref)
 }
 
 // summaryFor derives a new entry's denormalized Summary from its kind: a

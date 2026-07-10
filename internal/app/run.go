@@ -266,9 +266,26 @@ func Run(ctx context.Context, cfg Config) error {
 	// not have GITEA_TOKEN set) keeps behaving exactly as before. Neither
 	// catalogService nor dslService's provider resolver below change either
 	// way — both depend only on the catalogsvc.BundleStore interface.
+	// catalogLegacyBundles is set only when the switch to GitBundleStore
+	// happens (giteaClient != nil): it reopens cfg.CatalogBundleDir — the
+	// SAME root FSBundleStore always wrote under, never deleted by this
+	// switch — read-only from the healing path's perspective, so any
+	// catalog_entries row whose source_ref still names a bare (pre-git)
+	// content hash (e.g. this dev stand's 3 builtin instance rows, seeded
+	// before GITEA_TOKEN was set) can be transparently migrated into the git
+	// store on first read instead of staying permanently unreadable. See
+	// internal/services/catalog.healSourceRef's doc for the full mechanism.
+	// Left nil when catalogBundles is itself the FS store (no swap has
+	// happened), making every healing check downstream a no-op.
 	var catalogBundles catalogsvc.BundleStore
+	var catalogLegacyBundles catalogsvc.BundleStore
 	if giteaClient != nil {
 		catalogBundles = catalogsvc.NewGitBundleStore(giteaClient, gitrepo.InstanceRepoOwner, gitrepo.InstanceRepoName, gitrepo.InstanceRepoBranch)
+		legacyFSBundles, err := catalogsvc.NewFSBundleStore(cfg.CatalogBundleDir)
+		if err != nil {
+			return fmt.Errorf("catalog legacy bundle store: %w", err)
+		}
+		catalogLegacyBundles = legacyFSBundles
 	} else {
 		fsBundles, err := catalogsvc.NewFSBundleStore(cfg.CatalogBundleDir)
 		if err != nil {
@@ -346,7 +363,7 @@ func Run(ctx context.Context, cfg Config) error {
 	// itself — catalogService's own Checker dependency closes the loop the
 	// other direction, over dslService.CheckBundle below.
 	catalogEntries := store.CatalogEntries()
-	providerResolver := &catalogsvc.CatalogProviderResolver{Entries: catalogEntries, Bundles: catalogBundles}
+	providerResolver := &catalogsvc.CatalogProviderResolver{Entries: catalogEntries, Bundles: catalogBundles, Legacy: catalogLegacyBundles}
 	dslService := dslsvc.NewDslService(
 		dslsvc.WithVersionSource(stroppyVersions),
 		dslsvc.WithProviderResolver(providerResolver),
@@ -382,10 +399,11 @@ func Run(ctx context.Context, cfg Config) error {
 		return fmt.Errorf("load embedded postgres-ha example bundle: %w", err)
 	}
 	catalogService := catalogsvc.NewService(catalogsvc.Deps{
-		Entries: catalogEntries,
-		Bundles: catalogBundles,
-		Check:   newCatalogChecker(dslService),
-		Authn:   authn,
+		Entries:       catalogEntries,
+		Bundles:       catalogBundles,
+		LegacyBundles: catalogLegacyBundles,
+		Check:         newCatalogChecker(dslService),
+		Authn:         authn,
 		BuiltinProviders: map[string]map[string][]byte{
 			"docker": {"manifest.yaml": []byte(dslsvc.BuiltinDockerManifest)},
 			"yandex": yandexCatalogFiles,

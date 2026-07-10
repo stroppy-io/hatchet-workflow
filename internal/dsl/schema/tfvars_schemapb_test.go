@@ -67,6 +67,76 @@ variable "stroppy_machine_ext" {
 	require.False(t, extFields["disk_gb"].GetRequired(), "optional(...) object() attribute is not required")
 }
 
+// TestDeriveProviderParamsSchemapb_ExcludesProviderContractNodesVar locks
+// in the fix for the yandex-module bug: a terraform module's standard
+// provider-contract `stroppy_nodes` variable (internal/infrastructure/
+// provider/terraform.go's Provision always computes and overwrites it from
+// MachineGroups -- never user-supplied) must not leak into the derived
+// provider.params form schema the same way stroppy_machine_ext doesn't,
+// since a launch-form user has no correct value to give it.
+func TestDeriveProviderParamsSchemapb_ExcludesProviderContractNodesVar(t *testing.T) {
+	dir := t.TempDir()
+	writeFile(t, dir, "variables.tf", `
+variable "zone" {
+  type = string
+}
+variable "stroppy_nodes" {
+  type = list(object({
+    id     = string
+    group  = string
+    cpu    = number
+    ram_gb = number
+    disk = optional(object({
+      size_gb = number
+      type    = string
+    }))
+    ext = optional(any, {})
+  }))
+  default = []
+}
+`)
+
+	params, ext, diags := DeriveProviderParamsSchemapb(dir, "yandex")
+	require.False(t, diags.HasErrors(), diags.String())
+	require.NotNil(t, params)
+	require.Nil(t, ext, "no stroppy_machine_ext declared, ext schema stays nil")
+
+	byName := fieldsByName(params)
+	require.Contains(t, byName, "zone")
+	require.NotContains(t, byName, "stroppy_nodes", "provider-contract nodes var must never be a user-facing param")
+}
+
+// TestDeriveProviderParamsSchemapb_YandexModule exercises schema derivation
+// against the real yandex terraform module (deployments/terraform/yandex),
+// pinning: (1) its per-VM sizing/networking knobs (compute, network,
+// managed_ydb) surface as ordinary provider.params, (2) its standard
+// stroppy_nodes contract input is excluded from provider.params (a user
+// never fills it in -- terraform.go computes it from MachineGroups), and
+// (3) its stroppy_machine_ext variable produces a non-nil ext schema
+// (cluster.yaml's machines.<name>.yandex: {...} block).
+func TestDeriveProviderParamsSchemapb_YandexModule(t *testing.T) {
+	moduleDir := filepath.Join("..", "..", "..", "deployments", "terraform", "yandex")
+	if _, err := os.Stat(moduleDir); err != nil {
+		t.Skipf("yandex module not found at %s: %v", moduleDir, err)
+	}
+
+	params, ext, diags := DeriveProviderParamsSchemapb(moduleDir, "yandex")
+	require.NotNil(t, params)
+	t.Logf("diags: %s", diags.String())
+
+	byName := fieldsByName(params)
+	require.Contains(t, byName, "compute")
+	require.Contains(t, byName, "network")
+	require.Contains(t, byName, "managed_ydb")
+	require.NotContains(t, byName, "stroppy_nodes", "provider-contract nodes var must never be a user-facing param")
+	require.NotContains(t, byName, "stroppy_machine_ext", "ext var must be split out, not a param")
+
+	require.NotNil(t, ext, "yandex module declares stroppy_machine_ext, ext schema must be derived")
+	extFields := fieldsByName(ext)
+	require.Contains(t, extFields, "platform_id")
+	require.Contains(t, extFields, "network_acceleration")
+}
+
 func TestDeriveProviderParamsSchemapb_ValidationToRule(t *testing.T) {
 	dir := t.TempDir()
 	writeFile(t, dir, "variables.tf", `
