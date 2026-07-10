@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"net/http"
 	"net/url"
+	"strings"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/ide"
 )
@@ -41,6 +42,16 @@ func ideTicketHandler(issuer *ide.TicketIssuer) http.HandlerFunc {
 			http.Error(w, "unparsable target query parameter", http.StatusBadRequest)
 			return
 		}
+		// The ticket is authorized against targetURL.Path alone, so an absolute
+		// or protocol-relative target would pass authorization and still send
+		// the SPA to another origin — handing that origin a live, single-use
+		// ticket bound to this account and scope, which it can redeem itself.
+		// Only a relative /ide/ path is ever a legitimate target.
+		if targetURL.IsAbs() || targetURL.Host != "" || strings.HasPrefix(target, "//") ||
+			!strings.HasPrefix(targetURL.Path, "/ide/") {
+			http.Error(w, "target must be a relative /ide/ path", http.StatusBadRequest)
+			return
+		}
 		ticket, _, err := issuer.Issue(r, targetURL.Path)
 		if err != nil {
 			http.Error(w, "not authorized to open this IDE scope", http.StatusForbidden)
@@ -48,12 +59,13 @@ func ideTicketHandler(issuer *ide.TicketIssuer) http.HandlerFunc {
 		}
 		q := targetURL.Query()
 		q.Set("ticket", ticket)
-		targetURL.RawQuery = q.Encode()
 
+		// Rebuild from the path, never from targetURL.String(): no scheme, host
+		// or userinfo can be smuggled back out through the response.
 		w.Header().Set("Content-Type", "application/json")
 		_ = json.NewEncoder(w).Encode(struct {
 			Ticket string `json:"ticket"`
 			URL    string `json:"url"`
-		}{Ticket: ticket, URL: targetURL.String()})
+		}{Ticket: ticket, URL: targetURL.Path + "?" + q.Encode()})
 	}
 }
