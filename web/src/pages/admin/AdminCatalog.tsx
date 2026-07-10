@@ -6,7 +6,7 @@
 // own org catalog (OrgCatalog.tsx).
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Boxes, Code2, Pencil, Plus, RefreshCw, Trash2, Workflow } from "lucide-react";
+import { Boxes, Pencil, Plus, RefreshCw, Trash2, Workflow } from "lucide-react";
 import { Link, useNavigate, useSearchParams } from "@/lib/router";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -27,7 +27,6 @@ import {
   type CatalogEntryVM,
   type CatalogKind,
 } from "@/services/catalog";
-import { openInIde } from "@/services/ide";
 
 function StatusLine({ value, tone = "default" }: { value: string | null; tone?: "default" | "error" }) {
   if (!value) return null;
@@ -53,24 +52,6 @@ const KIND_PARAM: Record<"providers" | "workflows", CatalogKind> = {
   providers: "KIND_PROVIDER",
   workflows: "KIND_WORKFLOW",
 };
-
-// instanceIdeUrl builds the gateway /ide/instance/* URL for an entry's
-// on-disk location in the instance repo (spec §3 C1's fixed layout:
-// providers/<slug>/... or workflows/<slug>/...), opened as a code-server
-// "folder" deep link so the IDE lands on the entry's own files rather than
-// the whole repo root. Requires the instance-admin IdeAuthorizer grant
-// (internal/ide.Authorizer.CanAuthor) — a non-admin's click 403s at the
-// gateway, same as every other LEVEL_INSTANCE write path.
-function instanceIdeUrl(tab: "providers" | "workflows", slug: string): string {
-  // The scope segment is EntryKindProvider/EntryKindWorkflow — singular,
-  // exactly what internal/ide.ParseScope requires — never the plural tab
-  // name (that stays plural only in the `folder` deep link below, which
-  // mirrors the repo's own on-disk providers/<slug> | workflows/<slug>
-  // layout, a completely different string).
-  const entryKind = tab === "providers" ? "provider" : "workflow";
-  const folder = encodeURIComponent(`/home/coder/project/${tab}/${slug}`);
-  return `/ide/instance/${entryKind}/${slug}?folder=${folder}`;
-}
 
 export function AdminCatalog() {
   const navigate = useNavigate();
@@ -103,15 +84,6 @@ export function AdminCatalog() {
     const list = entries ?? [];
     return { total: list.length, compiling: list.filter((e) => e.summary.compiles).length };
   }, [entries]);
-
-  async function onOpenIde(entry: CatalogEntryVM) {
-    setError(null);
-    try {
-      await openInIde(instanceIdeUrl(tabParam, entry.slug));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  }
 
   async function onDelete(entry: CatalogEntryVM) {
     const ok = await confirm({
@@ -237,17 +209,9 @@ export function AdminCatalog() {
                       <Button
                         size="icon"
                         variant="ghost"
-                        aria-label="Open in IDE"
-                        title="Open in IDE"
-                        onClick={() => void onOpenIde(entry)}
-                      >
-                        <Code2 className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
                         onClick={() => navigate(`/admin/catalog/${tabParam}/${entry.id}/edit`)}
                         aria-label="Edit"
+                        title="Open in the embedded IDE"
                       >
                         <Pencil className="h-3.5 w-3.5" />
                       </Button>

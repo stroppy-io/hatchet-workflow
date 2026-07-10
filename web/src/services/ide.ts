@@ -13,12 +13,25 @@ import { getAccessToken } from "@/services/client";
 const rawBaseUrl = (import.meta.env.VITE_API_BASE_URL as string | undefined) || "/";
 const baseUrl = rawBaseUrl.endsWith("/") ? rawBaseUrl : `${rawBaseUrl}/`;
 
-// openInIde mints a ticket for targetUrl (an "/ide/<scope>/..." path, as
-// built by orgIdeUrl/instanceIdeUrl) and navigates a new browser tab to the
-// ticket-bearing URL the server returns. It never opens targetUrl directly
-// — doing so would 403 (no Authorization header on a plain navigation),
-// which is exactly the bug this handshake exists to fix.
-export async function openInIde(targetUrl: string): Promise<void> {
+export interface IdeTicket {
+  ticket: string;
+  /** The clean "/ide/<scope>/...?ticket=..." URL to navigate (a new tab, or
+   * an iframe's src) to. Relative — never carries a scheme/host, so it is
+   * always same-origin with the SPA (see internal/app/ide_ticket_handler.go). */
+  url: string;
+}
+
+// mintIdeTicket calls GET /api/ide/ticket?target=<targetUrl> with the SPA's
+// Bearer access token (the authenticated half of the browser-auth handshake
+// — see internal/ide/ticket.go's package doc) and returns the single-use
+// ticket-bearing URL the gateway will exchange for an httpOnly session
+// cookie on the next navigation to it. Throws on: not signed in, 400 (bad
+// target), 403 (not authorized for this scope), or a disabled IDE manager
+// (the endpoint 404s when IDE_MANAGER_ENABLED is off — see
+// internal/app/run.go's ideTicketHandler wiring). Callers distinguish these
+// by inspecting the thrown Error's message for the status code, mirroring
+// the server's own status-code-is-the-contract shape.
+export async function mintIdeTicket(targetUrl: string): Promise<IdeTicket> {
   const token = getAccessToken();
   if (!token) {
     throw new Error("not signed in");
@@ -29,6 +42,56 @@ export async function openInIde(targetUrl: string): Promise<void> {
   if (!res.ok) {
     throw new Error(`could not open IDE: ${res.status} ${res.statusText}`);
   }
-  const body = (await res.json()) as { url: string };
-  window.open(body.url, "_blank", "noreferrer");
+  return (await res.json()) as IdeTicket;
+}
+
+// openInIde mints a ticket for targetUrl (an "/ide/<scope>/..." path, as
+// built by orgIdeUrl/instanceIdeUrl) and navigates a new browser tab to the
+// ticket-bearing URL the server returns. It never opens targetUrl directly
+// — doing so would 403 (no Authorization header on a plain navigation),
+// which is exactly the bug this handshake exists to fix.
+export async function openInIde(targetUrl: string): Promise<void> {
+  const { url } = await mintIdeTicket(targetUrl);
+  window.open(url, "_blank", "noreferrer");
+}
+
+/** The two catalog-entry list tabs — matches AdminCatalog/OrgCatalog's tab
+ * param, always plural (it also names the on-disk providers/<slug> |
+ * workflows/<slug> folder path below). */
+export type IdeEntryTab = "providers" | "workflows";
+
+// entryKindSegment maps the plural list-tab name to the singular scope
+// segment internal/ide.ParseScope requires (EntryKindProvider/
+// EntryKindWorkflow — "provider"/"workflow", never "providers"/"workflows").
+// This is the one place that translation happens; every URL builder below
+// funnels through it so a future third kind can't reintroduce the
+// singular/plural mismatch bug fixed in commit 09f390e4 (a prior version of
+// these builders passed the plural tab name straight into the scope segment
+// and 404'd at the gateway).
+function entryKindSegment(tab: IdeEntryTab): "provider" | "workflow" {
+  return tab === "providers" ? "provider" : "workflow";
+}
+
+// instanceIdeUrl builds the gateway /ide/instance/* URL for an entry's
+// on-disk location in the instance repo, opened as a code-server "folder"
+// deep link so the IDE lands on the entry's own files rather than the whole
+// repo root. Requires the instance-admin IdeAuthorizer grant
+// (internal/ide.Authorizer.CanAuthor) — a non-admin's request 403s at the
+// gateway, same as every other LEVEL_INSTANCE write path.
+export function instanceIdeUrl(tab: IdeEntryTab, slug: string): string {
+  const entryKind = entryKindSegment(tab);
+  const folder = encodeURIComponent(`/home/coder/project/${tab}/${slug}`);
+  return `/ide/instance/${entryKind}/${slug}?folder=${folder}`;
+}
+
+// orgIdeUrl builds the gateway /ide/org/<slug>/* URL for an entry's on-disk
+// location in this org's own repo. Only meaningful for a NATIVE/FORKED
+// entry — a LINKED entry has no files of its own yet (org repos start
+// empty, spec's read-through model; see internal/services/catalog.
+// GitBundleStore's package doc) until it is forked, so the caller must gate
+// this behind origin !== "ORIGIN_LINKED".
+export function orgIdeUrl(orgSlug: string, tab: IdeEntryTab, slug: string): string {
+  const entryKind = entryKindSegment(tab);
+  const folder = encodeURIComponent(`/home/coder/project/${tab}/${slug}`);
+  return `/ide/org/${orgSlug}/${entryKind}/${slug}?folder=${folder}`;
 }

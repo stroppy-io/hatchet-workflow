@@ -8,7 +8,7 @@
 // gates its own actions with) rather than inventing a parallel mechanism.
 
 import { useCallback, useEffect, useMemo, useState } from "react";
-import { Boxes, Code2, GitFork, Link2, Pencil, Plus, RefreshCw, Sparkles, Trash2, Workflow } from "lucide-react";
+import { Boxes, GitFork, Link2, Pencil, Plus, RefreshCw, Sparkles, Trash2, Workflow } from "lucide-react";
 import { Link, useNavigate, useSearchParams, useTenantSlug } from "@/lib/router";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -31,7 +31,6 @@ import {
 import { useConfirm } from "@/components/ui/confirm-dialog";
 import { Panel } from "@/pages/dashboard/Panel";
 import { getOrgProvider, hasOrgPermission, type OrgRole } from "@/services/org";
-import { openInIde } from "@/services/ide";
 import {
   deleteOrgEntry,
   linkInstanceEntry,
@@ -59,23 +58,6 @@ function StatusLine({ value, tone = "default" }: { value: string | null; tone?: 
 function fmtDate(iso?: string): string {
   if (!iso) return "—";
   return new Date(iso).toLocaleDateString(undefined, { year: "numeric", month: "short", day: "numeric" });
-}
-
-// orgIdeUrl builds the gateway /ide/org/<slug>/* URL for an entry's on-disk
-// location in this org's own repo. Only meaningful for a NATIVE/FORKED
-// entry — a LINKED entry has no files of its own yet (org repos start
-// empty, spec's read-through model; see internal/services/catalog.
-// GitBundleStore's package doc) until it is forked, so the caller must gate
-// this behind origin !== "ORIGIN_LINKED".
-function orgIdeUrl(orgSlug: string, tab: "providers" | "workflows", slug: string): string {
-  // The scope segment is EntryKindProvider/EntryKindWorkflow — singular,
-  // exactly what internal/ide.ParseScope requires — never the plural tab
-  // name (that stays plural only in the `folder` deep link below, which
-  // mirrors the repo's own on-disk providers/<slug> | workflows/<slug>
-  // layout, a completely different string).
-  const entryKind = tab === "providers" ? "provider" : "workflow";
-  const folder = encodeURIComponent(`/home/coder/project/${tab}/${slug}`);
-  return `/ide/org/${orgSlug}/${entryKind}/${slug}?folder=${folder}`;
 }
 
 function OriginBadge({ origin }: { origin: CatalogEntryVM["origin"] }) {
@@ -227,15 +209,6 @@ export function OrgCatalog() {
     }
   }
 
-  async function onOpenIde(entry: CatalogEntryVM) {
-    setError(null);
-    try {
-      await openInIde(orgIdeUrl(slug, tabParam, entry.slug));
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  }
-
   return (
     <div className="mx-auto max-w-6xl p-8">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -350,31 +323,13 @@ export function OrgCatalog() {
                       <Button
                         size="icon"
                         variant="ghost"
-                        disabled={!canUpdate || entry.origin === "ORIGIN_LINKED"}
-                        title={
-                          entry.origin === "ORIGIN_LINKED"
-                            ? "Fork this entry before opening it in the IDE"
-                            : !canUpdate
-                              ? "Requires update permission on this resource"
-                              : "Open in IDE"
-                        }
-                        aria-label="Open in IDE"
-                        onClick={
-                          canUpdate && entry.origin !== "ORIGIN_LINKED" ? () => void onOpenIde(entry) : undefined
-                        }
-                      >
-                        <Code2 className="h-3.5 w-3.5" />
-                      </Button>
-                      <Button
-                        size="icon"
-                        variant="ghost"
                         disabled={!canUpdate}
                         title={
                           !canUpdate
                             ? "Requires update permission on this resource"
                             : entry.origin === "ORIGIN_LINKED"
                               ? "Editing a linked entry forks it into an independent copy"
-                              : "Edit"
+                              : "Open in the embedded IDE"
                         }
                         onClick={() => navigate(`/catalog/${tabParam}/${entry.id}/edit`)}
                         aria-label="Edit"
