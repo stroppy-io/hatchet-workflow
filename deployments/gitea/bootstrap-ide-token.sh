@@ -7,7 +7,7 @@
 #   1. Creates the "stroppy-bot" admin user inside the running gitea
 #      container, with a freshly generated random password, IF it does not
 #      already exist (idempotent: a second run skips this step).
-#   2. Mints a "server" access token (scopes: write:repository,
+#   2. Mints a "server" access token (scopes: write:user, write:repository,
 #      write:organization) for that user, IF no token of that name already
 #      exists for it (idempotent: a second run reports the token already
 #      exists and exits without minting a duplicate — Gitea has no API to
@@ -37,7 +37,7 @@ COMPOSE_FILE="${COMPOSE_FILE:-docker-compose.yaml}"
 GITEA_SERVICE="${GITEA_SERVICE:-gitea}"
 BOT_USER="${GITEA_BOT_USER:-stroppy-bot}"
 TOKEN_NAME="${GITEA_TOKEN_NAME:-server}"
-TOKEN_SCOPES="write:repository,write:organization"
+TOKEN_SCOPES="write:user,write:repository,write:organization"
 
 compose() {
 	docker compose -f "$COMPOSE_FILE" "$@"

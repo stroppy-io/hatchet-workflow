@@ -131,8 +131,17 @@ func Run(ctx context.Context, cfg Config) error {
 		if err != nil {
 			return fmt.Errorf("gitea client: %w", err)
 		}
+		// Git is an OPTIONAL subsystem (catalog bundles + the IDE). A bad
+		// token — e.g. one minted without the write:user scope POST
+		// /api/v1/user/repos needs — used to abort Run, which crash-looped
+		// the whole control plane over a feature nobody had switched on yet.
+		// Degrade instead: log loudly, drop the client, and keep serving with
+		// the filesystem bundle store and no IDE. Nothing here fails open —
+		// gateway.New still refuses an IDE backend without an authorizer.
 		if err := gitrepo.Bootstrap(ctx, giteaClient); err != nil {
-			return fmt.Errorf("gitea instance-repo bootstrap: %w", err)
+			log.Error("gitea instance-repo bootstrap failed; git catalog store and IDE disabled",
+				"err", err)
+			giteaClient = nil
 		}
 	}
 
@@ -837,10 +846,14 @@ func Run(ctx context.Context, cfg Config) error {
 	// task).
 	var ideBackends gateway.IdeBackendResolver
 	var ideAuthorizer gateway.IdeAuthorizer
-	if cfg.IdeManagerEnabled {
-		if giteaClient == nil {
-			return fmt.Errorf("ide manager requires GITEA_TOKEN to be set")
-		}
+	if cfg.IdeManagerEnabled && giteaClient == nil {
+		// Either GITEA_TOKEN is unset, or its bootstrap failed above. Serve
+		// without the IDE rather than refusing to boot the control plane —
+		// /ide/* then 404s, and gateway.New still refuses a backend without
+		// an authorizer, so this degrades closed.
+		log.Error("ide manager enabled but gitea is unavailable; /ide/* disabled")
+	}
+	if cfg.IdeManagerEnabled && giteaClient != nil {
 		instanceOwner, err := giteaClient.Whoami(ctx)
 		if err != nil {
 			return fmt.Errorf("ide manager: resolve instance repo owner: %w", err)
