@@ -60,7 +60,14 @@ function SharedGrafana({ session, dbKind }: { session: SharedSessionVM; dbKind: 
           ))}
         </div>
       </div>
-      <iframe key={active} src={src} title={`${active} dashboard`} className="h-[70vh] w-full border-0" />
+      {/* Nearly the whole viewport: a dashboard is many panels tall, so a short
+          frame turns into a tiny window scrolled by Grafana's own scrollbar. */}
+      <iframe
+        key={active}
+        src={src}
+        title={`${active} dashboard`}
+        className="h-[calc(100vh-7rem)] min-h-[640px] w-full border-0"
+      />
     </section>
   );
 }
