@@ -34,6 +34,9 @@ require (
 	github.com/stephenafamo/scan v0.7.0
 	github.com/stretchr/testify v1.11.1
 	github.com/stroppy-io/schemapb v1.6.0
+	go.lsp.dev/jsonrpc2 v0.10.0
+	go.lsp.dev/protocol v0.12.0
+	go.lsp.dev/uri v0.3.0
 	go.temporal.io/api v1.62.12
 	go.temporal.io/sdk v1.44.1
 	golang.org/x/crypto v0.53.0
@@ -63,6 +66,8 @@ require (
 	github.com/mattn/go-isatty v0.0.21 // indirect
 	github.com/mitchellh/go-homedir v1.1.0 // indirect
 	github.com/mitchellh/go-wordwrap v1.0.0 // indirect
+	github.com/segmentio/encoding v0.3.4 // indirect
+	go.lsp.dev/pkg v0.0.0-20210717090340-384b27a52fb2 // indirect
 	go.uber.org/zap v1.28.0 // indirect
 	go.yaml.in/yaml/v3 v3.0.4 // indirect
 	golang.org/x/mod v0.36.0 // indirect

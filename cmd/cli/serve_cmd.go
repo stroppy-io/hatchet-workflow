@@ -63,6 +63,11 @@ func serveCmd() *cobra.Command {
 				IdeWorktreeVolume: os.Getenv("IDE_WORKTREE_VOLUME"),
 				IdeImage:          env("IDE_IMAGE", "codercom/code-server:4.96.4"),
 				IdeDockerNetwork:  os.Getenv("IDE_DOCKER_NETWORK"),
+				// IDE_LSP_BINARY_PATH: host path to the compiled
+				// cmd/stroppy-yaml-lsp binary — unset by default (no LSP
+				// mounted into code-server) until the deploy pipeline builds
+				// and stages one. See internal/ide.Manager.Config.LSPBinaryPath.
+				IdeLSPBinaryPath: os.Getenv("IDE_LSP_BINARY_PATH"),
 			}
 
 			ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)

@@ -135,4 +135,13 @@ type Config struct {
 	// AttachNetwork (the same network agent containers already join) when
 	// empty.
 	IdeDockerNetwork string
+	// IdeLSPBinaryPath is a HOST path (as seen by dockerd, same caveat as
+	// IdeWorktreeVolume) to the compiled cmd/stroppy-yaml-lsp binary.
+	// Manager bind-mounts it read-only into every scope's code-server
+	// container (internal/ide.Manager.Config.LSPBinaryPath) so a code-server
+	// extension can spawn it over stdio — see
+	// .superpowers/sdd/spc-t5-t7-report.md's "hosting" section. Empty (the
+	// default) mounts nothing: a scope's code-server has no LSP available,
+	// same as every deployment before Tasks 5-7.
+	IdeLSPBinaryPath string
 }

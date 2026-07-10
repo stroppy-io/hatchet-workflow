@@ -80,6 +80,20 @@ func TestManager_GiteaOwnerRepo_OrgWithoutRepoEnsurerFails(t *testing.T) {
 	}
 }
 
+func TestManager_LSPBinaryMount_ReadOnlyAtFixedContainerPath(t *testing.T) {
+	m := NewManager(Config{LSPBinaryPath: "/opt/stroppy/stroppy-yaml-lsp"})
+	mnt := m.lspBinaryMount()
+	if mnt.Source != "/opt/stroppy/stroppy-yaml-lsp" {
+		t.Fatalf("mount source = %q, want the configured host path", mnt.Source)
+	}
+	if mnt.Target != lspBinaryContainerPath {
+		t.Fatalf("mount target = %q, want %q", mnt.Target, lspBinaryContainerPath)
+	}
+	if !mnt.ReadOnly {
+		t.Fatal("expected the LSP binary mount to be read-only — a code-server session must never overwrite the interpreter it runs")
+	}
+}
+
 func TestWorktreeDir_TwoScopesNeverCollide(t *testing.T) {
 	m := NewManager(Config{WorktreeRoot: "/var/lib/stroppy-ide"})
 	a := m.worktreeDir(Scope{Kind: ScopeOrg, OrgSlug: "acme"}.Key())

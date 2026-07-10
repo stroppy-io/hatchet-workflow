@@ -829,6 +829,7 @@ func Run(ctx context.Context, cfg Config) error {
 			Image:          cfg.IdeImage,
 			Network:        ideNetwork,
 			InstanceOwner:  instanceOwner,
+			LSPBinaryPath:  cfg.IdeLSPBinaryPath,
 		})
 		ideBackends = &ide.BackendResolver{Manager: ideManager, Tenants: store.Tenants()}
 		ideAuthorizer = &ide.Authorizer{Tokens: bearerVerifier, Perms: permResolver, Tenants: store.Tenants()}

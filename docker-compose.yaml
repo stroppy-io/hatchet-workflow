@@ -257,6 +257,14 @@ services:
       # per-org code-server containers Manager starts need to be reachable
       # from THIS container by name, exactly like agent containers do.
       IDE_DOCKER_NETWORK: stroppy-cloud_default
+      # SP-C Tasks 5-7: host path to the compiled cmd/stroppy-yaml-lsp
+      # binary, bind-mounted read-only into every scope's code-server
+      # container at /usr/local/bin/stroppy-yaml-lsp (internal/ide.Manager.
+      # Config.LSPBinaryPath). Unset by default: no deploy pipeline builds
+      # and stages this binary yet, so a scope's code-server simply has no
+      # LSP available until an operator sets this — see
+      # .superpowers/sdd/spc-t5-t7-report.md's "hosting" section.
+      IDE_LSP_BINARY_PATH: ${IDE_LSP_BINARY_PATH:-}
       STROPPY_UPSTREAM: https://github.com/stroppy-io/stroppy/releases/download/v5.1.2/stroppy_linux_amd64.tar.gz
       QUOTA_REFRESH_INTERVAL: 0
       YC_TOKEN: ${YC_TOKEN:-}

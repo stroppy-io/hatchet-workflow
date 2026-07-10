@@ -59,6 +59,7 @@ type Manager struct {
 	image          string
 	network        string
 	instanceOwner  string
+	lspBinaryPath  string
 }
 
 // Config configures a Manager.
@@ -109,7 +110,27 @@ type Config struct {
 	// instance repo. Required whenever Manager will ever see a ScopeInstance
 	// request.
 	InstanceOwner string
+	// LSPBinaryPath, when set, is a HOST path (as seen by whatever process
+	// runs dockerd — see the WorktreeVolume doc for the same
+	// docker-outside-of-docker caveat) to the compiled cmd/stroppy-yaml-lsp
+	// binary. EnsureRunning bind-mounts it READ-ONLY into every scope's
+	// code-server container at lspBinaryContainerPath, so a code-server
+	// extension inside the container can spawn it as a stdio subprocess —
+	// see .superpowers/sdd/spc-t5-t7-report.md's "hosting" section. Empty
+	// (the default) mounts nothing; a scope's container simply has no LSP
+	// available, exactly like every deployment before this task.
+	LSPBinaryPath string
 }
+
+// lspBinaryContainerPath is the fixed path inside every scope's code-server
+// container LSPBinaryPath (when configured) is mounted at — a code-server
+// extension's serverOptions.command points here, a plain constant rather
+// than a per-scope value, since the binary itself carries no scope-specific
+// state (DslService is instantiated fresh per LSP process; scope isolation
+// is enforced by internal/ide/lsp.Session.ResolvePath against the
+// workspace root the extension passes at `initialize`, not by which binary
+// path is used).
+const lspBinaryContainerPath = "/usr/local/bin/stroppy-yaml-lsp"
 
 // NewManager builds a Manager from cfg.
 func NewManager(cfg Config) *Manager {
@@ -123,6 +144,7 @@ func NewManager(cfg Config) *Manager {
 		image:          cfg.Image,
 		network:        cfg.Network,
 		instanceOwner:  cfg.InstanceOwner,
+		lspBinaryPath:  cfg.LSPBinaryPath,
 	}
 }
 
@@ -206,8 +228,12 @@ func (m *Manager) EnsureRunning(ctx context.Context, scope Scope) (string, error
 		return containerBaseURL(name), nil
 	}
 
+	mounts := []mount.Mount{m.workspaceMount(scope.Key(), dest)}
+	if m.lspBinaryPath != "" {
+		mounts = append(mounts, m.lspBinaryMount())
+	}
 	hostCfg := &container.HostConfig{
-		Mounts: []mount.Mount{m.workspaceMount(scope.Key(), dest)},
+		Mounts: mounts,
 	}
 	if m.network != "" {
 		hostCfg.NetworkMode = container.NetworkMode(m.network)
@@ -277,5 +303,20 @@ func (m *Manager) workspaceMount(scopeKey, dest string) mount.Mount {
 		Type:   mount.TypeBind,
 		Source: dest,
 		Target: "/home/coder/project",
+	}
+}
+
+// lspBinaryMount bind-mounts the host's compiled stroppy-yaml-lsp binary
+// read-only into every scope's container at lspBinaryContainerPath — always
+// a bind (never a docker-outside-of-docker volume-subpath concern like
+// workspaceMount's): the binary is a single static file built once by the
+// image/deploy pipeline at a fixed HOST path, not a per-scope subtree that
+// needs the same volume-subpath trick worktrees do.
+func (m *Manager) lspBinaryMount() mount.Mount {
+	return mount.Mount{
+		Type:     mount.TypeBind,
+		Source:   m.lspBinaryPath,
+		Target:   lspBinaryContainerPath,
+		ReadOnly: true,
 	}
 }
