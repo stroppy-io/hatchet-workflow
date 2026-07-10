@@ -1,0 +1,63 @@
+{
+  "name": "stroppy-yaml-lsp-client",
+  "displayName": "Stroppy YAML",
+  "description": "Language client for the stroppy-yaml DSL: live diagnostics, completion, and compiled-plan preview backed by the in-container stroppy-yaml-lsp server.",
+  "version": "0.1.0",
+  "publisher": "stroppy-io",
+  "private": true,
+  "license": "UNLICENSED",
+  "engines": {
+    "vscode": "^1.90.0"
+  },
+  "categories": [
+    "Programming Languages",
+    "Linters"
+  ],
+  "activationEvents": [
+    "workspaceContains:**/cluster.yaml",
+    "workspaceContains:**/workflow.yaml"
+  ],
+  "main": "./out/extension.js",
+  "contributes": {
+    "commands": [
+      {
+        "command": "stroppyYaml.previewBundle",
+        "title": "Stroppy: Preview Compiled Plan",
+        "icon": "$(eye)"
+      }
+    ],
+    "menus": {
+      "editor/title": [
+        {
+          "command": "stroppyYaml.previewBundle",
+          "when": "resourceFilename == cluster.yaml || resourceFilename == workflow.yaml",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Stroppy YAML",
+      "properties": {
+        "stroppyYaml.serverPath": {
+          "type": "string",
+          "default": "/usr/local/bin/stroppy-yaml-lsp",
+          "description": "Path to the stroppy-yaml-lsp binary inside this code-server container. The default matches where internal/ide.Manager bind-mounts it when IDE_LSP_BINARY_PATH is configured."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "compile": "tsc -p ./",
+    "watch": "tsc -w -p ./",
+    "package": "vsce package --no-yarn --allow-missing-repository -o dist/"
+  },
+  "dependencies": {
+    "vscode-languageclient": "9.0.1"
+  },
+  "devDependencies": {
+    "@types/node": "20.14.9",
+    "@types/vscode": "1.90.0",
+    "@vscode/vsce": "3.9.2",
+    "typescript": "5.9.3"
+  }
+}

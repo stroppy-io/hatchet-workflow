@@ -252,18 +252,28 @@ services:
       # Manager can mount each scope's subdirectory (not the whole volume)
       # into that scope's own code-server container.
       IDE_WORKTREE_VOLUME: stroppy-cloud_ide-worktrees
+      # `make ide-image` bakes the stroppy-yaml code-server extension
+      # (extensions/stroppy-yaml-lsp-client) into a derived code-server
+      # image (deployments/docker/stroppy-ide.Dockerfile) tagged
+      # stroppy-ide:latest by default — set IDE_IMAGE to that tag (and push
+      # it wherever this compose file's dockerd pulls from) to get live
+      # diagnostics/completion/preview in the embedded IDE. Left at the
+      # stock upstream tag by default: no extension, plain editor, exactly
+      # like every deployment before this feature existed.
       IDE_IMAGE: ${IDE_IMAGE:-codercom/code-server:4.96.4}
       # Same network agent containers attach to (AGENT_ATTACH_NETWORK) — the
       # per-org code-server containers Manager starts need to be reachable
       # from THIS container by name, exactly like agent containers do.
       IDE_DOCKER_NETWORK: stroppy-cloud_default
       # SP-C Tasks 5-7: host path to the compiled cmd/stroppy-yaml-lsp
-      # binary, bind-mounted read-only into every scope's code-server
-      # container at /usr/local/bin/stroppy-yaml-lsp (internal/ide.Manager.
-      # Config.LSPBinaryPath). Unset by default: no deploy pipeline builds
-      # and stages this binary yet, so a scope's code-server simply has no
-      # LSP available until an operator sets this — see
-      # .superpowers/sdd/spc-t5-t7-report.md's "hosting" section.
+      # binary (`make lsp-binary` -> bin/stroppy-yaml-lsp), bind-mounted
+      # read-only into every scope's code-server container at
+      # /usr/local/bin/stroppy-yaml-lsp (internal/ide.Manager.Config.
+      # LSPBinaryPath) — the stroppy-yaml-lsp-client extension baked into
+      # IDE_IMAGE (see above) spawns it from exactly that path. Unset by
+      # default: no deploy pipeline builds and stages this binary yet, so a
+      # scope's code-server simply has no LSP available until an operator
+      # sets this — see .superpowers/sdd/lsp-extension-report.md.
       IDE_LSP_BINARY_PATH: ${IDE_LSP_BINARY_PATH:-}
       STROPPY_UPSTREAM: https://github.com/stroppy-io/stroppy/releases/download/v5.1.2/stroppy_linux_amd64.tar.gz
       QUOTA_REFRESH_INTERVAL: 0

@@ -3,6 +3,7 @@
         agent-image test-unit test-db test-full smoke smoke-clean \
         tools proto-tools db-gen migrate-generate migrate-clear \
         lint fmt docker-build docker-push docker-up docker-down docker-logs ide-token \
+        lsp-binary ide-extension ide-image \
         serve docs-install docs-dev docs-build web-install web-dev web-build \
         clean release
 
@@ -203,6 +204,21 @@ docker-logs: ## Show server logs
 
 ide-token: ## Provision the Gitea service account + IDE access token (prints .env lines; never persists the token)
 	./deployments/gitea/bootstrap-ide-token.sh
+
+# ============================================================
+# Embedded IDE: stroppy-yaml LSP + code-server extension
+# ============================================================
+IDE_IMAGE_TAG ?= stroppy-ide:latest
+
+lsp-binary: ## Build the stroppy-yaml-lsp binary (bind-mounted into code-server via IDE_LSP_BINARY_PATH)
+	@mkdir -p bin
+	CGO_ENABLED=0 go build $(GOFLAGS) -o bin/stroppy-yaml-lsp ./cmd/stroppy-yaml-lsp
+
+ide-extension: ## Compile + package the stroppy-yaml code-server extension (.vsix under extensions/stroppy-yaml-lsp-client/dist)
+	cd extensions/stroppy-yaml-lsp-client && npm ci && npm run compile && mkdir -p dist && npm run package
+
+ide-image: ide-extension ## Build a code-server image with the stroppy-yaml extension baked in (point IDE_IMAGE at $(IDE_IMAGE_TAG))
+	docker build -f deployments/docker/stroppy-ide.Dockerfile -t $(IDE_IMAGE_TAG) extensions/stroppy-yaml-lsp-client/dist
 
 # ============================================================
 # Smoke — full local stack + minimal docker run end-to-end

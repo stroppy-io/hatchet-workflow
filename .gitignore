@@ -20,6 +20,9 @@ web/pnpm-lock.yaml
 tests/e2e/node_modules
 tests/e2e/report
 tests/e2e/test-results
+extensions/stroppy-yaml-lsp-client/node_modules
+extensions/stroppy-yaml-lsp-client/out
+extensions/stroppy-yaml-lsp-client/dist
 protocols/easyp_vendor
 /cli
 .superpowers/
