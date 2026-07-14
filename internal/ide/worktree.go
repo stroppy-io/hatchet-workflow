@@ -112,6 +112,22 @@ const (
 	editorGID = 1000
 )
 
+// ensureEditorDir creates dir (if absent) and hands it to the editor's user,
+// repairing the mode too: a directory an older build created as root-owned
+// 0700 stays unreadable from inside the container until both are fixed.
+func ensureEditorDir(dir string) error {
+	if err := os.MkdirAll(dir, 0o755); err != nil {
+		return fmt.Errorf("ide: create workspace dir %q: %w", dir, err)
+	}
+	if err := os.Chmod(dir, 0o755); err != nil {
+		return fmt.Errorf("ide: chmod workspace dir %q: %w", dir, err)
+	}
+	if err := os.Lchown(dir, editorUID, editorGID); err != nil {
+		return fmt.Errorf("ide: hand workspace dir %q to the editor user: %w", dir, err)
+	}
+	return nil
+}
+
 // chownToEditor hands a materialized worktree to the editor's user. The whole
 // tree, not just the root: the author has to be able to edit the files and let
 // code-server's own git integration commit them.
@@ -126,12 +142,9 @@ func chownToEditor(root string) error {
 		return fmt.Errorf("ide: hand worktree %q to the editor user: %w", root, err)
 	}
 	// The parent (…/recipes) is created by MkdirAll above and would otherwise
-	// stay root-owned, which is enough on its own to make the folder
+	// stay root-owned 0700, which is enough on its own to make the folder
 	// unlistable from inside the container.
-	if err := os.Lchown(filepath.Dir(root), editorUID, editorGID); err != nil {
-		return fmt.Errorf("ide: hand worktree parent of %q to the editor user: %w", root, err)
-	}
-	return nil
+	return ensureEditorDir(filepath.Dir(root))
 }
 
 // runGit never logs args verbatim on error beyond what exec already

@@ -300,7 +300,15 @@ func (m *Manager) EnsureRunning(ctx context.Context, scope Scope) (string, error
 	// one it wants via code-server's ?folder= deep link. Isolation is per
 	// WORKSPACE — a tenant's container can still never see another tenant's
 	// (or the instance's) worktree.
-	dest := m.worktreeDir(scope.WorkspaceKey()) + "/" + scope.EntryDir()
+	// The workspace root itself must be traversable by the editor's user, not
+	// just the entry tree underneath it: git runs here as the server (root in
+	// the deployed container), and a root-owned 0700 workspace dir is enough on
+	// its own to make every entry inside it unreadable from the container.
+	wsDir := m.worktreeDir(scope.WorkspaceKey())
+	if err := ensureEditorDir(wsDir); err != nil {
+		return "", err
+	}
+	dest := wsDir + "/" + scope.EntryDir()
 	if _, err := EnsureWorktree(ctx, remote, m.giteaToken, dest); err != nil {
 		return "", fmt.Errorf("ide: materialize worktree for %q: %w", scope.Key(), err)
 	}
