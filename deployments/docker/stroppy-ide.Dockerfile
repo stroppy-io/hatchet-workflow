@@ -81,3 +81,16 @@ RUN set -eux; \
     test -n "$ext_dir"; \
     install -m 0755 "$ext_dir/bin/terraform-ls" /usr/local/bin/terraform-ls
 USER 1000
+
+# Default the editor to a dark theme, and skip the workspace-trust prompt: the
+# only folders this editor ever opens are catalog repos the server itself
+# cloned for the signed-in author, so there is nobody else's code to distrust.
+RUN mkdir -p /home/coder/.local/share/code-server/User \
+    && printf '%s\n' \
+      '{' \
+      '  "workbench.colorTheme": "Default Dark Modern",' \
+      '  "security.workspace.trust.enabled": false,' \
+      '  "files.autoSave": "afterDelay",' \
+      '  "yaml.schemas": {},' \
+      '  "explorer.compactFolders": false' \
+      '}' > /home/coder/.local/share/code-server/User/settings.json
