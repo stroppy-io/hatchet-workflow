@@ -6,6 +6,7 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
+	"syscall"
 	"testing"
 )
 
@@ -149,6 +150,43 @@ func TestEnsureWorktree_TokenNeverLandsInGitConfig(t *testing.T) {
 		}
 		if contains(string(b), "sekret-token") {
 			t.Fatalf("token persisted into %s", p)
+		}
+	}
+}
+
+// TestEnsureWorktree_HandsTreeToTheEditorUser is the regression guard for a
+// live "Workspace does not exist": git runs as the server (root in the
+// deployed container) while code-server runs as uid 1000, so a root-owned
+// 0700 worktree was invisible from inside the editor — which still looked
+// perfectly healthy from the outside, serving its own settings UI instead of
+// the folder.
+func TestEnsureWorktree_HandsTreeToTheEditorUser(t *testing.T) {
+	if os.Geteuid() != 0 {
+		t.Skip("chown to another uid requires root; covered on the deployed image")
+	}
+	remote := t.TempDir()
+	run(t, remote, "init", "-q", "--initial-branch=main", ".")
+	if err := os.WriteFile(filepath.Join(remote, "cluster.yaml"), []byte("provider:\n  use: docker\n"), 0o644); err != nil {
+		t.Fatal(err)
+	}
+	run(t, remote, "add", ".")
+	run(t, remote, "-c", "user.email=t@t.io", "-c", "user.name=t", "commit", "-m", "init")
+
+	dest := filepath.Join(t.TempDir(), "recipes", "pg")
+	if _, err := EnsureWorktree(context.Background(), remote, "", dest); err != nil {
+		t.Fatalf("ensure worktree: %v", err)
+	}
+	for _, p := range []string{filepath.Dir(dest), dest, filepath.Join(dest, "cluster.yaml")} {
+		fi, err := os.Stat(p)
+		if err != nil {
+			t.Fatalf("stat %s: %v", p, err)
+		}
+		st, ok := fi.Sys().(*syscall.Stat_t)
+		if !ok {
+			t.Skip("no unix stat")
+		}
+		if st.Uid != editorUID {
+			t.Errorf("%s is owned by uid %d, not the editor's %d", p, st.Uid, editorUID)
 		}
 	}
 }

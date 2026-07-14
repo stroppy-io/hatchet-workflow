@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"io/fs"
 	"net/url"
 	"os"
 	"os/exec"
@@ -84,15 +85,53 @@ func EnsureWorktree(ctx context.Context, remoteURL, token, dest string) (string,
 		if err := runGit(ctx, dest, append(auth, "pull", "--ff-only")...); err != nil {
 			return "", fmt.Errorf("ide: pull worktree %q: %w", dest, err)
 		}
+		if err := chownToEditor(dest); err != nil {
+			return "", err
+		}
 		return dest, nil
 	}
-	if err := os.MkdirAll(filepath.Dir(dest), 0o700); err != nil {
+	if err := os.MkdirAll(filepath.Dir(dest), 0o755); err != nil {
 		return "", fmt.Errorf("ide: create worktree parent: %w", err)
 	}
 	if err := runGit(ctx, "", append(auth, "clone", remoteURL, dest)...); err != nil {
 		return "", fmt.Errorf("ide: clone worktree %q: %w", dest, err)
 	}
+	if err := chownToEditor(dest); err != nil {
+		return "", err
+	}
 	return dest, nil
+}
+
+// editorUID/editorGID are the uid:gid code-server runs as inside its image
+// (the "coder" user). git runs here as the server process (root in the
+// deployed container), so everything it writes is root-owned and mode 0700 —
+// code-server could not even list the folder, and the editor opened on
+// "Workspace does not exist" while looking perfectly healthy from the outside.
+const (
+	editorUID = 1000
+	editorGID = 1000
+)
+
+// chownToEditor hands a materialized worktree to the editor's user. The whole
+// tree, not just the root: the author has to be able to edit the files and let
+// code-server's own git integration commit them.
+func chownToEditor(root string) error {
+	err := filepath.WalkDir(root, func(path string, _ fs.DirEntry, err error) error {
+		if err != nil {
+			return err
+		}
+		return os.Lchown(path, editorUID, editorGID)
+	})
+	if err != nil {
+		return fmt.Errorf("ide: hand worktree %q to the editor user: %w", root, err)
+	}
+	// The parent (…/recipes) is created by MkdirAll above and would otherwise
+	// stay root-owned, which is enough on its own to make the folder
+	// unlistable from inside the container.
+	if err := os.Lchown(filepath.Dir(root), editorUID, editorGID); err != nil {
+		return fmt.Errorf("ide: hand worktree parent of %q to the editor user: %w", root, err)
+	}
+	return nil
 }
 
 // runGit never logs args verbatim on error beyond what exec already
