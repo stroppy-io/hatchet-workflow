@@ -80,6 +80,14 @@ function entryKindSegment(tab: IdeEntryTab): "provider" | "workflow" | "recipe" 
   return "recipe";
 }
 
+// workspaceRoot is where Manager mounts a scope's worktree inside its
+// code-server container (internal/ide.workspaceContainerPath). Since
+// 09f390e4 every entry is its OWN repo, so the worktree root already IS the
+// entry's files — cluster.yaml/workflow.yaml/manifest.yaml sit directly in
+// it. Deep-linking to <root>/<tab>/<slug> was a leftover of the old single
+// monorepo layout and points at a directory that does not exist.
+const workspaceRoot = "/home/coder/project";
+
 // instanceIdeUrl builds the gateway /ide/instance/* URL for an entry's
 // on-disk location in the instance repo, opened as a code-server "folder"
 // deep link so the IDE lands on the entry's own files rather than the whole
@@ -91,7 +99,7 @@ function entryKindSegment(tab: IdeEntryTab): "provider" | "workflow" | "recipe" 
 // even if a caller somehow still constructed it).
 export function instanceIdeUrl(tab: Exclude<IdeEntryTab, "recipes">, slug: string): string {
   const entryKind = entryKindSegment(tab);
-  const folder = encodeURIComponent(`/home/coder/project/${tab}/${slug}`);
+  const folder = encodeURIComponent(workspaceRoot);
   return `/ide/instance/${entryKind}/${slug}?folder=${folder}`;
 }
 
@@ -105,7 +113,7 @@ export function instanceIdeUrl(tab: Exclude<IdeEntryTab, "recipes">, slug: strin
 // reuses this same builder unconditionally.
 export function orgIdeUrl(orgSlug: string, tab: IdeEntryTab, slug: string): string {
   const entryKind = entryKindSegment(tab);
-  const folder = encodeURIComponent(`/home/coder/project/${tab}/${slug}`);
+  const folder = encodeURIComponent(workspaceRoot);
   return `/ide/org/${orgSlug}/${entryKind}/${slug}?folder=${folder}`;
 }
 

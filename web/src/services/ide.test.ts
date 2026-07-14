@@ -18,25 +18,25 @@ import { instanceIdeUrl, mintIdeTicket, openInIde, orgIdeUrl, recipeIdeUrl } fro
 describe("instanceIdeUrl / orgIdeUrl — scope-string construction", () => {
   it("uses the singular entry-kind segment for a provider, never the plural tab name", () => {
     expect(instanceIdeUrl("providers", "yandex")).toBe(
-      "/ide/instance/provider/yandex?folder=%2Fhome%2Fcoder%2Fproject%2Fproviders%2Fyandex",
+      "/ide/instance/provider/yandex?folder=%2Fhome%2Fcoder%2Fproject",
     );
   });
 
   it("uses the singular entry-kind segment for a workflow, never the plural tab name", () => {
     expect(instanceIdeUrl("workflows", "smoke-test")).toBe(
-      "/ide/instance/workflow/smoke-test?folder=%2Fhome%2Fcoder%2Fproject%2Fworkflows%2Fsmoke-test",
+      "/ide/instance/workflow/smoke-test?folder=%2Fhome%2Fcoder%2Fproject",
     );
   });
 
   it("orgIdeUrl inserts the org slug before the singular entry-kind segment", () => {
     expect(orgIdeUrl("acme", "providers", "yandex")).toBe(
-      "/ide/org/acme/provider/yandex?folder=%2Fhome%2Fcoder%2Fproject%2Fproviders%2Fyandex",
+      "/ide/org/acme/provider/yandex?folder=%2Fhome%2Fcoder%2Fproject",
     );
   });
 
   it("orgIdeUrl for a workflow also stays singular in the scope segment", () => {
     expect(orgIdeUrl("acme", "workflows", "smoke-test")).toBe(
-      "/ide/org/acme/workflow/smoke-test?folder=%2Fhome%2Fcoder%2Fproject%2Fworkflows%2Fsmoke-test",
+      "/ide/org/acme/workflow/smoke-test?folder=%2Fhome%2Fcoder%2Fproject",
     );
   });
 
@@ -46,7 +46,7 @@ describe("instanceIdeUrl / orgIdeUrl — scope-string construction", () => {
   // excludes "recipes" at compile time.
   it("recipeIdeUrl builds an org-scoped /ide/org/<slug>/recipe/<name> URL", () => {
     expect(recipeIdeUrl("acme", "pg-ha")).toBe(
-      "/ide/org/acme/recipe/pg-ha?folder=%2Fhome%2Fcoder%2Fproject%2Frecipes%2Fpg-ha",
+      "/ide/org/acme/recipe/pg-ha?folder=%2Fhome%2Fcoder%2Fproject",
     );
   });
 });

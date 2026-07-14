@@ -3,8 +3,10 @@ package ide
 import (
 	"context"
 	"fmt"
+	"net"
 	"regexp"
 	"strings"
+	"time"
 
 	"github.com/docker/docker/api/types/container"
 	"github.com/docker/docker/api/types/mount"
@@ -117,6 +119,14 @@ type Config struct {
 // workspace root the extension passes at `initialize`, not by which binary
 // path is used).
 const lspBinaryContainerPath = "/usr/local/bin/stroppy-yaml-lsp"
+
+// Cold-start readiness bounds for waitReady: code-server takes a couple of
+// seconds to bind after docker reports the container running.
+const (
+	readyTimeout      = 60 * time.Second
+	readyPollInterval = 250 * time.Millisecond
+	dialTimeout       = 2 * time.Second
+)
 
 // workspaceContainerPath is where a scope's worktree is mounted inside its
 // code-server container, and the folder code-server is told to open.
@@ -232,6 +242,9 @@ func (m *Manager) EnsureRunning(ctx context.Context, scope Scope) (string, error
 		if err := m.docker.ContainerStart(ctx, insp.ID, container.StartOptions{}); err != nil {
 			return "", fmt.Errorf("ide: restart container %q: %w", name, err)
 		}
+		if err := m.waitReady(ctx, name); err != nil {
+			return "", err
+		}
 		return containerBaseURL(name), nil
 	}
 
@@ -283,7 +296,39 @@ func (m *Manager) EnsureRunning(ctx context.Context, scope Scope) (string, error
 	if err := m.docker.ContainerStart(ctx, resp.ID, container.StartOptions{}); err != nil {
 		return "", fmt.Errorf("ide: start container %q: %w", name, err)
 	}
+	if err := m.waitReady(ctx, name); err != nil {
+		return "", err
+	}
 	return containerBaseURL(name), nil
+}
+
+// waitReady blocks until code-server inside name accepts a TCP connection, or
+// the deadline passes. Without it EnsureRunning hands the gateway a backend
+// address the instant docker reports the container started — but code-server
+// needs a few seconds to bind, so the very first request after a cold start
+// proxied into a refused connection and the browser got a 502. Retrying by
+// hand happened to work, which is exactly what made this look like "the
+// container is just slow" instead of a race.
+func (m *Manager) waitReady(ctx context.Context, name string) error {
+	addr := net.JoinHostPort(name, codeServerPort)
+	deadline := time.Now().Add(readyTimeout)
+	var lastErr error
+	for {
+		conn, err := net.DialTimeout("tcp", addr, dialTimeout)
+		if err == nil {
+			_ = conn.Close()
+			return nil
+		}
+		lastErr = err
+		if time.Now().After(deadline) {
+			return fmt.Errorf("ide: code-server %q did not become ready in %s: %w", name, readyTimeout, lastErr)
+		}
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(readyPollInterval):
+		}
+	}
 }
 
 // Stop removes scope's code-server container. Idempotent: removing an
