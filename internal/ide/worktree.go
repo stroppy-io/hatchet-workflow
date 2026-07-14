@@ -59,6 +59,15 @@ func RemoteURL(baseURL, owner, repo string) (string, error) {
 // server host — the same exposure terraform's provider credentials already
 // have in this codebase), but NOT in .git/config, NOT in the reflog, and
 // therefore NOT inside the container an org author can reach.
+// gitSafeArgs lets the server's git (running as root) operate on a worktree
+// we deliberately handed to the editor's user: git otherwise aborts with
+// "detected dubious ownership", which is exactly the protection we want
+// everywhere EXCEPT on the directories this package itself created and chowned.
+// Scoped to the one path, never a blanket safe.directory=*.
+func gitSafeArgs(dir string) []string {
+	return []string{"-c", "safe.directory=" + dir}
+}
+
 func gitAuthArgs(token string) []string {
 	if token == "" {
 		return nil
@@ -82,7 +91,8 @@ func gitAuthArgs(token string) []string {
 func EnsureWorktree(ctx context.Context, remoteURL, token, dest string) (string, error) {
 	auth := gitAuthArgs(token)
 	if _, err := os.Stat(filepath.Join(dest, ".git")); err == nil {
-		if err := runGit(ctx, dest, append(auth, "pull", "--ff-only")...); err != nil {
+		pullArgs := append(gitSafeArgs(dest), auth...)
+		if err := runGit(ctx, dest, append(pullArgs, "pull", "--ff-only")...); err != nil {
 			return "", fmt.Errorf("ide: pull worktree %q: %w", dest, err)
 		}
 		if err := chownToEditor(dest); err != nil {
