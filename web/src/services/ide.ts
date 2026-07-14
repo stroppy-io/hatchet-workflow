@@ -80,13 +80,18 @@ function entryKindSegment(tab: IdeEntryTab): "provider" | "workflow" | "recipe" 
   return "recipe";
 }
 
-// workspaceRoot is where Manager mounts a scope's worktree inside its
-// code-server container (internal/ide.workspaceContainerPath). Since
-// 09f390e4 every entry is its OWN repo, so the worktree root already IS the
-// entry's files — cluster.yaml/workflow.yaml/manifest.yaml sit directly in
-// it. Deep-linking to <root>/<tab>/<slug> was a leftover of the old single
-// monorepo layout and points at a directory that does not exist.
+// workspaceRoot is where Manager mounts a WORKSPACE (the instance catalog,
+// or one tenant) inside its single code-server container — one container per
+// workspace, not per entry (internal/ide.Scope.WorkspaceKey). Each entry's
+// own git repo is cloned side by side underneath it, so the folder deep link
+// below is what actually opens the entry the user asked for.
 const workspaceRoot = "/home/coder/project";
+
+// entryFolder is the workspace-relative path an entry's repo is cloned into
+// (internal/ide.Scope.EntryDir) — the plural, human-facing form.
+function entryFolder(tab: IdeEntryTab, slug: string): string {
+  return `${workspaceRoot}/${tab}/${slug}`;
+}
 
 // instanceIdeUrl builds the gateway /ide/instance/* URL for an entry's
 // on-disk location in the instance repo, opened as a code-server "folder"
@@ -99,7 +104,7 @@ const workspaceRoot = "/home/coder/project";
 // even if a caller somehow still constructed it).
 export function instanceIdeUrl(tab: Exclude<IdeEntryTab, "recipes">, slug: string): string {
   const entryKind = entryKindSegment(tab);
-  const folder = encodeURIComponent(workspaceRoot);
+  const folder = encodeURIComponent(entryFolder(tab, slug));
   return `/ide/instance/${entryKind}/${slug}?folder=${folder}`;
 }
 
@@ -113,7 +118,7 @@ export function instanceIdeUrl(tab: Exclude<IdeEntryTab, "recipes">, slug: strin
 // reuses this same builder unconditionally.
 export function orgIdeUrl(orgSlug: string, tab: IdeEntryTab, slug: string): string {
   const entryKind = entryKindSegment(tab);
-  const folder = encodeURIComponent(workspaceRoot);
+  const folder = encodeURIComponent(entryFolder(tab, slug));
   return `/ide/org/${orgSlug}/${entryKind}/${slug}?folder=${folder}`;
 }
 

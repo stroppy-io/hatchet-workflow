@@ -87,7 +87,7 @@ describe("CatalogEntryEditor — EDIT renders the embedded IDE, ticket -> iframe
 
     await waitFor(() => expect(mintIdeTicket).toHaveBeenCalled());
     expect(mintIdeTicket).toHaveBeenCalledWith(
-      "/ide/org/acme/provider/yandex?folder=%2Fhome%2Fcoder%2Fproject",
+      "/ide/org/acme/provider/yandex?folder=%2Fhome%2Fcoder%2Fproject%2Fproviders%2Fyandex",
     );
 
     const iframe = await screen.findByTestId("ide-iframe");

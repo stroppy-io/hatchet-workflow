@@ -2,6 +2,8 @@ package ide
 
 import (
 	"context"
+	"crypto/sha256"
+	"encoding/hex"
 	"fmt"
 	"net"
 	"regexp"
@@ -120,6 +122,11 @@ type Config struct {
 // path is used).
 const lspBinaryContainerPath = "/usr/local/bin/stroppy-yaml-lsp"
 
+// maxContainerKeyLen bounds the readable half of a container name so the
+// whole thing (prefix + key + "-" + 8-hex hash) stays inside DNS's 63-char
+// label limit.
+const maxContainerKeyLen = 40
+
 // Cold-start readiness bounds for waitReady: code-server takes a couple of
 // seconds to bind after docker reports the container running.
 const (
@@ -147,8 +154,19 @@ func NewManager(cfg Config) *Manager {
 	}
 }
 
-func containerName(key string) string {
-	return "stroppy-ide-" + containerNameRe.ReplaceAllString(key, "-")
+// containerName names the ONE code-server container a workspace gets. A
+// docker container name doubles as its DNS label on the network, and DNS
+// caps a label at 63 characters — an org key carries a 36-char tenant UUID,
+// so the raw form overflowed and docker's resolver answered NXDOMAIN while
+// the editor sat there healthy. Hash the variable half; the prefix stays
+// readable.
+func containerName(workspaceKey string) string {
+	sanitized := containerNameRe.ReplaceAllString(workspaceKey, "-")
+	if len(sanitized) > maxContainerKeyLen {
+		sum := sha256.Sum256([]byte(workspaceKey))
+		sanitized = sanitized[:maxContainerKeyLen] + "-" + hex.EncodeToString(sum[:])[:8]
+	}
+	return "stroppy-ide-" + sanitized
 }
 
 // worktreeSubpath is the scope-specific directory name, relative to
@@ -227,12 +245,18 @@ func (m *Manager) EnsureRunning(ctx context.Context, scope Scope) (string, error
 	if err != nil {
 		return "", fmt.Errorf("ide: remote url: %w", err)
 	}
-	dest := m.worktreeDir(scope.Key())
+	// One workspace = one worktree directory = one container (spec §9.2).
+	// The entry's own repo is cloned into a subdirectory of it, side by side
+	// with every other entry of the same workspace, and the browser opens the
+	// one it wants via code-server's ?folder= deep link. Isolation is per
+	// WORKSPACE — a tenant's container can still never see another tenant's
+	// (or the instance's) worktree.
+	dest := m.worktreeDir(scope.WorkspaceKey()) + "/" + scope.EntryDir()
 	if _, err := EnsureWorktree(ctx, remote, m.giteaToken, dest); err != nil {
 		return "", fmt.Errorf("ide: materialize worktree for %q: %w", scope.Key(), err)
 	}
 
-	name := containerName(scope.Key())
+	name := containerName(scope.WorkspaceKey())
 	if insp, err := m.docker.ContainerInspect(ctx, name); err == nil {
 		if insp.State != nil && insp.State.Running {
 			return containerBaseURL(name), nil
@@ -248,7 +272,7 @@ func (m *Manager) EnsureRunning(ctx context.Context, scope Scope) (string, error
 		return containerBaseURL(name), nil
 	}
 
-	mounts := []mount.Mount{m.workspaceMount(scope.Key(), dest)}
+	mounts := []mount.Mount{m.workspaceMount(scope.WorkspaceKey(), m.worktreeDir(scope.WorkspaceKey()))}
 	if m.lspBinaryPath != "" {
 		mounts = append(mounts, m.lspBinaryMount())
 	}
@@ -336,7 +360,7 @@ func (m *Manager) waitReady(ctx context.Context, name string) error {
 // convention elsewhere in this codebase). The worktree directory on disk is
 // left in place — Stop is a container-lifecycle op, not a data-deletion op.
 func (m *Manager) Stop(ctx context.Context, scope Scope) error {
-	name := containerName(scope.Key())
+	name := containerName(scope.WorkspaceKey())
 	err := m.docker.ContainerRemove(ctx, name, container.RemoveOptions{Force: true})
 	if err != nil && !strings.Contains(err.Error(), "No such container") {
 		return fmt.Errorf("ide: remove container %q: %w", name, err)

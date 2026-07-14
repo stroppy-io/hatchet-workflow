@@ -183,6 +183,34 @@ func (s Scope) Key() string {
 	return "org:" + s.OrgSlug + ":" + s.EntryKind + ":" + s.EntrySlug
 }
 
+// WorkspaceKey identifies the code-server WORKSPACE a scope belongs to —
+// the instance catalog, or one tenant. A workspace is what actually gets a
+// container and a worktree directory: spec §9.2 decided one shared
+// code-server per tenant, NOT one per user, and (as the repo-per-entry move
+// made tempting) certainly not one per entry. A container per entry meant a
+// cold start for every provider/workflow/recipe a person opened, dozens of
+// idle editors, and — since the name embeds a tenant UUID — container names
+// past DNS's 63-character label limit, which docker's embedded resolver
+// simply refuses to answer (the gateway then 502s against a perfectly
+// healthy editor).
+//
+// Every entry of a workspace is cloned side by side underneath it (see
+// Manager.entryWorktreeSubdir), and the browser picks one with code-server's
+// ?folder= deep link.
+func (s Scope) WorkspaceKey() string {
+	if s.Kind == ScopeInstance {
+		return "instance"
+	}
+	return "org:" + s.OrgSlug
+}
+
+// EntryDir is the workspace-relative directory an entry's repo is cloned
+// into — the plural, human-facing form the ?folder= deep link names
+// ("providers/postgres", "recipes/postgres-ha").
+func (s Scope) EntryDir() string {
+	return s.EntryKind + "s/" + s.EntrySlug
+}
+
 // Prefix reconstructs the canonical "/ide/..." URL prefix for s — the
 // request path with Rest stripped back off (the inverse of ParseScope minus
 // Rest). Used to scope the browser-auth session cookie's Path attribute

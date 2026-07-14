@@ -2,6 +2,7 @@ package ide
 
 import (
 	"context"
+	"strings"
 	"testing"
 
 	"github.com/docker/docker/client"
@@ -252,5 +253,57 @@ func TestManager_RecipeCrossTenantIsolationAndNoInstanceLevel(t *testing.T) {
 
 	if _, _, err := m.giteaOwnerRepo(context.Background(), Scope{Kind: ScopeInstance, EntryKind: EntryKindRecipe, EntrySlug: "pg-ha"}); err == nil {
 		t.Fatal("expected an error for ScopeInstance+EntryKindRecipe — a recipe has no instance level")
+	}
+}
+
+// TestContainerName_FitsDNSLabelLimit is the regression guard for a live 502:
+// a container name doubles as its DNS label, DNS caps a label at 63 chars, and
+// an org workspace key carries a 36-char tenant UUID. The over-long name made
+// docker's resolver answer NXDOMAIN, so the gateway could not reach a
+// perfectly healthy code-server.
+func TestContainerName_FitsDNSLabelLimit(t *testing.T) {
+	for _, key := range []string{
+		"instance",
+		"org:6efd731f-5f81-4b1d-8ab4-7915341d5eff",
+		"org:" + strings.Repeat("x", 300),
+	} {
+		got := containerName(key)
+		if len(got) > 63 {
+			t.Errorf("containerName(%q) = %q (%d chars), exceeds the 63-char DNS label limit", key, got, len(got))
+		}
+	}
+}
+
+// TestContainerName_DistinctWorkspacesDistinctNames proves the length cap
+// cannot collide two tenants: the hash is keyed on the full workspace key.
+func TestContainerName_DistinctWorkspacesDistinctNames(t *testing.T) {
+	a := containerName("org:6efd731f-5f81-4b1d-8ab4-7915341d5eff")
+	b := containerName("org:6efd731f-5f81-4b1d-8ab4-7915341d5ef0")
+	if a == b {
+		t.Fatalf("two tenants collided onto one container: %q", a)
+	}
+}
+
+// TestScope_OneContainerPerWorkspaceNotPerEntry pins the decision this file's
+// Manager doc states: every entry of a workspace shares ONE code-server (spec
+// §9.2). A container per entry meant a cold start per entry and dozens of idle
+// editors.
+func TestScope_OneContainerPerWorkspaceNotPerEntry(t *testing.T) {
+	provider := Scope{Kind: ScopeOrg, OrgSlug: "t1", EntryKind: EntryKindProvider, EntrySlug: "yandex"}
+	recipe := Scope{Kind: ScopeOrg, OrgSlug: "t1", EntryKind: EntryKindRecipe, EntrySlug: "postgres-ha"}
+	if containerName(provider.WorkspaceKey()) != containerName(recipe.WorkspaceKey()) {
+		t.Fatal("two entries of the same org landed on different containers")
+	}
+	if provider.EntryDir() == recipe.EntryDir() {
+		t.Fatal("two entries share a worktree subdirectory")
+	}
+
+	other := Scope{Kind: ScopeOrg, OrgSlug: "t2", EntryKind: EntryKindProvider, EntrySlug: "yandex"}
+	inst := Scope{Kind: ScopeInstance, EntryKind: EntryKindProvider, EntrySlug: "yandex"}
+	if containerName(provider.WorkspaceKey()) == containerName(other.WorkspaceKey()) {
+		t.Fatal("two tenants share a container")
+	}
+	if containerName(provider.WorkspaceKey()) == containerName(inst.WorkspaceKey()) {
+		t.Fatal("a tenant shares the instance container")
 	}
 }
