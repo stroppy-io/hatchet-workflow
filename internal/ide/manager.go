@@ -8,6 +8,7 @@ import (
 	"net"
 	"regexp"
 	"strings"
+	"sync"
 	"time"
 
 	"github.com/docker/docker/api/types/container"
@@ -57,6 +58,28 @@ type Manager struct {
 	image          string
 	network        string
 	lspBinaryPath  string
+
+	// mu guards entryLocks; entryLocks serializes materialization per entry so
+	// a burst of requests for a cold editor produces one clone, not a race.
+	mu         sync.Mutex
+	entryLocks map[string]*sync.Mutex
+}
+
+// lockEntry takes the per-entry materialization lock and returns its release.
+func (m *Manager) lockEntry(key string) func() {
+	m.mu.Lock()
+	if m.entryLocks == nil {
+		m.entryLocks = map[string]*sync.Mutex{}
+	}
+	l, ok := m.entryLocks[key]
+	if !ok {
+		l = &sync.Mutex{}
+		m.entryLocks[key] = l
+	}
+	m.mu.Unlock()
+
+	l.Lock()
+	return l.Unlock
 }
 
 // Config configures a Manager.
@@ -237,6 +260,32 @@ func (m *Manager) giteaOwnerRepo(ctx context.Context, scope Scope) (owner, repo 
 // container's internal HTTP base URL for gateway.IdeBackendResolver to
 // reverse-proxy to.
 func (m *Manager) EnsureRunning(ctx context.Context, scope Scope) (string, error) {
+	name := containerName(scope.WorkspaceKey())
+
+	// Fast path. The gateway resolves a backend for EVERY proxied request, and
+	// a code-server page load is dozens of static assets in parallel. Doing the
+	// gitea round-trip and a `git pull` on each of them meant they raced for
+	// the worktree's index.lock and most of them lost: 18 of 20 concurrent
+	// asset requests came back 503. Once the container is up there is nothing
+	// to materialize — hand back its address and touch neither git nor docker's
+	// create path.
+	if insp, err := m.docker.ContainerInspect(ctx, name); err == nil &&
+		insp.State != nil && insp.State.Running {
+		return containerBaseURL(name), nil
+	}
+
+	// Slow path: at most one materialization per entry at a time, so a burst of
+	// requests for a not-yet-started editor still results in exactly one clone
+	// and one container.
+	unlock := m.lockEntry(scope.Key())
+	defer unlock()
+
+	// Another request may have finished the whole thing while we waited.
+	if insp, err := m.docker.ContainerInspect(ctx, name); err == nil &&
+		insp.State != nil && insp.State.Running {
+		return containerBaseURL(name), nil
+	}
+
 	owner, repo, err := m.giteaOwnerRepo(ctx, scope)
 	if err != nil {
 		return "", err
@@ -256,7 +305,6 @@ func (m *Manager) EnsureRunning(ctx context.Context, scope Scope) (string, error
 		return "", fmt.Errorf("ide: materialize worktree for %q: %w", scope.Key(), err)
 	}
 
-	name := containerName(scope.WorkspaceKey())
 	if insp, err := m.docker.ContainerInspect(ctx, name); err == nil {
 		if insp.State != nil && insp.State.Running {
 			return containerBaseURL(name), nil

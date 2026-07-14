@@ -3,7 +3,9 @@ package ide
 import (
 	"context"
 	"strings"
+	"sync"
 	"testing"
+	"time"
 
 	"github.com/docker/docker/client"
 
@@ -305,5 +307,66 @@ func TestScope_OneContainerPerWorkspaceNotPerEntry(t *testing.T) {
 	}
 	if containerName(provider.WorkspaceKey()) == containerName(inst.WorkspaceKey()) {
 		t.Fatal("a tenant shares the instance container")
+	}
+}
+
+// TestLockEntry_SerializesSameEntry guards the 503 storm: the gateway resolves
+// a backend for EVERY proxied request, and one code-server page load is dozens
+// of parallel static assets. Each of them used to run a `git pull` on the same
+// worktree, so they fought over index.lock and most lost — 18 of 20 concurrent
+// asset requests came back 503 on the live stand. Materialization must happen
+// once per entry, not once per request.
+func TestLockEntry_SerializesSameEntry(t *testing.T) {
+	m := NewManager(Config{})
+
+	var mu sync.Mutex
+	inFlight, maxInFlight := 0, 0
+
+	var wg sync.WaitGroup
+	for range 20 {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			unlock := m.lockEntry("org:t1:recipe:pg")
+			defer unlock()
+
+			mu.Lock()
+			inFlight++
+			maxInFlight = max(maxInFlight, inFlight)
+			mu.Unlock()
+
+			time.Sleep(time.Millisecond)
+
+			mu.Lock()
+			inFlight--
+			mu.Unlock()
+		}()
+	}
+	wg.Wait()
+
+	if maxInFlight != 1 {
+		t.Fatalf("up to %d concurrent materializations of one entry; want 1", maxInFlight)
+	}
+}
+
+// TestLockEntry_DifferentEntriesDoNotBlock proves the lock is per entry, so one
+// slow clone cannot stall every other editor.
+func TestLockEntry_DifferentEntriesDoNotBlock(t *testing.T) {
+	m := NewManager(Config{})
+
+	unlockA := m.lockEntry("org:t1:recipe:a")
+	defer unlockA()
+
+	done := make(chan struct{})
+	go func() {
+		unlockB := m.lockEntry("org:t1:recipe:b")
+		unlockB()
+		close(done)
+	}()
+
+	select {
+	case <-done:
+	case <-time.After(2 * time.Second):
+		t.Fatal("a second entry blocked on the first entry's lock")
 	}
 }
