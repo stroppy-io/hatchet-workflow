@@ -307,7 +307,18 @@ func (a *Actor) DestroyExisting(ctx context.Context, wd WdId, opts ...Option) er
 		return err
 	}
 	defer a.unregister(w.wd)
-	return tf.Destroy(ctx, tfexec.Parallelism(w.parallelism))
+	if err := tf.Destroy(ctx, tfexec.Parallelism(w.parallelism)); err != nil {
+		return err
+	}
+	// Infra is gone, so the per-run workdir (.tf, state, and the cached provider
+	// plugin under .terraform/) is now garbage. Nothing else deletes it — the id
+	// is per-run, so it is never reused — and leaving it accumulates one workdir
+	// per run forever on the server's disk. A failed removal is not fatal: the
+	// destroy already succeeded.
+	if rerr := os.RemoveAll(w.WorkdirPath()); rerr != nil && !os.IsNotExist(rerr) {
+		return fmt.Errorf("remove terraform workdir %q: %w", w.wd, rerr)
+	}
+	return nil
 }
 
 func (a *Actor) register(w *WorkdirWithParams) error {
