@@ -226,7 +226,10 @@ type SharedTestRun struct {
 	// reproducible without handing over the run spec.
 	WorkloadSegments []*SharedWorkloadSegment `protobuf:"bytes,15,rep,name=workload_segments,json=workloadSegments,proto3" json:"workload_segments,omitempty"`
 	// database is the sizing + typed tuning of the database under test.
-	Database      *SharedDatabase `protobuf:"bytes,16,opt,name=database,proto3" json:"database,omitempty"`
+	Database *SharedDatabase `protobuf:"bytes,16,opt,name=database,proto3" json:"database,omitempty"`
+	// machines are the per-VM hardware the run was provisioned on, so a shared
+	// result carries the iron it ran on.
+	Machines      []*SharedMachine `protobuf:"bytes,17,rep,name=machines,proto3" json:"machines,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -373,6 +376,128 @@ func (x *SharedTestRun) GetDatabase() *SharedDatabase {
 	return nil
 }
 
+func (x *SharedTestRun) GetMachines() []*SharedMachine {
+	if x != nil {
+		return x.Machines
+	}
+	return nil
+}
+
+// SharedMachine is the SAFE projection of one provisioned VM's hardware.
+//
+// Every field is a typed, validated value from the run's infrastructure plan
+// (cores/memory/disk/zone are all `> 0` / closed-set enforced). The plan's
+// provider `settings` — which sit right next to this and carry the cloud TOKEN,
+// ssh public key and cloud/folder ids — are NEVER read here; only the typed
+// per-VM sizing and the platform/zone enums.
+type SharedMachine struct {
+	state protoimpl.MessageState `protogen:"open.v1"`
+	// node_id is the machine's role name (e.g. "postgres-master").
+	NodeId string `protobuf:"bytes,1,opt,name=node_id,json=nodeId,proto3" json:"node_id,omitempty"`
+	// cores is the vCPU count.
+	Cores uint32 `protobuf:"varint,2,opt,name=cores,proto3" json:"cores,omitempty"`
+	// memory_gb is RAM in GiB.
+	MemoryGb uint64 `protobuf:"varint,3,opt,name=memory_gb,json=memoryGb,proto3" json:"memory_gb,omitempty"`
+	// boot_disk_gb is the boot disk size in GiB.
+	BootDiskGb uint64 `protobuf:"varint,4,opt,name=boot_disk_gb,json=bootDiskGb,proto3" json:"boot_disk_gb,omitempty"`
+	// boot_disk_type is the boot disk class (network-ssd, …).
+	BootDiskType string `protobuf:"bytes,5,opt,name=boot_disk_type,json=bootDiskType,proto3" json:"boot_disk_type,omitempty"`
+	// platform is the compute platform tier (from the plan's provider settings).
+	Platform string `protobuf:"bytes,6,opt,name=platform,proto3" json:"platform,omitempty"`
+	// zone is the availability zone the VM ran in.
+	Zone string `protobuf:"bytes,7,opt,name=zone,proto3" json:"zone,omitempty"`
+	// secondary_disks are extra attached data disks.
+	SecondaryDisks []*SharedMachine_Disk `protobuf:"bytes,8,rep,name=secondary_disks,json=secondaryDisks,proto3" json:"secondary_disks,omitempty"`
+	unknownFields  protoimpl.UnknownFields
+	sizeCache      protoimpl.SizeCache
+}
+
+func (x *SharedMachine) Reset() {
+	*x = SharedMachine{}
+	mi := &file_cloud_v1_models_share_proto_msgTypes[2]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SharedMachine) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SharedMachine) ProtoMessage() {}
+
+func (x *SharedMachine) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_models_share_proto_msgTypes[2]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SharedMachine.ProtoReflect.Descriptor instead.
+func (*SharedMachine) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_models_share_proto_rawDescGZIP(), []int{2}
+}
+
+func (x *SharedMachine) GetNodeId() string {
+	if x != nil {
+		return x.NodeId
+	}
+	return ""
+}
+
+func (x *SharedMachine) GetCores() uint32 {
+	if x != nil {
+		return x.Cores
+	}
+	return 0
+}
+
+func (x *SharedMachine) GetMemoryGb() uint64 {
+	if x != nil {
+		return x.MemoryGb
+	}
+	return 0
+}
+
+func (x *SharedMachine) GetBootDiskGb() uint64 {
+	if x != nil {
+		return x.BootDiskGb
+	}
+	return 0
+}
+
+func (x *SharedMachine) GetBootDiskType() string {
+	if x != nil {
+		return x.BootDiskType
+	}
+	return ""
+}
+
+func (x *SharedMachine) GetPlatform() string {
+	if x != nil {
+		return x.Platform
+	}
+	return ""
+}
+
+func (x *SharedMachine) GetZone() string {
+	if x != nil {
+		return x.Zone
+	}
+	return ""
+}
+
+func (x *SharedMachine) GetSecondaryDisks() []*SharedMachine_Disk {
+	if x != nil {
+		return x.SecondaryDisks
+	}
+	return nil
+}
+
 // SharedWorkloadSegment is the SAFE projection of one stroppy workload segment:
 // the knobs that explain a number, and nothing else.
 //
@@ -415,7 +540,7 @@ type SharedWorkloadSegment struct {
 
 func (x *SharedWorkloadSegment) Reset() {
 	*x = SharedWorkloadSegment{}
-	mi := &file_cloud_v1_models_share_proto_msgTypes[2]
+	mi := &file_cloud_v1_models_share_proto_msgTypes[3]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -427,7 +552,7 @@ func (x *SharedWorkloadSegment) String() string {
 func (*SharedWorkloadSegment) ProtoMessage() {}
 
 func (x *SharedWorkloadSegment) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_models_share_proto_msgTypes[2]
+	mi := &file_cloud_v1_models_share_proto_msgTypes[3]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -440,7 +565,7 @@ func (x *SharedWorkloadSegment) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SharedWorkloadSegment.ProtoReflect.Descriptor instead.
 func (*SharedWorkloadSegment) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_models_share_proto_rawDescGZIP(), []int{2}
+	return file_cloud_v1_models_share_proto_rawDescGZIP(), []int{3}
 }
 
 func (x *SharedWorkloadSegment) GetName() string {
@@ -553,7 +678,7 @@ type SharedDatabase struct {
 
 func (x *SharedDatabase) Reset() {
 	*x = SharedDatabase{}
-	mi := &file_cloud_v1_models_share_proto_msgTypes[3]
+	mi := &file_cloud_v1_models_share_proto_msgTypes[4]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -565,7 +690,7 @@ func (x *SharedDatabase) String() string {
 func (*SharedDatabase) ProtoMessage() {}
 
 func (x *SharedDatabase) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_models_share_proto_msgTypes[3]
+	mi := &file_cloud_v1_models_share_proto_msgTypes[4]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -578,7 +703,7 @@ func (x *SharedDatabase) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SharedDatabase.ProtoReflect.Descriptor instead.
 func (*SharedDatabase) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_models_share_proto_rawDescGZIP(), []int{3}
+	return file_cloud_v1_models_share_proto_rawDescGZIP(), []int{4}
 }
 
 func (x *SharedDatabase) GetVersion() string {
@@ -631,7 +756,7 @@ type SharedSuiteRun struct {
 
 func (x *SharedSuiteRun) Reset() {
 	*x = SharedSuiteRun{}
-	mi := &file_cloud_v1_models_share_proto_msgTypes[4]
+	mi := &file_cloud_v1_models_share_proto_msgTypes[5]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -643,7 +768,7 @@ func (x *SharedSuiteRun) String() string {
 func (*SharedSuiteRun) ProtoMessage() {}
 
 func (x *SharedSuiteRun) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_models_share_proto_msgTypes[4]
+	mi := &file_cloud_v1_models_share_proto_msgTypes[5]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -656,7 +781,7 @@ func (x *SharedSuiteRun) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SharedSuiteRun.ProtoReflect.Descriptor instead.
 func (*SharedSuiteRun) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_models_share_proto_rawDescGZIP(), []int{4}
+	return file_cloud_v1_models_share_proto_rawDescGZIP(), []int{5}
 }
 
 func (x *SharedSuiteRun) GetName() string {
@@ -764,7 +889,7 @@ type ShareRecord_Target struct {
 
 func (x *ShareRecord_Target) Reset() {
 	*x = ShareRecord_Target{}
-	mi := &file_cloud_v1_models_share_proto_msgTypes[5]
+	mi := &file_cloud_v1_models_share_proto_msgTypes[6]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -776,7 +901,7 @@ func (x *ShareRecord_Target) String() string {
 func (*ShareRecord_Target) ProtoMessage() {}
 
 func (x *ShareRecord_Target) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_models_share_proto_msgTypes[5]
+	mi := &file_cloud_v1_models_share_proto_msgTypes[6]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -825,7 +950,7 @@ type ShareRecord_Snapshot struct {
 
 func (x *ShareRecord_Snapshot) Reset() {
 	*x = ShareRecord_Snapshot{}
-	mi := &file_cloud_v1_models_share_proto_msgTypes[6]
+	mi := &file_cloud_v1_models_share_proto_msgTypes[7]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -837,7 +962,7 @@ func (x *ShareRecord_Snapshot) String() string {
 func (*ShareRecord_Snapshot) ProtoMessage() {}
 
 func (x *ShareRecord_Snapshot) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_models_share_proto_msgTypes[6]
+	mi := &file_cloud_v1_models_share_proto_msgTypes[7]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -903,6 +1028,59 @@ func (*ShareRecord_Snapshot_TestRun) isShareRecord_Snapshot_View() {}
 
 func (*ShareRecord_Snapshot_SuiteRun) isShareRecord_Snapshot_View() {}
 
+// Disk is one attached data disk's size + class.
+type SharedMachine_Disk struct {
+	state         protoimpl.MessageState `protogen:"open.v1"`
+	SizeGb        uint32                 `protobuf:"varint,1,opt,name=size_gb,json=sizeGb,proto3" json:"size_gb,omitempty"`
+	Type          string                 `protobuf:"bytes,2,opt,name=type,proto3" json:"type,omitempty"`
+	unknownFields protoimpl.UnknownFields
+	sizeCache     protoimpl.SizeCache
+}
+
+func (x *SharedMachine_Disk) Reset() {
+	*x = SharedMachine_Disk{}
+	mi := &file_cloud_v1_models_share_proto_msgTypes[8]
+	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+	ms.StoreMessageInfo(mi)
+}
+
+func (x *SharedMachine_Disk) String() string {
+	return protoimpl.X.MessageStringOf(x)
+}
+
+func (*SharedMachine_Disk) ProtoMessage() {}
+
+func (x *SharedMachine_Disk) ProtoReflect() protoreflect.Message {
+	mi := &file_cloud_v1_models_share_proto_msgTypes[8]
+	if x != nil {
+		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
+		if ms.LoadMessageInfo() == nil {
+			ms.StoreMessageInfo(mi)
+		}
+		return ms
+	}
+	return mi.MessageOf(x)
+}
+
+// Deprecated: Use SharedMachine_Disk.ProtoReflect.Descriptor instead.
+func (*SharedMachine_Disk) Descriptor() ([]byte, []int) {
+	return file_cloud_v1_models_share_proto_rawDescGZIP(), []int{2, 0}
+}
+
+func (x *SharedMachine_Disk) GetSizeGb() uint32 {
+	if x != nil {
+		return x.SizeGb
+	}
+	return 0
+}
+
+func (x *SharedMachine_Disk) GetType() string {
+	if x != nil {
+		return x.Type
+	}
+	return ""
+}
+
 // Setting is one server-selected knob. Both key and value originate from a
 // typed proto field — never from a user-supplied map entry.
 type SharedDatabase_Setting struct {
@@ -915,7 +1093,7 @@ type SharedDatabase_Setting struct {
 
 func (x *SharedDatabase_Setting) Reset() {
 	*x = SharedDatabase_Setting{}
-	mi := &file_cloud_v1_models_share_proto_msgTypes[7]
+	mi := &file_cloud_v1_models_share_proto_msgTypes[9]
 	ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 	ms.StoreMessageInfo(mi)
 }
@@ -927,7 +1105,7 @@ func (x *SharedDatabase_Setting) String() string {
 func (*SharedDatabase_Setting) ProtoMessage() {}
 
 func (x *SharedDatabase_Setting) ProtoReflect() protoreflect.Message {
-	mi := &file_cloud_v1_models_share_proto_msgTypes[7]
+	mi := &file_cloud_v1_models_share_proto_msgTypes[9]
 	if x != nil {
 		ms := protoimpl.X.MessageStateOf(protoimpl.Pointer(x))
 		if ms.LoadMessageInfo() == nil {
@@ -940,7 +1118,7 @@ func (x *SharedDatabase_Setting) ProtoReflect() protoreflect.Message {
 
 // Deprecated: Use SharedDatabase_Setting.ProtoReflect.Descriptor instead.
 func (*SharedDatabase_Setting) Descriptor() ([]byte, []int) {
-	return file_cloud_v1_models_share_proto_rawDescGZIP(), []int{3, 0}
+	return file_cloud_v1_models_share_proto_rawDescGZIP(), []int{4, 0}
 }
 
 func (x *SharedDatabase_Setting) GetKey() string {
@@ -984,7 +1162,7 @@ const file_cloud_v1_models_share_proto_rawDesc = "" +
 	"capturedAt\x12;\n" +
 	"\btest_run\x18\x02 \x01(\v2\x1e.cloud.v1.models.SharedTestRunH\x00R\atestRun\x12>\n" +
 	"\tsuite_run\x18\x03 \x01(\v2\x1f.cloud.v1.models.SharedSuiteRunH\x00R\bsuiteRunB\x0e\n" +
-	"\x04view\x12\x06\xf2\xa7\x1d\x02\b\x03\"\x9a\x06\n" +
+	"\x04view\x12\x06\xf2\xa7\x1d\x02\b\x03\"\xd6\x06\n" +
 	"\rSharedTestRun\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12/\n" +
 	"\x06status\x18\x02 \x01(\x0e2\x17.cloud.v1.common.StatusR\x06status\x127\n" +
@@ -1005,7 +1183,21 @@ const file_cloud_v1_models_share_proto_rawDesc = "" +
 	"\fprogress_pct\x18\r \x01(\rB\a\xfaB\x04*\x02\x18dR\vprogressPct\x126\n" +
 	"\ametrics\x18\x0e \x01(\v2\x1c.cloud.v1.monitor.RunMetricsR\ametrics\x12S\n" +
 	"\x11workload_segments\x18\x0f \x03(\v2&.cloud.v1.models.SharedWorkloadSegmentR\x10workloadSegments\x12;\n" +
-	"\bdatabase\x18\x10 \x01(\v2\x1f.cloud.v1.models.SharedDatabaseR\bdatabase\"\xb1\x03\n" +
+	"\bdatabase\x18\x10 \x01(\v2\x1f.cloud.v1.models.SharedDatabaseR\bdatabase\x12:\n" +
+	"\bmachines\x18\x11 \x03(\v2\x1e.cloud.v1.models.SharedMachineR\bmachines\"\x8e\x03\n" +
+	"\rSharedMachine\x12!\n" +
+	"\anode_id\x18\x01 \x01(\tB\b\xfaB\x05r\x03\x18\x80\x01R\x06nodeId\x12\x14\n" +
+	"\x05cores\x18\x02 \x01(\rR\x05cores\x12\x1b\n" +
+	"\tmemory_gb\x18\x03 \x01(\x04R\bmemoryGb\x12 \n" +
+	"\fboot_disk_gb\x18\x04 \x01(\x04R\n" +
+	"bootDiskGb\x12-\n" +
+	"\x0eboot_disk_type\x18\x05 \x01(\tB\a\xfaB\x04r\x02\x18@R\fbootDiskType\x12#\n" +
+	"\bplatform\x18\x06 \x01(\tB\a\xfaB\x04r\x02\x18@R\bplatform\x12\x1b\n" +
+	"\x04zone\x18\a \x01(\tB\a\xfaB\x04r\x02\x18@R\x04zone\x12V\n" +
+	"\x0fsecondary_disks\x18\b \x03(\v2#.cloud.v1.models.SharedMachine.DiskB\b\xfaB\x05\x92\x01\x02\x10@R\x0esecondaryDisks\x1a<\n" +
+	"\x04Disk\x12\x17\n" +
+	"\asize_gb\x18\x01 \x01(\rR\x06sizeGb\x12\x1b\n" +
+	"\x04type\x18\x02 \x01(\tB\a\xfaB\x04r\x02\x18@R\x04type\"\xb1\x03\n" +
 	"\x15SharedWorkloadSegment\x12\x12\n" +
 	"\x04name\x18\x01 \x01(\tR\x04name\x12\x16\n" +
 	"\x06script\x18\x02 \x01(\tR\x06script\x12\x10\n" +
@@ -1060,56 +1252,60 @@ func file_cloud_v1_models_share_proto_rawDescGZIP() []byte {
 }
 
 var file_cloud_v1_models_share_proto_enumTypes = make([]protoimpl.EnumInfo, 1)
-var file_cloud_v1_models_share_proto_msgTypes = make([]protoimpl.MessageInfo, 8)
+var file_cloud_v1_models_share_proto_msgTypes = make([]protoimpl.MessageInfo, 10)
 var file_cloud_v1_models_share_proto_goTypes = []any{
 	(ShareRecord_Target_Kind)(0),   // 0: cloud.v1.models.ShareRecord.Target.Kind
 	(*ShareRecord)(nil),            // 1: cloud.v1.models.ShareRecord
 	(*SharedTestRun)(nil),          // 2: cloud.v1.models.SharedTestRun
-	(*SharedWorkloadSegment)(nil),  // 3: cloud.v1.models.SharedWorkloadSegment
-	(*SharedDatabase)(nil),         // 4: cloud.v1.models.SharedDatabase
-	(*SharedSuiteRun)(nil),         // 5: cloud.v1.models.SharedSuiteRun
-	(*ShareRecord_Target)(nil),     // 6: cloud.v1.models.ShareRecord.Target
-	(*ShareRecord_Snapshot)(nil),   // 7: cloud.v1.models.ShareRecord.Snapshot
-	(*SharedDatabase_Setting)(nil), // 8: cloud.v1.models.SharedDatabase.Setting
-	(*common.Entity)(nil),          // 9: cloud.v1.common.Entity
-	(*timestamppb.Timestamp)(nil),  // 10: google.protobuf.Timestamp
-	(common.Status)(0),             // 11: cloud.v1.common.Status
-	(domain.Database_Kind)(0),      // 12: cloud.v1.domain.Database.Kind
-	(deployment.Provider)(0),       // 13: cloud.v1.deployment.Provider
-	(*durationpb.Duration)(nil),    // 14: google.protobuf.Duration
-	(*monitor.RunMetrics)(nil),     // 15: cloud.v1.monitor.RunMetrics
+	(*SharedMachine)(nil),          // 3: cloud.v1.models.SharedMachine
+	(*SharedWorkloadSegment)(nil),  // 4: cloud.v1.models.SharedWorkloadSegment
+	(*SharedDatabase)(nil),         // 5: cloud.v1.models.SharedDatabase
+	(*SharedSuiteRun)(nil),         // 6: cloud.v1.models.SharedSuiteRun
+	(*ShareRecord_Target)(nil),     // 7: cloud.v1.models.ShareRecord.Target
+	(*ShareRecord_Snapshot)(nil),   // 8: cloud.v1.models.ShareRecord.Snapshot
+	(*SharedMachine_Disk)(nil),     // 9: cloud.v1.models.SharedMachine.Disk
+	(*SharedDatabase_Setting)(nil), // 10: cloud.v1.models.SharedDatabase.Setting
+	(*common.Entity)(nil),          // 11: cloud.v1.common.Entity
+	(*timestamppb.Timestamp)(nil),  // 12: google.protobuf.Timestamp
+	(common.Status)(0),             // 13: cloud.v1.common.Status
+	(domain.Database_Kind)(0),      // 14: cloud.v1.domain.Database.Kind
+	(deployment.Provider)(0),       // 15: cloud.v1.deployment.Provider
+	(*durationpb.Duration)(nil),    // 16: google.protobuf.Duration
+	(*monitor.RunMetrics)(nil),     // 17: cloud.v1.monitor.RunMetrics
 }
 var file_cloud_v1_models_share_proto_depIdxs = []int32{
-	9,  // 0: cloud.v1.models.ShareRecord.entity:type_name -> cloud.v1.common.Entity
-	6,  // 1: cloud.v1.models.ShareRecord.target:type_name -> cloud.v1.models.ShareRecord.Target
-	10, // 2: cloud.v1.models.ShareRecord.expires_at:type_name -> google.protobuf.Timestamp
-	7,  // 3: cloud.v1.models.ShareRecord.snapshot:type_name -> cloud.v1.models.ShareRecord.Snapshot
-	11, // 4: cloud.v1.models.SharedTestRun.status:type_name -> cloud.v1.common.Status
-	12, // 5: cloud.v1.models.SharedTestRun.db_kind:type_name -> cloud.v1.domain.Database.Kind
-	13, // 6: cloud.v1.models.SharedTestRun.provider:type_name -> cloud.v1.deployment.Provider
-	10, // 7: cloud.v1.models.SharedTestRun.started_at:type_name -> google.protobuf.Timestamp
-	10, // 8: cloud.v1.models.SharedTestRun.finished_at:type_name -> google.protobuf.Timestamp
-	14, // 9: cloud.v1.models.SharedTestRun.duration:type_name -> google.protobuf.Duration
-	15, // 10: cloud.v1.models.SharedTestRun.metrics:type_name -> cloud.v1.monitor.RunMetrics
-	3,  // 11: cloud.v1.models.SharedTestRun.workload_segments:type_name -> cloud.v1.models.SharedWorkloadSegment
-	4,  // 12: cloud.v1.models.SharedTestRun.database:type_name -> cloud.v1.models.SharedDatabase
-	8,  // 13: cloud.v1.models.SharedDatabase.settings:type_name -> cloud.v1.models.SharedDatabase.Setting
-	11, // 14: cloud.v1.models.SharedSuiteRun.status:type_name -> cloud.v1.common.Status
-	13, // 15: cloud.v1.models.SharedSuiteRun.provider:type_name -> cloud.v1.deployment.Provider
-	12, // 16: cloud.v1.models.SharedSuiteRun.db_kinds:type_name -> cloud.v1.domain.Database.Kind
-	10, // 17: cloud.v1.models.SharedSuiteRun.started_at:type_name -> google.protobuf.Timestamp
-	10, // 18: cloud.v1.models.SharedSuiteRun.finished_at:type_name -> google.protobuf.Timestamp
-	14, // 19: cloud.v1.models.SharedSuiteRun.duration:type_name -> google.protobuf.Duration
-	2,  // 20: cloud.v1.models.SharedSuiteRun.tests:type_name -> cloud.v1.models.SharedTestRun
-	0,  // 21: cloud.v1.models.ShareRecord.Target.kind:type_name -> cloud.v1.models.ShareRecord.Target.Kind
-	10, // 22: cloud.v1.models.ShareRecord.Snapshot.captured_at:type_name -> google.protobuf.Timestamp
-	2,  // 23: cloud.v1.models.ShareRecord.Snapshot.test_run:type_name -> cloud.v1.models.SharedTestRun
-	5,  // 24: cloud.v1.models.ShareRecord.Snapshot.suite_run:type_name -> cloud.v1.models.SharedSuiteRun
-	25, // [25:25] is the sub-list for method output_type
-	25, // [25:25] is the sub-list for method input_type
-	25, // [25:25] is the sub-list for extension type_name
-	25, // [25:25] is the sub-list for extension extendee
-	0,  // [0:25] is the sub-list for field type_name
+	11, // 0: cloud.v1.models.ShareRecord.entity:type_name -> cloud.v1.common.Entity
+	7,  // 1: cloud.v1.models.ShareRecord.target:type_name -> cloud.v1.models.ShareRecord.Target
+	12, // 2: cloud.v1.models.ShareRecord.expires_at:type_name -> google.protobuf.Timestamp
+	8,  // 3: cloud.v1.models.ShareRecord.snapshot:type_name -> cloud.v1.models.ShareRecord.Snapshot
+	13, // 4: cloud.v1.models.SharedTestRun.status:type_name -> cloud.v1.common.Status
+	14, // 5: cloud.v1.models.SharedTestRun.db_kind:type_name -> cloud.v1.domain.Database.Kind
+	15, // 6: cloud.v1.models.SharedTestRun.provider:type_name -> cloud.v1.deployment.Provider
+	12, // 7: cloud.v1.models.SharedTestRun.started_at:type_name -> google.protobuf.Timestamp
+	12, // 8: cloud.v1.models.SharedTestRun.finished_at:type_name -> google.protobuf.Timestamp
+	16, // 9: cloud.v1.models.SharedTestRun.duration:type_name -> google.protobuf.Duration
+	17, // 10: cloud.v1.models.SharedTestRun.metrics:type_name -> cloud.v1.monitor.RunMetrics
+	4,  // 11: cloud.v1.models.SharedTestRun.workload_segments:type_name -> cloud.v1.models.SharedWorkloadSegment
+	5,  // 12: cloud.v1.models.SharedTestRun.database:type_name -> cloud.v1.models.SharedDatabase
+	3,  // 13: cloud.v1.models.SharedTestRun.machines:type_name -> cloud.v1.models.SharedMachine
+	9,  // 14: cloud.v1.models.SharedMachine.secondary_disks:type_name -> cloud.v1.models.SharedMachine.Disk
+	10, // 15: cloud.v1.models.SharedDatabase.settings:type_name -> cloud.v1.models.SharedDatabase.Setting
+	13, // 16: cloud.v1.models.SharedSuiteRun.status:type_name -> cloud.v1.common.Status
+	15, // 17: cloud.v1.models.SharedSuiteRun.provider:type_name -> cloud.v1.deployment.Provider
+	14, // 18: cloud.v1.models.SharedSuiteRun.db_kinds:type_name -> cloud.v1.domain.Database.Kind
+	12, // 19: cloud.v1.models.SharedSuiteRun.started_at:type_name -> google.protobuf.Timestamp
+	12, // 20: cloud.v1.models.SharedSuiteRun.finished_at:type_name -> google.protobuf.Timestamp
+	16, // 21: cloud.v1.models.SharedSuiteRun.duration:type_name -> google.protobuf.Duration
+	2,  // 22: cloud.v1.models.SharedSuiteRun.tests:type_name -> cloud.v1.models.SharedTestRun
+	0,  // 23: cloud.v1.models.ShareRecord.Target.kind:type_name -> cloud.v1.models.ShareRecord.Target.Kind
+	12, // 24: cloud.v1.models.ShareRecord.Snapshot.captured_at:type_name -> google.protobuf.Timestamp
+	2,  // 25: cloud.v1.models.ShareRecord.Snapshot.test_run:type_name -> cloud.v1.models.SharedTestRun
+	6,  // 26: cloud.v1.models.ShareRecord.Snapshot.suite_run:type_name -> cloud.v1.models.SharedSuiteRun
+	27, // [27:27] is the sub-list for method output_type
+	27, // [27:27] is the sub-list for method input_type
+	27, // [27:27] is the sub-list for extension type_name
+	27, // [27:27] is the sub-list for extension extendee
+	0,  // [0:27] is the sub-list for field type_name
 }
 
 func init() { file_cloud_v1_models_share_proto_init() }
@@ -1117,7 +1313,7 @@ func file_cloud_v1_models_share_proto_init() {
 	if File_cloud_v1_models_share_proto != nil {
 		return
 	}
-	file_cloud_v1_models_share_proto_msgTypes[6].OneofWrappers = []any{
+	file_cloud_v1_models_share_proto_msgTypes[7].OneofWrappers = []any{
 		(*ShareRecord_Snapshot_TestRun)(nil),
 		(*ShareRecord_Snapshot_SuiteRun)(nil),
 	}
@@ -1127,7 +1323,7 @@ func file_cloud_v1_models_share_proto_init() {
 			GoPackagePath: reflect.TypeOf(x{}).PkgPath(),
 			RawDescriptor: unsafe.Slice(unsafe.StringData(file_cloud_v1_models_share_proto_rawDesc), len(file_cloud_v1_models_share_proto_rawDesc)),
 			NumEnums:      1,
-			NumMessages:   8,
+			NumMessages:   10,
 			NumExtensions: 0,
 			NumServices:   0,
 		},

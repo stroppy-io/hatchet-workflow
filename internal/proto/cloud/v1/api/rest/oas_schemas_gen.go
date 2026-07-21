@@ -3901,14 +3901,8 @@ func (s *Dir) SetInfo(val Info3) {
 
 // Ref: #/components/schemas/Disk
 type Disk struct {
-	DeviceName OptString   `json:"deviceName"`
-	SizeGb     OptInt32    `json:"sizeGb"`
-	Type       OptDiskType `json:"type"`
-}
-
-// GetDeviceName returns the value of DeviceName.
-func (s *Disk) GetDeviceName() OptString {
-	return s.DeviceName
+	SizeGb OptInt32  `json:"sizeGb"`
+	Type   OptString `json:"type"`
 }
 
 // GetSizeGb returns the value of SizeGb.
@@ -3917,13 +3911,8 @@ func (s *Disk) GetSizeGb() OptInt32 {
 }
 
 // GetType returns the value of Type.
-func (s *Disk) GetType() OptDiskType {
+func (s *Disk) GetType() OptString {
 	return s.Type
-}
-
-// SetDeviceName sets the value of DeviceName.
-func (s *Disk) SetDeviceName(val OptString) {
-	s.DeviceName = val
 }
 
 // SetSizeGb sets the value of SizeGb.
@@ -3932,39 +3921,76 @@ func (s *Disk) SetSizeGb(val OptInt32) {
 }
 
 // SetType sets the value of Type.
-func (s *Disk) SetType(val OptDiskType) {
+func (s *Disk) SetType(val OptString) {
 	s.Type = val
 }
 
-type DiskType string
+// Ref: #/components/schemas/Disk2
+type Disk2 struct {
+	DeviceName OptString    `json:"deviceName"`
+	SizeGb     OptInt32     `json:"sizeGb"`
+	Type       OptDisk2Type `json:"type"`
+}
+
+// GetDeviceName returns the value of DeviceName.
+func (s *Disk2) GetDeviceName() OptString {
+	return s.DeviceName
+}
+
+// GetSizeGb returns the value of SizeGb.
+func (s *Disk2) GetSizeGb() OptInt32 {
+	return s.SizeGb
+}
+
+// GetType returns the value of Type.
+func (s *Disk2) GetType() OptDisk2Type {
+	return s.Type
+}
+
+// SetDeviceName sets the value of DeviceName.
+func (s *Disk2) SetDeviceName(val OptString) {
+	s.DeviceName = val
+}
+
+// SetSizeGb sets the value of SizeGb.
+func (s *Disk2) SetSizeGb(val OptInt32) {
+	s.SizeGb = val
+}
+
+// SetType sets the value of Type.
+func (s *Disk2) SetType(val OptDisk2Type) {
+	s.Type = val
+}
+
+type Disk2Type string
 
 const (
-	DiskTypeNetworkSsd              DiskType = "network-ssd"
-	DiskTypeNetworkHdd              DiskType = "network-hdd"
-	DiskTypeNetworkSsdNonreplicated DiskType = "network-ssd-nonreplicated"
-	DiskTypeNetworkSsdIoM3          DiskType = "network-ssd-io-m3"
+	Disk2TypeNetworkSsd              Disk2Type = "network-ssd"
+	Disk2TypeNetworkHdd              Disk2Type = "network-hdd"
+	Disk2TypeNetworkSsdNonreplicated Disk2Type = "network-ssd-nonreplicated"
+	Disk2TypeNetworkSsdIoM3          Disk2Type = "network-ssd-io-m3"
 )
 
-// AllValues returns all DiskType values.
-func (DiskType) AllValues() []DiskType {
-	return []DiskType{
-		DiskTypeNetworkSsd,
-		DiskTypeNetworkHdd,
-		DiskTypeNetworkSsdNonreplicated,
-		DiskTypeNetworkSsdIoM3,
+// AllValues returns all Disk2Type values.
+func (Disk2Type) AllValues() []Disk2Type {
+	return []Disk2Type{
+		Disk2TypeNetworkSsd,
+		Disk2TypeNetworkHdd,
+		Disk2TypeNetworkSsdNonreplicated,
+		Disk2TypeNetworkSsdIoM3,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
-func (s DiskType) MarshalText() ([]byte, error) {
+func (s Disk2Type) MarshalText() ([]byte, error) {
 	switch s {
-	case DiskTypeNetworkSsd:
+	case Disk2TypeNetworkSsd:
 		return []byte(s), nil
-	case DiskTypeNetworkHdd:
+	case Disk2TypeNetworkHdd:
 		return []byte(s), nil
-	case DiskTypeNetworkSsdNonreplicated:
+	case Disk2TypeNetworkSsdNonreplicated:
 		return []byte(s), nil
-	case DiskTypeNetworkSsdIoM3:
+	case Disk2TypeNetworkSsdIoM3:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -3972,19 +3998,19 @@ func (s DiskType) MarshalText() ([]byte, error) {
 }
 
 // UnmarshalText implements encoding.TextUnmarshaler.
-func (s *DiskType) UnmarshalText(data []byte) error {
-	switch DiskType(data) {
-	case DiskTypeNetworkSsd:
-		*s = DiskTypeNetworkSsd
+func (s *Disk2Type) UnmarshalText(data []byte) error {
+	switch Disk2Type(data) {
+	case Disk2TypeNetworkSsd:
+		*s = Disk2TypeNetworkSsd
 		return nil
-	case DiskTypeNetworkHdd:
-		*s = DiskTypeNetworkHdd
+	case Disk2TypeNetworkHdd:
+		*s = Disk2TypeNetworkHdd
 		return nil
-	case DiskTypeNetworkSsdNonreplicated:
-		*s = DiskTypeNetworkSsdNonreplicated
+	case Disk2TypeNetworkSsdNonreplicated:
+		*s = Disk2TypeNetworkSsdNonreplicated
 		return nil
-	case DiskTypeNetworkSsdIoM3:
-		*s = DiskTypeNetworkSsdIoM3
+	case Disk2TypeNetworkSsdIoM3:
+		*s = Disk2TypeNetworkSsdIoM3
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -14394,38 +14420,38 @@ func (o OptDir) Or(d Dir) Dir {
 	return d
 }
 
-// NewOptDiskType returns new OptDiskType with value set to v.
-func NewOptDiskType(v DiskType) OptDiskType {
-	return OptDiskType{
+// NewOptDisk2Type returns new OptDisk2Type with value set to v.
+func NewOptDisk2Type(v Disk2Type) OptDisk2Type {
+	return OptDisk2Type{
 		Value: v,
 		Set:   true,
 	}
 }
 
-// OptDiskType is optional DiskType.
-type OptDiskType struct {
-	Value DiskType
+// OptDisk2Type is optional Disk2Type.
+type OptDisk2Type struct {
+	Value Disk2Type
 	Set   bool
 }
 
-// IsSet returns true if OptDiskType was set.
-func (o OptDiskType) IsSet() bool { return o.Set }
+// IsSet returns true if OptDisk2Type was set.
+func (o OptDisk2Type) IsSet() bool { return o.Set }
 
 // Reset unsets value.
-func (o *OptDiskType) Reset() {
-	var v DiskType
+func (o *OptDisk2Type) Reset() {
+	var v Disk2Type
 	o.Value = v
 	o.Set = false
 }
 
 // SetTo sets value to v.
-func (o *OptDiskType) SetTo(v DiskType) {
+func (o *OptDisk2Type) SetTo(v Disk2Type) {
 	o.Set = true
 	o.Value = v
 }
 
 // Get returns value and boolean that denotes whether value was set.
-func (o OptDiskType) Get() (v DiskType, ok bool) {
+func (o OptDisk2Type) Get() (v Disk2Type, ok bool) {
 	if !o.Set {
 		return v, false
 	}
@@ -14433,7 +14459,7 @@ func (o OptDiskType) Get() (v DiskType, ok bool) {
 }
 
 // Or returns value if set, or given parameter if does not.
-func (o OptDiskType) Or(d DiskType) DiskType {
+func (o OptDisk2Type) Or(d Disk2Type) Disk2Type {
 	if v, ok := o.Get(); ok {
 		return v
 	}
@@ -32378,6 +32404,98 @@ func (s *SharedDatabase) SetVersion(val OptString) {
 	s.Version = val
 }
 
+// Ref: #/components/schemas/SharedMachine
+type SharedMachine struct {
+	BootDiskGb     OptStringUint64 `json:"bootDiskGb"`
+	BootDiskType   OptString       `json:"bootDiskType"`
+	Cores          OptInt32        `json:"cores"`
+	MemoryGb       OptStringUint64 `json:"memoryGb"`
+	NodeId         OptString       `json:"nodeId"`
+	Platform       OptString       `json:"platform"`
+	SecondaryDisks []Disk          `json:"secondaryDisks"`
+	Zone           OptString       `json:"zone"`
+}
+
+// GetBootDiskGb returns the value of BootDiskGb.
+func (s *SharedMachine) GetBootDiskGb() OptStringUint64 {
+	return s.BootDiskGb
+}
+
+// GetBootDiskType returns the value of BootDiskType.
+func (s *SharedMachine) GetBootDiskType() OptString {
+	return s.BootDiskType
+}
+
+// GetCores returns the value of Cores.
+func (s *SharedMachine) GetCores() OptInt32 {
+	return s.Cores
+}
+
+// GetMemoryGb returns the value of MemoryGb.
+func (s *SharedMachine) GetMemoryGb() OptStringUint64 {
+	return s.MemoryGb
+}
+
+// GetNodeId returns the value of NodeId.
+func (s *SharedMachine) GetNodeId() OptString {
+	return s.NodeId
+}
+
+// GetPlatform returns the value of Platform.
+func (s *SharedMachine) GetPlatform() OptString {
+	return s.Platform
+}
+
+// GetSecondaryDisks returns the value of SecondaryDisks.
+func (s *SharedMachine) GetSecondaryDisks() []Disk {
+	return s.SecondaryDisks
+}
+
+// GetZone returns the value of Zone.
+func (s *SharedMachine) GetZone() OptString {
+	return s.Zone
+}
+
+// SetBootDiskGb sets the value of BootDiskGb.
+func (s *SharedMachine) SetBootDiskGb(val OptStringUint64) {
+	s.BootDiskGb = val
+}
+
+// SetBootDiskType sets the value of BootDiskType.
+func (s *SharedMachine) SetBootDiskType(val OptString) {
+	s.BootDiskType = val
+}
+
+// SetCores sets the value of Cores.
+func (s *SharedMachine) SetCores(val OptInt32) {
+	s.Cores = val
+}
+
+// SetMemoryGb sets the value of MemoryGb.
+func (s *SharedMachine) SetMemoryGb(val OptStringUint64) {
+	s.MemoryGb = val
+}
+
+// SetNodeId sets the value of NodeId.
+func (s *SharedMachine) SetNodeId(val OptString) {
+	s.NodeId = val
+}
+
+// SetPlatform sets the value of Platform.
+func (s *SharedMachine) SetPlatform(val OptString) {
+	s.Platform = val
+}
+
+// SetSecondaryDisks sets the value of SecondaryDisks.
+func (s *SharedMachine) SetSecondaryDisks(val []Disk) {
+	s.SecondaryDisks = val
+}
+
+// SetZone sets the value of Zone.
+func (s *SharedMachine) SetZone(val OptString) {
+	s.Zone = val
+}
+
 // Ref: #/components/schemas/SharedSuiteRun
 type SharedSuiteRun struct {
 	Completed   OptInt32                    `json:"completed"`
@@ -32619,6 +32737,7 @@ type SharedTestRun struct {
 	DbName           OptString                `json:"dbName"`
 	Duration         OptDuration              `json:"duration"`
 	FinishedAt       OptDateTime              `json:"finishedAt"`
+	Machines         []SharedMachine          `json:"machines"`
 	Metrics          OptRunMetrics            `json:"metrics"`
 	Name             OptString                `json:"name"`
 	NodeCount        OptInt32                 `json:"nodeCount"`
@@ -32655,6 +32774,11 @@ func (s *SharedTestRun) GetDuration() OptDuration {
 // GetFinishedAt returns the value of FinishedAt.
 func (s *SharedTestRun) GetFinishedAt() OptDateTime {
 	return s.FinishedAt
+}
+
+// GetMachines returns the value of Machines.
+func (s *SharedTestRun) GetMachines() []SharedMachine {
+	return s.Machines
 }
 
 // GetMetrics returns the value of Metrics.
@@ -32735,6 +32859,11 @@ func (s *SharedTestRun) SetDuration(val OptDuration) {
 // SetFinishedAt sets the value of FinishedAt.
 func (s *SharedTestRun) SetFinishedAt(val OptDateTime) {
 	s.FinishedAt = val
+}
+
+// SetMachines sets the value of Machines.
+func (s *SharedTestRun) SetMachines(val []SharedMachine) {
+	s.Machines = val
 }
 
 // SetMetrics sets the value of Metrics.
@@ -37792,7 +37921,7 @@ type VM struct {
 	MemoryGb            OptStringUint64          `json:"memoryGb"`
 	NetworkAcceleration OptVMNetworkAcceleration `json:"networkAcceleration"`
 	PublicIp            OptBool                  `json:"publicIp"`
-	SecondaryDisks      []Disk                   `json:"secondaryDisks"`
+	SecondaryDisks      []Disk2                  `json:"secondaryDisks"`
 	UserData            OptString                `json:"userData"`
 	Zone                OptVMZone                `json:"zone"`
 }
@@ -37833,7 +37962,7 @@ func (s *VM) GetPublicIp() OptBool {
 }
 
 // GetSecondaryDisks returns the value of SecondaryDisks.
-func (s *VM) GetSecondaryDisks() []Disk {
+func (s *VM) GetSecondaryDisks() []Disk2 {
 	return s.SecondaryDisks
 }
 
@@ -37883,7 +38012,7 @@ func (s *VM) SetPublicIp(val OptBool) {
 }
 
 // SetSecondaryDisks sets the value of SecondaryDisks.
-func (s *VM) SetSecondaryDisks(val []Disk) {
+func (s *VM) SetSecondaryDisks(val []Disk2) {
 	s.SecondaryDisks = val
 }
 

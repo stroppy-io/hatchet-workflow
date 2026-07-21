@@ -162,6 +162,20 @@ export interface SharedRunVM {
    *  snapshots captured before they were projected. */
   workloadSegments: SharedSegmentVM[];
   database?: SharedDatabaseVM;
+  /** Per-VM hardware the run ran on (typed sizing only, no cloud creds). */
+  machines: SharedMachineVM[];
+}
+
+/** One provisioned VM's hardware. */
+export interface SharedMachineVM {
+  nodeId: string;
+  cores?: number;
+  memoryGb?: number;
+  bootDiskGb?: number;
+  bootDiskType: string;
+  platform: string;
+  zone: string;
+  secondaryDisks: Array<{ sizeGb?: number; type: string }>;
 }
 
 /** One workload segment's public launch knobs (no env / sql / extra args). */
@@ -286,6 +300,16 @@ export async function getSharedRun(token: string): Promise<SharedRunVM | undefin
           noThresholds?: boolean;
         }>;
         database?: { version?: string; settings?: Array<{ key?: string; value?: string }> };
+        machines?: Array<{
+          nodeId?: string;
+          cores?: number;
+          memoryGb?: string | number;
+          bootDiskGb?: string | number;
+          bootDiskType?: string;
+          platform?: string;
+          zone?: string;
+          secondaryDisks?: Array<{ sizeGb?: number; type?: string }>;
+        }>;
       };
       suiteRun?: { name?: string };
     };
@@ -333,6 +357,16 @@ export async function getSharedRun(token: string): Promise<SharedRunVM | undefin
               .map((s) => ({ key: s.key as string, value: s.value ?? "" })),
           }
         : undefined,
+      machines: (tr.machines ?? []).map((m) => ({
+        nodeId: m.nodeId ?? "",
+        cores: m.cores,
+        memoryGb: m.memoryGb !== undefined ? Number(m.memoryGb) : undefined,
+        bootDiskGb: m.bootDiskGb !== undefined ? Number(m.bootDiskGb) : undefined,
+        bootDiskType: m.bootDiskType ?? "",
+        platform: m.platform ?? "",
+        zone: m.zone ?? "",
+        secondaryDisks: (m.secondaryDisks ?? []).map((d) => ({ sizeGb: d.sizeGb, type: d.type ?? "" })),
+      })),
     };
   }
   return {
@@ -350,5 +384,6 @@ export async function getSharedRun(token: string): Promise<SharedRunVM | undefin
     progressPct: 0,
     metrics: [],
     workloadSegments: [],
+    machines: [],
   };
 }

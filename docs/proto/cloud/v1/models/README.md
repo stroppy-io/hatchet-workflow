@@ -17,6 +17,8 @@
   - [cloud.v1.models.ShareRecord.Target.Kind](#cloud-v1-models-sharerecord-target-kind)
   - [cloud.v1.models.SharedDatabase](#cloud-v1-models-shareddatabase)
   - [cloud.v1.models.SharedDatabase.Setting](#cloud-v1-models-shareddatabase-setting)
+  - [cloud.v1.models.SharedMachine](#cloud-v1-models-sharedmachine)
+  - [cloud.v1.models.SharedMachine.Disk](#cloud-v1-models-sharedmachine-disk)
   - [cloud.v1.models.SharedSuiteRun](#cloud-v1-models-sharedsuiterun)
   - [cloud.v1.models.SharedTestRun](#cloud-v1-models-sharedtestrun)
   - [cloud.v1.models.SharedWorkloadSegment](#cloud-v1-models-sharedworkloadsegment)
@@ -631,6 +633,124 @@ go_name: Value</pre></td>
 
 
 
+<a name="cloud-v1-models-sharedmachine"></a>
+### cloud.v1.models.SharedMachine
+
+<pre>
+//SharedMachine is the SAFE projection of one provisioned VM's hardware.
+
+//Every field is a typed, validated value from the run's infrastructure plan
+//(cores/memory/disk/zone are all `> 0` / closed-set enforced). The plan's
+//provider `settings` — which sit right next to this and carry the cloud TOKEN,
+//ssh public key and cloud/folder ids — are NEVER read here; only the typed
+//per-VM sizing and the platform/zone enums.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>boot_disk_gb</td>
+<td>uint64</td>
+<td><pre>
+boot_disk_gb is the boot disk size in GiB.<br>
+
+json_name: bootDiskGb
+go_name: BootDiskGb</pre></td>
+</tr><tr>
+<td>boot_disk_type</td>
+<td>string</td>
+<td><pre>
+boot_disk_type is the boot disk class (network-ssd, …).<br>
+
+json_name: bootDiskType
+go_name: BootDiskType</pre></td>
+</tr><tr>
+<td>cores</td>
+<td>uint32</td>
+<td><pre>
+cores is the vCPU count.<br>
+
+json_name: cores
+go_name: Cores</pre></td>
+</tr><tr>
+<td>memory_gb</td>
+<td>uint64</td>
+<td><pre>
+memory_gb is RAM in GiB.<br>
+
+json_name: memoryGb
+go_name: MemoryGb</pre></td>
+</tr><tr>
+<td>node_id</td>
+<td>string</td>
+<td><pre>
+node_id is the machine's role name (e.g. "postgres-master").<br>
+
+json_name: nodeId
+go_name: NodeId</pre></td>
+</tr><tr>
+<td>platform</td>
+<td>string</td>
+<td><pre>
+platform is the compute platform tier (from the plan's provider settings).<br>
+
+json_name: platform
+go_name: Platform</pre></td>
+</tr><tr>
+<td>secondary_disks</td>
+<td><a href="#cloud-v1-models-sharedmachine-disk">cloud.v1.models.SharedMachine.Disk</a></td>
+<td><pre>
+secondary_disks are extra attached data disks.<br>
+
+json_name: secondaryDisks
+go_name: SecondaryDisks</pre></td>
+</tr><tr>
+<td>zone</td>
+<td>string</td>
+<td><pre>
+zone is the availability zone the VM ran in.<br>
+
+json_name: zone
+go_name: Zone</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-models-sharedmachine-disk"></a>
+### cloud.v1.models.SharedMachine.Disk
+
+<pre>
+//Disk is one attached data disk's size + class.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>size_gb</td>
+<td>uint32</td>
+<td><pre>
+json_name: sizeGb
+go_name: SizeGb</pre></td>
+</tr><tr>
+<td>type</td>
+<td>string</td>
+<td><pre>
+json_name: type
+go_name: Type</pre></td>
+</tr>
+</table>
+
+
+
 <a name="cloud-v1-models-sharedsuiterun"></a>
 ### cloud.v1.models.SharedSuiteRun
 
@@ -808,6 +928,15 @@ go_name: Duration</pre></td>
 
 json_name: finishedAt
 go_name: FinishedAt</pre></td>
+</tr><tr>
+<td>machines</td>
+<td><a href="#cloud-v1-models-sharedmachine">cloud.v1.models.SharedMachine</a></td>
+<td><pre>
+//machines are the per-VM hardware the run was provisioned on, so a shared
+//result carries the iron it ran on.<br>
+
+json_name: machines
+go_name: Machines</pre></td>
 </tr><tr>
 <td>metrics</td>
 <td><a href="../monitor/README.md#cloud-v1-monitor-runmetrics">cloud.v1.monitor.RunMetrics</a></td>

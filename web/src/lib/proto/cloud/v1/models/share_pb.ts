@@ -24,7 +24,7 @@ import type { Message } from "@bufbuild/protobuf";
  * Describes the file cloud/v1/models/share.proto.
  */
 export const file_cloud_v1_models_share: GenFile = /*@__PURE__*/
-  fileDesc("ChtjbG91ZC92MS9tb2RlbHMvc2hhcmUucHJvdG8SD2Nsb3VkLnYxLm1vZGVscyL3BAoLU2hhcmVSZWNvcmQSMQoGZW50aXR5GAEgASgLMhcuY2xvdWQudjEuY29tbW9uLkVudGl0eUII+kIFigECEAESPQoGdGFyZ2V0GAIgASgLMiMuY2xvdWQudjEubW9kZWxzLlNoYXJlUmVjb3JkLlRhcmdldEII+kIFigECEAESGQoFdG9rZW4YAyABKAlCCvpCB3IFEBAYgAESLgoKZXhwaXJlc19hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDwoHcmV2b2tlZBgFIAEoCBI3CghzbmFwc2hvdBgGIAEoCzIlLmNsb3VkLnYxLm1vZGVscy5TaGFyZVJlY29yZC5TbmFwc2hvdBqoAQoGVGFyZ2V0EkIKBGtpbmQYASABKA4yKC5jbG91ZC52MS5tb2RlbHMuU2hhcmVSZWNvcmQuVGFyZ2V0LktpbmRCCvpCB4IBBCAAEAESFQoCaWQYAiABKAlCCfpCBnIEGEAQASJDCgRLaW5kEhQKEEtJTkRfVU5TUEVDSUZJRUQQABIRCg1LSU5EX1RFU1RfUlVOEAESEgoOS0lORF9TVUlURV9SVU4QAhq1AQoIU25hcHNob3QSLwoLY2FwdHVyZWRfYXQYASABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjIKCHRlc3RfcnVuGAIgASgLMh4uY2xvdWQudjEubW9kZWxzLlNoYXJlZFRlc3RSdW5IABI0CglzdWl0ZV9ydW4YAyABKAsyHy5jbG91ZC52MS5tb2RlbHMuU2hhcmVkU3VpdGVSdW5IAEIOCgR2aWV3Egbypx0CCAMi5wQKDVNoYXJlZFRlc3RSdW4SDAoEbmFtZRgBIAEoCRInCgZzdGF0dXMYAiABKA4yFy5jbG91ZC52MS5jb21tb24uU3RhdHVzEi8KB2RiX2tpbmQYAyABKA4yHi5jbG91ZC52MS5kb21haW4uRGF0YWJhc2UuS2luZBIPCgdkYl9uYW1lGAQgASgJEhUKDXdvcmtsb2FkX25hbWUYBSABKAkSFwoPc3Ryb3BweV92ZXJzaW9uGAYgASgJEi8KCHByb3ZpZGVyGAcgASgOMh0uY2xvdWQudjEuZGVwbG95bWVudC5Qcm92aWRlchIWCg50b3BvbG9neV9sYWJlbBgIIAEoCRISCgpub2RlX2NvdW50GAkgASgNEi4KCnN0YXJ0ZWRfYXQYCiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC2ZpbmlzaGVkX2F0GAsgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIrCghkdXJhdGlvbhgMIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbhIdCgxwcm9ncmVzc19wY3QYDSABKA1CB/pCBCoCGGQSLQoHbWV0cmljcxgOIAEoCzIcLmNsb3VkLnYxLm1vbml0b3IuUnVuTWV0cmljcxJBChF3b3JrbG9hZF9zZWdtZW50cxgPIAMoCzImLmNsb3VkLnYxLm1vZGVscy5TaGFyZWRXb3JrbG9hZFNlZ21lbnQSMQoIZGF0YWJhc2UYECABKAsyHy5jbG91ZC52MS5tb2RlbHMuU2hhcmVkRGF0YWJhc2UitAIKFVNoYXJlZFdvcmtsb2FkU2VnbWVudBIMCgRuYW1lGAEgASgJEg4KBnNjcmlwdBgCIAEoCRILCgN2dXMYAyABKA0SGQoIZHVyYXRpb24YBCABKAlCB/pCBHICGCASEgoKaXRlcmF0aW9ucxgFIAEoDRIRCglwb29sX3NpemUYBiABKA0SFAoMc2NhbGVfZmFjdG9yGAcgASgBEh4KDWluc2VydF9tZXRob2QYCCABKAlCB/pCBHICGEASEQoJYnVsa19zaXplGAkgASgNEh0KBXN0ZXBzGAogAygJQg76QguSAQgQQCIEcgIYQBIgCghub19zdGVwcxgLIAMoCUIO+kILkgEIEEAiBHICGEASDQoFcXVpZXQYDCABKAgSFQoNbm9fdGhyZXNob2xkcxgNIAEoCCKpAQoOU2hhcmVkRGF0YWJhc2USGAoHdmVyc2lvbhgBIAEoCUIH+kIEcgIYQBJDCghzZXR0aW5ncxgCIAMoCzInLmNsb3VkLnYxLm1vZGVscy5TaGFyZWREYXRhYmFzZS5TZXR0aW5nQgj6QgWSAQIQIBo4CgdTZXR0aW5nEhQKA2tleRgBIAEoCUIH+kIEcgIYQBIXCgV2YWx1ZRgCIAEoCUII+kIFcgMYgAEiyQMKDlNoYXJlZFN1aXRlUnVuEgwKBG5hbWUYASABKAkSJwoGc3RhdHVzGAIgASgOMhcuY2xvdWQudjEuY29tbW9uLlN0YXR1cxIvCghwcm92aWRlchgDIAEoDjIdLmNsb3VkLnYxLmRlcGxveW1lbnQuUHJvdmlkZXISMAoIZGJfa2luZHMYBCADKA4yHi5jbG91ZC52MS5kb21haW4uRGF0YWJhc2UuS2luZBINCgV0b3RhbBgFIAEoDRIRCgljb21wbGV0ZWQYBiABKA0SDgoGZmFpbGVkGAcgASgNEg8KB3J1bm5pbmcYCCABKA0SHQoMcHJvZ3Jlc3NfcGN0GAkgASgNQgf6QgQqAhhkEi4KCnN0YXJ0ZWRfYXQYCiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC2ZpbmlzaGVkX2F0GAsgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIrCghkdXJhdGlvbhgMIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbhItCgV0ZXN0cxgNIAMoCzIeLmNsb3VkLnYxLm1vZGVscy5TaGFyZWRUZXN0UnVuQkRaQmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL21vZGVsc2IGcHJvdG8z", [file_cloud_v1_common_entity, file_cloud_v1_common_status, file_cloud_v1_deployment_provider, file_cloud_v1_domain_database, file_cloud_v1_monitor_metrics, file_google_protobuf_duration, file_google_protobuf_timestamp, file_validate_validate, file_ogen_ogen]);
+  fileDesc("ChtjbG91ZC92MS9tb2RlbHMvc2hhcmUucHJvdG8SD2Nsb3VkLnYxLm1vZGVscyL3BAoLU2hhcmVSZWNvcmQSMQoGZW50aXR5GAEgASgLMhcuY2xvdWQudjEuY29tbW9uLkVudGl0eUII+kIFigECEAESPQoGdGFyZ2V0GAIgASgLMiMuY2xvdWQudjEubW9kZWxzLlNoYXJlUmVjb3JkLlRhcmdldEII+kIFigECEAESGQoFdG9rZW4YAyABKAlCCvpCB3IFEBAYgAESLgoKZXhwaXJlc19hdBgEIAEoCzIaLmdvb2dsZS5wcm90b2J1Zi5UaW1lc3RhbXASDwoHcmV2b2tlZBgFIAEoCBI3CghzbmFwc2hvdBgGIAEoCzIlLmNsb3VkLnYxLm1vZGVscy5TaGFyZVJlY29yZC5TbmFwc2hvdBqoAQoGVGFyZ2V0EkIKBGtpbmQYASABKA4yKC5jbG91ZC52MS5tb2RlbHMuU2hhcmVSZWNvcmQuVGFyZ2V0LktpbmRCCvpCB4IBBBABIAASFQoCaWQYAiABKAlCCfpCBnIEEAEYQCJDCgRLaW5kEhQKEEtJTkRfVU5TUEVDSUZJRUQQABIRCg1LSU5EX1RFU1RfUlVOEAESEgoOS0lORF9TVUlURV9SVU4QAhq1AQoIU25hcHNob3QSLwoLY2FwdHVyZWRfYXQYASABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEjIKCHRlc3RfcnVuGAIgASgLMh4uY2xvdWQudjEubW9kZWxzLlNoYXJlZFRlc3RSdW5IABI0CglzdWl0ZV9ydW4YAyABKAsyHy5jbG91ZC52MS5tb2RlbHMuU2hhcmVkU3VpdGVSdW5IAEIOCgR2aWV3Egbypx0CCAMimQUKDVNoYXJlZFRlc3RSdW4SDAoEbmFtZRgBIAEoCRInCgZzdGF0dXMYAiABKA4yFy5jbG91ZC52MS5jb21tb24uU3RhdHVzEi8KB2RiX2tpbmQYAyABKA4yHi5jbG91ZC52MS5kb21haW4uRGF0YWJhc2UuS2luZBIPCgdkYl9uYW1lGAQgASgJEhUKDXdvcmtsb2FkX25hbWUYBSABKAkSFwoPc3Ryb3BweV92ZXJzaW9uGAYgASgJEi8KCHByb3ZpZGVyGAcgASgOMh0uY2xvdWQudjEuZGVwbG95bWVudC5Qcm92aWRlchIWCg50b3BvbG9neV9sYWJlbBgIIAEoCRISCgpub2RlX2NvdW50GAkgASgNEi4KCnN0YXJ0ZWRfYXQYCiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC2ZpbmlzaGVkX2F0GAsgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIrCghkdXJhdGlvbhgMIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbhIdCgxwcm9ncmVzc19wY3QYDSABKA1CB/pCBCoCGGQSLQoHbWV0cmljcxgOIAEoCzIcLmNsb3VkLnYxLm1vbml0b3IuUnVuTWV0cmljcxJBChF3b3JrbG9hZF9zZWdtZW50cxgPIAMoCzImLmNsb3VkLnYxLm1vZGVscy5TaGFyZWRXb3JrbG9hZFNlZ21lbnQSMQoIZGF0YWJhc2UYECABKAsyHy5jbG91ZC52MS5tb2RlbHMuU2hhcmVkRGF0YWJhc2USMAoIbWFjaGluZXMYESADKAsyHi5jbG91ZC52MS5tb2RlbHMuU2hhcmVkTWFjaGluZSKtAgoNU2hhcmVkTWFjaGluZRIZCgdub2RlX2lkGAEgASgJQgj6QgVyAxiAARINCgVjb3JlcxgCIAEoDRIRCgltZW1vcnlfZ2IYAyABKAQSFAoMYm9vdF9kaXNrX2diGAQgASgEEh8KDmJvb3RfZGlza190eXBlGAUgASgJQgf6QgRyAhhAEhkKCHBsYXRmb3JtGAYgASgJQgf6QgRyAhhAEhUKBHpvbmUYByABKAlCB/pCBHICGEASRgoPc2Vjb25kYXJ5X2Rpc2tzGAggAygLMiMuY2xvdWQudjEubW9kZWxzLlNoYXJlZE1hY2hpbmUuRGlza0II+kIFkgECEEAaLgoERGlzaxIPCgdzaXplX2diGAEgASgNEhUKBHR5cGUYAiABKAlCB/pCBHICGEAitAIKFVNoYXJlZFdvcmtsb2FkU2VnbWVudBIMCgRuYW1lGAEgASgJEg4KBnNjcmlwdBgCIAEoCRILCgN2dXMYAyABKA0SGQoIZHVyYXRpb24YBCABKAlCB/pCBHICGCASEgoKaXRlcmF0aW9ucxgFIAEoDRIRCglwb29sX3NpemUYBiABKA0SFAoMc2NhbGVfZmFjdG9yGAcgASgBEh4KDWluc2VydF9tZXRob2QYCCABKAlCB/pCBHICGEASEQoJYnVsa19zaXplGAkgASgNEh0KBXN0ZXBzGAogAygJQg76QguSAQgiBHICGEAQQBIgCghub19zdGVwcxgLIAMoCUIO+kILkgEIEEAiBHICGEASDQoFcXVpZXQYDCABKAgSFQoNbm9fdGhyZXNob2xkcxgNIAEoCCKpAQoOU2hhcmVkRGF0YWJhc2USGAoHdmVyc2lvbhgBIAEoCUIH+kIEcgIYQBJDCghzZXR0aW5ncxgCIAMoCzInLmNsb3VkLnYxLm1vZGVscy5TaGFyZWREYXRhYmFzZS5TZXR0aW5nQgj6QgWSAQIQIBo4CgdTZXR0aW5nEhQKA2tleRgBIAEoCUIH+kIEcgIYQBIXCgV2YWx1ZRgCIAEoCUII+kIFcgMYgAEiyQMKDlNoYXJlZFN1aXRlUnVuEgwKBG5hbWUYASABKAkSJwoGc3RhdHVzGAIgASgOMhcuY2xvdWQudjEuY29tbW9uLlN0YXR1cxIvCghwcm92aWRlchgDIAEoDjIdLmNsb3VkLnYxLmRlcGxveW1lbnQuUHJvdmlkZXISMAoIZGJfa2luZHMYBCADKA4yHi5jbG91ZC52MS5kb21haW4uRGF0YWJhc2UuS2luZBINCgV0b3RhbBgFIAEoDRIRCgljb21wbGV0ZWQYBiABKA0SDgoGZmFpbGVkGAcgASgNEg8KB3J1bm5pbmcYCCABKA0SHQoMcHJvZ3Jlc3NfcGN0GAkgASgNQgf6QgQqAhhkEi4KCnN0YXJ0ZWRfYXQYCiABKAsyGi5nb29nbGUucHJvdG9idWYuVGltZXN0YW1wEi8KC2ZpbmlzaGVkX2F0GAsgASgLMhouZ29vZ2xlLnByb3RvYnVmLlRpbWVzdGFtcBIrCghkdXJhdGlvbhgMIAEoCzIZLmdvb2dsZS5wcm90b2J1Zi5EdXJhdGlvbhItCgV0ZXN0cxgNIAMoCzIeLmNsb3VkLnYxLm1vZGVscy5TaGFyZWRUZXN0UnVuQkRaQmdpdGh1Yi5jb20vc3Ryb3BweS1pby9zdHJvcHB5LWNsb3VkL2ludGVybmFsL3Byb3RvL2Nsb3VkL3YxL21vZGVsc2IGcHJvdG8z", [file_cloud_v1_common_entity, file_cloud_v1_common_status, file_cloud_v1_deployment_provider, file_cloud_v1_domain_database, file_cloud_v1_monitor_metrics, file_google_protobuf_duration, file_google_protobuf_timestamp, file_validate_validate, file_ogen_ogen]);
 
 /**
  *
@@ -506,6 +506,15 @@ export type SharedTestRun = Message<"cloud.v1.models.SharedTestRun"> & {
    * @generated from field: cloud.v1.models.SharedDatabase database = 16;
    */
   database?: SharedDatabase;
+
+  /**
+   *
+   * machines are the per-VM hardware the run was provisioned on, so a shared
+   * result carries the iron it ran on.
+   *
+   * @generated from field: repeated cloud.v1.models.SharedMachine machines = 17;
+   */
+  machines: SharedMachine[];
 };
 
 /**
@@ -644,6 +653,15 @@ export type SharedTestRunJson = {
    * @generated from field: cloud.v1.models.SharedDatabase database = 16;
    */
   database?: SharedDatabaseJson;
+
+  /**
+   *
+   * machines are the per-VM hardware the run was provisioned on, so a shared
+   * result carries the iron it ran on.
+   *
+   * @generated from field: repeated cloud.v1.models.SharedMachine machines = 17;
+   */
+  machines?: SharedMachineJson[];
 };
 
 export type SharedTestRunValid = SharedTestRun;
@@ -654,6 +672,200 @@ export type SharedTestRunValid = SharedTestRun;
  */
 export const SharedTestRunSchema: GenMessage<SharedTestRun, {jsonType: SharedTestRunJson, validType: SharedTestRunValid}> = /*@__PURE__*/
   messageDesc(file_cloud_v1_models_share, 1);
+
+/**
+ *
+ * SharedMachine is the SAFE projection of one provisioned VM's hardware.
+ *
+ * Every field is a typed, validated value from the run's infrastructure plan
+ * (cores/memory/disk/zone are all `> 0` / closed-set enforced). The plan's
+ * provider `settings` — which sit right next to this and carry the cloud TOKEN,
+ * ssh public key and cloud/folder ids — are NEVER read here; only the typed
+ * per-VM sizing and the platform/zone enums.
+ *
+ * @generated from message cloud.v1.models.SharedMachine
+ */
+export type SharedMachine = Message<"cloud.v1.models.SharedMachine"> & {
+  /**
+   * node_id is the machine's role name (e.g. "postgres-master"). 
+   *
+   * @generated from field: string node_id = 1;
+   */
+  nodeId: string;
+
+  /**
+   * cores is the vCPU count. 
+   *
+   * @generated from field: uint32 cores = 2;
+   */
+  cores: number;
+
+  /**
+   * memory_gb is RAM in GiB. 
+   *
+   * @generated from field: uint64 memory_gb = 3;
+   */
+  memoryGb: bigint;
+
+  /**
+   * boot_disk_gb is the boot disk size in GiB. 
+   *
+   * @generated from field: uint64 boot_disk_gb = 4;
+   */
+  bootDiskGb: bigint;
+
+  /**
+   * boot_disk_type is the boot disk class (network-ssd, …). 
+   *
+   * @generated from field: string boot_disk_type = 5;
+   */
+  bootDiskType: string;
+
+  /**
+   * platform is the compute platform tier (from the plan's provider settings). 
+   *
+   * @generated from field: string platform = 6;
+   */
+  platform: string;
+
+  /**
+   * zone is the availability zone the VM ran in. 
+   *
+   * @generated from field: string zone = 7;
+   */
+  zone: string;
+
+  /**
+   * secondary_disks are extra attached data disks. 
+   *
+   * @generated from field: repeated cloud.v1.models.SharedMachine.Disk secondary_disks = 8;
+   */
+  secondaryDisks: SharedMachine_Disk[];
+};
+
+/**
+ *
+ * SharedMachine is the SAFE projection of one provisioned VM's hardware.
+ *
+ * Every field is a typed, validated value from the run's infrastructure plan
+ * (cores/memory/disk/zone are all `> 0` / closed-set enforced). The plan's
+ * provider `settings` — which sit right next to this and carry the cloud TOKEN,
+ * ssh public key and cloud/folder ids — are NEVER read here; only the typed
+ * per-VM sizing and the platform/zone enums.
+ *
+ * @generated from message cloud.v1.models.SharedMachine
+ */
+export type SharedMachineJson = {
+  /**
+   * node_id is the machine's role name (e.g. "postgres-master"). 
+   *
+   * @generated from field: string node_id = 1;
+   */
+  nodeId?: string;
+
+  /**
+   * cores is the vCPU count. 
+   *
+   * @generated from field: uint32 cores = 2;
+   */
+  cores?: number;
+
+  /**
+   * memory_gb is RAM in GiB. 
+   *
+   * @generated from field: uint64 memory_gb = 3;
+   */
+  memoryGb?: string;
+
+  /**
+   * boot_disk_gb is the boot disk size in GiB. 
+   *
+   * @generated from field: uint64 boot_disk_gb = 4;
+   */
+  bootDiskGb?: string;
+
+  /**
+   * boot_disk_type is the boot disk class (network-ssd, …). 
+   *
+   * @generated from field: string boot_disk_type = 5;
+   */
+  bootDiskType?: string;
+
+  /**
+   * platform is the compute platform tier (from the plan's provider settings). 
+   *
+   * @generated from field: string platform = 6;
+   */
+  platform?: string;
+
+  /**
+   * zone is the availability zone the VM ran in. 
+   *
+   * @generated from field: string zone = 7;
+   */
+  zone?: string;
+
+  /**
+   * secondary_disks are extra attached data disks. 
+   *
+   * @generated from field: repeated cloud.v1.models.SharedMachine.Disk secondary_disks = 8;
+   */
+  secondaryDisks?: SharedMachine_DiskJson[];
+};
+
+export type SharedMachineValid = SharedMachine;
+
+/**
+ * Describes the message cloud.v1.models.SharedMachine.
+ * Use `create(SharedMachineSchema)` to create a new message.
+ */
+export const SharedMachineSchema: GenMessage<SharedMachine, {jsonType: SharedMachineJson, validType: SharedMachineValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_models_share, 2);
+
+/**
+ *
+ * Disk is one attached data disk's size + class.
+ *
+ * @generated from message cloud.v1.models.SharedMachine.Disk
+ */
+export type SharedMachine_Disk = Message<"cloud.v1.models.SharedMachine.Disk"> & {
+  /**
+   * @generated from field: uint32 size_gb = 1;
+   */
+  sizeGb: number;
+
+  /**
+   * @generated from field: string type = 2;
+   */
+  type: string;
+};
+
+/**
+ *
+ * Disk is one attached data disk's size + class.
+ *
+ * @generated from message cloud.v1.models.SharedMachine.Disk
+ */
+export type SharedMachine_DiskJson = {
+  /**
+   * @generated from field: uint32 size_gb = 1;
+   */
+  sizeGb?: number;
+
+  /**
+   * @generated from field: string type = 2;
+   */
+  type?: string;
+};
+
+export type SharedMachine_DiskValid = SharedMachine_Disk;
+
+/**
+ * Describes the message cloud.v1.models.SharedMachine.Disk.
+ * Use `create(SharedMachine_DiskSchema)` to create a new message.
+ */
+export const SharedMachine_DiskSchema: GenMessage<SharedMachine_Disk, {jsonType: SharedMachine_DiskJson, validType: SharedMachine_DiskValid}> = /*@__PURE__*/
+  messageDesc(file_cloud_v1_models_share, 2, 0);
 
 /**
  *
@@ -874,7 +1086,7 @@ export type SharedWorkloadSegmentValid = SharedWorkloadSegment;
  * Use `create(SharedWorkloadSegmentSchema)` to create a new message.
  */
 export const SharedWorkloadSegmentSchema: GenMessage<SharedWorkloadSegment, {jsonType: SharedWorkloadSegmentJson, validType: SharedWorkloadSegmentValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_models_share, 2);
+  messageDesc(file_cloud_v1_models_share, 3);
 
 /**
  *
@@ -939,7 +1151,7 @@ export type SharedDatabaseValid = SharedDatabase;
  * Use `create(SharedDatabaseSchema)` to create a new message.
  */
 export const SharedDatabaseSchema: GenMessage<SharedDatabase, {jsonType: SharedDatabaseJson, validType: SharedDatabaseValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_models_share, 3);
+  messageDesc(file_cloud_v1_models_share, 4);
 
 /**
  *
@@ -986,7 +1198,7 @@ export type SharedDatabase_SettingValid = SharedDatabase_Setting;
  * Use `create(SharedDatabase_SettingSchema)` to create a new message.
  */
 export const SharedDatabase_SettingSchema: GenMessage<SharedDatabase_Setting, {jsonType: SharedDatabase_SettingJson, validType: SharedDatabase_SettingValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_models_share, 3, 0);
+  messageDesc(file_cloud_v1_models_share, 4, 0);
 
 /**
  *
@@ -1221,5 +1433,5 @@ export type SharedSuiteRunValid = SharedSuiteRun;
  * Use `create(SharedSuiteRunSchema)` to create a new message.
  */
 export const SharedSuiteRunSchema: GenMessage<SharedSuiteRun, {jsonType: SharedSuiteRunJson, validType: SharedSuiteRunValid}> = /*@__PURE__*/
-  messageDesc(file_cloud_v1_models_share, 4);
+  messageDesc(file_cloud_v1_models_share, 5);
 

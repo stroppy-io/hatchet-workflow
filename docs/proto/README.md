@@ -612,6 +612,8 @@
     - [cloud.v1.models.ShareRecord.Target.Kind](cloud/v1/models/README.md#cloud-v1-models-sharerecord-target-kind)
     - [cloud.v1.models.SharedDatabase](cloud/v1/models/README.md#cloud-v1-models-shareddatabase)
     - [cloud.v1.models.SharedDatabase.Setting](cloud/v1/models/README.md#cloud-v1-models-shareddatabase-setting)
+    - [cloud.v1.models.SharedMachine](cloud/v1/models/README.md#cloud-v1-models-sharedmachine)
+    - [cloud.v1.models.SharedMachine.Disk](cloud/v1/models/README.md#cloud-v1-models-sharedmachine-disk)
     - [cloud.v1.models.SharedSuiteRun](cloud/v1/models/README.md#cloud-v1-models-sharedsuiterun)
     - [cloud.v1.models.SharedTestRun](cloud/v1/models/README.md#cloud-v1-models-sharedtestrun)
     - [cloud.v1.models.SharedWorkloadSegment](cloud/v1/models/README.md#cloud-v1-models-sharedworkloadsegment)

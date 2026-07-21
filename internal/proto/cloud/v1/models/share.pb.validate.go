@@ -527,6 +527,40 @@ func (m *SharedTestRun) validate(all bool) error {
 		}
 	}
 
+	for idx, item := range m.GetMachines() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, SharedTestRunValidationError{
+						field:  fmt.Sprintf("Machines[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, SharedTestRunValidationError{
+						field:  fmt.Sprintf("Machines[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return SharedTestRunValidationError{
+					field:  fmt.Sprintf("Machines[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
 	if len(errors) > 0 {
 		return SharedTestRunMultiError(errors)
 	}
@@ -604,6 +638,201 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = SharedTestRunValidationError{}
+
+// Validate checks the field values on SharedMachine with the rules defined in
+// the proto definition for this message. If any rules are violated, the first
+// error encountered is returned, or nil if there are no violations.
+func (m *SharedMachine) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on SharedMachine with the rules defined
+// in the proto definition for this message. If any rules are violated, the
+// result is a list of violation errors wrapped in SharedMachineMultiError, or
+// nil if none found.
+func (m *SharedMachine) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *SharedMachine) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if utf8.RuneCountInString(m.GetNodeId()) > 128 {
+		err := SharedMachineValidationError{
+			field:  "NodeId",
+			reason: "value length must be at most 128 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	// no validation rules for Cores
+
+	// no validation rules for MemoryGb
+
+	// no validation rules for BootDiskGb
+
+	if utf8.RuneCountInString(m.GetBootDiskType()) > 64 {
+		err := SharedMachineValidationError{
+			field:  "BootDiskType",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetPlatform()) > 64 {
+		err := SharedMachineValidationError{
+			field:  "Platform",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if utf8.RuneCountInString(m.GetZone()) > 64 {
+		err := SharedMachineValidationError{
+			field:  "Zone",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(m.GetSecondaryDisks()) > 64 {
+		err := SharedMachineValidationError{
+			field:  "SecondaryDisks",
+			reason: "value must contain no more than 64 item(s)",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	for idx, item := range m.GetSecondaryDisks() {
+		_, _ = idx, item
+
+		if all {
+			switch v := interface{}(item).(type) {
+			case interface{ ValidateAll() error }:
+				if err := v.ValidateAll(); err != nil {
+					errors = append(errors, SharedMachineValidationError{
+						field:  fmt.Sprintf("SecondaryDisks[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			case interface{ Validate() error }:
+				if err := v.Validate(); err != nil {
+					errors = append(errors, SharedMachineValidationError{
+						field:  fmt.Sprintf("SecondaryDisks[%v]", idx),
+						reason: "embedded message failed validation",
+						cause:  err,
+					})
+				}
+			}
+		} else if v, ok := interface{}(item).(interface{ Validate() error }); ok {
+			if err := v.Validate(); err != nil {
+				return SharedMachineValidationError{
+					field:  fmt.Sprintf("SecondaryDisks[%v]", idx),
+					reason: "embedded message failed validation",
+					cause:  err,
+				}
+			}
+		}
+
+	}
+
+	if len(errors) > 0 {
+		return SharedMachineMultiError(errors)
+	}
+
+	return nil
+}
+
+// SharedMachineMultiError is an error wrapping multiple validation errors
+// returned by SharedMachine.ValidateAll() if the designated constraints
+// aren't met.
+type SharedMachineMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m SharedMachineMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m SharedMachineMultiError) AllErrors() []error { return m }
+
+// SharedMachineValidationError is the validation error returned by
+// SharedMachine.Validate if the designated constraints aren't met.
+type SharedMachineValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SharedMachineValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SharedMachineValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SharedMachineValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SharedMachineValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SharedMachineValidationError) ErrorName() string { return "SharedMachineValidationError" }
+
+// Error satisfies the builtin error interface
+func (e SharedMachineValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSharedMachine.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SharedMachineValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SharedMachineValidationError{}
 
 // Validate checks the field values on SharedWorkloadSegment with the rules
 // defined in the proto definition for this message. If any rules are
@@ -1559,6 +1788,121 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = ShareRecord_SnapshotValidationError{}
+
+// Validate checks the field values on SharedMachine_Disk with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *SharedMachine_Disk) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on SharedMachine_Disk with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// SharedMachine_DiskMultiError, or nil if none found.
+func (m *SharedMachine_Disk) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *SharedMachine_Disk) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for SizeGb
+
+	if utf8.RuneCountInString(m.GetType()) > 64 {
+		err := SharedMachine_DiskValidationError{
+			field:  "Type",
+			reason: "value length must be at most 64 runes",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return SharedMachine_DiskMultiError(errors)
+	}
+
+	return nil
+}
+
+// SharedMachine_DiskMultiError is an error wrapping multiple validation errors
+// returned by SharedMachine_Disk.ValidateAll() if the designated constraints
+// aren't met.
+type SharedMachine_DiskMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m SharedMachine_DiskMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m SharedMachine_DiskMultiError) AllErrors() []error { return m }
+
+// SharedMachine_DiskValidationError is the validation error returned by
+// SharedMachine_Disk.Validate if the designated constraints aren't met.
+type SharedMachine_DiskValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e SharedMachine_DiskValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e SharedMachine_DiskValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e SharedMachine_DiskValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e SharedMachine_DiskValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e SharedMachine_DiskValidationError) ErrorName() string {
+	return "SharedMachine_DiskValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e SharedMachine_DiskValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sSharedMachine_Disk.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = SharedMachine_DiskValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = SharedMachine_DiskValidationError{}
 
 // Validate checks the field values on SharedDatabase_Setting with the rules
 // defined in the proto definition for this message. If any rules are

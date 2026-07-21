@@ -193,6 +193,47 @@ message SharedTestRun {
         database is the sizing + typed tuning of the database under test.
      */
     SharedDatabase database = 16;
+    /*
+        machines are the per-VM hardware the run was provisioned on, so a shared
+        result carries the iron it ran on.
+     */
+    repeated SharedMachine machines = 17;
+}
+
+/*
+    SharedMachine is the SAFE projection of one provisioned VM's hardware.
+
+    Every field is a typed, validated value from the run's infrastructure plan
+    (cores/memory/disk/zone are all `> 0` / closed-set enforced). The plan's
+    provider `settings` — which sit right next to this and carry the cloud TOKEN,
+    ssh public key and cloud/folder ids — are NEVER read here; only the typed
+    per-VM sizing and the platform/zone enums.
+ */
+message SharedMachine {
+    /* node_id is the machine's role name (e.g. "postgres-master"). */
+    string node_id = 1 [(validate.rules).string.max_len = 128];
+    /* cores is the vCPU count. */
+    uint32 cores = 2;
+    /* memory_gb is RAM in GiB. */
+    uint64 memory_gb = 3;
+    /* boot_disk_gb is the boot disk size in GiB. */
+    uint64 boot_disk_gb = 4;
+    /* boot_disk_type is the boot disk class (network-ssd, …). */
+    string boot_disk_type = 5 [(validate.rules).string.max_len = 64];
+    /* platform is the compute platform tier (from the plan's provider settings). */
+    string platform = 6 [(validate.rules).string.max_len = 64];
+    /* zone is the availability zone the VM ran in. */
+    string zone = 7 [(validate.rules).string.max_len = 64];
+    /* secondary_disks are extra attached data disks. */
+    repeated Disk secondary_disks = 8 [(validate.rules).repeated.max_items = 64];
+
+    /*
+        Disk is one attached data disk's size + class.
+     */
+    message Disk {
+        uint32 size_gb = 1;
+        string type = 2 [(validate.rules).string.max_len = 64];
+    }
 }
 
 /*

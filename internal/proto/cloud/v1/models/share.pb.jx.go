@@ -409,6 +409,14 @@ func (m *SharedTestRun) Encode(e *jx.Encoder) {
 		e.FieldStart("database")
 		m.Database.Encode(e)
 	}
+	if len(m.Machines) > 0 {
+		e.FieldStart("machines")
+		e.ArrStart()
+		for _, v := range m.Machines {
+			v.Encode(e)
+		}
+		e.ArrEnd()
+	}
 	e.ObjEnd()
 }
 
@@ -682,6 +690,22 @@ func (m *SharedTestRun) Decode(d *jx.Decoder) error {
 				return err
 			}
 			return nil
+		case "machines":
+			if seen["Machines"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Machines"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &SharedMachine{}
+				if err := el.Decode(d); err != nil {
+					return err
+				}
+				m.Machines = append(m.Machines, el)
+				return nil
+			})
 		default:
 			return fmt.Errorf("unknown field %q", key)
 		}
@@ -695,6 +719,254 @@ func (m *SharedTestRun) MarshalJSON() ([]byte, error) {
 }
 
 func (m *SharedTestRun) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *SharedMachine) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.NodeId != "" {
+		e.FieldStart("nodeId")
+		e.Str(m.NodeId)
+	}
+	if m.Cores != 0 {
+		e.FieldStart("cores")
+		e.UInt32(m.Cores)
+	}
+	if m.MemoryGb != 0 {
+		e.FieldStart("memoryGb")
+		jxpb.EncUint64(e, m.MemoryGb)
+	}
+	if m.BootDiskGb != 0 {
+		e.FieldStart("bootDiskGb")
+		jxpb.EncUint64(e, m.BootDiskGb)
+	}
+	if m.BootDiskType != "" {
+		e.FieldStart("bootDiskType")
+		e.Str(m.BootDiskType)
+	}
+	if m.Platform != "" {
+		e.FieldStart("platform")
+		e.Str(m.Platform)
+	}
+	if m.Zone != "" {
+		e.FieldStart("zone")
+		e.Str(m.Zone)
+	}
+	if len(m.SecondaryDisks) > 0 {
+		e.FieldStart("secondaryDisks")
+		e.ArrStart()
+		for _, v := range m.SecondaryDisks {
+			v.Encode(e)
+		}
+		e.ArrEnd()
+	}
+	e.ObjEnd()
+}
+
+func (m *SharedMachine) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "nodeId", "node_id":
+			if seen["NodeId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["NodeId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.NodeId = v
+			return nil
+		case "cores":
+			if seen["Cores"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Cores"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint32(d)
+			if err != nil {
+				return err
+			}
+			m.Cores = v
+			return nil
+		case "memoryGb", "memory_gb":
+			if seen["MemoryGb"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["MemoryGb"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint64(d)
+			if err != nil {
+				return err
+			}
+			m.MemoryGb = v
+			return nil
+		case "bootDiskGb", "boot_disk_gb":
+			if seen["BootDiskGb"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["BootDiskGb"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint64(d)
+			if err != nil {
+				return err
+			}
+			m.BootDiskGb = v
+			return nil
+		case "bootDiskType", "boot_disk_type":
+			if seen["BootDiskType"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["BootDiskType"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.BootDiskType = v
+			return nil
+		case "platform":
+			if seen["Platform"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Platform"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Platform = v
+			return nil
+		case "zone":
+			if seen["Zone"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Zone"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Zone = v
+			return nil
+		case "secondaryDisks", "secondary_disks":
+			if seen["SecondaryDisks"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["SecondaryDisks"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			return d.Arr(func(d *jx.Decoder) error {
+				el := &SharedMachine_Disk{}
+				if err := el.Decode(d); err != nil {
+					return err
+				}
+				m.SecondaryDisks = append(m.SecondaryDisks, el)
+				return nil
+			})
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *SharedMachine) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *SharedMachine) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *SharedMachine_Disk) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.SizeGb != 0 {
+		e.FieldStart("sizeGb")
+		e.UInt32(m.SizeGb)
+	}
+	if m.Type != "" {
+		e.FieldStart("type")
+		e.Str(m.Type)
+	}
+	e.ObjEnd()
+}
+
+func (m *SharedMachine_Disk) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "sizeGb", "size_gb":
+			if seen["SizeGb"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["SizeGb"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := jxpb.DecUint32(d)
+			if err != nil {
+				return err
+			}
+			m.SizeGb = v
+			return nil
+		case "type":
+			if seen["Type"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["Type"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.Type = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *SharedMachine_Disk) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *SharedMachine_Disk) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return m.Decode(d)
 }

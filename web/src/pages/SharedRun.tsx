@@ -7,7 +7,7 @@
 // anything.
 import { useEffect, useMemo, useState } from "react";
 import { useParams } from "react-router-dom";
-import { BarChart3, Check, Copy, Database, Gauge, LineChart } from "lucide-react";
+import { BarChart3, Check, Copy, Cpu, Database, Gauge, LineChart, Settings2 } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { MetricsPanel } from "@/components/run/MetricsPanel";
@@ -16,6 +16,7 @@ import { buildEmbedUrl, DASHBOARD_LABEL, dashboardsForRun } from "@/services/gra
 import {
   getSharedRun,
   startSharedSession,
+  type SharedMachineVM,
   type SharedRunVM,
   type SharedSegmentVM,
   type SharedSessionVM,
@@ -130,13 +131,36 @@ function FactStrip({ run }: { run: SharedRunVM }) {
  * extra CLI args and free-form engine option maps are never projected into a
  * share.
  */
+function machineFacts(m: SharedMachineVM): string {
+  const disks = [
+    m.bootDiskGb !== undefined && `${m.bootDiskGb}GB ${m.bootDiskType}`.trim(),
+    ...m.secondaryDisks.map((d) => (d.sizeGb !== undefined ? `+${d.sizeGb}GB ${d.type}`.trim() : "")),
+  ].filter(Boolean);
+  return [
+    m.cores !== undefined && `${m.cores} vCPU`,
+    m.memoryGb !== undefined && `${m.memoryGb} GB`,
+    disks.join(" "),
+    m.platform,
+    m.zone,
+  ]
+    .filter(Boolean)
+    .join(" · ");
+}
+
 function SharedConfig({ run }: { run: SharedRunVM }) {
   const segments = run.workloadSegments;
   const db = run.database;
-  if (segments.length === 0 && !db) return null;
+  const machines = run.machines;
+  if (segments.length === 0 && !db && machines.length === 0) return null;
 
+  const cols = 1 + (db ? 1 : 0) + (machines.length > 0 ? 1 : 0);
   return (
-    <section className="grid gap-px overflow-hidden border border-border bg-border md:grid-cols-2">
+    <section
+      className={cn(
+        "grid gap-px overflow-hidden border border-border bg-border",
+        cols >= 3 ? "lg:grid-cols-3" : "md:grid-cols-2",
+      )}
+    >
       {segments.length > 0 && (
         <div className="bg-background">
           <SectionHead icon={<Gauge className="h-3.5 w-3.5" />} title="Workload" />
@@ -174,6 +198,20 @@ function SharedConfig({ run }: { run: SharedRunVM }) {
                 </div>
               ))
             )}
+          </div>
+        </div>
+      )}
+
+      {machines.length > 0 && (
+        <div className="bg-background">
+          <SectionHead icon={<Cpu className="h-3.5 w-3.5" />} title="Infrastructure" />
+          <div className="flex flex-col gap-2 p-3">
+            {machines.map((m) => (
+              <div key={m.nodeId} className="flex flex-col gap-0.5">
+                <div className="font-mono text-xs text-foreground">{m.nodeId}</div>
+                <div className="break-words font-mono text-[11px] text-muted-foreground">{machineFacts(m)}</div>
+              </div>
+            ))}
           </div>
         </div>
       )}
@@ -246,6 +284,59 @@ function SharedGrafana({ session, dbKind }: { session: SharedSessionVM; dbKind: 
         className="h-[calc(100vh-7rem)] min-h-[640px] w-full border-0"
       />
     </section>
+  );
+}
+
+type ShareTab = "overview" | "metrics" | "grafana";
+
+/**
+ * The read-only run, as tabs — the same shape as the authenticated run detail:
+ * Overview (its launch config), Metrics (the frozen numbers), Grafana (the live
+ * scoped dashboards). The header above stays put so the run's identity is always
+ * on screen.
+ */
+function SharedTabs({
+  run,
+  session,
+  isTestRun,
+}: {
+  run: SharedRunVM;
+  session: SharedSessionVM | null;
+  isTestRun: boolean;
+}) {
+  const allTabs: Array<{ id: ShareTab; label: string; icon: React.ReactNode; show: boolean }> = [
+    { id: "overview", label: "Overview", icon: <Settings2 className="h-3.5 w-3.5" />, show: isTestRun },
+    { id: "metrics", label: "Metrics", icon: <LineChart className="h-3.5 w-3.5" />, show: true },
+    { id: "grafana", label: "Grafana", icon: <BarChart3 className="h-3.5 w-3.5" />, show: isTestRun && !!session },
+  ];
+  const tabs = allTabs.filter((t) => t.show);
+  const [active, setActive] = useState<ShareTab>(tabs[0]?.id ?? "metrics");
+
+  return (
+    <div className="flex flex-col gap-4">
+      <div className="flex gap-1 border-b border-border">
+        {tabs.map((t) => (
+          <button
+            key={t.id}
+            type="button"
+            onClick={() => setActive(t.id)}
+            className={cn(
+              "flex items-center gap-1.5 border-b-2 px-3 py-2 text-xs font-medium uppercase tracking-wider transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-ring",
+              active === t.id
+                ? "border-primary text-foreground"
+                : "border-transparent text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {t.icon}
+            {t.label}
+          </button>
+        ))}
+      </div>
+
+      {active === "overview" && isTestRun && <SharedConfig run={run} />}
+      {active === "metrics" && <MetricsPanel metrics={run.metrics} />}
+      {active === "grafana" && session && isTestRun && <SharedGrafana session={session} dbKind={run.dbKind} />}
+    </div>
   );
 }
 
@@ -328,20 +419,7 @@ export function SharedRun() {
               {isTestRun && <Signature text={signature} />}
             </header>
 
-            {isTestRun && <SharedConfig run={run} />}
-
-            <section className="overflow-hidden border border-border bg-background">
-              <SectionHead
-                icon={<LineChart className="h-3.5 w-3.5" />}
-                title="Metrics"
-                extra={<span className="font-mono text-[11px] text-muted-foreground">{run.metrics.length}</span>}
-              />
-              <div className="p-3">
-                <MetricsPanel metrics={run.metrics} />
-              </div>
-            </section>
-
-            {session && isTestRun && <SharedGrafana session={session} dbKind={run.dbKind} />}
+            <SharedTabs run={run} session={session} isTestRun={isTestRun} />
           </div>
         )}
       </div>

@@ -1559,6 +1559,17 @@ components:
         Disk:
             additionalProperties: false
             properties:
+                sizeGb:
+                    format: int32
+                    minimum: 0
+                    type: integer
+                type:
+                    maxLength: 64
+                    type: string
+            type: object
+        Disk2:
+            additionalProperties: false
+            properties:
                 deviceName:
                     minLength: 1
                     type: string
@@ -6826,6 +6837,37 @@ components:
                     maxLength: 64
                     type: string
             type: object
+        SharedMachine:
+            additionalProperties: false
+            properties:
+                bootDiskGb:
+                    format: uint64
+                    type: string
+                bootDiskType:
+                    maxLength: 64
+                    type: string
+                cores:
+                    format: int32
+                    minimum: 0
+                    type: integer
+                memoryGb:
+                    format: uint64
+                    type: string
+                nodeId:
+                    maxLength: 128
+                    type: string
+                platform:
+                    maxLength: 64
+                    type: string
+                secondaryDisks:
+                    items:
+                        $ref: '#/components/schemas/Disk'
+                    maxItems: 64
+                    type: array
+                zone:
+                    maxLength: 64
+                    type: string
+            type: object
         SharedSuiteRun:
             additionalProperties: false
             properties:
@@ -6936,6 +6978,10 @@ components:
                 finishedAt:
                     format: date-time
                     type: string
+                machines:
+                    items:
+                        $ref: '#/components/schemas/SharedMachine'
+                    type: array
                 metrics:
                     $ref: '#/components/schemas/RunMetrics'
                 name:
@@ -8807,7 +8853,7 @@ components:
                     type: boolean
                 secondaryDisks:
                     items:
-                        $ref: '#/components/schemas/Disk'
+                        $ref: '#/components/schemas/Disk2'
                     maxItems: 64
                     type: array
                 userData:

@@ -2151,20 +2151,46 @@ func DirFromOgen(src *rest.Dir) (*common.Dir, error) {
 	return dst, nil
 }
 
-// DiskToOgen converts deployment.Yandex_Disk (an imported type) to its ogen representation.
-func DiskToOgen(src *deployment.Yandex_Disk) (*rest.Disk, error) {
+// DiskToOgen converts models.SharedMachine_Disk (an imported type) to its ogen representation.
+func DiskToOgen(src *models.SharedMachine_Disk) (*rest.Disk, error) {
 	var dst rest.Disk
+	if src == nil {
+		return &dst, nil
+	}
+	dst.SizeGb.SetTo(int32(src.GetSizeGb()))
+	dst.Type.SetTo(string(src.GetType()))
+	return &dst, nil
+}
+
+// DiskFromOgen converts the ogen representation back to SharedMachine_Disk.
+func DiskFromOgen(src *rest.Disk) (*models.SharedMachine_Disk, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &models.SharedMachine_Disk{}
+	if v1, ok := src.SizeGb.Get(); ok {
+		dst.SizeGb = uint32(v1)
+	}
+	if v2, ok := src.Type.Get(); ok {
+		dst.Type = string(v2)
+	}
+	return dst, nil
+}
+
+// Disk2ToOgen converts deployment.Yandex_Disk (an imported type) to its ogen representation.
+func Disk2ToOgen(src *deployment.Yandex_Disk) (*rest.Disk2, error) {
+	var dst rest.Disk2
 	if src == nil {
 		return &dst, nil
 	}
 	dst.DeviceName.SetTo(string(src.GetDeviceName()))
 	dst.SizeGb.SetTo(int32(src.GetSizeGb()))
-	dst.Type.SetTo(rest.DiskType(src.GetType()))
+	dst.Type.SetTo(rest.Disk2Type(src.GetType()))
 	return &dst, nil
 }
 
-// DiskFromOgen converts the ogen representation back to Yandex_Disk.
-func DiskFromOgen(src *rest.Disk) (*deployment.Yandex_Disk, error) {
+// Disk2FromOgen converts the ogen representation back to Yandex_Disk.
+func Disk2FromOgen(src *rest.Disk2) (*deployment.Yandex_Disk, error) {
 	if src == nil {
 		return nil, nil
 	}
@@ -9400,6 +9426,74 @@ func SharedDatabaseFromOgen(src *rest.SharedDatabase) (*models.SharedDatabase, e
 	return dst, nil
 }
 
+// SharedMachineToOgen converts models.SharedMachine (an imported type) to its ogen representation.
+func SharedMachineToOgen(src *models.SharedMachine) (*rest.SharedMachine, error) {
+	var dst rest.SharedMachine
+	if src == nil {
+		return &dst, nil
+	}
+	dst.NodeId.SetTo(string(src.GetNodeId()))
+	dst.Cores.SetTo(int32(src.GetCores()))
+	dst.MemoryGb.SetTo(uint64(src.GetMemoryGb()))
+	dst.BootDiskGb.SetTo(uint64(src.GetBootDiskGb()))
+	dst.BootDiskType.SetTo(string(src.GetBootDiskType()))
+	dst.Platform.SetTo(string(src.GetPlatform()))
+	dst.Zone.SetTo(string(src.GetZone()))
+	c1, err := convert.SliceErr(src.GetSecondaryDisks(), func(e *models.SharedMachine_Disk) (zero rest.Disk, _ error) {
+		o2, err := DiskToOgen(e)
+		if err != nil {
+			return zero, err
+		}
+		return *o2, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dst.SecondaryDisks = c1
+	return &dst, nil
+}
+
+// SharedMachineFromOgen converts the ogen representation back to SharedMachine.
+func SharedMachineFromOgen(src *rest.SharedMachine) (*models.SharedMachine, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &models.SharedMachine{}
+	if v1, ok := src.NodeId.Get(); ok {
+		dst.NodeId = string(v1)
+	}
+	if v2, ok := src.Cores.Get(); ok {
+		dst.Cores = uint32(v2)
+	}
+	if v3, ok := src.MemoryGb.Get(); ok {
+		dst.MemoryGb = uint64(v3)
+	}
+	if v4, ok := src.BootDiskGb.Get(); ok {
+		dst.BootDiskGb = uint64(v4)
+	}
+	if v5, ok := src.BootDiskType.Get(); ok {
+		dst.BootDiskType = string(v5)
+	}
+	if v6, ok := src.Platform.Get(); ok {
+		dst.Platform = string(v6)
+	}
+	if v7, ok := src.Zone.Get(); ok {
+		dst.Zone = string(v7)
+	}
+	c8, err := convert.SliceErr(src.SecondaryDisks, func(e rest.Disk) (zero *models.SharedMachine_Disk, _ error) {
+		m9, err := DiskFromOgen(&e)
+		if err != nil {
+			return zero, err
+		}
+		return m9, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dst.SecondaryDisks = c8
+	return dst, nil
+}
+
 // SharedSuiteRunToOgen converts models.SharedSuiteRun (an imported type) to its ogen representation.
 func SharedSuiteRunToOgen(src *models.SharedSuiteRun) (*rest.SharedSuiteRun, error) {
 	var dst rest.SharedSuiteRun
@@ -9761,6 +9855,17 @@ func SharedTestRunToOgen(src *models.SharedTestRun) (*rest.SharedTestRun, error)
 		}
 		dst.Database.SetTo(*o7)
 	}
+	c8, err := convert.SliceErr(src.GetMachines(), func(e *models.SharedMachine) (zero rest.SharedMachine, _ error) {
+		o9, err := SharedMachineToOgen(e)
+		if err != nil {
+			return zero, err
+		}
+		return *o9, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dst.Machines = c8
 	return &dst, nil
 }
 
@@ -9903,6 +10008,17 @@ func SharedTestRunFromOgen(src *rest.SharedTestRun) (*models.SharedTestRun, erro
 		}
 		dst.Database = m22
 	}
+	c23, err := convert.SliceErr(src.Machines, func(e rest.SharedMachine) (zero *models.SharedMachine, _ error) {
+		m24, err := SharedMachineFromOgen(&e)
+		if err != nil {
+			return zero, err
+		}
+		return m24, nil
+	})
+	if err != nil {
+		return nil, err
+	}
+	dst.Machines = c23
 	return dst, nil
 }
 
@@ -12948,8 +13064,8 @@ func VMToOgen(src *deployment.Yandex_Vm) (*rest.VM, error) {
 	dst.PublicIp.SetTo(bool(src.GetPublicIp()))
 	dst.UserData.SetTo(string(src.GetUserData()))
 	dst.NetworkAcceleration.SetTo(rest.VMNetworkAcceleration(src.GetNetworkAcceleration()))
-	c1, err := convert.SliceErr(src.GetSecondaryDisks(), func(e *deployment.Yandex_Disk) (zero rest.Disk, _ error) {
-		o2, err := DiskToOgen(e)
+	c1, err := convert.SliceErr(src.GetSecondaryDisks(), func(e *deployment.Yandex_Disk) (zero rest.Disk2, _ error) {
+		o2, err := Disk2ToOgen(e)
 		if err != nil {
 			return zero, err
 		}
@@ -12995,8 +13111,8 @@ func VMFromOgen(src *rest.VM) (*deployment.Yandex_Vm, error) {
 	if v9, ok := src.NetworkAcceleration.Get(); ok {
 		dst.NetworkAcceleration = string(v9)
 	}
-	c10, err := convert.SliceErr(src.SecondaryDisks, func(e rest.Disk) (zero *deployment.Yandex_Disk, _ error) {
-		m11, err := DiskFromOgen(&e)
+	c10, err := convert.SliceErr(src.SecondaryDisks, func(e rest.Disk2) (zero *deployment.Yandex_Disk, _ error) {
+		m11, err := Disk2FromOgen(&e)
 		if err != nil {
 			return zero, err
 		}

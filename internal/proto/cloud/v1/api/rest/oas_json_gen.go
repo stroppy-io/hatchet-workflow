@@ -11865,12 +11865,6 @@ func (s *Disk) Encode(e *jx.Encoder) {
 // encodeFields encodes fields.
 func (s *Disk) encodeFields(e *jx.Encoder) {
 	{
-		if s.DeviceName.Set {
-			e.FieldStart("deviceName")
-			s.DeviceName.Encode(e)
-		}
-	}
-	{
 		if s.SizeGb.Set {
 			e.FieldStart("sizeGb")
 			s.SizeGb.Encode(e)
@@ -11884,10 +11878,9 @@ func (s *Disk) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfDisk = [3]string{
-	0: "deviceName",
-	1: "sizeGb",
-	2: "type",
+var jsonFieldsNameOfDisk = [2]string{
+	0: "sizeGb",
+	1: "type",
 }
 
 // Decode decodes Disk from json.
@@ -11898,16 +11891,6 @@ func (s *Disk) Decode(d *jx.Decoder) error {
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
-		case "deviceName":
-			if err := func() error {
-				s.DeviceName.Reset()
-				if err := s.DeviceName.Decode(d); err != nil {
-					return err
-				}
-				return nil
-			}(); err != nil {
-				return errors.Wrap(err, "decode field \"deviceName\"")
-			}
 		case "sizeGb":
 			if err := func() error {
 				s.SizeGb.Reset()
@@ -11952,46 +11935,143 @@ func (s *Disk) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
-// Encode encodes DiskType as json.
-func (s DiskType) Encode(e *jx.Encoder) {
-	e.Str(string(s))
+// Encode implements json.Marshaler.
+func (s *Disk2) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
 }
 
-// Decode decodes DiskType from json.
-func (s *DiskType) Decode(d *jx.Decoder) error {
+// encodeFields encodes fields.
+func (s *Disk2) encodeFields(e *jx.Encoder) {
+	{
+		if s.DeviceName.Set {
+			e.FieldStart("deviceName")
+			s.DeviceName.Encode(e)
+		}
+	}
+	{
+		if s.SizeGb.Set {
+			e.FieldStart("sizeGb")
+			s.SizeGb.Encode(e)
+		}
+	}
+	{
+		if s.Type.Set {
+			e.FieldStart("type")
+			s.Type.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfDisk2 = [3]string{
+	0: "deviceName",
+	1: "sizeGb",
+	2: "type",
+}
+
+// Decode decodes Disk2 from json.
+func (s *Disk2) Decode(d *jx.Decoder) error {
 	if s == nil {
-		return errors.New("invalid: unable to decode DiskType to nil")
+		return errors.New("invalid: unable to decode Disk2 to nil")
 	}
-	v, err := d.StrBytes()
-	if err != nil {
-		return err
-	}
-	// Try to use constant string.
-	switch DiskType(v) {
-	case DiskTypeNetworkSsd:
-		*s = DiskTypeNetworkSsd
-	case DiskTypeNetworkHdd:
-		*s = DiskTypeNetworkHdd
-	case DiskTypeNetworkSsdNonreplicated:
-		*s = DiskTypeNetworkSsdNonreplicated
-	case DiskTypeNetworkSsdIoM3:
-		*s = DiskTypeNetworkSsdIoM3
-	default:
-		*s = DiskType(v)
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "deviceName":
+			if err := func() error {
+				s.DeviceName.Reset()
+				if err := s.DeviceName.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"deviceName\"")
+			}
+		case "sizeGb":
+			if err := func() error {
+				s.SizeGb.Reset()
+				if err := s.SizeGb.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"sizeGb\"")
+			}
+		case "type":
+			if err := func() error {
+				s.Type.Reset()
+				if err := s.Type.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"type\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode Disk2")
 	}
 
 	return nil
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s DiskType) MarshalJSON() ([]byte, error) {
+func (s *Disk2) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *DiskType) UnmarshalJSON(data []byte) error {
+func (s *Disk2) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes Disk2Type as json.
+func (s Disk2Type) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes Disk2Type from json.
+func (s *Disk2Type) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode Disk2Type to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch Disk2Type(v) {
+	case Disk2TypeNetworkSsd:
+		*s = Disk2TypeNetworkSsd
+	case Disk2TypeNetworkHdd:
+		*s = Disk2TypeNetworkHdd
+	case Disk2TypeNetworkSsdNonreplicated:
+		*s = Disk2TypeNetworkSsdNonreplicated
+	case Disk2TypeNetworkSsdIoM3:
+		*s = Disk2TypeNetworkSsdIoM3
+	default:
+		*s = Disk2Type(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s Disk2Type) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *Disk2Type) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -36147,18 +36227,18 @@ func (s *OptDir) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
-// Encode encodes DiskType as json.
-func (o OptDiskType) Encode(e *jx.Encoder) {
+// Encode encodes Disk2Type as json.
+func (o OptDisk2Type) Encode(e *jx.Encoder) {
 	if !o.Set {
 		return
 	}
 	e.Str(string(o.Value))
 }
 
-// Decode decodes DiskType from json.
-func (o *OptDiskType) Decode(d *jx.Decoder) error {
+// Decode decodes Disk2Type from json.
+func (o *OptDisk2Type) Decode(d *jx.Decoder) error {
 	if o == nil {
-		return errors.New("invalid: unable to decode OptDiskType to nil")
+		return errors.New("invalid: unable to decode OptDisk2Type to nil")
 	}
 	o.Set = true
 	if err := o.Value.Decode(d); err != nil {
@@ -36168,14 +36248,14 @@ func (o *OptDiskType) Decode(d *jx.Decoder) error {
 }
 
 // MarshalJSON implements stdjson.Marshaler.
-func (s OptDiskType) MarshalJSON() ([]byte, error) {
+func (s OptDisk2Type) MarshalJSON() ([]byte, error) {
 	e := jx.Encoder{}
 	s.Encode(&e)
 	return e.Bytes(), nil
 }
 
 // UnmarshalJSON implements stdjson.Unmarshaler.
-func (s *OptDiskType) UnmarshalJSON(data []byte) error {
+func (s *OptDisk2Type) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return s.Decode(d)
 }
@@ -59341,6 +59421,199 @@ func (s *SharedDatabase) UnmarshalJSON(data []byte) error {
 }
 
 // Encode implements json.Marshaler.
+func (s *SharedMachine) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *SharedMachine) encodeFields(e *jx.Encoder) {
+	{
+		if s.BootDiskGb.Set {
+			e.FieldStart("bootDiskGb")
+			s.BootDiskGb.Encode(e)
+		}
+	}
+	{
+		if s.BootDiskType.Set {
+			e.FieldStart("bootDiskType")
+			s.BootDiskType.Encode(e)
+		}
+	}
+	{
+		if s.Cores.Set {
+			e.FieldStart("cores")
+			s.Cores.Encode(e)
+		}
+	}
+	{
+		if s.MemoryGb.Set {
+			e.FieldStart("memoryGb")
+			s.MemoryGb.Encode(e)
+		}
+	}
+	{
+		if s.NodeId.Set {
+			e.FieldStart("nodeId")
+			s.NodeId.Encode(e)
+		}
+	}
+	{
+		if s.Platform.Set {
+			e.FieldStart("platform")
+			s.Platform.Encode(e)
+		}
+	}
+	{
+		if s.SecondaryDisks != nil {
+			e.FieldStart("secondaryDisks")
+			e.ArrStart()
+			for _, elem := range s.SecondaryDisks {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
+		if s.Zone.Set {
+			e.FieldStart("zone")
+			s.Zone.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfSharedMachine = [8]string{
+	0: "bootDiskGb",
+	1: "bootDiskType",
+	2: "cores",
+	3: "memoryGb",
+	4: "nodeId",
+	5: "platform",
+	6: "secondaryDisks",
+	7: "zone",
+}
+
+// Decode decodes SharedMachine from json.
+func (s *SharedMachine) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode SharedMachine to nil")
+	}
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "bootDiskGb":
+			if err := func() error {
+				s.BootDiskGb.Reset()
+				if err := s.BootDiskGb.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"bootDiskGb\"")
+			}
+		case "bootDiskType":
+			if err := func() error {
+				s.BootDiskType.Reset()
+				if err := s.BootDiskType.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"bootDiskType\"")
+			}
+		case "cores":
+			if err := func() error {
+				s.Cores.Reset()
+				if err := s.Cores.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"cores\"")
+			}
+		case "memoryGb":
+			if err := func() error {
+				s.MemoryGb.Reset()
+				if err := s.MemoryGb.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"memoryGb\"")
+			}
+		case "nodeId":
+			if err := func() error {
+				s.NodeId.Reset()
+				if err := s.NodeId.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"nodeId\"")
+			}
+		case "platform":
+			if err := func() error {
+				s.Platform.Reset()
+				if err := s.Platform.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"platform\"")
+			}
+		case "secondaryDisks":
+			if err := func() error {
+				s.SecondaryDisks = make([]Disk, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem Disk
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.SecondaryDisks = append(s.SecondaryDisks, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"secondaryDisks\"")
+			}
+		case "zone":
+			if err := func() error {
+				s.Zone.Reset()
+				if err := s.Zone.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"zone\"")
+			}
+		default:
+			return errors.Errorf("unexpected field %q", k)
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode SharedMachine")
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *SharedMachine) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *SharedMachine) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
 func (s *SharedSuiteRun) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
@@ -59765,6 +60038,16 @@ func (s *SharedTestRun) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.Machines != nil {
+			e.FieldStart("machines")
+			e.ArrStart()
+			for _, elem := range s.Machines {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
+		}
+	}
+	{
 		if s.Metrics.Set {
 			e.FieldStart("metrics")
 			s.Metrics.Encode(e)
@@ -59836,23 +60119,24 @@ func (s *SharedTestRun) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfSharedTestRun = [16]string{
+var jsonFieldsNameOfSharedTestRun = [17]string{
 	0:  "database",
 	1:  "dbKind",
 	2:  "dbName",
 	3:  "duration",
 	4:  "finishedAt",
-	5:  "metrics",
-	6:  "name",
-	7:  "nodeCount",
-	8:  "progressPct",
-	9:  "provider",
-	10: "startedAt",
-	11: "status",
-	12: "stroppyVersion",
-	13: "topologyLabel",
-	14: "workloadName",
-	15: "workloadSegments",
+	5:  "machines",
+	6:  "metrics",
+	7:  "name",
+	8:  "nodeCount",
+	9:  "progressPct",
+	10: "provider",
+	11: "startedAt",
+	12: "status",
+	13: "stroppyVersion",
+	14: "topologyLabel",
+	15: "workloadName",
+	16: "workloadSegments",
 }
 
 // Decode decodes SharedTestRun from json.
@@ -59912,6 +60196,23 @@ func (s *SharedTestRun) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"finishedAt\"")
+			}
+		case "machines":
+			if err := func() error {
+				s.Machines = make([]SharedMachine, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem SharedMachine
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Machines = append(s.Machines, elem)
+					return nil
+				}); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"machines\"")
 			}
 		case "metrics":
 			if err := func() error {
@@ -72358,9 +72659,9 @@ func (s *VM) Decode(d *jx.Decoder) error {
 			}
 		case "secondaryDisks":
 			if err := func() error {
-				s.SecondaryDisks = make([]Disk, 0)
+				s.SecondaryDisks = make([]Disk2, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
-					var elem Disk
+					var elem Disk2
 					if err := elem.Decode(d); err != nil {
 						return err
 					}

@@ -6,8 +6,10 @@ import (
 	"encoding/base64"
 	"fmt"
 	"strconv"
+	"strings"
 
 	derrors "github.com/stroppy-io/stroppy-cloud/internal/domain/errors"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
@@ -133,7 +135,71 @@ func (b *RunSnapshotBuilder) sharedTestRun(ctx context.Context, rec *models.Test
 	}
 	view.WorkloadSegments = sharedWorkloadSegments(rec.GetSpec().GetWorkload())
 	view.Database = sharedDatabase(rec.GetSpec().GetDatabase())
+	view.Machines = sharedMachines(rec.GetSpec().GetInfrastructurePlan())
 	return view
+}
+
+// sharedMachines projects the per-VM hardware from the infrastructure plan.
+// Only the TYPED sizing fields are read — the plan's provider `settings` object
+// sits right next to this and carries the cloud token, ssh key and account ids,
+// so it is never touched except for the safe platform/zone enums.
+func sharedMachines(plan *deployment.InfrastructurePlan) []*models.SharedMachine {
+	machines := plan.GetMachines()
+	if len(machines) == 0 {
+		return nil
+	}
+	settings := plan.GetSettings().GetYandex()
+	platform := yandexPlatformName(settings.GetPlatformId())
+	defaultZone := yandexZoneName(settings.GetZone())
+
+	out := make([]*models.SharedMachine, 0, len(machines))
+	for _, m := range machines {
+		vm := m.GetYandex()
+		if vm == nil {
+			// Docker machines have no cloud sizing to share.
+			continue
+		}
+		zone := vm.GetZone()
+		if zone == "" {
+			zone = defaultZone
+		}
+		sm := &models.SharedMachine{
+			NodeId:       m.GetNodeId(),
+			Cores:        vm.GetCores(),
+			MemoryGb:     vm.GetMemoryGb(),
+			BootDiskGb:   vm.GetBootDiskGb(),
+			BootDiskType: vm.GetBootDiskType(),
+			Platform:     platform,
+			Zone:         zone,
+		}
+		for _, d := range vm.GetSecondaryDisks() {
+			sm.SecondaryDisks = append(sm.SecondaryDisks, &models.SharedMachine_Disk{
+				SizeGb: d.GetSizeGb(),
+				Type:   d.GetType(),
+			})
+		}
+		out = append(out, sm)
+	}
+	if len(out) == 0 {
+		return nil
+	}
+	return out
+}
+
+// yandexPlatformName / yandexZoneName render the closed-set enums to the short
+// tokens the UI shows, stripping the proto prefix. Unspecified -> "".
+func yandexPlatformName(p deployment.Yandex_Settings_PlatformId) string {
+	if p == deployment.Yandex_Settings_PLATFORM_ID_UNSPECIFIED {
+		return ""
+	}
+	return strings.ToLower(strings.TrimPrefix(p.String(), "PLATFORM_ID_"))
+}
+
+func yandexZoneName(z deployment.Yandex_Settings_Zone) string {
+	if z == deployment.Yandex_Settings_ZONE_UNSPECIFIED {
+		return ""
+	}
+	return strings.ToLower(strings.ReplaceAll(strings.TrimPrefix(z.String(), "ZONE_"), "_", "-"))
 }
 
 /*

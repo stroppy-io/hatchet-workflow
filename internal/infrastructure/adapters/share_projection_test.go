@@ -9,6 +9,7 @@ import (
 	"google.golang.org/protobuf/proto"
 
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/common"
+	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/domain"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/models"
 )
@@ -23,10 +24,39 @@ const (
 	secretOption    = "SECRET-CONF-VALUE"
 	secretFile      = "SECRET-FILE-CONTENT"
 	secretOptionKey = "SECRET-CONF-KEY"
+	secretToken     = "SECRET-YC-TOKEN"
+	secretCloud     = "SECRET-CLOUD-ID"
+	secretFolder    = "SECRET-FOLDER-ID"
+	secretSSHKey    = "SECRET-SSH-PUBLIC-KEY"
 )
 
 func specWithSecrets() *domain.TestRun {
 	return &domain.TestRun{
+		InfrastructurePlan: &deployment.InfrastructurePlan{
+			// settings sit right next to the per-VM sizing and hold cloud creds.
+			Settings: &deployment.ProviderSettings{
+				Settings: &deployment.ProviderSettings_Yandex{Yandex: &deployment.Yandex_Settings{
+					Token:        secretToken,
+					CloudId:      secretCloud,
+					FolderId:     secretFolder,
+					SshPublicKey: secretSSHKey,
+					PlatformId:   deployment.Yandex_Settings_PLATFORM_ID_STANDARD_V3,
+					Zone:         deployment.Yandex_Settings_ZONE_RU_CENTRAL1_A,
+				}},
+			},
+			Machines: []*deployment.MachinePlan{{
+				NodeId: "postgres-master",
+				ProviderParams: &deployment.MachinePlan_Yandex{Yandex: &deployment.Yandex_Vm{
+					Cores:        8,
+					MemoryGb:     32,
+					BootDiskGb:   100,
+					BootDiskType: "network-ssd",
+					SecondaryDisks: []*deployment.Yandex_Disk{
+						{DeviceName: "data", SizeGb: 500, Type: "network-ssd-nonreplicated"},
+					},
+				}},
+			}},
+		},
 		Database: &domain.Database{
 			Source: &domain.Database_Params{Params: &domain.DatabaseParams{
 				Version: "17",
@@ -99,6 +129,10 @@ func TestSharedTestRunLeaksNoFreeFormFields(t *testing.T) {
 		"engine *_options key":    secretOptionKey,
 		"workload file content":   secretFile,
 		"free-form option marker": "password",
+		"yandex settings token":   secretToken,
+		"yandex cloud id":         secretCloud,
+		"yandex folder id":        secretFolder,
+		"yandex ssh public key":   secretSSHKey,
 	} {
 		if strings.Contains(rendered, secret) {
 			t.Fatalf("%s leaked into the public snapshot: %s", name, rendered)
@@ -123,6 +157,26 @@ func TestSharedTestRunProjectsWorkloadKnobs(t *testing.T) {
 	}
 	if len(seg.GetSteps()) != 1 || seg.GetSteps()[0] != "load" || !seg.GetQuiet() {
 		t.Fatalf("steps/flags not projected: %+v", seg)
+	}
+}
+
+func TestSharedMachinesProjectTypedSizing(t *testing.T) {
+	machines := projectRun(t).GetMachines()
+	if len(machines) != 1 {
+		t.Fatalf("machines = %d, want 1", len(machines))
+	}
+	m := machines[0]
+	if m.GetNodeId() != "postgres-master" {
+		t.Fatalf("node_id = %q", m.GetNodeId())
+	}
+	if m.GetCores() != 8 || m.GetMemoryGb() != 32 || m.GetBootDiskGb() != 100 || m.GetBootDiskType() != "network-ssd" {
+		t.Fatalf("sizing not projected: %+v", m)
+	}
+	if m.GetPlatform() != "standard_v3" || m.GetZone() != "ru-central1-a" {
+		t.Fatalf("platform/zone = %q/%q", m.GetPlatform(), m.GetZone())
+	}
+	if len(m.GetSecondaryDisks()) != 1 || m.GetSecondaryDisks()[0].GetSizeGb() != 500 {
+		t.Fatalf("secondary disks not projected: %+v", m.GetSecondaryDisks())
 	}
 }
 
