@@ -13,10 +13,50 @@ import (
 	deploymentpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/deployment"
 	"github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/monitor"
 	workflowpb "github.com/stroppy-io/stroppy-cloud/internal/proto/cloud/v1/workflow"
+	"go.temporal.io/sdk/temporal"
 	"go.temporal.io/sdk/workflow"
 	"google.golang.org/protobuf/proto"
 	"google.golang.org/protobuf/types/known/timestamppb"
 )
+
+// agentActivityScheduleToStart bounds how long a scheduled agent activity waits
+// for its per-agent worker to pick it up. A live agent polls its own task queue
+// continuously, so pickup is immediate; this only bites when the agent VM is
+// gone. The generous 10m tolerates a brief agent reconnect/restart.
+const agentActivityScheduleToStart = 10 * time.Minute
+
+// agentActivityMaxAttempts caps retries of an agent activity. A dead agent will
+// not come back within a run, so retrying its command forever is pointless — and
+// without a cap the workflow hangs indefinitely, so its infrastructure teardown
+// (a deferred step that only runs once the workflow RETURNS) never fires and the
+// cloud machines leak.
+const agentActivityMaxAttempts = 5
+
+// agentActivityOptions builds the activity options for a command dispatched to a
+// specific agent's task queue. startToClose is per-activity and may be very long
+// (a workload run can last days) — that is deliberately NOT the safety net.
+//
+// The safety net is ScheduleToStartTimeout + a finite RetryPolicy: when the
+// agent VM dies, its heartbeat lapses, the attempt fails, and the retry is
+// re-queued onto a per-agent task queue that nothing polls. Without these two
+// the retry waits forever (StartToClose never starts counting for a task that
+// never starts), the workflow never returns, and the deferred teardown never
+// runs. With them the activity fails within minutes and the workflow unwinds to
+// teardown. A live, heartbeating activity is unaffected by either.
+func agentActivityOptions(taskQueue string, startToClose time.Duration) workflow.ActivityOptions {
+	return workflow.ActivityOptions{
+		TaskQueue:              taskQueue,
+		StartToCloseTimeout:    startToClose,
+		HeartbeatTimeout:       time.Minute,
+		ScheduleToStartTimeout: agentActivityScheduleToStart,
+		RetryPolicy: &temporal.RetryPolicy{
+			InitialInterval:    5 * time.Second,
+			BackoffCoefficient: 2.0,
+			MaximumInterval:    time.Minute,
+			MaximumAttempts:    agentActivityMaxAttempts,
+		},
+	}
+}
 
 type deploymentWorkflows struct {
 	options Options
@@ -494,11 +534,7 @@ func executeComponentDeployment(ctx workflow.Context, runID string, plan *deploy
 	if err != nil {
 		return err
 	}
-	activityCtx := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
-		TaskQueue:           taskQueue,
-		StartToCloseTimeout: 60 * time.Minute,
-		HeartbeatTimeout:    time.Minute,
-	})
+	activityCtx := workflow.WithActivityOptions(ctx, agentActivityOptions(taskQueue, 60*time.Minute))
 	if err := executeActivityNoResult(activityCtx, workflowpb.EnsureAgentOnlineActivityActivityName); err != nil {
 		return fmt.Errorf("agent %s is not online: %w", component.GetNodeId(), err)
 	}

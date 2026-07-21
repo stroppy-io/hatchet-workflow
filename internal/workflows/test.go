@@ -131,11 +131,11 @@ func (w *runWorkloadWorkflow) Execute(ctx workflow.Context) (*workflowpb.RunWork
 		return nil, err
 	}
 
-	activityCtx := workflow.WithActivityOptions(ctx, workflow.ActivityOptions{
-		TaskQueue:           taskQueue,
-		StartToCloseTimeout: 30 * 24 * time.Hour,
-		HeartbeatTimeout:    time.Minute,
-	})
+	// StartToClose is 30 days: a workload run may legitimately last a week, so
+	// there is no run-level watchdog. agentActivityOptions still bounds the
+	// DEAD-agent case (ScheduleToStart + finite retries) so the workflow can't
+	// hang forever waiting on a queue nobody polls — see its doc.
+	activityCtx := workflow.WithActivityOptions(ctx, agentActivityOptions(taskQueue, 30*24*time.Hour))
 	if err := executeActivityNoResult(activityCtx, workflowpb.EnsureAgentOnlineActivityActivityName); err != nil {
 		return nil, fmt.Errorf("agent %s is not online: %w", component.GetNodeId(), err)
 	}
