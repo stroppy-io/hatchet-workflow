@@ -688,6 +688,17 @@ func (UnimplementedHandler) GetWorkloadPreset(ctx context.Context, req *GetWorkl
 	return r, ht.ErrNotImplemented
 }
 
+// GrafanaSession implements grafanaSession operation.
+//
+// GrafanaSession mints a run-scoped token so the caller's embedded Grafana
+// can read this run's metrics through the same scoped datasource a public
+// share uses. Read-only; scopes to exactly this run.
+//
+// GET /api/v1/test-run-overview/grafana-session
+func (UnimplementedHandler) GrafanaSession(ctx context.Context, req *GrafanaSessionRequest) (r *GrafanaSessionResponse, _ error) {
+	return r, ht.ErrNotImplemented
+}
+
 // LeaveTenant implements leaveTenant operation.
 //
 // LeaveTenant drops the caller's own membership — authenticated, no

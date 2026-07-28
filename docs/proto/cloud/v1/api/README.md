@@ -150,6 +150,8 @@
   - [cloud.v1.api.GetTestWizardDraftResponse](#cloud-v1-api-gettestwizarddraftresponse)
   - [cloud.v1.api.GetWorkloadPresetRequest](#cloud-v1-api-getworkloadpresetrequest)
   - [cloud.v1.api.GetWorkloadPresetResponse](#cloud-v1-api-getworkloadpresetresponse)
+  - [cloud.v1.api.GrafanaSessionRequest](#cloud-v1-api-grafanasessionrequest)
+  - [cloud.v1.api.GrafanaSessionResponse](#cloud-v1-api-grafanasessionresponse)
   - [cloud.v1.api.LeaveTenantRequest](#cloud-v1-api-leavetenantrequest)
   - [cloud.v1.api.LeaveTenantResponse](#cloud-v1-api-leavetenantresponse)
   - [cloud.v1.api.LinkExternalIdentityRequest](#cloud-v1-api-linkexternalidentityrequest)
@@ -4790,6 +4792,73 @@ go_name: TenantId</pre></td>
 
 json_name: preset
 go_name: Preset</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-grafanasessionrequest"></a>
+### cloud.v1.api.GrafanaSessionRequest
+
+<pre>
+//GrafanaSessionRequest asks for a scope token that lets the caller's embedded
+//Grafana read THIS run's metrics. The embed is anonymous to Grafana (an iframe
+//carries no bearer), so the run detail page exchanges its authenticated session
+//for a run-scoped token here, then hands it to Grafana via a cookie — the same
+//scoped-datasource path a public share uses, but authorised per-run instead of
+//by a share token.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>run_id</td>
+<td>string</td>
+<td><pre>
+json_name: runId
+go_name: RunId</pre></td>
+</tr><tr>
+<td>tenant_id</td>
+<td>string</td>
+<td><pre>
+json_name: tenantId
+go_name: TenantId</pre></td>
+</tr>
+</table>
+
+
+
+<a name="cloud-v1-api-grafanasessionresponse"></a>
+### cloud.v1.api.GrafanaSessionResponse
+
+<pre>
+//GrafanaSessionResponse returns the opaque, signed run-scope token. The gateway
+//trusts it to pin every embedded metrics query to run_id; it grants nothing
+//beyond reading this one run's series.
+</pre>
+
+<table>
+<tr>
+<th>Attribute</th>
+<th>Type</th>
+<th>Description</th>
+</tr>
+<tr>
+<td>run_id</td>
+<td>string</td>
+<td><pre>
+json_name: runId
+go_name: RunId</pre></td>
+</tr><tr>
+<td>scope_token</td>
+<td>string</td>
+<td><pre>
+json_name: scopeToken
+go_name: ScopeToken</pre></td>
 </tr>
 </table>
 

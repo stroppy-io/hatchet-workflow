@@ -77,6 +77,7 @@ const (
 	GetTestRunOverviewOperation             OperationName = "GetTestRunOverview"
 	GetTestWizardDraftOperation             OperationName = "GetTestWizardDraft"
 	GetWorkloadPresetOperation              OperationName = "GetWorkloadPreset"
+	GrafanaSessionOperation                 OperationName = "GrafanaSession"
 	LeaveTenantOperation                    OperationName = "LeaveTenant"
 	LinkExternalIdentityOperation           OperationName = "LinkExternalIdentity"
 	ListAccountsOperation                   OperationName = "ListAccounts"

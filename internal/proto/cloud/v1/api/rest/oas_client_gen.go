@@ -970,6 +970,14 @@ type TestRunOverviewInvoker interface {
 	//
 	// GET /api/v1/test-run-overview/get-test-run-overview
 	GetTestRunOverview(ctx context.Context, request *GetTestRunOverviewRequest) (*GetTestRunOverviewResponse, error)
+	// GrafanaSession invokes grafanaSession operation.
+	//
+	// GrafanaSession mints a run-scoped token so the caller's embedded Grafana
+	// can read this run's metrics through the same scoped datasource a public
+	// share uses. Read-only; scopes to exactly this run.
+	//
+	// GET /api/v1/test-run-overview/grafana-session
+	GrafanaSession(ctx context.Context, request *GrafanaSessionRequest) (*GrafanaSessionResponse, error)
 	// QueryLogs invokes queryLogs operation.
 	//
 	// QueryLogs fetches a cursor-paged window of historical log lines. Read-only.
@@ -6948,6 +6956,85 @@ func (c *Client) sendGetWorkloadPreset(ctx context.Context, request *GetWorkload
 
 	stage = "DecodeResponse"
 	result, err := decodeGetWorkloadPresetResponse(resp)
+	if err != nil {
+		return res, errors.Wrap(err, "decode response")
+	}
+
+	return result, nil
+}
+
+// GrafanaSession invokes grafanaSession operation.
+//
+// GrafanaSession mints a run-scoped token so the caller's embedded Grafana
+// can read this run's metrics through the same scoped datasource a public
+// share uses. Read-only; scopes to exactly this run.
+//
+// GET /api/v1/test-run-overview/grafana-session
+func (c *Client) GrafanaSession(ctx context.Context, request *GrafanaSessionRequest) (*GrafanaSessionResponse, error) {
+	res, err := c.sendGrafanaSession(ctx, request)
+	return res, err
+}
+
+func (c *Client) sendGrafanaSession(ctx context.Context, request *GrafanaSessionRequest) (res *GrafanaSessionResponse, err error) {
+	otelAttrs := []attribute.KeyValue{
+		otelogen.OperationID("grafanaSession"),
+		semconv.HTTPRequestMethodKey.String("GET"),
+		semconv.URLTemplateKey.String("/api/v1/test-run-overview/grafana-session"),
+	}
+	otelAttrs = append(otelAttrs, c.cfg.Attributes...)
+
+	// Run stopwatch.
+	startTime := time.Now()
+	defer func() {
+		// Use floating point division here for higher precision (instead of Millisecond method).
+		elapsedDuration := time.Since(startTime)
+		c.duration.Record(ctx, float64(elapsedDuration)/float64(time.Millisecond), metric.WithAttributes(otelAttrs...))
+	}()
+
+	// Increment request counter.
+	c.requests.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+
+	// Start a span for this request.
+	ctx, span := c.cfg.Tracer.Start(ctx, GrafanaSessionOperation,
+		trace.WithAttributes(otelAttrs...),
+		clientSpanKind,
+	)
+	// Track stage for error reporting.
+	var stage string
+	defer func() {
+		if err != nil {
+			span.RecordError(err)
+			span.SetStatus(codes.Error, stage)
+			c.errors.Add(ctx, 1, metric.WithAttributes(otelAttrs...))
+		}
+		span.End()
+	}()
+
+	stage = "BuildURL"
+	u := uri.Clone(c.requestURL(ctx))
+	var pathParts [1]string
+	pathParts[0] = "/api/v1/test-run-overview/grafana-session"
+	uri.AddPathParts(u, pathParts[:]...)
+
+	stage = "EncodeRequest"
+	r, err := ht.NewRequest(ctx, "GET", u)
+	if err != nil {
+		return res, errors.Wrap(err, "create request")
+	}
+	if err := encodeGrafanaSessionRequest(request, r); err != nil {
+		return res, errors.Wrap(err, "encode request")
+	}
+
+	stage = "SendRequest"
+	resp, err := c.cfg.Client.Do(r)
+	if err != nil {
+		return res, errors.Wrap(err, "do request")
+	}
+	body := resp.Body
+	defer body.Close()
+
+	stage = "DecodeResponse"
+	result, err := decodeGrafanaSessionResponse(resp)
 	if err != nil {
 		return res, errors.Wrap(err, "decode response")
 	}

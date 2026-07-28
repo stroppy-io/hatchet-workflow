@@ -250,6 +250,8 @@
     - [cloud.v1.api.GetTestWizardDraftResponse](cloud/v1/api/README.md#cloud-v1-api-gettestwizarddraftresponse)
     - [cloud.v1.api.GetWorkloadPresetRequest](cloud/v1/api/README.md#cloud-v1-api-getworkloadpresetrequest)
     - [cloud.v1.api.GetWorkloadPresetResponse](cloud/v1/api/README.md#cloud-v1-api-getworkloadpresetresponse)
+    - [cloud.v1.api.GrafanaSessionRequest](cloud/v1/api/README.md#cloud-v1-api-grafanasessionrequest)
+    - [cloud.v1.api.GrafanaSessionResponse](cloud/v1/api/README.md#cloud-v1-api-grafanasessionresponse)
     - [cloud.v1.api.LeaveTenantRequest](cloud/v1/api/README.md#cloud-v1-api-leavetenantrequest)
     - [cloud.v1.api.LeaveTenantResponse](cloud/v1/api/README.md#cloud-v1-api-leavetenantresponse)
     - [cloud.v1.api.LinkExternalIdentityRequest](cloud/v1/api/README.md#cloud-v1-api-linkexternalidentityrequest)

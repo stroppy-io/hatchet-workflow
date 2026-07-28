@@ -420,6 +420,9 @@ func Run(ctx context.Context, cfg Config) error {
 		Logs:     logReader,
 		Metrics:  metricsReader,
 		Tx:       trm,
+		// Mints the run-scope cookie the embedded Grafana forwards to the gateway's
+		// scoped datasource; signed with the same secret the gateway verifies with.
+		GrafanaScopeSigner: func(runID string) string { return gateway.SignRunScope(cfg.JWTSecret, runID) },
 	})
 
 	testWizardService := testwizardsvc.NewTestWizardService(testwizardsvc.TestWizardDeps{
@@ -779,6 +782,7 @@ func Run(ctx context.Context, cfg Config) error {
 		// /public/metrics/* serves ONLY that run's series to Grafana's public org.
 		MetricsQueryBackend: cfg.MetricsQueryBackend,
 		ShareScopes:         adapters.NewShareScopeResolver(store.Shares()),
+		RunScopeSecret:      cfg.JWTSecret,
 		HTTPFallback:        h2cHandler,
 		Logger:              log,
 	})

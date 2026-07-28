@@ -400,6 +400,28 @@ message GetLogFacetsResponse {
 }
 
 /*
+    GrafanaSessionRequest asks for a scope token that lets the caller's embedded
+    Grafana read THIS run's metrics. The embed is anonymous to Grafana (an iframe
+    carries no bearer), so the run detail page exchanges its authenticated session
+    for a run-scoped token here, then hands it to Grafana via a cookie — the same
+    scoped-datasource path a public share uses, but authorised per-run instead of
+    by a share token.
+ */
+message GrafanaSessionRequest {
+    string tenant_id = 1 [(validate.rules).string = {min_len: 1, max_len: 64}];
+    string run_id = 2 [(validate.rules).string = {min_len: 1, max_len: 128}];
+}
+/*
+    GrafanaSessionResponse returns the opaque, signed run-scope token. The gateway
+    trusts it to pin every embedded metrics query to run_id; it grants nothing
+    beyond reading this one run's series.
+ */
+message GrafanaSessionResponse {
+    string run_id = 1;
+    string scope_token = 2;
+}
+
+/*
     TestRunOverviewService serves the read-only overview, logs and metrics for a
     single run.
  */
@@ -573,6 +595,34 @@ service TestRunOverviewService {
             http_method: HTTP_METHOD_GET
             path: "/get-log-facets"
             operation_id: "getLogFacets"
+            request_body: {
+                required: true
+            }
+            responses: {
+                status: 200
+                description: "OK"
+            }
+            responses: {
+                description: "Unexpected error."
+                schema: {
+                    ref: "#/components/schemas/Error"
+                }
+            }
+        };
+
+        option idempotency_level = NO_SIDE_EFFECTS;
+        option (cloud.v1.iam.auth) = {all_of: [{resource: RESOURCE_TEST_RUN, action: ACTION_READ}]};
+    }
+    /*
+        GrafanaSession mints a run-scoped token so the caller's embedded Grafana
+        can read this run's metrics through the same scoped datasource a public
+        share uses. Read-only; scopes to exactly this run.
+     */
+    rpc GrafanaSession (GrafanaSessionRequest) returns (GrafanaSessionResponse) {
+        option (ogen.method) = {
+            http_method: HTTP_METHOD_GET
+            path: "/grafana-session"
+            operation_id: "grafanaSession"
             request_body: {
                 required: true
             }

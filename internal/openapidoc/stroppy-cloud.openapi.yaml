@@ -3031,6 +3031,26 @@ components:
             required:
                 - preset
             type: object
+        GrafanaSessionRequest:
+            additionalProperties: false
+            properties:
+                runId:
+                    maxLength: 128
+                    minLength: 1
+                    type: string
+                tenantId:
+                    maxLength: 64
+                    minLength: 1
+                    type: string
+            type: object
+        GrafanaSessionResponse:
+            additionalProperties: false
+            properties:
+                runId:
+                    type: string
+                scopeToken:
+                    type: string
+            type: object
         Healthcheck:
             additionalProperties: false
             properties:
@@ -12765,6 +12785,37 @@ paths:
                                 $ref: '#/components/schemas/Error'
                     description: Unexpected error.
             summary: GetTestRunOverview fetches the Overview snapshot. Read-only.
+            tags:
+                - test-run-overview
+            x-idempotency-level: NO_SIDE_EFFECTS
+            x-ogen-operation-group: TestRunOverview
+    /api/v1/test-run-overview/grafana-session:
+        get:
+            description: |-
+                GrafanaSession mints a run-scoped token so the caller's embedded Grafana
+                can read this run's metrics through the same scoped datasource a public
+                share uses. Read-only; scopes to exactly this run.
+            operationId: grafanaSession
+            requestBody:
+                content:
+                    application/json:
+                        schema:
+                            $ref: '#/components/schemas/GrafanaSessionRequest'
+                required: true
+            responses:
+                "200":
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/GrafanaSessionResponse'
+                    description: OK
+                default:
+                    content:
+                        application/json:
+                            schema:
+                                $ref: '#/components/schemas/Error'
+                    description: Unexpected error.
+            summary: GrafanaSession mints a run-scoped token so the caller's embedded Grafana
             tags:
                 - test-run-overview
             x-idempotency-level: NO_SIDE_EFFECTS

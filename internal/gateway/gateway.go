@@ -51,6 +51,11 @@ type Config struct {
 	// It backs both /public/share/{token}/session and the run filter forced onto
 	// every /public/metrics/* query. Empty disables both routes (404).
 	ShareScopes ShareResolver
+	// RunScopeSecret is the HMAC secret that signs authenticated run-scope cookies
+	// (SignRunScope) — the in-app equivalent of a share token, minted by the
+	// GrafanaSession RPC. /public/metrics accepts a cookie signed with it. Empty
+	// disables authenticated run-scope cookies (only share tokens then work).
+	RunScopeSecret string
 	// GrafanaBackend is the internal Grafana base URL (e.g. "http://grafana:3001")
 	// the gateway reverse-proxies /grafana/* to, so the embedded dashboards are
 	// served from the SAME server origin — no separate public Grafana URL needed.
@@ -143,7 +148,7 @@ func New(cfg Config) (*Gateway, error) {
 	}
 	g.shareScopes = cfg.ShareScopes
 	if cfg.MetricsQueryBackend != "" && cfg.ShareScopes != nil {
-		pm, err := newPublicMetricsProxy(cfg.MetricsQueryBackend, cfg.MonitoringToken, cfg.ShareScopes, logger)
+		pm, err := newPublicMetricsProxy(cfg.MetricsQueryBackend, cfg.MonitoringToken, cfg.ShareScopes, cfg.RunScopeSecret, logger)
 		if err != nil {
 			return nil, fmt.Errorf("gateway: metrics query backend %q: %w", cfg.MetricsQueryBackend, err)
 		}

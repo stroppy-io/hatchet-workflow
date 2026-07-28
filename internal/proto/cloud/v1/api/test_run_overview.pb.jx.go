@@ -1667,3 +1667,137 @@ func (m *GetLogFacetsResponse) UnmarshalJSON(data []byte) error {
 	d := jx.DecodeBytes(data)
 	return m.Decode(d)
 }
+
+func (m *GrafanaSessionRequest) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.TenantId != "" {
+		e.FieldStart("tenantId")
+		e.Str(m.TenantId)
+	}
+	if m.RunId != "" {
+		e.FieldStart("runId")
+		e.Str(m.RunId)
+	}
+	e.ObjEnd()
+}
+
+func (m *GrafanaSessionRequest) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "tenantId", "tenant_id":
+			if seen["TenantId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["TenantId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.TenantId = v
+			return nil
+		case "runId", "run_id":
+			if seen["RunId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["RunId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.RunId = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *GrafanaSessionRequest) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *GrafanaSessionRequest) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}
+
+func (m *GrafanaSessionResponse) Encode(e *jx.Encoder) {
+	if m == nil {
+		e.ObjStart()
+		e.ObjEnd()
+		return
+	}
+	e.ObjStart()
+	if m.RunId != "" {
+		e.FieldStart("runId")
+		e.Str(m.RunId)
+	}
+	if m.ScopeToken != "" {
+		e.FieldStart("scopeToken")
+		e.Str(m.ScopeToken)
+	}
+	e.ObjEnd()
+}
+
+func (m *GrafanaSessionResponse) Decode(d *jx.Decoder) error {
+	seen := map[string]bool{}
+	return d.Obj(func(d *jx.Decoder, key string) error {
+		switch key {
+		case "runId", "run_id":
+			if seen["RunId"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["RunId"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.RunId = v
+			return nil
+		case "scopeToken", "scope_token":
+			if seen["ScopeToken"] {
+				return fmt.Errorf("duplicate field %q", key)
+			}
+			seen["ScopeToken"] = true
+			if d.Next() == jx.Null {
+				return d.Null()
+			}
+			v, err := d.Str()
+			if err != nil {
+				return err
+			}
+			m.ScopeToken = v
+			return nil
+		default:
+			return fmt.Errorf("unknown field %q", key)
+		}
+	})
+}
+
+func (m *GrafanaSessionResponse) MarshalJSON() ([]byte, error) {
+	var e jx.Encoder
+	m.Encode(&e)
+	return e.Bytes(), nil
+}
+
+func (m *GrafanaSessionResponse) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return m.Decode(d)
+}

@@ -51,3 +51,7 @@ func (h *ConnectHandler) GetRunMetrics(ctx context.Context, req *api.GetRunMetri
 func (h *ConnectHandler) GetLogFacets(ctx context.Context, req *api.GetLogFacetsRequest) (*api.GetLogFacetsResponse, error) {
 	return h.svc.GetLogFacets(ctx, req)
 }
+
+func (h *ConnectHandler) GrafanaSession(ctx context.Context, req *api.GrafanaSessionRequest) (*api.GrafanaSessionResponse, error) {
+	return h.svc.GrafanaSession(ctx, req)
+}

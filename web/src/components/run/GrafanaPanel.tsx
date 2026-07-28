@@ -12,10 +12,11 @@ import {
   buildEmbedUrl,
   dashboardsForRun,
 } from "@/services/grafana";
-import type { WorkerVM } from "@/services/run_overview";
+import { ensureGrafanaSession, type WorkerVM } from "@/services/run_overview";
 import { cn } from "@/lib/utils";
 
 interface GrafanaPanelProps {
+  tenantSlug: string;
   runId: string;
   dbKind?: string;
   startedAt?: string;
@@ -28,10 +29,25 @@ function machineId(w: WorkerVM): string {
   return w.machineId || w.host || w.id;
 }
 
-export function GrafanaPanel({ runId, dbKind, startedAt, finishedAt, workers }: GrafanaPanelProps) {
+export function GrafanaPanel({ tenantSlug, runId, dbKind, startedAt, finishedAt, workers }: GrafanaPanelProps) {
   const dashboards = dashboardsForRun(dbKind);
   const [selected, setSelected] = useState(dashboards[0] ?? "workload");
   const [machine, setMachine] = useState<string>(""); // "" = All
+
+  // The embed queries the gateway's run-scoped datasource, which needs a scope
+  // cookie. Mint it BEFORE any iframe mounts, or the first dashboard load races
+  // the cookie and every panel 404s. Iframes stay unmounted until it is set.
+  const [sessionReady, setSessionReady] = useState(false);
+  useEffect(() => {
+    let alive = true;
+    setSessionReady(false);
+    ensureGrafanaSession(tenantSlug, runId)
+      .catch(() => {}) // best-effort: still show the dashboards, panels error if unscoped
+      .finally(() => alive && setSessionReady(true));
+    return () => {
+      alive = false;
+    };
+  }, [tenantSlug, runId]);
 
   const machineActive = selected === "system";
   const targets = workers
@@ -53,13 +69,14 @@ export function GrafanaPanel({ runId, dbKind, startedAt, finishedAt, workers }: 
   // (Pre-warming the whole dashboards×machines product booted a full Grafana
   // app per iframe → hundreds of requests on page open — never do that.)
   useEffect(() => {
+    if (!sessionReady) return; // don't race the scope cookie
     const m = srcsRef.current;
     if (!m.has(activeKey)) {
       m.set(activeKey, buildEmbedUrl(selected, { runId, dbKind, machine, startedAt, finishedAt }));
       tick((n) => n + 1);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [activeKey, runId]);
+  }, [activeKey, runId, sessionReady]);
 
   // Rebuild every URL when the run's time window changes (run finishes) — the
   // locked from..to is part of the URL.

@@ -955,6 +955,14 @@ type TestRunOverviewHandler interface {
 	//
 	// GET /api/v1/test-run-overview/get-test-run-overview
 	GetTestRunOverview(ctx context.Context, req *GetTestRunOverviewRequest) (*GetTestRunOverviewResponse, error)
+	// GrafanaSession implements grafanaSession operation.
+	//
+	// GrafanaSession mints a run-scoped token so the caller's embedded Grafana
+	// can read this run's metrics through the same scoped datasource a public
+	// share uses. Read-only; scopes to exactly this run.
+	//
+	// GET /api/v1/test-run-overview/grafana-session
+	GrafanaSession(ctx context.Context, req *GrafanaSessionRequest) (*GrafanaSessionResponse, error)
 	// QueryLogs implements queryLogs operation.
 	//
 	// QueryLogs fetches a cursor-paged window of historical log lines. Read-only.

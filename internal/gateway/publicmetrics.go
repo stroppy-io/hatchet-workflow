@@ -189,7 +189,7 @@ func scopeRequest(r *http.Request, scope ShareScope) error {
 // (the same Prometheus-compatible endpoint the authenticated Grafana datasource
 // uses). backendToken, when set, authenticates the server-side relay; it is
 // never accepted from, nor exposed to, the client.
-func newPublicMetricsProxy(backend, backendToken string, shares ShareResolver, log *slog.Logger) (http.Handler, error) {
+func newPublicMetricsProxy(backend, backendToken string, shares ShareResolver, runScopeSecret string, log *slog.Logger) (http.Handler, error) {
 	u, err := url.Parse(backend)
 	if err != nil {
 		return nil, err
@@ -208,7 +208,7 @@ func newPublicMetricsProxy(backend, backendToken string, shares ShareResolver, l
 	}
 
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		scope, ok := shareScopeFromRequest(r, shares)
+		scope, ok := shareScopeFromRequest(r, shares, runScopeSecret)
 		if !ok {
 			// Fail closed, and stay indistinguishable from an unknown token.
 			http.NotFound(w, r)
@@ -229,13 +229,21 @@ func newPublicMetricsProxy(backend, backendToken string, shares ShareResolver, l
 	}), nil
 }
 
-// shareScopeFromRequest resolves the share cookie into a run scope.
-func shareScopeFromRequest(r *http.Request, shares ShareResolver) (ShareScope, bool) {
-	if shares == nil {
-		return ShareScope{}, false
-	}
+// shareScopeFromRequest resolves the scope cookie into a run scope. The cookie
+// carries EITHER a signed run-scope token (an authenticated in-app viewer, see
+// runscope.go) or a public share token; both live under the same cookie name so
+// Grafana's single keepCookies entry forwards whichever applies.
+func shareScopeFromRequest(r *http.Request, shares ShareResolver, runScopeSecret string) (ShareScope, bool) {
 	c, err := r.Cookie(shareCookieName)
 	if err != nil || c.Value == "" {
+		return ShareScope{}, false
+	}
+	// Signed run-scope token: an authorised in-app viewer. No window bound — the
+	// user picks the dashboard time range freely.
+	if runID, ok := verifyRunScope(runScopeSecret, c.Value); ok {
+		return ShareScope{RunID: runID}, true
+	}
+	if shares == nil {
 		return ShareScope{}, false
 	}
 	scope, err := shares.ResolveShare(r.Context(), c.Value)

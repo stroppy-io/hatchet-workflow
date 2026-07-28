@@ -211,6 +211,58 @@ func GetTestRunOverviewResponseFromOgen(src *rest.GetTestRunOverviewResponse) (*
 	return dst, nil
 }
 
+// ToOgen converts GrafanaSessionRequest to its ogen representation.
+func (src *GrafanaSessionRequest) ToOgen() (*rest.GrafanaSessionRequest, error) {
+	var dst rest.GrafanaSessionRequest
+	if src == nil {
+		return &dst, nil
+	}
+	dst.TenantId.SetTo(string(src.GetTenantId()))
+	dst.RunId.SetTo(string(src.GetRunId()))
+	return &dst, nil
+}
+
+// GrafanaSessionRequestFromOgen converts the ogen representation back to GrafanaSessionRequest.
+func GrafanaSessionRequestFromOgen(src *rest.GrafanaSessionRequest) (*GrafanaSessionRequest, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &GrafanaSessionRequest{}
+	if v1, ok := src.TenantId.Get(); ok {
+		dst.TenantId = string(v1)
+	}
+	if v2, ok := src.RunId.Get(); ok {
+		dst.RunId = string(v2)
+	}
+	return dst, nil
+}
+
+// ToOgen converts GrafanaSessionResponse to its ogen representation.
+func (src *GrafanaSessionResponse) ToOgen() (*rest.GrafanaSessionResponse, error) {
+	var dst rest.GrafanaSessionResponse
+	if src == nil {
+		return &dst, nil
+	}
+	dst.RunId.SetTo(string(src.GetRunId()))
+	dst.ScopeToken.SetTo(string(src.GetScopeToken()))
+	return &dst, nil
+}
+
+// GrafanaSessionResponseFromOgen converts the ogen representation back to GrafanaSessionResponse.
+func GrafanaSessionResponseFromOgen(src *rest.GrafanaSessionResponse) (*GrafanaSessionResponse, error) {
+	if src == nil {
+		return nil, nil
+	}
+	dst := &GrafanaSessionResponse{}
+	if v1, ok := src.RunId.Get(); ok {
+		dst.RunId = string(v1)
+	}
+	if v2, ok := src.ScopeToken.Get(); ok {
+		dst.ScopeToken = string(v2)
+	}
+	return dst, nil
+}
+
 // ToOgen converts LogFacetField to its ogen representation.
 func (src *LogFacetField) ToOgen() (*rest.LogFacetField, error) {
 	var dst rest.LogFacetField

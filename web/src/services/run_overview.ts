@@ -516,6 +516,24 @@ function snapshotToVM(snap: SnapshotJson, runRecord: TestRunRecord | undefined, 
   };
 }
 
+/**
+ * Prime the embedded Grafana to read THIS run's metrics.
+ *
+ * The dashboards are iframes, anonymous to Grafana (an iframe carries no bearer),
+ * so they query the gateway's run-scoped datasource — which needs a scope cookie.
+ * Exchange the authenticated session for a signed run-scope token and drop it in
+ * the `stroppy_share` cookie the datasource forwards. Not HttpOnly on purpose:
+ * it is set client-side and only grants reading a run the caller already sees,
+ * so it is no more sensitive than the bearer that minted it. Best-effort — the
+ * caller still renders on failure (the panels just show Grafana's own error).
+ */
+export async function ensureGrafanaSession(tenantSlug: string, runId: string): Promise<void> {
+  const tenantId = await resolveTenantId(tenantSlug);
+  const resp = await testRunOverviewClient.grafanaSession({ tenantId, runId });
+  if (!resp.scopeToken) return;
+  document.cookie = `stroppy_share=${resp.scopeToken}; path=/; max-age=43200; samesite=lax`;
+}
+
 export async function getRunOverview(
   tenantSlug: string,
   runId: string,

@@ -552,6 +552,7 @@ export function RunDetail() {
             {overview && grafanaSeen && (
               <div className={cn("absolute inset-0 overflow-hidden", view === "grafana" ? "block" : "hidden")}>
                 <GrafanaPanel
+                  tenantSlug={tenantSlug}
                   runId={id}
                   dbKind={run?.dbKind}
                   startedAt={winStart}

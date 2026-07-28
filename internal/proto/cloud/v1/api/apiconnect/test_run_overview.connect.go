@@ -55,6 +55,9 @@ const (
 	// TestRunOverviewServiceGetLogFacetsProcedure is the fully-qualified name of the
 	// TestRunOverviewService's GetLogFacets RPC.
 	TestRunOverviewServiceGetLogFacetsProcedure = "/cloud.v1.api.TestRunOverviewService/GetLogFacets"
+	// TestRunOverviewServiceGrafanaSessionProcedure is the fully-qualified name of the
+	// TestRunOverviewService's GrafanaSession RPC.
+	TestRunOverviewServiceGrafanaSessionProcedure = "/cloud.v1.api.TestRunOverviewService/GrafanaSession"
 )
 
 // TestRunOverviewServiceClient is a client for the cloud.v1.api.TestRunOverviewService service.
@@ -75,6 +78,10 @@ type TestRunOverviewServiceClient interface {
 	// dimensions across the whole run (so the filter dropdowns don't depend on
 	// which page of logs is loaded). Read-only.
 	GetLogFacets(context.Context, *api.GetLogFacetsRequest) (*api.GetLogFacetsResponse, error)
+	// GrafanaSession mints a run-scoped token so the caller's embedded Grafana
+	// can read this run's metrics through the same scoped datasource a public
+	// share uses. Read-only; scopes to exactly this run.
+	GrafanaSession(context.Context, *api.GrafanaSessionRequest) (*api.GrafanaSessionResponse, error)
 }
 
 // NewTestRunOverviewServiceClient constructs a client for the cloud.v1.api.TestRunOverviewService
@@ -135,6 +142,13 @@ func NewTestRunOverviewServiceClient(httpClient connect.HTTPClient, baseURL stri
 			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 			connect.WithClientOptions(opts...),
 		),
+		grafanaSession: connect.NewClient[api.GrafanaSessionRequest, api.GrafanaSessionResponse](
+			httpClient,
+			baseURL+TestRunOverviewServiceGrafanaSessionProcedure,
+			connect.WithSchema(testRunOverviewServiceMethods.ByName("GrafanaSession")),
+			connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+			connect.WithClientOptions(opts...),
+		),
 	}
 }
 
@@ -147,6 +161,7 @@ type testRunOverviewServiceClient struct {
 	resolveLogRef         *connect.Client[api.ResolveLogRefRequest, api.ResolveLogRefResponse]
 	getRunMetrics         *connect.Client[api.GetRunMetricsRequest, api.GetRunMetricsResponse]
 	getLogFacets          *connect.Client[api.GetLogFacetsRequest, api.GetLogFacetsResponse]
+	grafanaSession        *connect.Client[api.GrafanaSessionRequest, api.GrafanaSessionResponse]
 }
 
 // GetTestRunOverview calls cloud.v1.api.TestRunOverviewService.GetTestRunOverview.
@@ -204,6 +219,15 @@ func (c *testRunOverviewServiceClient) GetLogFacets(ctx context.Context, req *ap
 	return nil, err
 }
 
+// GrafanaSession calls cloud.v1.api.TestRunOverviewService.GrafanaSession.
+func (c *testRunOverviewServiceClient) GrafanaSession(ctx context.Context, req *api.GrafanaSessionRequest) (*api.GrafanaSessionResponse, error) {
+	response, err := c.grafanaSession.CallUnary(ctx, connect.NewRequest(req))
+	if response != nil {
+		return response.Msg, err
+	}
+	return nil, err
+}
+
 // TestRunOverviewServiceHandler is an implementation of the cloud.v1.api.TestRunOverviewService
 // service.
 type TestRunOverviewServiceHandler interface {
@@ -223,6 +247,10 @@ type TestRunOverviewServiceHandler interface {
 	// dimensions across the whole run (so the filter dropdowns don't depend on
 	// which page of logs is loaded). Read-only.
 	GetLogFacets(context.Context, *api.GetLogFacetsRequest) (*api.GetLogFacetsResponse, error)
+	// GrafanaSession mints a run-scoped token so the caller's embedded Grafana
+	// can read this run's metrics through the same scoped datasource a public
+	// share uses. Read-only; scopes to exactly this run.
+	GrafanaSession(context.Context, *api.GrafanaSessionRequest) (*api.GrafanaSessionResponse, error)
 }
 
 // NewTestRunOverviewServiceHandler builds an HTTP handler from the service implementation. It
@@ -279,6 +307,13 @@ func NewTestRunOverviewServiceHandler(svc TestRunOverviewServiceHandler, opts ..
 		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
 		connect.WithHandlerOptions(opts...),
 	)
+	testRunOverviewServiceGrafanaSessionHandler := connect.NewUnaryHandlerSimple(
+		TestRunOverviewServiceGrafanaSessionProcedure,
+		svc.GrafanaSession,
+		connect.WithSchema(testRunOverviewServiceMethods.ByName("GrafanaSession")),
+		connect.WithIdempotency(connect.IdempotencyNoSideEffects),
+		connect.WithHandlerOptions(opts...),
+	)
 	return "/cloud.v1.api.TestRunOverviewService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.URL.Path {
 		case TestRunOverviewServiceGetTestRunOverviewProcedure:
@@ -295,6 +330,8 @@ func NewTestRunOverviewServiceHandler(svc TestRunOverviewServiceHandler, opts ..
 			testRunOverviewServiceGetRunMetricsHandler.ServeHTTP(w, r)
 		case TestRunOverviewServiceGetLogFacetsProcedure:
 			testRunOverviewServiceGetLogFacetsHandler.ServeHTTP(w, r)
+		case TestRunOverviewServiceGrafanaSessionProcedure:
+			testRunOverviewServiceGrafanaSessionHandler.ServeHTTP(w, r)
 		default:
 			http.NotFound(w, r)
 		}
@@ -330,4 +367,8 @@ func (UnimplementedTestRunOverviewServiceHandler) GetRunMetrics(context.Context,
 
 func (UnimplementedTestRunOverviewServiceHandler) GetLogFacets(context.Context, *api.GetLogFacetsRequest) (*api.GetLogFacetsResponse, error) {
 	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.TestRunOverviewService.GetLogFacets is not implemented"))
+}
+
+func (UnimplementedTestRunOverviewServiceHandler) GrafanaSession(context.Context, *api.GrafanaSessionRequest) (*api.GrafanaSessionResponse, error) {
+	return nil, connect.NewError(connect.CodeUnimplemented, errors.New("cloud.v1.api.TestRunOverviewService.GrafanaSession is not implemented"))
 }

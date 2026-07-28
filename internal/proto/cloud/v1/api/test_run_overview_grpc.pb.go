@@ -27,6 +27,7 @@ const (
 	TestRunOverviewService_ResolveLogRef_FullMethodName         = "/cloud.v1.api.TestRunOverviewService/ResolveLogRef"
 	TestRunOverviewService_GetRunMetrics_FullMethodName         = "/cloud.v1.api.TestRunOverviewService/GetRunMetrics"
 	TestRunOverviewService_GetLogFacets_FullMethodName          = "/cloud.v1.api.TestRunOverviewService/GetLogFacets"
+	TestRunOverviewService_GrafanaSession_FullMethodName        = "/cloud.v1.api.TestRunOverviewService/GrafanaSession"
 )
 
 // TestRunOverviewServiceClient is the client API for TestRunOverviewService service.
@@ -52,6 +53,10 @@ type TestRunOverviewServiceClient interface {
 	// dimensions across the whole run (so the filter dropdowns don't depend on
 	// which page of logs is loaded). Read-only.
 	GetLogFacets(ctx context.Context, in *GetLogFacetsRequest, opts ...grpc.CallOption) (*GetLogFacetsResponse, error)
+	// GrafanaSession mints a run-scoped token so the caller's embedded Grafana
+	// can read this run's metrics through the same scoped datasource a public
+	// share uses. Read-only; scopes to exactly this run.
+	GrafanaSession(ctx context.Context, in *GrafanaSessionRequest, opts ...grpc.CallOption) (*GrafanaSessionResponse, error)
 }
 
 type testRunOverviewServiceClient struct {
@@ -150,6 +155,16 @@ func (c *testRunOverviewServiceClient) GetLogFacets(ctx context.Context, in *Get
 	return out, nil
 }
 
+func (c *testRunOverviewServiceClient) GrafanaSession(ctx context.Context, in *GrafanaSessionRequest, opts ...grpc.CallOption) (*GrafanaSessionResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GrafanaSessionResponse)
+	err := c.cc.Invoke(ctx, TestRunOverviewService_GrafanaSession_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // TestRunOverviewServiceServer is the server API for TestRunOverviewService service.
 // All implementations must embed UnimplementedTestRunOverviewServiceServer
 // for forward compatibility.
@@ -173,6 +188,10 @@ type TestRunOverviewServiceServer interface {
 	// dimensions across the whole run (so the filter dropdowns don't depend on
 	// which page of logs is loaded). Read-only.
 	GetLogFacets(context.Context, *GetLogFacetsRequest) (*GetLogFacetsResponse, error)
+	// GrafanaSession mints a run-scoped token so the caller's embedded Grafana
+	// can read this run's metrics through the same scoped datasource a public
+	// share uses. Read-only; scopes to exactly this run.
+	GrafanaSession(context.Context, *GrafanaSessionRequest) (*GrafanaSessionResponse, error)
 	mustEmbedUnimplementedTestRunOverviewServiceServer()
 }
 
@@ -203,6 +222,9 @@ func (UnimplementedTestRunOverviewServiceServer) GetRunMetrics(context.Context, 
 }
 func (UnimplementedTestRunOverviewServiceServer) GetLogFacets(context.Context, *GetLogFacetsRequest) (*GetLogFacetsResponse, error) {
 	return nil, status.Error(codes.Unimplemented, "method GetLogFacets not implemented")
+}
+func (UnimplementedTestRunOverviewServiceServer) GrafanaSession(context.Context, *GrafanaSessionRequest) (*GrafanaSessionResponse, error) {
+	return nil, status.Error(codes.Unimplemented, "method GrafanaSession not implemented")
 }
 func (UnimplementedTestRunOverviewServiceServer) mustEmbedUnimplementedTestRunOverviewServiceServer() {
 }
@@ -338,6 +360,24 @@ func _TestRunOverviewService_GetLogFacets_Handler(srv interface{}, ctx context.C
 	return interceptor(ctx, in, info, handler)
 }
 
+func _TestRunOverviewService_GrafanaSession_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GrafanaSessionRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(TestRunOverviewServiceServer).GrafanaSession(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: TestRunOverviewService_GrafanaSession_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(TestRunOverviewServiceServer).GrafanaSession(ctx, req.(*GrafanaSessionRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // TestRunOverviewService_ServiceDesc is the grpc.ServiceDesc for TestRunOverviewService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -364,6 +404,10 @@ var TestRunOverviewService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "GetLogFacets",
 			Handler:    _TestRunOverviewService_GetLogFacets_Handler,
+		},
+		{
+			MethodName: "GrafanaSession",
+			Handler:    _TestRunOverviewService_GrafanaSession_Handler,
 		},
 	},
 	Streams: []grpc.StreamDesc{

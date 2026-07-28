@@ -2875,3 +2875,233 @@ var _ interface {
 	Cause() error
 	ErrorName() string
 } = GetLogFacetsResponseValidationError{}
+
+// Validate checks the field values on GrafanaSessionRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GrafanaSessionRequest) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GrafanaSessionRequest with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GrafanaSessionRequestMultiError, or nil if none found.
+func (m *GrafanaSessionRequest) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GrafanaSessionRequest) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	if l := utf8.RuneCountInString(m.GetTenantId()); l < 1 || l > 64 {
+		err := GrafanaSessionRequestValidationError{
+			field:  "TenantId",
+			reason: "value length must be between 1 and 64 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if l := utf8.RuneCountInString(m.GetRunId()); l < 1 || l > 128 {
+		err := GrafanaSessionRequestValidationError{
+			field:  "RunId",
+			reason: "value length must be between 1 and 128 runes, inclusive",
+		}
+		if !all {
+			return err
+		}
+		errors = append(errors, err)
+	}
+
+	if len(errors) > 0 {
+		return GrafanaSessionRequestMultiError(errors)
+	}
+
+	return nil
+}
+
+// GrafanaSessionRequestMultiError is an error wrapping multiple validation
+// errors returned by GrafanaSessionRequest.ValidateAll() if the designated
+// constraints aren't met.
+type GrafanaSessionRequestMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GrafanaSessionRequestMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GrafanaSessionRequestMultiError) AllErrors() []error { return m }
+
+// GrafanaSessionRequestValidationError is the validation error returned by
+// GrafanaSessionRequest.Validate if the designated constraints aren't met.
+type GrafanaSessionRequestValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GrafanaSessionRequestValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GrafanaSessionRequestValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GrafanaSessionRequestValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GrafanaSessionRequestValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GrafanaSessionRequestValidationError) ErrorName() string {
+	return "GrafanaSessionRequestValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GrafanaSessionRequestValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGrafanaSessionRequest.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GrafanaSessionRequestValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GrafanaSessionRequestValidationError{}
+
+// Validate checks the field values on GrafanaSessionResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the first error encountered is returned, or nil if there are no violations.
+func (m *GrafanaSessionResponse) Validate() error {
+	return m.validate(false)
+}
+
+// ValidateAll checks the field values on GrafanaSessionResponse with the rules
+// defined in the proto definition for this message. If any rules are
+// violated, the result is a list of violation errors wrapped in
+// GrafanaSessionResponseMultiError, or nil if none found.
+func (m *GrafanaSessionResponse) ValidateAll() error {
+	return m.validate(true)
+}
+
+func (m *GrafanaSessionResponse) validate(all bool) error {
+	if m == nil {
+		return nil
+	}
+
+	var errors []error
+
+	// no validation rules for RunId
+
+	// no validation rules for ScopeToken
+
+	if len(errors) > 0 {
+		return GrafanaSessionResponseMultiError(errors)
+	}
+
+	return nil
+}
+
+// GrafanaSessionResponseMultiError is an error wrapping multiple validation
+// errors returned by GrafanaSessionResponse.ValidateAll() if the designated
+// constraints aren't met.
+type GrafanaSessionResponseMultiError []error
+
+// Error returns a concatenation of all the error messages it wraps.
+func (m GrafanaSessionResponseMultiError) Error() string {
+	msgs := make([]string, 0, len(m))
+	for _, err := range m {
+		msgs = append(msgs, err.Error())
+	}
+	return strings.Join(msgs, "; ")
+}
+
+// AllErrors returns a list of validation violation errors.
+func (m GrafanaSessionResponseMultiError) AllErrors() []error { return m }
+
+// GrafanaSessionResponseValidationError is the validation error returned by
+// GrafanaSessionResponse.Validate if the designated constraints aren't met.
+type GrafanaSessionResponseValidationError struct {
+	field  string
+	reason string
+	cause  error
+	key    bool
+}
+
+// Field function returns field value.
+func (e GrafanaSessionResponseValidationError) Field() string { return e.field }
+
+// Reason function returns reason value.
+func (e GrafanaSessionResponseValidationError) Reason() string { return e.reason }
+
+// Cause function returns cause value.
+func (e GrafanaSessionResponseValidationError) Cause() error { return e.cause }
+
+// Key function returns key value.
+func (e GrafanaSessionResponseValidationError) Key() bool { return e.key }
+
+// ErrorName returns error name.
+func (e GrafanaSessionResponseValidationError) ErrorName() string {
+	return "GrafanaSessionResponseValidationError"
+}
+
+// Error satisfies the builtin error interface
+func (e GrafanaSessionResponseValidationError) Error() string {
+	cause := ""
+	if e.cause != nil {
+		cause = fmt.Sprintf(" | caused by: %v", e.cause)
+	}
+
+	key := ""
+	if e.key {
+		key = "key for "
+	}
+
+	return fmt.Sprintf(
+		"invalid %sGrafanaSessionResponse.%s: %s%s",
+		key,
+		e.field,
+		e.reason,
+		cause)
+}
+
+var _ error = GrafanaSessionResponseValidationError{}
+
+var _ interface {
+	Field() string
+	Reason() string
+	Key() bool
+	Cause() error
+	ErrorName() string
+} = GrafanaSessionResponseValidationError{}

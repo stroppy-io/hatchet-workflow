@@ -186,7 +186,7 @@ func newProxyFixture(t *testing.T, shares ShareResolver) (*httptest.Server, *url
 	}))
 	t.Cleanup(upstream.Close)
 
-	h, err := newPublicMetricsProxy(upstream.URL, "backend-token", shares, slog.New(slog.DiscardHandler))
+	h, err := newPublicMetricsProxy(upstream.URL, "backend-token", shares, "", slog.New(slog.DiscardHandler))
 	if err != nil {
 		t.Fatalf("newPublicMetricsProxy: %v", err)
 	}
@@ -269,7 +269,7 @@ func TestProxyStripsViewerCredentials(t *testing.T) {
 	}))
 	defer upstream.Close()
 
-	h, err := newPublicMetricsProxy(upstream.URL, "backend-token", stubShares{scope: liveScope()}, slog.New(slog.DiscardHandler))
+	h, err := newPublicMetricsProxy(upstream.URL, "backend-token", stubShares{scope: liveScope()}, "", slog.New(slog.DiscardHandler))
 	if err != nil {
 		t.Fatalf("newPublicMetricsProxy: %v", err)
 	}

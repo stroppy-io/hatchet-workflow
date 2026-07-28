@@ -7829,6 +7829,58 @@ func (s *GetWorkloadPresetResponse) SetPreset(val WorkloadPresetRecord) {
 	s.Preset = val
 }
 
+// Ref: #/components/schemas/GrafanaSessionRequest
+type GrafanaSessionRequest struct {
+	RunId    OptString `json:"runId"`
+	TenantId OptString `json:"tenantId"`
+}
+
+// GetRunId returns the value of RunId.
+func (s *GrafanaSessionRequest) GetRunId() OptString {
+	return s.RunId
+}
+
+// GetTenantId returns the value of TenantId.
+func (s *GrafanaSessionRequest) GetTenantId() OptString {
+	return s.TenantId
+}
+
+// SetRunId sets the value of RunId.
+func (s *GrafanaSessionRequest) SetRunId(val OptString) {
+	s.RunId = val
+}
+
+// SetTenantId sets the value of TenantId.
+func (s *GrafanaSessionRequest) SetTenantId(val OptString) {
+	s.TenantId = val
+}
+
+// Ref: #/components/schemas/GrafanaSessionResponse
+type GrafanaSessionResponse struct {
+	RunId      OptString `json:"runId"`
+	ScopeToken OptString `json:"scopeToken"`
+}
+
+// GetRunId returns the value of RunId.
+func (s *GrafanaSessionResponse) GetRunId() OptString {
+	return s.RunId
+}
+
+// GetScopeToken returns the value of ScopeToken.
+func (s *GrafanaSessionResponse) GetScopeToken() OptString {
+	return s.ScopeToken
+}
+
+// SetRunId sets the value of RunId.
+func (s *GrafanaSessionResponse) SetRunId(val OptString) {
+	s.RunId = val
+}
+
+// SetScopeToken sets the value of ScopeToken.
+func (s *GrafanaSessionResponse) SetScopeToken(val OptString) {
+	s.ScopeToken = val
+}
+
 // Ref: #/components/schemas/Healthcheck
 type Healthcheck struct {
 	IntervalSeconds    OptInt32 `json:"intervalSeconds"`

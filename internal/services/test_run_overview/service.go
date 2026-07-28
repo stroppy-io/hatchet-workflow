@@ -100,6 +100,10 @@ type TestRunOverviewDeps struct {
 	Logs     LogReader
 	Metrics  MetricsReader
 	Tx       tx.Trm
+	// GrafanaScopeSigner mints the run-scope token GrafanaSession returns, so an
+	// authenticated viewer's embedded Grafana can read a run through the same
+	// gateway-scoped datasource a public share uses. nil disables GrafanaSession.
+	GrafanaScopeSigner func(runID string) string
 }
 
 type TestRunOverviewService struct {
@@ -265,6 +269,24 @@ func (s *TestRunOverviewService) GetRunMetrics(ctx context.Context, req *api.Get
 		return nil, utils.MapErr(err)
 	}
 	return &api.GetRunMetricsResponse{Metrics: m}, nil
+}
+
+// GrafanaSession authorises the caller for the run, then returns a signed
+// run-scope token. The run detail page hands it to Grafana via a cookie so the
+// embedded (anonymous-to-Grafana) dashboards read this run's metrics through the
+// gateway's scoped datasource — the same path a public share uses. Read-only.
+func (s *TestRunOverviewService) GrafanaSession(ctx context.Context, req *api.GrafanaSessionRequest) (*api.GrafanaSessionResponse, error) {
+	if err := s.authorizeRun(ctx, req.GetTenantId(), req.GetRunId()); err != nil {
+		return nil, err
+	}
+	if s.d.GrafanaScopeSigner == nil {
+		return nil, status.Error(codes.Unimplemented, "grafana metrics scoping is not configured")
+	}
+	token := s.d.GrafanaScopeSigner(req.GetRunId())
+	if token == "" {
+		return nil, status.Error(codes.Internal, "failed to mint grafana scope token")
+	}
+	return &api.GrafanaSessionResponse{RunId: req.GetRunId(), ScopeToken: token}, nil
 }
 
 func (s *TestRunOverviewService) streamOverview(ctx context.Context, tenantID, runID string, send func(*api.TestRunOverviewSnapshot) error) error {

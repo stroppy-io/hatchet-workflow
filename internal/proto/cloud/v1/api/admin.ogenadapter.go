@@ -1299,6 +1299,24 @@ func (a *OgenAdapter) GetWorkloadPreset(ctx context.Context, req *rest.GetWorklo
 	return out, nil
 }
 
+func (a *OgenAdapter) GrafanaSession(ctx context.Context, req *rest.GrafanaSessionRequest) (*rest.GrafanaSessionResponse, error) {
+	in := &GrafanaSessionRequest{}
+	b, err := GrafanaSessionRequestFromOgen(req)
+	if err != nil {
+		return nil, err
+	}
+	in = b
+	resp, err := a.testRunOverviewService.GrafanaSession(ctx, in)
+	if err != nil {
+		return nil, err
+	}
+	out, err := resp.ToOgen()
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (a *OgenAdapter) LeaveTenant(ctx context.Context, req *rest.LeaveTenantRequest, params rest.LeaveTenantParams) error {
 	in := &LeaveTenantRequest{}
 	b, err := LeaveTenantRequestFromOgen(req)
