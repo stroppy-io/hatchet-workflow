@@ -1,0 +1,909 @@
+paths:
+  # -------------------------------------------------------------- Databases
+  /api/v1/t/{slug}/databases:
+    get:
+      operationId: listDatabases
+      tags: [Databases]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/search'
+        - $ref: '#/components/parameters/tags'
+        - $ref: '#/components/parameters/author'
+        - $ref: '#/components/parameters/favorites'
+        - { name: kind, in: query, style: form, explode: false, schema: { type: array, items: { $ref: '#/components/schemas/DatabaseKind' } } }
+        - { name: sort, in: query, schema: { type: string, enum: [name, created_at, updated_at, kind], default: updated_at } }
+        - $ref: '#/components/parameters/order'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      summary: List database definitions.
+      responses:
+        '200':
+          description: Page.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Database' }
+                  meta: { $ref: '#/components/schemas/PageMeta' }
+        default: { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: createDatabase
+      tags: [Databases]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Create a database definition.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DatabaseWrite' }
+      responses:
+        '201':
+          description: Database.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Database' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/databases/{id}:
+    get:
+      operationId: getDatabase
+      tags: [Databases]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Database definition with topology preview, requirements, effective configs and usages.
+      responses:
+        '200':
+          description: Database.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Database' }
+        default: { $ref: '#/components/responses/Problem' }
+    patch:
+      operationId: patchDatabase
+      tags: [Databases]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Update a database definition.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DatabasePatch' }
+      responses:
+        '200':
+          description: Database.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Database' }
+        default: { $ref: '#/components/responses/Problem' }
+    delete:
+      operationId: deleteDatabase
+      tags: [Databases]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+        - { name: inline_usages, in: query, schema: { type: boolean, default: false }, description: Copy into dependents instead of failing with `entity_in_use`. }
+      summary: Delete (fails when referenced unless `inline_usages`).
+      responses:
+        '204': { $ref: '#/components/responses/NoContent' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/databases:preview:
+    post:
+      operationId: previewDatabase
+      tags: [Databases]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Validate an unsaved definition; returns topology preview, requirements and effective configs.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/DatabaseWrite' }
+      responses:
+        '200':
+          description: Preview.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/DatabasePreview' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/databases/{id}:clone:
+    post:
+      operationId: cloneDatabase
+      tags: [Databases]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CloneRequest' }
+      summary: Clone.
+      responses:
+        '201':
+          description: Database.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Database' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/databases/{id}:export:
+    get:
+      operationId: exportDatabase
+      tags: [Databases]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Portable document (YAML or JSON by `Accept`).
+      responses:
+        '200':
+          description: Document.
+          content:
+            application/json: { schema: { $ref: '#/components/schemas/ExportDocument' } }
+            application/yaml: { schema: { type: string } }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/databases:import:
+    post:
+      operationId: importDatabase
+      tags: [Databases]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Create or update (by `metadata.name`) from a document.
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: '#/components/schemas/ExportDocument' } }
+          application/yaml: { schema: { type: string } }
+      responses:
+        '200':
+          description: Database.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Database' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/databases:diff:
+    get:
+      operationId: diffDatabases
+      tags: [Databases]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/diffA'
+        - $ref: '#/components/parameters/diffB'
+      summary: Field-by-field diff of two definitions.
+      responses:
+        '200':
+          description: Diff.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Diff' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  # -------------------------------------------------------------- Workloads
+  /api/v1/t/{slug}/workloads:
+    get:
+      operationId: listWorkloads
+      tags: [Workloads]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/search'
+        - $ref: '#/components/parameters/tags'
+        - $ref: '#/components/parameters/author'
+        - $ref: '#/components/parameters/favorites'
+        - { name: protocol, in: query, style: form, explode: false, schema: { type: array, items: { $ref: '#/components/schemas/Protocol' } } }
+        - { name: stroppy_version, in: query, style: form, explode: false, schema: { type: array, items: { type: string } } }
+        - { name: script, in: query, schema: { type: string } }
+        - { name: sort, in: query, schema: { type: string, enum: [name, created_at, updated_at, protocol, stroppy_version], default: updated_at } }
+        - $ref: '#/components/parameters/order'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      summary: List workload definitions.
+      responses:
+        '200':
+          description: Page.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Workload' }
+                  meta: { $ref: '#/components/schemas/PageMeta' }
+        default: { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: createWorkload
+      tags: [Workloads]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Create a workload definition.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WorkloadWrite' }
+      responses:
+        '201':
+          description: Workload.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Workload' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/workloads/{id}:
+    get:
+      operationId: getWorkload
+      tags: [Workloads]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Workload definition.
+      responses:
+        '200':
+          description: Workload.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Workload' }
+        default: { $ref: '#/components/responses/Problem' }
+    patch:
+      operationId: patchWorkload
+      tags: [Workloads]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Update.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WorkloadPatch' }
+      responses:
+        '200':
+          description: Workload.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Workload' }
+        default: { $ref: '#/components/responses/Problem' }
+    delete:
+      operationId: deleteWorkload
+      tags: [Workloads]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+        - { name: inline_usages, in: query, schema: { type: boolean, default: false } }
+      summary: Delete.
+      responses:
+        '204': { $ref: '#/components/responses/NoContent' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/workloads:preview:
+    post:
+      operationId: previewWorkload
+      tags: [Workloads]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Validate an unsaved definition; returns requirements.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WorkloadWrite' }
+      responses:
+        '200':
+          description: Preview.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WorkloadPreview' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/workloads/{id}:clone:
+    post:
+      operationId: cloneWorkload
+      tags: [Workloads]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CloneRequest' }
+      summary: Clone.
+      responses:
+        '201':
+          description: Workload.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Workload' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/workloads/{id}:export:
+    get:
+      operationId: exportWorkload
+      tags: [Workloads]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Portable document.
+      responses:
+        '200':
+          description: Document.
+          content:
+            application/json: { schema: { $ref: '#/components/schemas/ExportDocument' } }
+            application/yaml: { schema: { type: string } }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/workloads:import:
+    post:
+      operationId: importWorkload
+      tags: [Workloads]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Create or update from a document.
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: '#/components/schemas/ExportDocument' } }
+          application/yaml: { schema: { type: string } }
+      responses:
+        '200':
+          description: Workload.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Workload' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/workloads:diff:
+    get:
+      operationId: diffWorkloads
+      tags: [Workloads]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/diffA'
+        - $ref: '#/components/parameters/diffB'
+      summary: Diff of two definitions.
+      responses:
+        '200':
+          description: Diff.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Diff' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  # ------------------------------------------------------------------ Tests
+  /api/v1/t/{slug}/tests:
+    get:
+      operationId: listTests
+      tags: [Tests]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/search'
+        - $ref: '#/components/parameters/tags'
+        - $ref: '#/components/parameters/author'
+        - $ref: '#/components/parameters/favorites'
+        - { name: status, in: query, style: form, explode: false, schema: { type: array, items: { $ref: '#/components/schemas/TestStatus' } } }
+        - { name: kind, in: query, style: form, explode: false, schema: { type: array, items: { $ref: '#/components/schemas/DatabaseKind' } } }
+        - { name: sort, in: query, schema: { type: string, enum: [name, created_at, updated_at, kind, last_run_at], default: updated_at } }
+        - $ref: '#/components/parameters/order'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      summary: List tests.
+      responses:
+        '200':
+          description: Page.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Test' }
+                  meta: { $ref: '#/components/schemas/PageMeta' }
+        default: { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: createTest
+      tags: [Tests]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Create a test (status `draft` until it validates; the wizard creates it on step one).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TestWrite' }
+      responses:
+        '201':
+          description: Test.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Test' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/tests/{id}:
+    get:
+      operationId: getTest
+      tags: [Tests]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Test with resolved references, validation and last runs.
+      responses:
+        '200':
+          description: Test.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Test' }
+        default: { $ref: '#/components/responses/Problem' }
+    patch:
+      operationId: patchTest
+      tags: [Tests]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Update (wizard steps patch incrementally; status recomputed).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TestPatch' }
+      responses:
+        '200':
+          description: Test.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Test' }
+        default: { $ref: '#/components/responses/Problem' }
+    delete:
+      operationId: deleteTest
+      tags: [Tests]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Delete (runs keep their snapshots).
+      responses:
+        '204': { $ref: '#/components/responses/NoContent' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/tests:validate:
+    post:
+      operationId: validateTest
+      tags: [Tests]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: "Validate an unsaved test (live form): fit, requirements, resolved refs."
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TestWrite' }
+      responses:
+        '200':
+          description: Validation.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TestValidation' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/tests/{id}:launch:
+    post:
+      operationId: launchTest
+      tags: [Tests]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/idempotencyKey'
+      summary: Launch a run from the test (re-validates, checks limits and quotas, snapshots, starts in Graphene).
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LaunchOverrides' }
+      responses:
+        '201':
+          description: Run.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Run' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/tests/{id}:clone:
+    post:
+      operationId: cloneTest
+      tags: [Tests]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CloneRequest' }
+      summary: Clone.
+      responses:
+        '201':
+          description: Test.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Test' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/tests/{id}:export:
+    get:
+      operationId: exportTest
+      tags: [Tests]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+        - { name: inline_refs, in: query, schema: { type: boolean, default: true }, description: Embed referenced database/workload. }
+      summary: Portable document.
+      responses:
+        '200':
+          description: Document.
+          content:
+            application/json: { schema: { $ref: '#/components/schemas/ExportDocument' } }
+            application/yaml: { schema: { type: string } }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/tests:import:
+    post:
+      operationId: importTest
+      tags: [Tests]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Create or update from a document.
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: '#/components/schemas/ExportDocument' } }
+          application/yaml: { schema: { type: string } }
+      responses:
+        '200':
+          description: Test.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Test' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/tests:diff:
+    get:
+      operationId: diffTests
+      tags: [Tests]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/diffA'
+        - $ref: '#/components/parameters/diffB'
+      summary: Diff of two tests (with resolved references).
+      responses:
+        '200':
+          description: Diff.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Diff' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/tests/{id}/runs:
+    get:
+      operationId: listTestRuns
+      tags: [Tests]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      summary: Run history of the test with a metric trend and baseline.
+      responses:
+        '200':
+          description: History.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TestRunHistory' }
+        default: { $ref: '#/components/responses/Problem' }
+components:
+  parameters:
+    diffA:
+      name: a
+      in: query
+      required: true
+      schema: { type: string, format: uuid }
+    diffB:
+      name: b
+      in: query
+      required: true
+      schema: { type: string, format: uuid }
+  schemas:
+    CloneRequest:
+      type: object
+      properties:
+        name: { type: string, minLength: 1, maxLength: 128 }
+    Database:
+      allOf:
+        - $ref: '#/components/schemas/Entity'
+        - $ref: '#/components/schemas/DatabaseSpec'
+        - $ref: '#/components/schemas/DatabaseDerived'
+    DatabaseSpec:
+      type: object
+      required: [kind, version, params]
+      properties:
+        kind: { $ref: '#/components/schemas/DatabaseKind' }
+        version: { type: string }
+        image: { type: string, description: Docker image override (custom builds; registry creds via provider secret). }
+        params:
+          $ref: '#/components/schemas/SchemaValue'
+          x-schema: db.<kind>.params
+        configs:
+          type: object
+          description: Per role — deviations from the config schema defaults (stored as diff).
+          additionalProperties:
+            type: object
+            additionalProperties:
+              $ref: '#/components/schemas/SchemaValue'
+            description: '`<config schema id>` → value diff.'
+        external:
+          type: object
+          description: For kind `external` only.
+          properties:
+            dsn: { type: string, writeOnly: true }
+        schema: { $ref: '#/components/schemas/SchemaRef' }
+    DatabaseDerived:
+      type: object
+      properties:
+        topology_preview: { $ref: '#/components/schemas/TopologyPreview' }
+        requirements: { $ref: '#/components/schemas/Requirements' }
+        effective_configs:
+          type: object
+          readOnly: true
+          description: Per role → config schema id → fully resolved value.
+          additionalProperties:
+            type: object
+            additionalProperties: { $ref: '#/components/schemas/SchemaValue' }
+        validation: { $ref: '#/components/schemas/ValidationResult' }
+        usages:
+          type: array
+          readOnly: true
+          items: { $ref: '#/components/schemas/Usage' }
+    DatabaseWrite:
+      allOf:
+        - type: object
+          required: [name]
+          properties:
+            name: { type: string, minLength: 1, maxLength: 128 }
+            description: { type: string }
+            tags: { type: object, additionalProperties: { type: string } }
+        - $ref: '#/components/schemas/DatabaseSpec'
+    DatabasePatch:
+      allOf:
+        - $ref: '#/components/schemas/EntityPatch'
+        - type: object
+          properties:
+            version: { type: string }
+            image: { type: string }
+            params: { $ref: '#/components/schemas/SchemaValue' }
+            configs:
+              type: object
+              additionalProperties:
+                type: object
+                additionalProperties: { $ref: '#/components/schemas/SchemaValue' }
+    DatabasePreview:
+      type: object
+      required: [validation]
+      properties:
+        validation: { $ref: '#/components/schemas/ValidationResult' }
+        topology_preview: { $ref: '#/components/schemas/TopologyPreview' }
+        requirements: { $ref: '#/components/schemas/Requirements' }
+        effective_configs:
+          type: object
+          additionalProperties:
+            type: object
+            additionalProperties: { $ref: '#/components/schemas/SchemaValue' }
+    TopologyPreview:
+      type: object
+      required: [nodes, label]
+      properties:
+        label: { type: string, example: 'master + 2 replicas + haproxy' }
+        node_count: { type: integer }
+        nodes:
+          type: array
+          items:
+            type: object
+            required: [role, count]
+            properties:
+              role: { type: string }
+              engine: { type: string }
+              count: { type: integer }
+              colocated_with: { type: string }
+        flows:
+          type: array
+          items:
+            type: object
+            required: [from, to, protocol]
+            properties:
+              from: { type: string }
+              to: { type: string }
+              protocol: { type: string }
+              port: { type: integer }
+    Workload:
+      allOf:
+        - $ref: '#/components/schemas/Entity'
+        - $ref: '#/components/schemas/WorkloadSpec'
+        - type: object
+          properties:
+            requirements: { $ref: '#/components/schemas/Requirements' }
+            validation: { $ref: '#/components/schemas/ValidationResult' }
+            usages:
+              type: array
+              readOnly: true
+              items: { $ref: '#/components/schemas/Usage' }
+    WorkloadSpec:
+      type: object
+      required: [stroppy_version, protocol, segments]
+      properties:
+        stroppy_version: { type: string }
+        protocol: { $ref: '#/components/schemas/Protocol' }
+        segments:
+          type: array
+          minItems: 1
+          maxItems: 32
+          items:
+            $ref: '#/components/schemas/SchemaValue'
+            x-schema: workload.segment
+        schema: { $ref: '#/components/schemas/SchemaRef' }
+    WorkloadWrite:
+      allOf:
+        - type: object
+          required: [name]
+          properties:
+            name: { type: string, minLength: 1, maxLength: 128 }
+            description: { type: string }
+            tags: { type: object, additionalProperties: { type: string } }
+        - $ref: '#/components/schemas/WorkloadSpec'
+    WorkloadPatch:
+      allOf:
+        - $ref: '#/components/schemas/EntityPatch'
+        - type: object
+          properties:
+            stroppy_version: { type: string }
+            protocol: { $ref: '#/components/schemas/Protocol' }
+            segments:
+              type: array
+              items: { $ref: '#/components/schemas/SchemaValue' }
+    WorkloadPreview:
+      type: object
+      required: [validation]
+      properties:
+        validation: { $ref: '#/components/schemas/ValidationResult' }
+        requirements: { $ref: '#/components/schemas/Requirements' }
+        segments_summary:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              script: { type: string }
+              vus: { type: integer }
+              limit: { type: string }
+              steps: { type: array, items: { type: string } }
+    TestStatus:
+      type: string
+      enum: [draft, ready, needs_attention]
+    TestStatusDescription:
+      type: string
+      description: '`draft` — incomplete; `ready` — validated; `needs_attention` — a referenced record changed or the schema moved; re-validate.'
+    LibraryRef:
+      type: object
+      description: Reference to a library record or an inline definition.
+      oneOf:
+        - type: object
+          required: [ref]
+          properties:
+            ref: { $ref: '#/components/schemas/Ref' }
+        - type: object
+          required: [inline]
+          properties:
+            inline: { type: object, additionalProperties: true }
+    TestSpec:
+      type: object
+      properties:
+        database:
+          oneOf:
+            - type: object
+              required: [ref]
+              properties: { ref: { $ref: '#/components/schemas/Ref' } }
+            - type: object
+              required: [inline]
+              properties: { inline: { $ref: '#/components/schemas/DatabaseSpec' } }
+        workload:
+          oneOf:
+            - type: object
+              required: [ref]
+              properties: { ref: { $ref: '#/components/schemas/Ref' } }
+            - type: object
+              required: [inline]
+              properties: { inline: { $ref: '#/components/schemas/WorkloadSpec' } }
+        sizes: { $ref: '#/components/schemas/RoleSizes' }
+        provider_profile_id: { type: [string, 'null'], format: uuid, description: Default profile; chosen explicitly at launch when null. }
+        keep: { type: string, description: Go duration; default from tenant settings. }
+        rating: { $ref: '#/components/schemas/RatingFlags' }
+    Test:
+      allOf:
+        - $ref: '#/components/schemas/Entity'
+        - $ref: '#/components/schemas/TestSpec'
+        - type: object
+          required: [status]
+          properties:
+            status: { $ref: '#/components/schemas/TestStatus' }
+            resolved:
+              type: object
+              readOnly: true
+              properties:
+                database: { $ref: '#/components/schemas/Database' }
+                workload: { $ref: '#/components/schemas/Workload' }
+            validation: { $ref: '#/components/schemas/Fit' }
+            requirements: { $ref: '#/components/schemas/Requirements' }
+            summary:
+              type: object
+              readOnly: true
+              properties:
+                db_kind: { $ref: '#/components/schemas/DatabaseKind' }
+                db_version: { type: string }
+                topology_label: { type: string }
+                node_count: { type: integer }
+                protocol: { $ref: '#/components/schemas/Protocol' }
+                stroppy_version: { type: string }
+                last_run: { $ref: '#/components/schemas/RunRef' }
+                run_count: { type: integer }
+            usages:
+              type: array
+              readOnly: true
+              items: { $ref: '#/components/schemas/Usage' }
+    TestWrite:
+      allOf:
+        - type: object
+          required: [name]
+          properties:
+            name: { type: string, minLength: 1, maxLength: 128 }
+            description: { type: string }
+            tags: { type: object, additionalProperties: { type: string } }
+        - $ref: '#/components/schemas/TestSpec'
+    TestPatch:
+      allOf:
+        - $ref: '#/components/schemas/EntityPatch'
+        - $ref: '#/components/schemas/TestSpec'
+    TestValidation:
+      type: object
+      required: [validation, status]
+      properties:
+        status: { $ref: '#/components/schemas/TestStatus' }
+        validation: { $ref: '#/components/schemas/Fit' }
+        requirements: { $ref: '#/components/schemas/Requirements' }
+        resolved:
+          type: object
+          properties:
+            database: { $ref: '#/components/schemas/Database' }
+            workload: { $ref: '#/components/schemas/Workload' }
+        estimated:
+          type: object
+          description: Machines that would be created.
+          properties:
+            machines:
+              type: array
+              items:
+                type: object
+                properties:
+                  role: { type: string }
+                  count: { type: integer }
+                  size: { $ref: '#/components/schemas/Size' }
+                  cpu: { type: integer }
+                  memory_gb: { type: integer }
+                  disk_gb: { type: integer }
+    LaunchOverrides:
+      type: object
+      properties:
+        name: { type: string, maxLength: 128 }
+        provider_profile_id: { type: string, format: uuid, description: Required when the test has no default. }
+        sizes: { $ref: '#/components/schemas/RoleSizes' }
+        keep: { type: string }
+        rating: { $ref: '#/components/schemas/RatingFlags' }
+        labels: { type: object, additionalProperties: { type: string } }
+        notes: { type: string }
+    TestRunHistory:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/Run' }
+        meta: { $ref: '#/components/schemas/PageMeta' }
+        trend:
+          type: object
+          properties:
+            metric: { type: string, example: tps }
+            points:
+              type: array
+              items:
+                type: object
+                required: [run_id, at, value]
+                properties:
+                  run_id: { type: string, format: uuid }
+                  at: { type: string, format: date-time }
+                  value: { type: number }
+            baseline_run_id: { type: [string, 'null'], format: uuid }

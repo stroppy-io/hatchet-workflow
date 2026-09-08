@@ -1,0 +1,21 @@
+# ogen configuration — https://ogen.dev/docs/config/
+# Drives Go generation from openapi/.build/openapi.3.0.yaml into internal/oas.
+# Invoked ONLY via `make generate-go`.
+parser:
+  infer_types: true
+  allow_remote: false
+generator:
+  features:
+    enable:
+      - "paths/client"
+      - "paths/server"
+      - "client/security/reentrant"
+      - "client/request/options"
+      - "client/request/validation"
+      - "server/response/validation"
+      - "ogen/otel"
+      - "ogen/unimplemented"
+    disable: []
+    disable_all: false
+  ignore_not_implemented: []
+  convenient_errors: "on"

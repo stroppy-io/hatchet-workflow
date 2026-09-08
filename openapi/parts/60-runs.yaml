@@ -1,0 +1,545 @@
+paths:
+  /api/v1/t/{slug}/runs:
+    get:
+      operationId: listRuns
+      tags: [Runs]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/search'
+        - $ref: '#/components/parameters/tags'
+        - $ref: '#/components/parameters/author'
+        - $ref: '#/components/parameters/favorites'
+        - { name: status, in: query, style: form, explode: false, schema: { type: array, items: { $ref: '#/components/schemas/RunStatus' } } }
+        - { name: kind, in: query, style: form, explode: false, schema: { type: array, items: { $ref: '#/components/schemas/DatabaseKind' } } }
+        - { name: provider_profile, in: query, style: form, explode: false, schema: { type: array, items: { type: string, format: uuid } } }
+        - { name: test_id, in: query, schema: { type: string, format: uuid } }
+        - { name: suite_run_id, in: query, schema: { type: string, format: uuid } }
+        - { name: standalone, in: query, schema: { type: boolean }, description: Only runs not belonging to a suite run. }
+        - { name: trigger, in: query, style: form, explode: false, schema: { type: array, items: { $ref: '#/components/schemas/Trigger' } } }
+        - { name: labels, in: query, schema: { type: string }, description: 'Comma-separated key=value run labels.' }
+        - { name: started_after, in: query, schema: { type: string, format: date-time } }
+        - { name: started_before, in: query, schema: { type: string, format: date-time } }
+        - { name: finished_after, in: query, schema: { type: string, format: date-time } }
+        - { name: finished_before, in: query, schema: { type: string, format: date-time } }
+        - { name: duration_min, in: query, schema: { type: string }, description: Go duration. }
+        - { name: duration_max, in: query, schema: { type: string } }
+        - { name: stand_kept, in: query, schema: { type: boolean } }
+        - { name: sort, in: query, schema: { type: string, enum: [started_at, finished_at, duration, tps, status, name, created_at], default: created_at } }
+        - $ref: '#/components/parameters/order'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      summary: List runs.
+      responses:
+        '200':
+          description: Page.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Run' }
+                  meta: { $ref: '#/components/schemas/PageMeta' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/runs:facets:
+    get:
+      operationId: getRunFacets
+      tags: [Runs]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Facet values for the run list filters.
+      responses:
+        '200':
+          description: Facets.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Facet' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/runs/{id}:
+    get:
+      operationId: getRun
+      tags: [Runs]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Run record with snapshot and summary.
+      responses:
+        '200':
+          description: Run.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Run' }
+        default: { $ref: '#/components/responses/Problem' }
+    patch:
+      operationId: patchRun
+      tags: [Runs]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Rename; edit notes, labels, rating flags.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/RunPatch' }
+      responses:
+        '200':
+          description: Run.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Run' }
+        default: { $ref: '#/components/responses/Problem' }
+    delete:
+      operationId: deleteRun
+      tags: [Runs]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Soft-delete; cascades the Graphene run (stand, artifacts). Live runs must be cancelled first.
+      responses:
+        '204': { $ref: '#/components/responses/NoContent' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/runs/{id}/overview:
+    get:
+      operationId: getRunOverview
+      tags: [Runs]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Live overview — phases, components, machines/agents, resources. Same shape as the `run.overview` WS topic.
+      responses:
+        '200':
+          description: Overview.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RunOverview' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/runs/{id}/tree:
+    get:
+      operationId: getRunTree
+      tags: [Runs]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Raw Graphene ownership tree of the run (advanced).
+      responses:
+        '200':
+          description: Tree.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ResourceTree' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/runs/{id}/events:
+    get:
+      operationId: listRunEvents
+      tags: [Runs]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+        - { name: after, in: query, schema: { type: string }, description: Event cursor. }
+        - $ref: '#/components/parameters/limit'
+      summary: Timeline events (phases, segments, machines, failures).
+      responses:
+        '200':
+          description: Events.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/RunEvent' }
+                  meta: { $ref: '#/components/schemas/PageMeta' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/runs/{id}/logs:
+    get:
+      operationId: queryRunLogs
+      tags: [Runs]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+        - { name: role, in: query, style: form, explode: false, schema: { type: array, items: { type: string } } }
+        - { name: machine, in: query, style: form, explode: false, schema: { type: array, items: { type: string } } }
+        - { name: container, in: query, style: form, explode: false, schema: { type: array, items: { type: string } } }
+        - { name: stream, in: query, style: form, explode: false, schema: { type: array, items: { type: string, enum: [stdout, stderr, journal, pipeline] } } }
+        - { name: phase, in: query, style: form, explode: false, schema: { type: array, items: { type: string } } }
+        - { name: segment, in: query, schema: { type: string } }
+        - { name: level, in: query, style: form, explode: false, schema: { type: array, items: { type: string, enum: [debug, info, warn, error] } } }
+        - $ref: '#/components/parameters/windowStart'
+        - $ref: '#/components/parameters/windowEnd'
+        - { name: q, in: query, schema: { type: string, maxLength: 512 }, description: Substring / phrase search. }
+        - { name: cursor, in: query, schema: { type: string }, description: Opaque (`_time`+`seq`). }
+        - { name: direction, in: query, schema: { type: string, enum: [older, newer], default: older } }
+        - $ref: '#/components/parameters/limit'
+      summary: Typed log query (VictoriaLogs behind, scope forced to the run).
+      responses:
+        '200':
+          description: Lines.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LogPage' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/runs/{id}/logs:facets:
+    get:
+      operationId: getRunLogFacets
+      tags: [Runs]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Facet counts for the log filters.
+      responses:
+        '200':
+          description: Facets.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Facet' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/runs/{id}/logs:raw:
+    post:
+      operationId: queryRunLogsRaw
+      tags: [Runs]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: LogsQL query, AND-ed with the run scope by the server.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query]
+              properties:
+                query: { type: string, maxLength: 4096 }
+                start: { type: string, format: date-time }
+                end: { type: string, format: date-time }
+                limit: { type: integer, maximum: 5000, default: 1000 }
+      responses:
+        '200':
+          description: Lines.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/LogPage' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/runs/{id}/metrics:
+    get:
+      operationId: getRunMetrics
+      tags: [Runs]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+        - { name: segment, in: query, schema: { type: string }, description: Window = this workload segment. }
+        - $ref: '#/components/parameters/windowStart'
+        - $ref: '#/components/parameters/windowEnd'
+        - { name: keys, in: query, style: form, explode: false, schema: { type: array, items: { type: string } }, description: Metric keys from the catalog; all when omitted. }
+        - { name: step, in: query, schema: { type: string }, description: Series step, Go duration. }
+      summary: Typed metrics (catalog keys) over a window — series + aggregates.
+      responses:
+        '200':
+          description: Metrics.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RunMetrics' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/runs/{id}/metrics:raw:
+    post:
+      operationId: queryRunMetricsRaw
+      tags: [Runs]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: PromQL range query with the run label injected by the server.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [query, start, end]
+              properties:
+                query: { type: string, maxLength: 4096 }
+                start: { type: string, format: date-time }
+                end: { type: string, format: date-time }
+                step: { type: string }
+      responses:
+        '200':
+          description: Prometheus range result (as returned by VictoriaMetrics).
+          content:
+            application/json:
+              schema: { type: object, additionalProperties: true }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/runs/{id}/grafana-session:
+    post:
+      operationId: createRunGrafanaSession
+      tags: [Runs]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Mint the Grafana scope cookie and dashboard links for the run.
+      responses:
+        '200':
+          description: Session.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GrafanaSession' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/runs/{id}/artifacts:
+    get:
+      operationId: listRunArtifacts
+      tags: [Runs]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Artifacts (stroppy raw, report, rendered configs).
+      responses:
+        '200':
+          description: Artifacts.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Artifact' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/runs/{id}/artifacts/{artifactId}:
+    get:
+      operationId: downloadRunArtifact
+      tags: [Runs]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+        - { name: artifactId, in: path, required: true, schema: { type: string } }
+      summary: Download an artifact (streams from Graphene).
+      responses:
+        '200':
+          description: Bytes.
+          content:
+            application/octet-stream: { schema: { type: string, format: binary } }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/runs/{id}/export:
+    get:
+      operationId: exportRun
+      tags: [Runs]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/exportFormat'
+      summary: Export the run report.
+      responses:
+        '200':
+          description: Report file.
+          content:
+            text/markdown: { schema: { type: string } }
+            application/pdf: { schema: { type: string, format: binary } }
+            application/json: { schema: { type: object, additionalProperties: true } }
+            text/csv: { schema: { type: string } }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/runs/{id}:cancel:
+    post:
+      operationId: cancelRun
+      tags: [Runs]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: "Cancel (member: own runs; admin: any). Teardown follows."
+      responses:
+        '200':
+          description: Run (status `cancelling`).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Run' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/runs/{id}:keep-extend:
+    post:
+      operationId: extendRunKeep
+      tags: [Runs]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Extend the stand lifetime (bounded by `max_keep`).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [duration]
+              properties:
+                duration: { type: string, description: Go duration added from now. }
+      responses:
+        '200':
+          description: Run.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Run' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/runs/{id}:keep-release:
+    post:
+      operationId: releaseRunKeep
+      tags: [Runs]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Tear the kept stand down now.
+      responses:
+        '200':
+          description: Run.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Run' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/runs/{id}:rerun:
+    post:
+      operationId: rerunRun
+      tags: [Runs]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/idempotencyKey'
+      summary: New run from this run's snapshot (overrides allowed).
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LaunchOverrides' }
+      responses:
+        '201':
+          description: Run.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Run' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/runs/{id}:rerun-resume:
+    post:
+      operationId: resumeRun
+      tags: [Runs]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/idempotencyKey'
+      summary: |
+        Resume from the failure point. When the stand is still alive (`stand_kept`) the new run adopts it
+        and restarts the workload from the failed segment; otherwise degrades to `rerun` (`resumed: false`).
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                from_segment: { type: string, description: Override the segment to restart from. }
+      responses:
+        '201':
+          description: Run.
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: '#/components/schemas/Run'
+                  - type: object
+                    properties:
+                      resumed: { type: boolean }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/runs/{id}:save-as-test:
+    post:
+      operationId: saveRunAsTest
+      tags: [Runs]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Create a Test (with inline database/workload) from the snapshot.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [name]
+              properties:
+                name: { type: string, minLength: 1, maxLength: 128 }
+                save_database_as: { type: string, description: Also create a library Database with this name. }
+                save_workload_as: { type: string, description: Also create a library Workload with this name. }
+      responses:
+        '201':
+          description: Test.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Test' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/runs/{id}:share:
+    post:
+      operationId: shareRun
+      tags: [Shares]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Create a public share of the run.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ShareCreate' }
+      responses:
+        '201':
+          description: Share.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Share' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  # ---------------------------------------------------------------- Compare
+  /api/v1/t/{slug}/compare:
+    post:
+      operationId: compareRuns
+      tags: [Compare]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Compare 2..16 runs — metrics with verdicts and a spec diff against the baseline.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CompareRequest' }
+      responses:
+        '200':
+          description: Comparison.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Comparison' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/compare:share:
+    post:
+      operationId: shareComparison
+      tags: [Shares]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Publish a comparison snapshot.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              allOf:
+                - $ref: '#/components/schemas/CompareRequest'
+                - $ref: '#/components/schemas/ShareCreate'
+      responses:
+        '201':
+          description: Share.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Share' }
+        default: { $ref: '#/components/responses/Problem' }

@@ -1,0 +1,748 @@
+paths:
+  /api/v1/t/{slug}/suites:
+    get:
+      operationId: listSuites
+      tags: [Suites]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/search'
+        - $ref: '#/components/parameters/tags'
+        - $ref: '#/components/parameters/author'
+        - $ref: '#/components/parameters/favorites'
+        - { name: sort, in: query, schema: { type: string, enum: [name, created_at, updated_at, last_run_at, cell_count], default: updated_at } }
+        - $ref: '#/components/parameters/order'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      summary: List suites.
+      responses:
+        '200':
+          description: Page.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Suite' }
+                  meta: { $ref: '#/components/schemas/PageMeta' }
+        default: { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: createSuite
+      tags: [Suites]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Create a suite.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SuiteWrite' }
+      responses:
+        '201':
+          description: Suite.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Suite' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/suites/{id}:
+    get:
+      operationId: getSuite
+      tags: [Suites]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Suite with computed cells.
+      responses:
+        '200':
+          description: Suite.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Suite' }
+        default: { $ref: '#/components/responses/Problem' }
+    patch:
+      operationId: patchSuite
+      tags: [Suites]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Update.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SuitePatch' }
+      responses:
+        '200':
+          description: Suite.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Suite' }
+        default: { $ref: '#/components/responses/Problem' }
+    delete:
+      operationId: deleteSuite
+      tags: [Suites]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Delete (schedules targeting it are disabled).
+      responses:
+        '204': { $ref: '#/components/responses/NoContent' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/suites:preview:
+    post:
+      operationId: previewSuite
+      tags: [Suites]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Compute cells for an unsaved suite with totals, quota check and validation.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SuiteWrite' }
+      responses:
+        '200':
+          description: Preview.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SuitePreview' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/suites/{id}:launch:
+    post:
+      operationId: launchSuite
+      tags: [Suites]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/idempotencyKey'
+      summary: Start a suite run.
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SuiteLaunch' }
+      responses:
+        '201':
+          description: Suite run.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SuiteRun' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/suites/{id}:clone:
+    post:
+      operationId: cloneSuite
+      tags: [Suites]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      requestBody:
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CloneRequest' }
+      summary: Clone.
+      responses:
+        '201':
+          description: Suite.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Suite' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/suites/{id}:export:
+    get:
+      operationId: exportSuite
+      tags: [Suites]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Portable document.
+      responses:
+        '200':
+          description: Document.
+          content:
+            application/json: { schema: { $ref: '#/components/schemas/ExportDocument' } }
+            application/yaml: { schema: { type: string } }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/suites:import:
+    post:
+      operationId: importSuite
+      tags: [Suites]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Create or update from a document.
+      requestBody:
+        required: true
+        content:
+          application/json: { schema: { $ref: '#/components/schemas/ExportDocument' } }
+          application/yaml: { schema: { type: string } }
+      responses:
+        '200':
+          description: Suite.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Suite' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/suites/{id}/runs:
+    get:
+      operationId: listSuiteRunsOfSuite
+      tags: [Suites]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      summary: Suite runs of this suite.
+      responses:
+        '200':
+          description: Page.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/SuiteRun' }
+                  meta: { $ref: '#/components/schemas/PageMeta' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/suite-runs:
+    get:
+      operationId: listSuiteRuns
+      tags: [Suites]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - { name: status, in: query, style: form, explode: false, schema: { type: array, items: { $ref: '#/components/schemas/RunStatus' } } }
+        - { name: suite_id, in: query, schema: { type: string, format: uuid } }
+        - { name: trigger, in: query, style: form, explode: false, schema: { type: array, items: { $ref: '#/components/schemas/Trigger' } } }
+        - { name: started_after, in: query, schema: { type: string, format: date-time } }
+        - { name: started_before, in: query, schema: { type: string, format: date-time } }
+        - { name: sort, in: query, schema: { type: string, enum: [started_at, finished_at, duration, status, progress], default: started_at } }
+        - $ref: '#/components/parameters/order'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      summary: List suite runs.
+      responses:
+        '200':
+          description: Page.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/SuiteRun' }
+                  meta: { $ref: '#/components/schemas/PageMeta' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/suite-runs/{id}:
+    get:
+      operationId: getSuiteRun
+      tags: [Suites]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Suite run with cells.
+      responses:
+        '200':
+          description: Suite run.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SuiteRun' }
+        default: { $ref: '#/components/responses/Problem' }
+    delete:
+      operationId: deleteSuiteRun
+      tags: [Suites]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Soft-delete the suite run and its child runs.
+      responses:
+        '204': { $ref: '#/components/responses/NoContent' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/suite-runs/{id}/summary:
+    get:
+      operationId: getSuiteRunSummary
+      tags: [Suites]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+        - { name: compare_to, in: query, schema: { type: string, format: uuid }, description: Previous suite run; defaults to the latest earlier one of the same suite. }
+      summary: Results table across cells with a comparison to a previous suite run.
+      responses:
+        '200':
+          description: Summary.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SuiteRunSummary' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/suite-runs/{id}:cancel:
+    post:
+      operationId: cancelSuiteRun
+      tags: [Suites]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Cancel (cascades to child runs).
+      responses:
+        '200':
+          description: Suite run.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SuiteRun' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/suite-runs/{id}:retry-failed:
+    post:
+      operationId: retryFailedSuiteRun
+      tags: [Suites]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/idempotencyKey'
+      summary: New suite run over the failed/cancelled cells only.
+      responses:
+        '201':
+          description: Suite run.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SuiteRun' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/suite-runs/{id}:share:
+    post:
+      operationId: shareSuiteRun
+      tags: [Shares]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Create a public share of the suite run.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ShareCreate' }
+      responses:
+        '201':
+          description: Share.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Share' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  # -------------------------------------------------------------- Schedules
+  /api/v1/t/{slug}/schedules:
+    get:
+      operationId: listSchedules
+      tags: [Schedules]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - { name: target_kind, in: query, schema: { type: string, enum: [test, suite] } }
+        - { name: enabled, in: query, schema: { type: boolean } }
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      summary: Schedules.
+      responses:
+        '200':
+          description: Page.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Schedule' }
+                  meta: { $ref: '#/components/schemas/PageMeta' }
+        default: { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: createSchedule
+      tags: [Schedules]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Create a schedule.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ScheduleWrite' }
+      responses:
+        '201':
+          description: Schedule.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Schedule' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/schedules/{id}:
+    get:
+      operationId: getSchedule
+      tags: [Schedules]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Schedule.
+      responses:
+        '200':
+          description: Schedule.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Schedule' }
+        default: { $ref: '#/components/responses/Problem' }
+    patch:
+      operationId: patchSchedule
+      tags: [Schedules]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Update.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SchedulePatch' }
+      responses:
+        '200':
+          description: Schedule.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Schedule' }
+        default: { $ref: '#/components/responses/Problem' }
+    delete:
+      operationId: deleteSchedule
+      tags: [Schedules]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Delete.
+      responses:
+        '204': { $ref: '#/components/responses/NoContent' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/schedules/{id}:pause:
+    post:
+      operationId: pauseSchedule
+      tags: [Schedules]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Pause.
+      responses:
+        '200':
+          description: Schedule.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Schedule' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/schedules/{id}:resume:
+    post:
+      operationId: resumeSchedule
+      tags: [Schedules]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Resume.
+      responses:
+        '200':
+          description: Schedule.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Schedule' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/schedules/{id}:run-now:
+    post:
+      operationId: runScheduleNow
+      tags: [Schedules]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/idempotencyKey'
+      summary: Trigger immediately (trigger = schedule).
+      responses:
+        '201':
+          description: Started run or suite run.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ScheduleRunRef' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/schedules/{id}/history:
+    get:
+      operationId: listScheduleHistory
+      tags: [Schedules]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      summary: Past firings.
+      responses:
+        '200':
+          description: History.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/ScheduleRunRef' }
+                  meta: { $ref: '#/components/schemas/PageMeta' }
+        default: { $ref: '#/components/responses/Problem' }
+components:
+  schemas:
+    SuiteAxes:
+      type: object
+      description: Variation axes; the cell set is the product of tests × non-empty axes.
+      properties:
+        provider_profiles:
+          type: array
+          items: { type: string, format: uuid }
+        sizes:
+          type: array
+          items: { $ref: '#/components/schemas/RoleSizes' }
+        database_versions:
+          type: array
+          items: { type: string }
+        workload_variants:
+          type: array
+          description: Overrides applied to every segment.
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              vus: { type: integer }
+              scale_factor: { type: integer }
+              duration: { type: string }
+              params: { type: object, additionalProperties: true }
+    SuiteCell:
+      type: object
+      required: [id, test, enabled]
+      properties:
+        id: { type: string, description: Stable id derived from test + axis values. }
+        name: { type: string }
+        test: { $ref: '#/components/schemas/Ref' }
+        enabled: { type: boolean }
+        axis:
+          type: object
+          description: Axis values this cell was generated from.
+          properties:
+            provider_profile_id: { type: string, format: uuid }
+            sizes: { $ref: '#/components/schemas/RoleSizes' }
+            database_version: { type: string }
+            workload_variant: { type: string }
+        overrides: { $ref: '#/components/schemas/LaunchOverrides' }
+        generated: { type: boolean, readOnly: true, description: false when added manually. }
+        validation: { $ref: '#/components/schemas/Fit' }
+    SuiteSpec:
+      type: object
+      properties:
+        tests:
+          type: array
+          items:
+            oneOf:
+              - type: object
+                required: [ref]
+                properties: { ref: { $ref: '#/components/schemas/Ref' } }
+              - type: object
+                required: [inline]
+                properties: { inline: { $ref: '#/components/schemas/TestWrite' } }
+        axes: { $ref: '#/components/schemas/SuiteAxes' }
+        cells:
+          type: array
+          description: Manual edits over the generated set (disable, override, add).
+          items: { $ref: '#/components/schemas/SuiteCell' }
+        concurrency: { type: integer, minimum: 1, default: 1 }
+        defaults:
+          type: object
+          properties:
+            rating: { $ref: '#/components/schemas/RatingFlags' }
+            keep: { type: string }
+    Suite:
+      allOf:
+        - $ref: '#/components/schemas/Entity'
+        - $ref: '#/components/schemas/SuiteSpec'
+        - type: object
+          properties:
+            computed_cells:
+              type: array
+              readOnly: true
+              items: { $ref: '#/components/schemas/SuiteCell' }
+            summary:
+              type: object
+              readOnly: true
+              properties:
+                cell_count: { type: integer }
+                enabled_cell_count: { type: integer }
+                last_run: { $ref: '#/components/schemas/RunRef' }
+                run_count: { type: integer }
+                schedules: { type: array, items: { $ref: '#/components/schemas/Ref' } }
+    SuiteWrite:
+      allOf:
+        - type: object
+          required: [name]
+          properties:
+            name: { type: string, minLength: 1, maxLength: 128 }
+            description: { type: string }
+            tags: { type: object, additionalProperties: { type: string } }
+        - $ref: '#/components/schemas/SuiteSpec'
+    SuitePatch:
+      allOf:
+        - $ref: '#/components/schemas/EntityPatch'
+        - $ref: '#/components/schemas/SuiteSpec'
+    SuitePreview:
+      type: object
+      required: [cells, validation]
+      properties:
+        cells:
+          type: array
+          items: { $ref: '#/components/schemas/SuiteCell' }
+        validation: { $ref: '#/components/schemas/Fit' }
+        totals:
+          type: object
+          properties:
+            machines: { type: integer }
+            cpu: { type: integer }
+            memory_gb: { type: integer }
+            disk_gb: { type: integer }
+            estimated_duration: { type: string }
+        quota_check:
+          type: array
+          items:
+            type: object
+            properties:
+              provider_profile_id: { type: string, format: uuid }
+              fits: { type: boolean }
+              issues: { type: array, items: { type: string } }
+    SuiteLaunch:
+      type: object
+      properties:
+        name: { type: string }
+        concurrency: { type: integer, minimum: 1 }
+        cell_ids:
+          type: array
+          description: Subset of enabled cells; all when omitted.
+          items: { type: string }
+        rating: { $ref: '#/components/schemas/RatingFlags' }
+        keep: { type: string }
+        labels: { type: object, additionalProperties: { type: string } }
+    SuiteRun:
+      type: object
+      required: [id, name, suite, status, trigger, cells, progress, author, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        suite: { $ref: '#/components/schemas/Ref' }
+        status: { $ref: '#/components/schemas/RunStatus' }
+        trigger: { $ref: '#/components/schemas/Trigger' }
+        trigger_ref:
+          type: object
+          properties:
+            schedule_id: { type: string, format: uuid }
+            retry_of: { type: string, format: uuid }
+        concurrency: { type: integer }
+        progress:
+          type: object
+          required: [total, done, failed, running, pending]
+          properties:
+            total: { type: integer }
+            done: { type: integer }
+            failed: { type: integer }
+            running: { type: integer }
+            pending: { type: integer }
+            cancelled: { type: integer }
+            pct: { type: number }
+        cells:
+          type: array
+          items:
+            type: object
+            required: [cell_id, status]
+            properties:
+              cell_id: { type: string }
+              name: { type: string }
+              run: { $ref: '#/components/schemas/RunRef' }
+              status: { $ref: '#/components/schemas/RunStatus' }
+              summary: { $ref: '#/components/schemas/RunSummary' }
+        author: { $ref: '#/components/schemas/UserRef' }
+        labels: { type: object, additionalProperties: { type: string } }
+        created_at: { type: string, format: date-time }
+        started_at: { type: [string, 'null'], format: date-time }
+        finished_at: { type: [string, 'null'], format: date-time }
+        duration: { type: [string, 'null'] }
+        graphene:
+          type: object
+          readOnly: true
+          properties:
+            run_ref: { type: string }
+    SuiteRunSummary:
+      type: object
+      required: [suite_run_id, rows]
+      properties:
+        suite_run_id: { type: string, format: uuid }
+        compared_to: { type: [string, 'null'], format: uuid }
+        metric_keys: { type: array, items: { type: string } }
+        rows:
+          type: array
+          items:
+            type: object
+            required: [cell_id]
+            properties:
+              cell_id: { type: string }
+              name: { type: string }
+              run: { $ref: '#/components/schemas/RunRef' }
+              status: { $ref: '#/components/schemas/RunStatus' }
+              metrics:
+                type: object
+                additionalProperties:
+                  type: object
+                  properties:
+                    value: { type: number }
+                    previous: { type: number }
+                    diff_pct: { type: number }
+                    verdict: { type: string, enum: [better, worse, same, missing] }
+    Schedule:
+      type: object
+      required: [id, name, target, cron, timezone, enabled, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        target: { $ref: '#/components/schemas/ScheduleTarget' }
+        cron: { type: string, example: '0 3 * * *' }
+        timezone: { type: string, example: Europe/Moscow }
+        enabled: { type: boolean }
+        overrides: { $ref: '#/components/schemas/LaunchOverrides' }
+        next_run_at: { type: [string, 'null'], format: date-time }
+        last_run: { $ref: '#/components/schemas/ScheduleRunRef' }
+        author: { $ref: '#/components/schemas/UserRef' }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+    ScheduleTarget:
+      type: object
+      required: [kind, id]
+      properties:
+        kind: { type: string, enum: [test, suite] }
+        id: { type: string, format: uuid }
+        name: { type: string, readOnly: true }
+    ScheduleWrite:
+      type: object
+      required: [name, target, cron]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 128 }
+        target: { $ref: '#/components/schemas/ScheduleTarget' }
+        cron: { type: string }
+        timezone: { type: string, default: UTC }
+        enabled: { type: boolean, default: true }
+        overrides: { $ref: '#/components/schemas/LaunchOverrides' }
+    SchedulePatch:
+      type: object
+      properties:
+        name: { type: string }
+        target: { $ref: '#/components/schemas/ScheduleTarget' }
+        cron: { type: string }
+        timezone: { type: string }
+        enabled: { type: boolean }
+        overrides: { $ref: '#/components/schemas/LaunchOverrides' }
+    ScheduleRunRef:
+      type: object
+      required: [kind, id, status, at]
+      properties:
+        kind: { type: string, enum: [run, suite_run] }
+        id: { type: string, format: uuid }
+        name: { type: string }
+        status: { $ref: '#/components/schemas/RunStatus' }
+        at: { type: string, format: date-time }
+        error: { type: string, description: Set when the firing itself failed (e.g. limits). }

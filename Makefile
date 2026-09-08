@@ -1,5 +1,5 @@
 # stroppy-cloud Makefile
-.PHONY: help configure build build-pipelines test lint fmt \
+.PHONY: help configure build build-pipelines test lint fmt openapi generate-go generate-ts schemas-export schemas-test \
         tools db-gen migrate-generate migrate-clear \
         web-install web-dev web-build docs-install docs-dev docs-build \
         docker-build clean
@@ -46,6 +46,32 @@ build-pipelines: ## Build the graphene pipeline binaries (linux/amd64, shipped i
 	@mkdir -p bin
 	cd pipelines && GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -o ../bin/stroppy-run ./cmd/run/
 	cd pipelines && GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -o ../bin/stroppy-suite ./cmd/suite/
+	cd pipelines && GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -o ../bin/stroppy-provider-verify ./cmd/provider-verify/
+	cd pipelines && GOOS=linux GOARCH=amd64 CGO_ENABLED=0 go build -trimpath -o ../bin/stroppy-quotas ./cmd/quotas/
+
+# ============================================================
+# OpenAPI → code
+# ============================================================
+OPENAPI    := openapi/openapi.yaml
+OPENAPI_30 := openapi/.build/openapi.3.0.yaml
+OGEN       := go run github.com/ogen-go/ogen/cmd/ogen@v1.20.3
+
+openapi: ## Merge openapi/parts/*.yaml into openapi/openapi.yaml
+	python3 scripts/openapi_merge.py
+
+generate-go: openapi ## Generate the ogen server/client into internal/oas
+	@mkdir -p $(dir $(OPENAPI_30))
+	python3 scripts/openapi_to_30.py $(OPENAPI) $(OPENAPI_30)
+	$(OGEN) --config .ogen.yaml --target internal/oas --package oas --clean $(OPENAPI_30)
+
+generate-ts: openapi ## Generate the TypeScript client into web/src/api
+	cd web && yarn generate
+
+schemas-export: ## Export schemapb schemas (protoJSON + TS types) into web/src/schemas
+	cd pipelines && go run ./cmd/schemas-export -out ../web/src/schemas
+
+schemas-test: ## Run schema tests (add ARGS=-update to refresh goldens)
+	cd pipelines && go test ./schemas/... $(ARGS)
 
 # ============================================================
 # Postgres store codegen (sqld toolchain)

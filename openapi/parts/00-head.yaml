@@ -1,0 +1,84 @@
+openapi: 3.1.0
+info:
+  title: Stroppy Cloud API
+  version: 1.0.0
+  summary: Database benchmarking as a service — product server over Graphene CI.
+  description: |
+    The Stroppy Cloud HTTP API. The server owns tenants, the benchmark
+    library (databases, workloads, tests), runs and their results; provisioning,
+    agents and observability are Graphene's; identity is IAM's.
+
+    Namespaces:
+      - `/api/v1/public/...`      no auth
+      - `/api/v1/me`, `/api/v1/tenants`   caller scope
+      - `/api/v1/t/{slug}/...`    tenant scope (membership required)
+      - `/api/v1/catalog/...`     read-only reference data (any authenticated caller)
+      - `/api/v1/admin/...`       platform admin
+      - `/api/v1/ws`              one WebSocket for every live stream (see README)
+
+    Authentication: `Authorization: Bearer <token>` where token is either an IAM
+    access token (people) or a Stroppy API token (`stc_...`, personal or tenant
+    service token). IAM itself is reverse-proxied same-origin under `/v1/*`.
+
+    Errors: RFC 9457 `application/problem+json` with a stable machine `code`;
+    domain validation failures carry `validation` — a schemapb
+    `ValidationResult` (protoJSON) with per-field `path`/`code`.
+
+    Forms: any request field marked `x-schema: <id>` is a schemapb value; fetch
+    the schema from `/api/v1/catalog/schemas/{id}` and validate with
+    `/api/v1/catalog/schemas/{id}:validate`. One validation on every door.
+  license:
+    name: Proprietary
+servers:
+  - url: https://cloud.stroppy.io
+    description: Production
+  - url: http://localhost:8080
+    description: Local server
+tags:
+  - name: Public
+    description: Config, catalog, rating, shared pages, health. No auth.
+  - name: Me
+    description: Profile, preferences, personal API tokens.
+  - name: Tenants
+    description: Tenant lifecycle, members, invites, service tokens.
+  - name: Tenant Settings
+    description: Defaults, provider profiles, quotas, limits, webhooks.
+  - name: Catalog
+    description: Reference data — databases, providers/sizes, stroppy, examples, schemas, metrics.
+  - name: Databases
+    description: Database definitions (engine, version, topology, configs).
+  - name: Workloads
+    description: Workload definitions (stroppy version, protocol, segments).
+  - name: Tests
+    description: Test definitions — database × workload × sizes; validation and launch.
+  - name: Runs
+    description: Runs — status, overview, logs, metrics, artifacts, actions.
+  - name: Compare
+    description: Ad-hoc comparison of runs.
+  - name: Suites
+    description: Suites (tests × axes → cells) and suite runs.
+  - name: Schedules
+    description: Cron schedules targeting a test or a suite.
+  - name: Favorites
+    description: Favorites on any library or run entity.
+  - name: Shares
+    description: Public share links and snapshots.
+  - name: Rating
+    description: Tenant rating.
+  - name: Admin
+    description: Platform administration.
+x-tagGroups:
+  - name: Public
+    tags: [Public]
+  - name: Account
+    tags: [Me, Tenants]
+  - name: Tenant
+    tags: [Tenant Settings, Catalog, Databases, Workloads, Tests]
+  - name: Execution
+    tags: [Runs, Compare, Suites, Schedules]
+  - name: Results
+    tags: [Favorites, Shares, Rating]
+  - name: Platform
+    tags: [Admin]
+security:
+  - bearerAuth: []

@@ -1,0 +1,376 @@
+paths:
+  /api/v1/t/{slug}/favorites/{kind}/{id}:
+    put:
+      operationId: addFavorite
+      tags: [Favorites]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/favoriteKind'
+        - $ref: '#/components/parameters/id'
+      summary: Mark as favorite (per user).
+      responses:
+        '204': { $ref: '#/components/responses/NoContent' }
+        default: { $ref: '#/components/responses/Problem' }
+    delete:
+      operationId: removeFavorite
+      tags: [Favorites]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/favoriteKind'
+        - $ref: '#/components/parameters/id'
+      summary: Unmark.
+      responses:
+        '204': { $ref: '#/components/responses/NoContent' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/shares:
+    get:
+      operationId: listShares
+      tags: [Shares]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - { name: target_kind, in: query, schema: { $ref: '#/components/schemas/ShareTargetKind' } }
+        - { name: target_id, in: query, schema: { type: string, format: uuid } }
+        - { name: active, in: query, schema: { type: boolean } }
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      summary: Shares of the tenant.
+      responses:
+        '200':
+          description: Page.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Share' }
+                  meta: { $ref: '#/components/schemas/PageMeta' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/shares/{id}:
+    get:
+      operationId: getShare
+      tags: [Shares]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Share.
+      responses:
+        '200':
+          description: Share.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Share' }
+        default: { $ref: '#/components/responses/Problem' }
+    patch:
+      operationId: patchShare
+      tags: [Shares]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Change TTL or scope.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                ttl: { type: string, description: Go duration from now; `0s` = never expires. }
+                scope: { $ref: '#/components/schemas/ShareScope' }
+      responses:
+        '200':
+          description: Share.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Share' }
+        default: { $ref: '#/components/responses/Problem' }
+    delete:
+      operationId: revokeShare
+      tags: [Shares]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Revoke (link stops working immediately).
+      responses:
+        '204': { $ref: '#/components/responses/NoContent' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/shares/{id}:rebuild:
+    post:
+      operationId: rebuildShare
+      tags: [Shares]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Re-capture the snapshot from the current state of the target.
+      responses:
+        '200':
+          description: Share.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Share' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/rating:
+    get:
+      operationId: getTenantRating
+      tags: [Rating]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/ratingMetric'
+        - $ref: '#/components/parameters/ratingKind'
+        - $ref: '#/components/parameters/ratingVersion'
+        - $ref: '#/components/parameters/ratingProvider'
+        - $ref: '#/components/parameters/ratingStroppy'
+        - $ref: '#/components/parameters/ratingLeague'
+        - $ref: '#/components/parameters/ratingPeriod'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      summary: Tenant rating (runs opted into `rating.tenant`).
+      responses:
+        '200':
+          description: Rating page.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RatingPage' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/dashboard:
+    get:
+      operationId: getTenantDashboard
+      tags: [Rating]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Tenant home — counters, recent runs/suite runs, upcoming schedules, top results.
+      responses:
+        '200':
+          description: Dashboard.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TenantDashboard' }
+        default: { $ref: '#/components/responses/Problem' }
+components:
+  parameters:
+    favoriteKind:
+      name: kind
+      in: path
+      required: true
+      schema: { type: string, enum: [database, workload, test, run, suite, suite_run, schedule] }
+    ratingMetric:
+      name: metric
+      in: query
+      schema: { type: string, default: tps }
+    ratingKind:
+      name: kind
+      in: query
+      style: form
+      explode: false
+      schema: { type: array, items: { $ref: '#/components/schemas/DatabaseKind' } }
+    ratingVersion:
+      name: version
+      in: query
+      style: form
+      explode: false
+      schema: { type: array, items: { type: string } }
+    ratingProvider:
+      name: provider
+      in: query
+      style: form
+      explode: false
+      schema: { type: array, items: { $ref: '#/components/schemas/ProviderKind' } }
+    ratingStroppy:
+      name: stroppy_version
+      in: query
+      style: form
+      explode: false
+      schema: { type: array, items: { type: string } }
+    ratingLeague:
+      name: league
+      in: query
+      description: Size league (`db:M`); all leagues when omitted.
+      schema: { type: string }
+    ratingPeriod:
+      name: period
+      in: query
+      schema: { type: string, enum: [7d, 30d, 90d, 1y, all], default: all }
+  schemas:
+    RatingEntry:
+      type: object
+      required: [rank, value, unit, db_kind, league, run_at]
+      properties:
+        rank: { type: integer }
+        value: { type: number }
+        unit: { type: string }
+        db_kind: { $ref: '#/components/schemas/DatabaseKind' }
+        db_version: { type: string }
+        topology_label: { type: string }
+        node_count: { type: integer }
+        sizes: { $ref: '#/components/schemas/RoleSizes' }
+        league: { type: string }
+        workload_name: { type: string }
+        script: { type: string }
+        stroppy_version: { type: string }
+        provider_kind: { $ref: '#/components/schemas/ProviderKind' }
+        run_at: { type: string, format: date-time }
+        run_id: { type: string, format: uuid, description: Tenant rating only. }
+        author: { $ref: '#/components/schemas/UserRef', description: Tenant rating only. }
+        tenant_name: { type: string, description: Global rating; only when the tenant set `public_name`. }
+        share_token: { type: string, description: Global rating; public snapshot link. }
+    RatingPage:
+      type: object
+      required: [metric, data, meta]
+      properties:
+        metric: { $ref: '#/components/schemas/MetricDef' }
+        leagues:
+          type: array
+          items: { type: string }
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/RatingEntry' }
+        meta: { $ref: '#/components/schemas/PageMeta' }
+    ShareTargetKind:
+      type: string
+      enum: [run, suite_run, comparison]
+    ShareScope:
+      type: string
+      enum: [overview, metrics, configs]
+      description: overview = summary+timeline+topology; metrics adds series and Grafana; configs adds rendered software configs.
+    ShareCreate:
+      type: object
+      properties:
+        ttl: { type: string, description: Go duration; default 7d; `0s` = never expires. }
+        scope: { $ref: '#/components/schemas/ShareScope' }
+        title: { type: string, maxLength: 256 }
+    Share:
+      type: object
+      required: [id, token, url, target, scope, created_at, active]
+      properties:
+        id: { type: string, format: uuid }
+        token: { type: string }
+        url: { type: string, format: uri }
+        target:
+          type: object
+          required: [kind, id]
+          properties:
+            kind: { $ref: '#/components/schemas/ShareTargetKind' }
+            id: { type: string, format: uuid }
+            name: { type: string }
+            run_ids: { type: array, items: { type: string, format: uuid }, description: For comparisons. }
+        scope: { $ref: '#/components/schemas/ShareScope' }
+        title: { type: string }
+        active: { type: boolean }
+        expires_at: { type: [string, 'null'], format: date-time }
+        revoked_at: { type: [string, 'null'], format: date-time }
+        captured_at: { type: string, format: date-time }
+        view_count: { type: integer }
+        created_by: { $ref: '#/components/schemas/UserRef' }
+        created_at: { type: string, format: date-time }
+    ShareSnapshot:
+      type: object
+      required: [kind, captured_at, scope]
+      properties:
+        kind: { $ref: '#/components/schemas/ShareTargetKind' }
+        scope: { $ref: '#/components/schemas/ShareScope' }
+        title: { type: string }
+        captured_at: { type: string, format: date-time }
+        tenant_name: { type: string }
+        run: { $ref: '#/components/schemas/SharedRun' }
+        suite_run:
+          type: object
+          properties:
+            name: { type: string }
+            status: { $ref: '#/components/schemas/RunStatus' }
+            cells:
+              type: array
+              items: { $ref: '#/components/schemas/SharedRun' }
+            summary: { $ref: '#/components/schemas/SuiteRunSummary' }
+        comparison: { $ref: '#/components/schemas/Comparison' }
+    SharedRun:
+      type: object
+      description: Allowlisted projection of a run — never carries secrets.
+      required: [name, status, summary, timeline]
+      properties:
+        name: { type: string }
+        status: { $ref: '#/components/schemas/RunStatus' }
+        started_at: { type: string, format: date-time }
+        finished_at: { type: string, format: date-time }
+        duration: { type: string }
+        summary: { $ref: '#/components/schemas/RunSummary' }
+        result: { $ref: '#/components/schemas/RunResult' }
+        timeline:
+          type: array
+          items: { $ref: '#/components/schemas/RunEvent' }
+        topology: { $ref: '#/components/schemas/TopologyPreview' }
+        database:
+          type: object
+          properties:
+            kind: { $ref: '#/components/schemas/DatabaseKind' }
+            version: { type: string }
+            image: { type: string }
+            params: { $ref: '#/components/schemas/SchemaValue' }
+        workload:
+          type: object
+          properties:
+            stroppy_version: { type: string }
+            protocol: { $ref: '#/components/schemas/Protocol' }
+            segments:
+              type: array
+              items: { $ref: '#/components/schemas/SchemaValue' }
+        machines:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              role: { type: string }
+              size: { $ref: '#/components/schemas/Size' }
+              cpu: { type: integer }
+              memory_gb: { type: integer }
+              disk_gb: { type: integer }
+              disk_type: { type: string }
+              instance_type: { type: string }
+              location: { type: string }
+        configs:
+          type: object
+          description: Scope `configs` — rendered files per role (secret fields masked).
+          additionalProperties:
+            type: object
+            additionalProperties: { type: string }
+        metrics: { $ref: '#/components/schemas/RunMetrics' }
+        workload_segments:
+          type: array
+          items:
+            type: object
+            properties:
+              name: { type: string }
+              started_at: { type: string, format: date-time }
+              finished_at: { type: string, format: date-time }
+    TenantDashboard:
+      type: object
+      required: [run_counts, recent_runs, recent_suite_runs, upcoming]
+      properties:
+        run_counts:
+          type: object
+          properties:
+            total: { type: integer }
+            pending: { type: integer }
+            running: { type: integer }
+            completed: { type: integer }
+            failed: { type: integer }
+            cancelled: { type: integer }
+            kept_stands: { type: integer }
+        success_rate: { type: number }
+        recent_runs:
+          type: array
+          items: { $ref: '#/components/schemas/Run' }
+        recent_suite_runs:
+          type: array
+          items: { $ref: '#/components/schemas/SuiteRun' }
+        upcoming:
+          type: array
+          items: { $ref: '#/components/schemas/Schedule' }
+        top_results:
+          type: array
+          items: { $ref: '#/components/schemas/RatingEntry' }
+        providers:
+          type: array
+          items: { $ref: '#/components/schemas/ProviderProfile' }
+        limits: { $ref: '#/components/schemas/TenantLimits' }

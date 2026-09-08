@@ -1,0 +1,259 @@
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      description: IAM access token (JWT) or Stroppy API token (`stc_...`).
+  parameters:
+    slug:
+      name: slug
+      in: path
+      required: true
+      description: Tenant slug.
+      schema: { type: string, pattern: '^[a-z0-9][a-z0-9-]{1,62}$' }
+    id:
+      name: id
+      in: path
+      required: true
+      schema: { type: string, format: uuid }
+    cursor:
+      name: cursor
+      in: query
+      schema: { type: string, maxLength: 1024 }
+    limit:
+      name: limit
+      in: query
+      schema: { type: integer, minimum: 1, maximum: 200, default: 50 }
+    order:
+      name: order
+      in: query
+      schema: { type: string, enum: [asc, desc], default: desc }
+    search:
+      name: search
+      in: query
+      description: Free-text search over name and description.
+      schema: { type: string, maxLength: 256 }
+    tags:
+      name: tags
+      in: query
+      description: Comma-separated `key=value` or bare `key` label filters.
+      schema: { type: string, maxLength: 1024 }
+    author:
+      name: author
+      in: query
+      schema: { type: string, description: User id (IAM `sub`). }
+    favorites:
+      name: favorites
+      in: query
+      schema: { type: boolean }
+    idempotencyKey:
+      name: Idempotency-Key
+      in: header
+      required: false
+      schema: { type: string, maxLength: 128 }
+  responses:
+    Problem:
+      description: Error (RFC 9457).
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/Problem' }
+    NoContent:
+      description: Done.
+  schemas:
+    Problem:
+      type: object
+      required: [type, title, status, code]
+      properties:
+        type: { type: string, format: uri, description: Problem type URI. }
+        title: { type: string }
+        status: { type: integer }
+        detail: { type: string }
+        instance: { type: string }
+        code:
+          type: string
+          description: Stable machine-readable code. Branch on this, never on `detail`.
+          example: test_not_ready
+        request_id: { type: string }
+        validation:
+          $ref: '#/components/schemas/ValidationResult'
+    ValidationResult:
+      type: object
+      description: schemapb `ValidationResult` in protoJSON.
+      properties:
+        errors:
+          type: array
+          items: { $ref: '#/components/schemas/ValidationError' }
+    ValidationError:
+      type: object
+      required: [path, code]
+      properties:
+        path: { type: string, example: 'params.replicas' }
+        code: { type: string, example: GTE_VIOLATED }
+        constraint: { type: string }
+        message: { type: string }
+        severity: { type: string, enum: [ERROR, WARNING] }
+        rule_id: { type: string }
+        expected: {}
+        actual: {}
+    SchemaValue:
+      type: object
+      description: |
+        A schemapb value (plain JSON object). The concrete schema is named by
+        the enclosing property's `x-schema`; validate via
+        `/catalog/schemas/{id}:validate`.
+      additionalProperties: true
+    BakedValue:
+      type: object
+      description: schemapb `Baked` (schema embedded + canonical values), protoJSON.
+      required: [schema, values]
+      properties:
+        schema: { type: object, additionalProperties: true }
+        values: { type: object, additionalProperties: true }
+    SchemaRef:
+      type: object
+      required: [id, version]
+      properties:
+        id: { type: string, example: db.postgres.params }
+        version: { type: string, example: '1.0.0' }
+    PageMeta:
+      type: object
+      properties:
+        next_cursor: { type: [string, 'null'], maxLength: 1024 }
+        has_more: { type: boolean }
+    Facet:
+      type: object
+      required: [field, values]
+      properties:
+        field: { type: string }
+        values:
+          type: array
+          items:
+            type: object
+            required: [value, count]
+            properties:
+              value: { type: string }
+              label: { type: string }
+              count: { type: integer }
+    Entity:
+      type: object
+      description: Common header of tenant records.
+      required: [id, name, created_at, updated_at, author]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string, minLength: 1, maxLength: 128 }
+        description: { type: string, maxLength: 4096 }
+        tags:
+          type: object
+          additionalProperties: { type: string }
+          maxProperties: 64
+        author: { $ref: '#/components/schemas/UserRef' }
+        created_at: { type: string, format: date-time }
+        updated_at: { type: string, format: date-time }
+        deleted_at: { type: [string, 'null'], format: date-time }
+        is_favorite: { type: boolean }
+    EntityPatch:
+      type: object
+      properties:
+        name: { type: string, minLength: 1, maxLength: 128 }
+        description: { type: string, maxLength: 4096 }
+        tags:
+          type: object
+          additionalProperties: { type: string }
+    UserRef:
+      type: object
+      required: [id]
+      properties:
+        id: { type: string, description: IAM `sub`. }
+        display_name: { type: string }
+        avatar: { type: string }
+    Usage:
+      type: object
+      required: [kind, id, name]
+      properties:
+        kind: { type: string, enum: [test, suite, schedule] }
+        id: { type: string, format: uuid }
+        name: { type: string }
+    Requirements:
+      type: object
+      description: Minimal hardware per role, computed by the server.
+      additionalProperties:
+        $ref: '#/components/schemas/RoleRequirement'
+    RoleRequirement:
+      type: object
+      properties:
+        cpu: { type: integer }
+        memory_gb: { type: number }
+        disk_gb: { type: number }
+        reason: { type: string, description: What drove the number (e.g. shared_buffers). }
+    Size:
+      type: string
+      enum: [XS, S, M, L, XL]
+    RoleSizes:
+      type: object
+      description: Size per role (`db`, `proxy`, `runner`, ...).
+      additionalProperties:
+        type: object
+        required: [size]
+        properties:
+          size: { $ref: '#/components/schemas/Size' }
+          disk:
+            type: object
+            properties:
+              type: { type: string, description: Provider disk type id from the catalog. }
+              gb: { type: integer, minimum: 10 }
+    Fit:
+      type: object
+      required: [fits]
+      properties:
+        fits: { type: boolean }
+        issues:
+          type: array
+          items:
+            type: object
+            required: [path, code, severity]
+            properties:
+              path: { type: string }
+              code: { type: string }
+              severity: { type: string, enum: [ERROR, WARNING] }
+              message: { type: string }
+              suggested: { description: Suggested value (e.g. a size). }
+        stale:
+          type: object
+          description: Referenced library records changed since last validation.
+          properties:
+            database: { type: boolean }
+            workload: { type: boolean }
+    Ref:
+      type: object
+      required: [id]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string, readOnly: true }
+    ExportDocument:
+      type: object
+      description: Portable YAML/JSON document (`kind`, `api_version`, `spec`).
+      required: [api_version, kind, spec]
+      properties:
+        api_version: { type: string, example: stroppy.io/v1 }
+        kind: { type: string, enum: [Database, Workload, Test, Suite] }
+        metadata:
+          type: object
+          properties:
+            name: { type: string }
+            description: { type: string }
+            tags: { type: object, additionalProperties: { type: string } }
+        spec: { type: object, additionalProperties: true }
+    Diff:
+      type: object
+      required: [changes]
+      properties:
+        changes:
+          type: array
+          items:
+            type: object
+            required: [path, op]
+            properties:
+              path: { type: string }
+              op: { type: string, enum: [add, remove, replace] }
+              a: {}
+              b: {}

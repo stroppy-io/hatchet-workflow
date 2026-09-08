@@ -1,0 +1,466 @@
+components:
+  schemas:
+    RunStatus:
+      type: string
+      enum: [pending, running, cancelling, completed, failed, cancelled]
+    RunPhase:
+      type: string
+      enum: [queued, provisioning, deploying, workload, collecting, teardown, done]
+    Trigger:
+      type: string
+      enum: [manual, suite, api, schedule]
+    RunRef:
+      type: object
+      required: [id]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        status: { $ref: '#/components/schemas/RunStatus' }
+        started_at: { type: [string, 'null'], format: date-time }
+    RunSummary:
+      type: object
+      description: Denormalized fields for lists, sorting and rating.
+      properties:
+        db_kind: { $ref: '#/components/schemas/DatabaseKind' }
+        db_version: { type: string }
+        workload_name: { type: string }
+        protocol: { $ref: '#/components/schemas/Protocol' }
+        stroppy_version: { type: string }
+        topology_label: { type: string }
+        node_count: { type: integer }
+        provider_kind: { $ref: '#/components/schemas/ProviderKind' }
+        provider_profile: { $ref: '#/components/schemas/Ref' }
+        sizes: { $ref: '#/components/schemas/RoleSizes' }
+        league: { type: string, description: Size league key for rating, e.g. `db:M`. }
+        progress_pct: { type: number, minimum: 0, maximum: 100 }
+        segment: { type: string, description: Current workload segment while running. }
+        headline:
+          type: object
+          description: Key result metrics once available.
+          additionalProperties: { type: number }
+          example: { tps: 12345.6, latency_p99_ms: 12.4, errors: 0 }
+    Run:
+      type: object
+      required: [id, name, status, phase, trigger, test_ref, snapshot, author, created_at, rating, stand_kept]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        status: { $ref: '#/components/schemas/RunStatus' }
+        phase: { $ref: '#/components/schemas/RunPhase' }
+        status_reason: { type: string, description: Failure/cancel reason. }
+        stand_kept: { type: boolean }
+        keep_until: { type: [string, 'null'], format: date-time }
+        trigger: { $ref: '#/components/schemas/Trigger' }
+        trigger_ref:
+          type: object
+          properties:
+            schedule_id: { type: string, format: uuid }
+            suite_run_id: { type: string, format: uuid }
+            cell_id: { type: string }
+            parent_run_id: { type: string, format: uuid, description: Set for rerun/resume/clone lineage. }
+        test_ref:
+          allOf: [{ $ref: '#/components/schemas/Ref' }]
+          description: Source test (may be deleted later; snapshot remains).
+        snapshot: { $ref: '#/components/schemas/RunSnapshot' }
+        run_spec:
+          allOf: [{ $ref: '#/components/schemas/BakedValue' }]
+          x-schema: spec.run
+          readOnly: true
+          description: The exact RunSpec handed to the pipeline (secrets are names only).
+        rating: { $ref: '#/components/schemas/RatingFlags' }
+        notes: { type: string, description: Markdown. }
+        labels: { type: object, additionalProperties: { type: string } }
+        author: { $ref: '#/components/schemas/UserRef' }
+        is_favorite: { type: boolean }
+        created_at: { type: string, format: date-time }
+        started_at: { type: [string, 'null'], format: date-time }
+        finished_at: { type: [string, 'null'], format: date-time }
+        duration: { type: [string, 'null'], description: Go duration; ticks client-side while running. }
+        summary: { $ref: '#/components/schemas/RunSummary' }
+        result: { $ref: '#/components/schemas/RunResult' }
+        graphene:
+          type: object
+          readOnly: true
+          properties:
+            run_ref: { type: string, example: 'run/8f1c…' }
+            namespace: { type: string }
+            pipeline_revision: { type: string }
+        shares:
+          type: array
+          readOnly: true
+          items: { $ref: '#/components/schemas/Ref' }
+    RunSnapshot:
+      type: object
+      description: Definition frozen at launch.
+      required: [database, workload, sizes, provider_profile]
+      properties:
+        database: { $ref: '#/components/schemas/DatabaseSpec' }
+        database_name: { type: string }
+        workload: { $ref: '#/components/schemas/WorkloadSpec' }
+        workload_name: { type: string }
+        sizes: { $ref: '#/components/schemas/RoleSizes' }
+        provider_profile: { $ref: '#/components/schemas/Ref' }
+        keep: { type: string }
+        effective_configs:
+          type: object
+          description: Per role → config schema id → Baked value that was rendered.
+          additionalProperties:
+            type: object
+            additionalProperties: { $ref: '#/components/schemas/BakedValue' }
+        machines:
+          type: array
+          items:
+            type: object
+            required: [name, role, size]
+            properties:
+              name: { type: string }
+              role: { type: string }
+              size: { $ref: '#/components/schemas/Size' }
+              cpu: { type: integer }
+              memory_gb: { type: integer }
+              disk_gb: { type: integer }
+              disk_type: { type: string }
+              instance_type: { type: string }
+              location: { type: string }
+    RunResult:
+      type: object
+      description: Typed result from the pipeline (`RunResult`).
+      properties:
+        metrics:
+          type: object
+          additionalProperties: { $ref: '#/components/schemas/MetricValue' }
+        segments:
+          type: array
+          items:
+            type: object
+            required: [name, status]
+            properties:
+              name: { type: string }
+              status: { type: string, enum: [completed, failed, skipped, cancelled] }
+              started_at: { type: string, format: date-time }
+              finished_at: { type: string, format: date-time }
+              metrics:
+                type: object
+                additionalProperties: { $ref: '#/components/schemas/MetricValue' }
+        artifacts:
+          type: array
+          items: { type: string, description: 'artifact/<id>' }
+    MetricValue:
+      type: object
+      required: [value]
+      properties:
+        value: { type: number }
+        unit: { type: string }
+        min: { type: number }
+        max: { type: number }
+        avg: { type: number }
+    RunPatch:
+      type: object
+      properties:
+        name: { type: string, minLength: 1, maxLength: 128 }
+        notes: { type: string, maxLength: 65536 }
+        labels: { type: object, additionalProperties: { type: string } }
+        rating: { $ref: '#/components/schemas/RatingFlags' }
+    RunOverview:
+      type: object
+      required: [run_id, status, phase, source, observed_at, phases, components, machines]
+      properties:
+        run_id: { type: string, format: uuid }
+        status: { $ref: '#/components/schemas/RunStatus' }
+        phase: { $ref: '#/components/schemas/RunPhase' }
+        progress_pct: { type: number }
+        source:
+          type: string
+          enum: [live, persisted, synthetic]
+          description: live = Graphene projection is fresh; persisted = last stored state; synthetic = before the run exists.
+        observed_at: { type: string, format: date-time }
+        degraded_reasons:
+          type: array
+          items: { type: string }
+        phases:
+          type: array
+          items:
+            type: object
+            required: [id, title, status]
+            properties:
+              id: { $ref: '#/components/schemas/RunPhase' }
+              title: { type: string }
+              status: { type: string, enum: [pending, running, completed, failed, skipped, cancelled] }
+              started_at: { type: [string, 'null'], format: date-time }
+              finished_at: { type: [string, 'null'], format: date-time }
+              steps:
+                type: array
+                items:
+                  type: object
+                  required: [id, title, status]
+                  properties:
+                    id: { type: string, description: Stable node id; usable as a log filter (`phase`/`segment`). }
+                    title: { type: string }
+                    status: { type: string }
+                    role: { type: string }
+                    machine: { type: string }
+                    attempt: { type: integer }
+                    error: { type: string }
+                    started_at: { type: [string, 'null'], format: date-time }
+                    finished_at: { type: [string, 'null'], format: date-time }
+        components:
+          type: array
+          description: Deployed software (containers) by role.
+          items:
+            type: object
+            required: [id, role, machine, status]
+            properties:
+              id: { type: string }
+              role: { type: string }
+              engine: { type: string }
+              image: { type: string }
+              machine: { type: string }
+              status: { type: string, enum: [pending, creating, ready, failed, deleting, deleted] }
+              endpoints:
+                type: array
+                items:
+                  type: object
+                  properties:
+                    name: { type: string }
+                    address: { type: string }
+                    port: { type: integer }
+              scrape: { type: string }
+        machines:
+          type: array
+          items:
+            type: object
+            required: [name, role, status, presence]
+            properties:
+              name: { type: string }
+              role: { type: string }
+              status: { type: string, enum: [pending, creating, ready, failed, deleting, deleted] }
+              presence: { type: string, enum: [online, stale, offline, terminated] }
+              agent_id: { type: string }
+              address: { type: string }
+              public_ip: { type: string }
+              size: { $ref: '#/components/schemas/Size' }
+              provider_resource_id: { type: string }
+              last_heartbeat_at: { type: [string, 'null'], format: date-time }
+        flows:
+          type: array
+          items:
+            type: object
+            properties:
+              from: { type: string }
+              to: { type: string }
+              protocol: { type: string }
+              port: { type: integer }
+        workload_segments:
+          type: array
+          description: Segment windows for the metrics/Grafana window selector.
+          items:
+            type: object
+            required: [name, status]
+            properties:
+              name: { type: string }
+              status: { type: string }
+              started_at: { type: [string, 'null'], format: date-time }
+              finished_at: { type: [string, 'null'], format: date-time }
+        pending_activity:
+          type: object
+          description: What the run is waiting on right now (from Graphene RunStatus).
+          properties:
+            activity: { type: string }
+            attempt: { type: integer }
+            since: { type: string, format: date-time }
+            last_failure: { type: string }
+    ResourceTree:
+      type: object
+      required: [ref, kind]
+      properties:
+        ref: { type: string }
+        kind: { type: string }
+        phase: { type: string }
+        labels: { type: object, additionalProperties: { type: string } }
+        keep_until: { type: [string, 'null'], format: date-time }
+        children:
+          type: array
+          items: { $ref: '#/components/schemas/ResourceTree' }
+    RunEvent:
+      type: object
+      required: [id, at, kind, title]
+      properties:
+        id: { type: string }
+        at: { type: string, format: date-time }
+        kind:
+          type: string
+          example: segment.finished
+          description: 'run.*, phase.*, segment.*, machine.*, component.*, activity.*'
+        title: { type: string }
+        subject: { type: string, description: Graphene ref or role/machine. }
+        status: { type: string }
+        error: { type: string }
+        attempt: { type: integer }
+        payload: { type: object, additionalProperties: true }
+        log_ref:
+          type: object
+          description: Deep link into the logs.
+          properties:
+            filter: { type: object, additionalProperties: true }
+            cursor: { type: string }
+    LogLine:
+      type: object
+      required: [time, message]
+      properties:
+        time: { type: string, format: date-time }
+        seq: { type: integer }
+        message: { type: string }
+        level: { type: string }
+        stream: { type: string }
+        role: { type: string }
+        machine: { type: string }
+        container: { type: string }
+        phase: { type: string }
+        segment: { type: string }
+        fields: { type: object, additionalProperties: { type: string } }
+    LogPage:
+      type: object
+      required: [data]
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/LogLine' }
+        older: { type: [string, 'null'], description: Cursor towards the past. }
+        newer: { type: [string, 'null'], description: Cursor towards the present. }
+        truncated: { type: boolean }
+    RunMetrics:
+      type: object
+      required: [window, series]
+      properties:
+        window:
+          type: object
+          required: [start, end]
+          properties:
+            start: { type: string, format: date-time }
+            end: { type: string, format: date-time }
+            segment: { type: string }
+        series:
+          type: array
+          items:
+            type: object
+            required: [key, points]
+            properties:
+              key: { type: string }
+              title: { type: string }
+              unit: { type: string }
+              role: { type: string }
+              machine: { type: string }
+              points:
+                type: array
+                items:
+                  type: array
+                  description: '[unix_ms, value]'
+                  items: { type: number }
+                  minItems: 2
+                  maxItems: 2
+              aggregates:
+                type: object
+                properties:
+                  avg: { type: number }
+                  min: { type: number }
+                  max: { type: number }
+                  last: { type: number }
+                  p95: { type: number }
+        errors:
+          type: array
+          description: Per-key backend errors; other series are still returned.
+          items:
+            type: object
+            properties:
+              key: { type: string }
+              error: { type: string }
+    GrafanaSession:
+      type: object
+      required: [expires_at, dashboards]
+      properties:
+        expires_at: { type: string, format: date-time }
+        dashboards:
+          type: array
+          items:
+            type: object
+            required: [id, title, url]
+            properties:
+              id: { type: string }
+              title: { type: string }
+              url: { type: string, description: Same-origin `/grafana/...` URL with from/to preset. }
+              per_machine: { type: boolean }
+    Artifact:
+      type: object
+      required: [id, name, kind, size_bytes]
+      properties:
+        id: { type: string }
+        name: { type: string }
+        kind: { type: string, enum: [stroppy_raw, report, config, log_bundle, other] }
+        content_type: { type: string }
+        size_bytes: { type: integer }
+        digest: { type: string }
+        created_at: { type: string, format: date-time }
+    CompareRequest:
+      type: object
+      required: [run_ids]
+      properties:
+        run_ids:
+          type: array
+          items: { type: string, format: uuid }
+          minItems: 2
+          maxItems: 16
+        baseline_run_id: { type: string, format: uuid, description: Defaults to the first id. }
+        metric_keys:
+          type: array
+          items: { type: string }
+        deadband_pct: { type: number, default: 1 }
+    Comparison:
+      type: object
+      required: [columns, metrics, spec_diff]
+      properties:
+        baseline_run_id: { type: string, format: uuid }
+        columns:
+          type: array
+          items:
+            type: object
+            required: [run_id]
+            properties:
+              run_id: { type: string, format: uuid }
+              name: { type: string }
+              status: { $ref: '#/components/schemas/RunStatus' }
+              summary: { $ref: '#/components/schemas/RunSummary' }
+              started_at: { type: string, format: date-time }
+              duration: { type: string }
+              verdict:
+                type: object
+                properties:
+                  better: { type: integer }
+                  worse: { type: integer }
+                  same: { type: integer }
+                  missing: { type: integer }
+        metrics:
+          type: array
+          items:
+            type: object
+            required: [key, cells]
+            properties:
+              key: { type: string }
+              title: { type: string }
+              unit: { type: string }
+              group: { type: string }
+              higher_is_better: { type: boolean }
+              cells:
+                type: array
+                items:
+                  type: object
+                  required: [run_id, present]
+                  properties:
+                    run_id: { type: string, format: uuid }
+                    present: { type: boolean }
+                    value: { type: number }
+                    diff_pct: { type: number }
+                    verdict: { type: string, enum: [better, worse, same, baseline] }
+        spec_diff:
+          type: object
+          description: Per run (vs baseline) — field-level differences in database/workload/sizes/configs.
+          additionalProperties: { $ref: '#/components/schemas/Diff' }

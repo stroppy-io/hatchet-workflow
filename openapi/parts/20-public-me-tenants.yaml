@@ -1,0 +1,533 @@
+paths:
+  # ---------------------------------------------------------------- Public
+  /api/v1/public/config:
+    get:
+      operationId: getPublicConfig
+      tags: [Public]
+      security: []
+      summary: Public bootstrap config for the SPA.
+      responses:
+        '200':
+          description: Config.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PublicConfig' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/public/catalog:
+    get:
+      operationId: getPublicCatalog
+      tags: [Public]
+      security: []
+      summary: Supported databases, versions, topologies and providers.
+      responses:
+        '200':
+          description: Catalog.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PublicCatalog' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/public/rating:
+    get:
+      operationId: getPublicRating
+      tags: [Public]
+      security: []
+      summary: Global rating (opt-in runs only).
+      parameters:
+        - $ref: '#/components/parameters/ratingMetric'
+        - $ref: '#/components/parameters/ratingKind'
+        - $ref: '#/components/parameters/ratingVersion'
+        - $ref: '#/components/parameters/ratingProvider'
+        - $ref: '#/components/parameters/ratingStroppy'
+        - $ref: '#/components/parameters/ratingLeague'
+        - $ref: '#/components/parameters/ratingPeriod'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      responses:
+        '200':
+          description: Rating page.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RatingPage' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/public/share/{token}:
+    get:
+      operationId: getPublicShare
+      tags: [Public]
+      security: []
+      summary: Shared snapshot (run, suite run or comparison).
+      parameters:
+        - $ref: '#/components/parameters/shareToken'
+      responses:
+        '200':
+          description: Snapshot.
+          headers:
+            X-Robots-Tag: { schema: { type: string }, description: 'noindex' }
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ShareSnapshot' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/public/share/{token}/metrics:
+    get:
+      operationId: getPublicShareMetrics
+      tags: [Public]
+      security: []
+      summary: Metrics for a shared run over a window (scope +metrics).
+      parameters:
+        - $ref: '#/components/parameters/shareToken'
+        - $ref: '#/components/parameters/windowStart'
+        - $ref: '#/components/parameters/windowEnd'
+      responses:
+        '200':
+          description: Metrics.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/RunMetrics' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/public/share/{token}/grafana-session:
+    post:
+      operationId: createPublicShareGrafanaSession
+      tags: [Public]
+      security: []
+      summary: Mint the Grafana scope cookie for a shared run.
+      parameters:
+        - $ref: '#/components/parameters/shareToken'
+      responses:
+        '200':
+          description: Session.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/GrafanaSession' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/public/share/{token}/export:
+    get:
+      operationId: exportPublicShare
+      tags: [Public]
+      security: []
+      summary: Export the shared report.
+      parameters:
+        - $ref: '#/components/parameters/shareToken'
+        - $ref: '#/components/parameters/exportFormat'
+      responses:
+        '200':
+          description: Report file.
+          content:
+            text/markdown: { schema: { type: string } }
+            application/pdf: { schema: { type: string, format: binary } }
+            application/json: { schema: { type: object, additionalProperties: true } }
+            text/csv: { schema: { type: string } }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/public/health:
+    get:
+      operationId: getPublicHealth
+      tags: [Public]
+      security: []
+      summary: Health of the server and its dependencies.
+      responses:
+        '200':
+          description: Health.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Health' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  # -------------------------------------------------------------------- Me
+  /api/v1/me:
+    get:
+      operationId: getMe
+      tags: [Me]
+      summary: Current profile, tenants and preferences.
+      responses:
+        '200':
+          description: Profile.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Me' }
+        default: { $ref: '#/components/responses/Problem' }
+    patch:
+      operationId: patchMe
+      tags: [Me]
+      summary: Update display name, avatar, preferences, notifications.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/MePatch' }
+      responses:
+        '200':
+          description: Profile.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Me' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/me/tokens:
+    get:
+      operationId: listMyTokens
+      tags: [Me]
+      summary: Personal API tokens.
+      responses:
+        '200':
+          description: Tokens.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/ApiToken' }
+        default: { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: createMyToken
+      tags: [Me]
+      summary: Create a personal API token scoped to one tenant.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ApiTokenCreate' }
+      responses:
+        '201':
+          description: Token (secret shown once).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiTokenCreated' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/me/tokens/{id}:
+    delete:
+      operationId: revokeMyToken
+      tags: [Me]
+      summary: Revoke a personal API token.
+      parameters: [{ $ref: '#/components/parameters/id' }]
+      responses:
+        '204': { $ref: '#/components/responses/NoContent' }
+        default: { $ref: '#/components/responses/Problem' }
+
+  # --------------------------------------------------------------- Tenants
+  /api/v1/tenants:
+    get:
+      operationId: listMyTenants
+      tags: [Tenants]
+      summary: Tenants the caller belongs to.
+      responses:
+        '200':
+          description: Tenants.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/TenantMembership' }
+        default: { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: createTenant
+      tags: [Tenants]
+      summary: Create the caller's own tenant (one per account).
+      description: |
+        Creates the Graphene namespace `t-<slug>`, pushes the pipelines and
+        records the tenant with the caller as owner. Fails with
+        `tenant_limit_reached` if the caller already owns one.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TenantCreate' }
+      responses:
+        '201':
+          description: Tenant.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Tenant' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/tenants/suggest-name:
+    get:
+      operationId: suggestTenantName
+      tags: [Tenants]
+      summary: Unique name/slug suggestion derived from the account.
+      responses:
+        '200':
+          description: Suggestion.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [name, slug]
+                properties:
+                  name: { type: string }
+                  slug: { type: string }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/tenants/{slug}:
+    get:
+      operationId: getTenant
+      tags: [Tenants]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Tenant details.
+      responses:
+        '200':
+          description: Tenant.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Tenant' }
+        default: { $ref: '#/components/responses/Problem' }
+    patch:
+      operationId: patchTenant
+      tags: [Tenants]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Rename / describe (owner, admin).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TenantPatch' }
+      responses:
+        '200':
+          description: Tenant.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Tenant' }
+        default: { $ref: '#/components/responses/Problem' }
+    delete:
+      operationId: deleteTenant
+      tags: [Tenants]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Delete the tenant (owner; no live runs). Retires the Graphene namespace.
+      responses:
+        '204': { $ref: '#/components/responses/NoContent' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/tenants/{slug}/members:
+    get:
+      operationId: listMembers
+      tags: [Tenants]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Members and their roles.
+      responses:
+        '200':
+          description: Members.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Member' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/tenants/{slug}/members/{userId}:
+    patch:
+      operationId: patchMember
+      tags: [Tenants]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/userId'
+      summary: Change a member's role (owner, admin; owner role only via transfer).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [role]
+              properties:
+                role: { $ref: '#/components/schemas/TenantRole' }
+      responses:
+        '200':
+          description: Member.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Member' }
+        default: { $ref: '#/components/responses/Problem' }
+    delete:
+      operationId: removeMember
+      tags: [Tenants]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/userId'
+      summary: Remove a member, or leave (self). Owner cannot leave.
+      responses:
+        '204': { $ref: '#/components/responses/NoContent' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/tenants/{slug}:transfer:
+    post:
+      operationId: transferTenant
+      tags: [Tenants]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Transfer ownership to another member (owner).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id]
+              properties:
+                user_id: { type: string }
+      responses:
+        '200':
+          description: Tenant.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Tenant' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/tenants/{slug}/invites:
+    get:
+      operationId: listInvites
+      tags: [Tenants]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Pending invites.
+      responses:
+        '200':
+          description: Invites.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Invite' }
+        default: { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: createInvite
+      tags: [Tenants]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Invite by email (admin). Applied on the invitee's first sign-in if unknown.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [email, role]
+              properties:
+                email: { type: string, format: email }
+                role: { $ref: '#/components/schemas/TenantRole' }
+                message: { type: string, maxLength: 1024 }
+      responses:
+        '201':
+          description: Invite.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Invite' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/tenants/{slug}/invites/{id}:
+    delete:
+      operationId: revokeInvite
+      tags: [Tenants]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Revoke an invite.
+      responses:
+        '204': { $ref: '#/components/responses/NoContent' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/me/invites:
+    get:
+      operationId: listMyInvites
+      tags: [Me]
+      summary: Invites addressed to the caller.
+      responses:
+        '200':
+          description: Invites.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Invite' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/me/invites/{id}:accept:
+    post:
+      operationId: acceptInvite
+      tags: [Me]
+      parameters: [{ $ref: '#/components/parameters/id' }]
+      summary: Accept an invite.
+      responses:
+        '200':
+          description: Membership.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TenantMembership' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/me/invites/{id}:decline:
+    post:
+      operationId: declineInvite
+      tags: [Me]
+      parameters: [{ $ref: '#/components/parameters/id' }]
+      summary: Decline an invite.
+      responses:
+        '204': { $ref: '#/components/responses/NoContent' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/tenants/{slug}/tokens:
+    get:
+      operationId: listTenantTokens
+      tags: [Tenants]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Tenant service tokens (admin).
+      responses:
+        '200':
+          description: Tokens.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/ApiToken' }
+        default: { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: createTenantToken
+      tags: [Tenants]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Create a service token (admin; role member|viewer).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ServiceTokenCreate' }
+      responses:
+        '201':
+          description: Token (secret shown once).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ApiTokenCreated' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/tenants/{slug}/tokens/{id}:
+    delete:
+      operationId: revokeTenantToken
+      tags: [Tenants]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Revoke a service token.
+      responses:
+        '204': { $ref: '#/components/responses/NoContent' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/audit:
+    get:
+      operationId: listTenantAudit
+      tags: [Tenants]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+        - { name: action, in: query, schema: { type: string } }
+        - { name: actor, in: query, schema: { type: string } }
+        - { name: since, in: query, schema: { type: string, format: date-time } }
+      summary: Tenant slice of the audit log.
+      responses:
+        '200':
+          description: Audit page.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuditPage' }
+        default: { $ref: '#/components/responses/Problem' }

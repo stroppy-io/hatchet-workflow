@@ -1,0 +1,462 @@
+paths:
+  /api/v1/t/{slug}/settings:
+    get:
+      operationId: getTenantSettings
+      tags: [Tenant Settings]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Tenant defaults.
+      responses:
+        '200':
+          description: Settings.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TenantSettings' }
+        default: { $ref: '#/components/responses/Problem' }
+    patch:
+      operationId: patchTenantSettings
+      tags: [Tenant Settings]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Update defaults (admin).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TenantSettingsPatch' }
+      responses:
+        '200':
+          description: Settings.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TenantSettings' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/limits:
+    get:
+      operationId: getTenantLimits
+      tags: [Tenant Settings]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Effective limits (platform ceilings applied).
+      responses:
+        '200':
+          description: Limits.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TenantLimits' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/providers:
+    get:
+      operationId: listProviderProfiles
+      tags: [Tenant Settings]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Provider profiles.
+      responses:
+        '200':
+          description: Profiles.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/ProviderProfile' }
+        default: { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: createProviderProfile
+      tags: [Tenant Settings]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Add a provider profile (admin). Credentials go to Graphene; verification pipeline starts.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProviderProfileCreate' }
+      responses:
+        '201':
+          description: Profile (status `verifying`).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProviderProfile' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/providers/{id}:
+    get:
+      operationId: getProviderProfile
+      tags: [Tenant Settings]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Provider profile.
+      responses:
+        '200':
+          description: Profile.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProviderProfile' }
+        default: { $ref: '#/components/responses/Problem' }
+    patch:
+      operationId: patchProviderProfile
+      tags: [Tenant Settings]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Rename or rotate credentials (re-verifies when credentials change).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/ProviderProfilePatch' }
+      responses:
+        '200':
+          description: Profile.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProviderProfile' }
+        default: { $ref: '#/components/responses/Problem' }
+    delete:
+      operationId: deleteProviderProfile
+      tags: [Tenant Settings]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Delete a profile (no live runs on it).
+      responses:
+        '204': { $ref: '#/components/responses/NoContent' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/providers/{id}:verify:
+    post:
+      operationId: verifyProviderProfile
+      tags: [Tenant Settings]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Re-run the verification pipeline.
+      responses:
+        '202':
+          description: Verification started.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/ProviderProfile' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/providers/{id}/quotas:
+    get:
+      operationId: getProviderQuotas
+      tags: [Tenant Settings]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Cloud quotas from the cache (filled by the quota pipeline).
+      responses:
+        '200':
+          description: Quotas.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/QuotaReport' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/providers/{id}/quotas:refresh:
+    post:
+      operationId: refreshProviderQuotas
+      tags: [Tenant Settings]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Run the quota pipeline now and wait for the result.
+      responses:
+        '200':
+          description: Quotas.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/QuotaReport' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/webhooks:
+    get:
+      operationId: listWebhooks
+      tags: [Tenant Settings]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Outbound webhooks.
+      responses:
+        '200':
+          description: Webhooks.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Webhook' }
+        default: { $ref: '#/components/responses/Problem' }
+    post:
+      operationId: createWebhook
+      tags: [Tenant Settings]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Create a webhook (admin).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WebhookCreate' }
+      responses:
+        '201':
+          description: Webhook (secret shown once).
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WebhookCreated' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/webhooks/{id}:
+    patch:
+      operationId: patchWebhook
+      tags: [Tenant Settings]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Update url/events/enabled.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/WebhookPatch' }
+      responses:
+        '200':
+          description: Webhook.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Webhook' }
+        default: { $ref: '#/components/responses/Problem' }
+    delete:
+      operationId: deleteWebhook
+      tags: [Tenant Settings]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Delete a webhook.
+      responses:
+        '204': { $ref: '#/components/responses/NoContent' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/webhooks/{id}:rotate-secret:
+    post:
+      operationId: rotateWebhookSecret
+      tags: [Tenant Settings]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+      summary: Rotate the signing secret (24h overlap).
+      responses:
+        '200':
+          description: Webhook with the new secret.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WebhookCreated' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/webhooks/{id}/deliveries:
+    get:
+      operationId: listWebhookDeliveries
+      tags: [Tenant Settings]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      summary: Delivery log.
+      responses:
+        '200':
+          description: Deliveries.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/WebhookDelivery' }
+                  meta: { $ref: '#/components/schemas/PageMeta' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/webhooks/{id}/deliveries/{deliveryId}:replay:
+    post:
+      operationId: replayWebhookDelivery
+      tags: [Tenant Settings]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/id'
+        - { name: deliveryId, in: path, required: true, schema: { type: string } }
+      summary: Re-send a delivery.
+      responses:
+        '202':
+          description: Queued.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/WebhookDelivery' }
+        default: { $ref: '#/components/responses/Problem' }
+components:
+  schemas:
+    TenantSettings:
+      type: object
+      required: [run_retention_days, default_rating, default_keep]
+      properties:
+        run_retention_days: { type: integer, minimum: 1 }
+        default_rating: { $ref: '#/components/schemas/RatingFlags' }
+        default_keep: { type: string, description: 'Go duration, e.g. 0s, 2h', example: '0s' }
+        notification_emails:
+          type: array
+          items: { type: string, format: email }
+          maxItems: 16
+    TenantSettingsPatch:
+      type: object
+      properties:
+        run_retention_days: { type: integer, minimum: 1 }
+        default_rating: { $ref: '#/components/schemas/RatingFlags' }
+        default_keep: { type: string }
+        notification_emails:
+          type: array
+          items: { type: string, format: email }
+          maxItems: 16
+    RatingFlags:
+      type: object
+      properties:
+        tenant: { type: boolean }
+        global: { type: boolean }
+    TenantLimits:
+      type: object
+      required: [max_concurrent_runs, max_machines_per_run, max_size, max_keep, run_retention_max_days]
+      properties:
+        max_concurrent_runs: { type: integer }
+        max_machines_per_run: { type: integer }
+        max_size: { $ref: '#/components/schemas/Size' }
+        max_keep: { type: string, description: Go duration. }
+        run_retention_max_days: { type: integer }
+        source: { type: string, enum: [platform_default, tenant_override], readOnly: true }
+    ProviderKind:
+      type: string
+      enum: [yandex, aws]
+    ProviderProfile:
+      type: object
+      required: [id, name, kind, status, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        kind: { $ref: '#/components/schemas/ProviderKind' }
+        status: { type: string, enum: [verifying, ready, failed] }
+        status_reason: { type: string }
+        verified_at: { type: [string, 'null'], format: date-time }
+        settings:
+          $ref: '#/components/schemas/SchemaValue'
+          x-schema: provider.<kind>.settings
+          description: Non-secret settings (folder/cloud/zone or region). Secrets are never returned.
+        secret_names:
+          type: array
+          items: { type: string }
+          readOnly: true
+          description: Graphene secret names holding the credentials.
+        quotas_observed_at: { type: [string, 'null'], format: date-time }
+        created_at: { type: string, format: date-time }
+        created_by: { $ref: '#/components/schemas/UserRef' }
+    ProviderProfileCreate:
+      type: object
+      required: [name, kind, settings, credentials]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 64 }
+        kind: { $ref: '#/components/schemas/ProviderKind' }
+        settings:
+          $ref: '#/components/schemas/SchemaValue'
+          x-schema: provider.<kind>.settings
+        credentials:
+          $ref: '#/components/schemas/SchemaValue'
+          x-schema: provider.<kind>.credentials
+          description: Write-only; forwarded to Graphene `SetSecret`.
+    ProviderProfilePatch:
+      type: object
+      properties:
+        name: { type: string, minLength: 1, maxLength: 64 }
+        settings:
+          $ref: '#/components/schemas/SchemaValue'
+          x-schema: provider.<kind>.settings
+        credentials:
+          $ref: '#/components/schemas/SchemaValue'
+          x-schema: provider.<kind>.credentials
+    QuotaReport:
+      type: object
+      required: [observed_at, stale, quotas]
+      properties:
+        observed_at: { type: [string, 'null'], format: date-time }
+        stale: { type: boolean, description: Older than the freshness window (1 min). }
+        quotas:
+          type: array
+          items:
+            type: object
+            required: [name, limit, used]
+            properties:
+              name: { type: string, example: compute.instanceCores.count }
+              title: { type: string }
+              unit: { type: string }
+              limit: { type: number }
+              used: { type: number }
+              zone: { type: string }
+    WebhookEvent:
+      type: string
+      enum:
+        - run.started
+        - run.stage
+        - run.finished
+        - run.failed
+        - run.cancelled
+        - suite.started
+        - suite.cell_finished
+        - suite.finished
+    Webhook:
+      type: object
+      required: [id, url, events, enabled, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        url: { type: string, format: uri }
+        events:
+          type: array
+          items: { $ref: '#/components/schemas/WebhookEvent' }
+        enabled: { type: boolean }
+        description: { type: string }
+        last_delivery:
+          type: object
+          properties:
+            at: { type: string, format: date-time }
+            status: { type: string, enum: [success, failed, pending] }
+        created_at: { type: string, format: date-time }
+    WebhookCreate:
+      type: object
+      required: [url, events]
+      properties:
+        url: { type: string, format: uri }
+        events:
+          type: array
+          items: { $ref: '#/components/schemas/WebhookEvent' }
+          minItems: 1
+        enabled: { type: boolean, default: true }
+        description: { type: string, maxLength: 512 }
+    WebhookPatch:
+      type: object
+      properties:
+        url: { type: string, format: uri }
+        events:
+          type: array
+          items: { $ref: '#/components/schemas/WebhookEvent' }
+        enabled: { type: boolean }
+        description: { type: string, maxLength: 512 }
+    WebhookCreated:
+      allOf:
+        - $ref: '#/components/schemas/Webhook'
+        - type: object
+          required: [secret]
+          properties:
+            secret: { type: string, description: 'whsec_... signing secret, shown once.' }
+    WebhookDelivery:
+      type: object
+      required: [id, event, status, attempts, created_at]
+      properties:
+        id: { type: string }
+        event: { $ref: '#/components/schemas/WebhookEvent' }
+        status: { type: string, enum: [pending, success, failed] }
+        attempts: { type: integer }
+        last_attempt_at: { type: [string, 'null'], format: date-time }
+        response_status: { type: [integer, 'null'] }
+        error: { type: string }
+        payload: { type: object, additionalProperties: true }
+        created_at: { type: string, format: date-time }

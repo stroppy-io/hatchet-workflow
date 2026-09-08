@@ -1,0 +1,240 @@
+components:
+  parameters:
+    userId:
+      name: userId
+      in: path
+      required: true
+      schema: { type: string }
+    shareToken:
+      name: token
+      in: path
+      required: true
+      schema: { type: string, minLength: 32, maxLength: 128 }
+    exportFormat:
+      name: format
+      in: query
+      required: true
+      schema: { type: string, enum: [md, pdf, json, csv] }
+    windowStart:
+      name: start
+      in: query
+      schema: { type: string, format: date-time }
+    windowEnd:
+      name: end
+      in: query
+      schema: { type: string, format: date-time }
+  schemas:
+    PublicConfig:
+      type: object
+      required: [iam, tenant_creation, public_rating_enabled, version]
+      properties:
+        iam:
+          type: object
+          required: [base_url, client_id, environment]
+          properties:
+            base_url: { type: string, description: Same-origin proxy base ('' in prod). }
+            client_id: { type: string }
+            environment: { type: string }
+        tenant_creation: { type: string, enum: [anyone, admin_only] }
+        public_rating_enabled: { type: boolean }
+        examples_enabled: { type: boolean }
+        version: { type: string }
+        commit: { type: string }
+    PublicCatalog:
+      type: object
+      required: [databases, providers]
+      properties:
+        databases:
+          type: array
+          items:
+            type: object
+            required: [kind, versions, topologies]
+            properties:
+              kind: { $ref: '#/components/schemas/DatabaseKind' }
+              title: { type: string }
+              versions: { type: array, items: { type: string } }
+              topologies: { type: array, items: { type: string } }
+        providers:
+          type: array
+          items: { $ref: '#/components/schemas/ProviderKind' }
+    Health:
+      type: object
+      required: [status, components]
+      properties:
+        status: { type: string, enum: [ok, degraded, down] }
+        version: { type: string }
+        components:
+          type: object
+          additionalProperties:
+            type: object
+            required: [status]
+            properties:
+              status: { type: string, enum: [ok, degraded, down] }
+              detail: { type: string }
+    Me:
+      type: object
+      required: [id, email, display_name, is_platform_admin, tenants, preferences, notifications]
+      properties:
+        id: { type: string }
+        email: { type: string, format: email }
+        display_name: { type: string }
+        avatar: { type: string, description: 'identicon:<seed> or https URL' }
+        is_platform_admin: { type: boolean }
+        tenants:
+          type: array
+          items: { $ref: '#/components/schemas/TenantMembership' }
+        owned_tenant_id: { type: [string, 'null'], format: uuid }
+        preferences: { $ref: '#/components/schemas/Preferences' }
+        notifications: { $ref: '#/components/schemas/NotificationPrefs' }
+        created_at: { type: string, format: date-time }
+    MePatch:
+      type: object
+      properties:
+        display_name: { type: string, minLength: 1, maxLength: 64 }
+        avatar: { type: string, maxLength: 512 }
+        preferences: { $ref: '#/components/schemas/Preferences' }
+        notifications: { $ref: '#/components/schemas/NotificationPrefs' }
+    Preferences:
+      type: object
+      properties:
+        theme: { type: string, enum: [system, light, dark] }
+        timezone: { type: string, example: Europe/Moscow }
+        default_tenant: { type: [string, 'null'], description: Tenant slug. }
+    NotificationPrefs:
+      type: object
+      properties:
+        run_finished: { type: boolean }
+        run_failed: { type: boolean }
+        suite_finished: { type: boolean }
+    TenantRole:
+      type: string
+      enum: [owner, admin, member, viewer]
+    Tenant:
+      type: object
+      required: [id, slug, name, status, owner, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        slug: { type: string }
+        name: { type: string }
+        description: { type: string }
+        status: { type: string, enum: [active, orphaned, suspended] }
+        owner: { $ref: '#/components/schemas/UserRef' }
+        public_name: { type: [string, 'null'], description: Shown in the global rating when set. }
+        member_count: { type: integer }
+        created_at: { type: string, format: date-time }
+        graphene_namespace: { type: string, readOnly: true }
+    TenantCreate:
+      type: object
+      required: [name]
+      properties:
+        name: { type: string, minLength: 2, maxLength: 64 }
+        slug: { type: string, pattern: '^[a-z0-9][a-z0-9-]{1,62}$', description: Derived from name when omitted. }
+        description: { type: string, maxLength: 4096 }
+    TenantPatch:
+      type: object
+      properties:
+        name: { type: string, minLength: 2, maxLength: 64 }
+        description: { type: string, maxLength: 4096 }
+        public_name: { type: [string, 'null'], maxLength: 64 }
+    TenantMembership:
+      type: object
+      required: [tenant, role]
+      properties:
+        tenant: { $ref: '#/components/schemas/Tenant' }
+        role: { $ref: '#/components/schemas/TenantRole' }
+        joined_at: { type: string, format: date-time }
+    Member:
+      type: object
+      required: [user, role, joined_at]
+      properties:
+        user:
+          allOf:
+            - $ref: '#/components/schemas/UserRef'
+            - type: object
+              properties:
+                email: { type: string, format: email }
+        role: { $ref: '#/components/schemas/TenantRole' }
+        joined_at: { type: string, format: date-time }
+        last_seen_at: { type: [string, 'null'], format: date-time }
+    Invite:
+      type: object
+      required: [id, tenant, email, role, status, created_at, expires_at]
+      properties:
+        id: { type: string, format: uuid }
+        tenant: { $ref: '#/components/schemas/Tenant' }
+        email: { type: string, format: email }
+        role: { $ref: '#/components/schemas/TenantRole' }
+        status: { type: string, enum: [pending, accepted, declined, expired, revoked] }
+        invited_by: { $ref: '#/components/schemas/UserRef' }
+        message: { type: string }
+        created_at: { type: string, format: date-time }
+        expires_at: { type: string, format: date-time }
+    ApiToken:
+      type: object
+      required: [id, name, prefix, kind, role, created_at]
+      properties:
+        id: { type: string, format: uuid }
+        name: { type: string }
+        prefix: { type: string, description: 'First characters, e.g. stc_ab12' }
+        kind: { type: string, enum: [personal, service] }
+        tenant: { $ref: '#/components/schemas/Ref' }
+        role: { $ref: '#/components/schemas/TenantRole' }
+        owner: { $ref: '#/components/schemas/UserRef' }
+        expires_at: { type: [string, 'null'], format: date-time }
+        last_used_at: { type: [string, 'null'], format: date-time }
+        created_at: { type: string, format: date-time }
+    ApiTokenCreate:
+      type: object
+      required: [name, tenant_id]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 64 }
+        tenant_id: { type: string, format: uuid }
+        role:
+          allOf: [{ $ref: '#/components/schemas/TenantRole' }]
+          description: Not above the caller's role in the tenant; defaults to it.
+        expires_at: { type: [string, 'null'], format: date-time }
+    ServiceTokenCreate:
+      type: object
+      required: [name, role]
+      properties:
+        name: { type: string, minLength: 1, maxLength: 64 }
+        role: { type: string, enum: [member, viewer] }
+        expires_at: { type: [string, 'null'], format: date-time }
+    ApiTokenCreated:
+      allOf:
+        - $ref: '#/components/schemas/ApiToken'
+        - type: object
+          required: [secret]
+          properties:
+            secret: { type: string, description: Full token, shown once. }
+    AuditEntry:
+      type: object
+      required: [id, at, actor, action, target]
+      properties:
+        id: { type: string }
+        at: { type: string, format: date-time }
+        actor:
+          type: object
+          required: [kind]
+          properties:
+            kind: { type: string, enum: [user, token, system, admin] }
+            id: { type: string }
+            display_name: { type: string }
+        tenant: { $ref: '#/components/schemas/Ref' }
+        action: { type: string, example: run.launch }
+        target:
+          type: object
+          properties:
+            kind: { type: string }
+            id: { type: string }
+            name: { type: string }
+        details: { type: object, additionalProperties: true }
+        request_id: { type: string }
+    AuditPage:
+      type: object
+      required: [data, meta]
+      properties:
+        data:
+          type: array
+          items: { $ref: '#/components/schemas/AuditEntry' }
+        meta: { $ref: '#/components/schemas/PageMeta' }

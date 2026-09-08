@@ -1,0 +1,397 @@
+paths:
+  /api/v1/admin/status:
+    get:
+      operationId: getAdminStatus
+      tags: [Admin]
+      summary: Platform status — versions, dependencies, pipeline push state per namespace, global run queue.
+      responses:
+        '200':
+          description: Status.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminStatus' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/admin/pipelines:resync:
+    post:
+      operationId: resyncPipelines
+      tags: [Admin]
+      summary: Re-push the pipelines into one or all tenant namespaces.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                tenant_slug: { type: string, description: All tenants when omitted. }
+      responses:
+        '202':
+          description: Started.
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  namespaces: { type: array, items: { type: string } }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/admin/tenants:
+    get:
+      operationId: adminListTenants
+      tags: [Admin]
+      parameters:
+        - $ref: '#/components/parameters/search'
+        - { name: status, in: query, schema: { type: string, enum: [active, orphaned, suspended] } }
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      summary: All tenants.
+      responses:
+        '200':
+          description: Page.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/AdminTenant' }
+                  meta: { $ref: '#/components/schemas/PageMeta' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/admin/tenants/{slug}:
+    get:
+      operationId: adminGetTenant
+      tags: [Admin]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Tenant details.
+      responses:
+        '200':
+          description: Tenant.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminTenant' }
+        default: { $ref: '#/components/responses/Problem' }
+    delete:
+      operationId: adminDeleteTenant
+      tags: [Admin]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Delete a tenant (cancels live runs first).
+      responses:
+        '204': { $ref: '#/components/responses/NoContent' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/admin/tenants/{slug}:suspend:
+    post:
+      operationId: adminSuspendTenant
+      tags: [Admin]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Suspend — no new launches, schedules paused.
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reason: { type: string }
+      responses:
+        '200':
+          description: Tenant.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminTenant' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/admin/tenants/{slug}:resume:
+    post:
+      operationId: adminResumeTenant
+      tags: [Admin]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Resume.
+      responses:
+        '200':
+          description: Tenant.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminTenant' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/admin/tenants/{slug}/limits:
+    put:
+      operationId: adminSetTenantLimits
+      tags: [Admin]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Set tenant limit ceilings (null = platform default).
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/TenantLimitsWrite' }
+      responses:
+        '200':
+          description: Limits.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/TenantLimits' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/admin/tenants/{slug}:assign-owner:
+    post:
+      operationId: adminAssignOwner
+      tags: [Admin]
+      parameters: [{ $ref: '#/components/parameters/slug' }]
+      summary: Assign an owner to an orphaned tenant.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [user_id]
+              properties:
+                user_id: { type: string }
+      responses:
+        '200':
+          description: Tenant.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminTenant' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/admin/users:
+    get:
+      operationId: adminListUsers
+      tags: [Admin]
+      parameters:
+        - $ref: '#/components/parameters/search'
+        - { name: platform_admin, in: query, schema: { type: boolean } }
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      summary: Profiles known to the server.
+      responses:
+        '200':
+          description: Page.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/AdminUser' }
+                  meta: { $ref: '#/components/schemas/PageMeta' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/admin/users/{userId}:
+    patch:
+      operationId: adminPatchUser
+      tags: [Admin]
+      parameters: [{ $ref: '#/components/parameters/userId' }]
+      summary: Toggle platform admin.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                is_platform_admin: { type: boolean }
+      responses:
+        '200':
+          description: User.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AdminUser' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/admin/settings:
+    get:
+      operationId: getSystemSettings
+      tags: [Admin]
+      summary: System settings.
+      responses:
+        '200':
+          description: Settings.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SystemSettings' }
+        default: { $ref: '#/components/responses/Problem' }
+    patch:
+      operationId: patchSystemSettings
+      tags: [Admin]
+      summary: Update system settings.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/SystemSettingsPatch' }
+      responses:
+        '200':
+          description: Settings.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/SystemSettings' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/admin/runs:
+    get:
+      operationId: adminListRuns
+      tags: [Admin]
+      parameters:
+        - { name: status, in: query, style: form, explode: false, schema: { type: array, items: { $ref: '#/components/schemas/RunStatus' } } }
+        - { name: tenant, in: query, schema: { type: string } }
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      summary: Runs across all tenants (queue view).
+      responses:
+        '200':
+          description: Page.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data, meta]
+                properties:
+                  data:
+                    type: array
+                    items:
+                      allOf:
+                        - $ref: '#/components/schemas/Run'
+                        - type: object
+                          properties:
+                            tenant: { $ref: '#/components/schemas/Ref' }
+                  meta: { $ref: '#/components/schemas/PageMeta' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/admin/runs/{id}:cancel:
+    post:
+      operationId: adminCancelRun
+      tags: [Admin]
+      parameters: [{ $ref: '#/components/parameters/id' }]
+      summary: Cancel any run.
+      responses:
+        '200':
+          description: Run.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Run' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/admin/audit:
+    get:
+      operationId: adminListAudit
+      tags: [Admin]
+      parameters:
+        - { name: tenant, in: query, schema: { type: string } }
+        - { name: action, in: query, schema: { type: string } }
+        - { name: actor, in: query, schema: { type: string } }
+        - { name: since, in: query, schema: { type: string, format: date-time } }
+        - $ref: '#/components/parameters/cursor'
+        - $ref: '#/components/parameters/limit'
+      summary: Platform audit log.
+      responses:
+        '200':
+          description: Audit page.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AuditPage' }
+        default: { $ref: '#/components/responses/Problem' }
+components:
+  schemas:
+    AdminStatus:
+      type: object
+      required: [version, commit, components, pipelines, runs]
+      properties:
+        version: { type: string }
+        commit: { type: string }
+        started_at: { type: string, format: date-time }
+        components:
+          type: object
+          additionalProperties:
+            type: object
+            required: [status]
+            properties:
+              status: { type: string, enum: [ok, degraded, down] }
+              detail: { type: string }
+              version: { type: string }
+        pipelines:
+          type: object
+          required: [expected_revision, namespaces]
+          properties:
+            expected_revision: { type: string }
+            namespaces:
+              type: array
+              items:
+                type: object
+                required: [namespace, status]
+                properties:
+                  namespace: { type: string }
+                  tenant_slug: { type: string }
+                  status: { type: string, enum: [synced, behind, failed, pending] }
+                  revision: { type: string }
+                  error: { type: string }
+                  pushed_at: { type: [string, 'null'], format: date-time }
+        runs:
+          type: object
+          properties:
+            running: { type: integer }
+            pending: { type: integer }
+            kept_stands: { type: integer }
+        tenants:
+          type: object
+          properties:
+            active: { type: integer }
+            suspended: { type: integer }
+            orphaned: { type: integer }
+    AdminTenant:
+      allOf:
+        - $ref: '#/components/schemas/Tenant'
+        - type: object
+          properties:
+            limits: { $ref: '#/components/schemas/TenantLimits' }
+            suspended_reason: { type: string }
+            counters:
+              type: object
+              properties:
+                members: { type: integer }
+                runs_total: { type: integer }
+                runs_running: { type: integer }
+                kept_stands: { type: integer }
+                providers: { type: integer }
+            last_activity_at: { type: [string, 'null'], format: date-time }
+    TenantLimitsWrite:
+      type: object
+      properties:
+        max_concurrent_runs: { type: [integer, 'null'] }
+        max_machines_per_run: { type: [integer, 'null'] }
+        max_size: { anyOf: [{ $ref: '#/components/schemas/Size' }, { type: 'null' }] }
+        max_keep: { type: [string, 'null'] }
+        run_retention_max_days: { type: [integer, 'null'] }
+    AdminUser:
+      type: object
+      required: [id, email, display_name, is_platform_admin, created_at]
+      properties:
+        id: { type: string }
+        email: { type: string, format: email }
+        display_name: { type: string }
+        is_platform_admin: { type: boolean }
+        admin_source: { type: string, enum: [config, db] }
+        owned_tenant: { $ref: '#/components/schemas/Ref' }
+        memberships: { type: integer }
+        last_seen_at: { type: [string, 'null'], format: date-time }
+        created_at: { type: string, format: date-time }
+    SystemSettings:
+      type: object
+      required: [tenant_creation, public_rating_enabled, examples_enabled, default_limits, run_retention_max_days]
+      properties:
+        tenant_creation: { type: string, enum: [anyone, admin_only] }
+        public_rating_enabled: { type: boolean }
+        examples_enabled: { type: boolean }
+        default_limits: { $ref: '#/components/schemas/TenantLimits' }
+        run_retention_max_days: { type: integer }
+        stroppy_catalog:
+          $ref: '#/components/schemas/SchemaValue'
+          x-schema: system.stroppy_catalog
+          description: Static stroppy catalog (v0 source of `/catalog/stroppy`).
+        updated_at: { type: string, format: date-time }
+        updated_by: { $ref: '#/components/schemas/UserRef' }
+    SystemSettingsPatch:
+      type: object
+      properties:
+        tenant_creation: { type: string, enum: [anyone, admin_only] }
+        public_rating_enabled: { type: boolean }
+        examples_enabled: { type: boolean }
+        default_limits: { $ref: '#/components/schemas/TenantLimitsWrite' }
+        run_retention_max_days: { type: integer }
+        stroppy_catalog:
+          $ref: '#/components/schemas/SchemaValue'
+          x-schema: system.stroppy_catalog

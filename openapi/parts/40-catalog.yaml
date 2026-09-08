@@ -1,0 +1,426 @@
+paths:
+  /api/v1/catalog/databases:
+    get:
+      operationId: getCatalogDatabases
+      tags: [Catalog]
+      summary: Database kinds — versions, roles, topology templates, params schema id, protocols.
+      responses:
+        '200':
+          description: Database catalog.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/CatalogDatabase' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/catalog/providers:
+    get:
+      operationId: getCatalogProviders
+      tags: [Catalog]
+      summary: Providers — zones/regions, platforms, disk types, size table per role.
+      responses:
+        '200':
+          description: Provider catalog.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/CatalogProvider' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/catalog/stroppy:
+    get:
+      operationId: getCatalogStroppy
+      tags: [Catalog]
+      summary: Stroppy versions and per-version script catalog (steps, params).
+      parameters:
+        - { name: version, in: query, schema: { type: string }, description: Limit to one version. }
+      responses:
+        '200':
+          description: Stroppy catalog.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/StroppyCatalog' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/catalog/examples:
+    get:
+      operationId: listExamples
+      tags: [Catalog]
+      summary: Read-only example gallery shipped with the server.
+      parameters:
+        - { name: kind, in: query, schema: { type: string, enum: [database, workload, test, suite] } }
+        - { name: db_kind, in: query, schema: { $ref: '#/components/schemas/DatabaseKind' } }
+      responses:
+        '200':
+          description: Examples.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/Example' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/examples/{exampleId}:clone:
+    post:
+      operationId: cloneExample
+      tags: [Catalog]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/exampleId'
+      summary: Clone an example into the tenant library (creates the entity and its dependencies).
+      requestBody:
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                name: { type: string }
+      responses:
+        '201':
+          description: Created entities.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [created]
+                properties:
+                  created:
+                    type: array
+                    items: { $ref: '#/components/schemas/Usage' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/t/{slug}/examples/{exampleId}:quick-run:
+    post:
+      operationId: quickRunExample
+      tags: [Catalog]
+      parameters:
+        - $ref: '#/components/parameters/slug'
+        - $ref: '#/components/parameters/exampleId'
+        - $ref: '#/components/parameters/idempotencyKey'
+      summary: Launch a test example as a run without saving it to the library.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/LaunchOverrides' }
+      responses:
+        '201':
+          description: Run.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Run' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/catalog/schemas:
+    get:
+      operationId: listSchemas
+      tags: [Catalog]
+      summary: Registered schemapb schemas (ids, versions, titles).
+      parameters:
+        - { name: namespace, in: query, schema: { type: string }, description: 'db | cfg | workload | provider | spec | suite | system' }
+      responses:
+        '200':
+          description: Schemas.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/SchemaInfo' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/catalog/schemas/{schemaId}:
+    get:
+      operationId: getSchema
+      tags: [Catalog]
+      parameters: [{ $ref: '#/components/parameters/schemaId' }]
+      summary: schemapb `Schema` in protoJSON (feeds the form renderer).
+      responses:
+        '200':
+          description: Schema.
+          content:
+            application/json:
+              schema: { type: object, additionalProperties: true }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/catalog/schemas/{schemaId}:validate:
+    post:
+      operationId: validateSchemaValue
+      tags: [Catalog]
+      parameters: [{ $ref: '#/components/parameters/schemaId' }]
+      summary: Validate (resolve + bake) a value; returns the result and the resolved value.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [value]
+              properties:
+                value: { $ref: '#/components/schemas/SchemaValue' }
+      responses:
+        '200':
+          description: Result (200 even when invalid; check `result.errors`).
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [result]
+                properties:
+                  result: { $ref: '#/components/schemas/ValidationResult' }
+                  resolved: { $ref: '#/components/schemas/SchemaValue' }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/catalog/schemas/{schemaId}:render:
+    post:
+      operationId: renderSchemaValue
+      tags: [Catalog]
+      parameters: [{ $ref: '#/components/parameters/schemaId' }]
+      summary: Render a config value to its file form (e.g. postgresql.conf) via the schema template.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [value]
+              properties:
+                value: { $ref: '#/components/schemas/SchemaValue' }
+                template: { type: string, default: conf }
+      responses:
+        '200':
+          description: Rendered text.
+          content:
+            text/plain: { schema: { type: string } }
+        default: { $ref: '#/components/responses/Problem' }
+  /api/v1/catalog/metrics:
+    get:
+      operationId: getCatalogMetrics
+      tags: [Catalog]
+      summary: Metric catalog — result metrics and per-kind DB metrics with descriptions.
+      parameters:
+        - { name: db_kind, in: query, schema: { $ref: '#/components/schemas/DatabaseKind' } }
+      responses:
+        '200':
+          description: Metric catalog.
+          content:
+            application/json:
+              schema:
+                type: object
+                required: [data]
+                properties:
+                  data:
+                    type: array
+                    items: { $ref: '#/components/schemas/MetricDef' }
+        default: { $ref: '#/components/responses/Problem' }
+components:
+  parameters:
+    exampleId:
+      name: exampleId
+      in: path
+      required: true
+      schema: { type: string, pattern: '^[a-z0-9][a-z0-9-]*$' }
+    schemaId:
+      name: schemaId
+      in: path
+      required: true
+      description: '`<namespace>.<name>` or `<namespace>.<name>@<version>` (latest when no version).'
+      schema: { type: string, example: 'cfg.postgresql.conf@16' }
+  schemas:
+    DatabaseKind:
+      type: string
+      enum: [postgres, mysql, mariadb, picodata, ydb, ydb_managed, cockroach, orioledb, external, noop, pg_noop]
+    Protocol:
+      type: string
+      enum: [pg, mysql, picodata, ydb_grpc, ydb_grpcs, cockroach, noop]
+    CatalogDatabase:
+      type: object
+      required: [kind, title, versions, roles, topologies, params_schema, protocols, deployable]
+      properties:
+        kind: { $ref: '#/components/schemas/DatabaseKind' }
+        title: { type: string }
+        description: { type: string }
+        versions:
+          type: array
+          items:
+            type: object
+            required: [version]
+            properties:
+              version: { type: string }
+              image: { type: string, description: Default docker image reference. }
+              default: { type: boolean }
+              deprecated: { type: boolean }
+        roles:
+          type: array
+          items:
+            type: object
+            required: [role, title]
+            properties:
+              role: { type: string, example: master }
+              title: { type: string }
+              engine: { type: string, example: postgres }
+              config_schemas:
+                type: array
+                items: { type: string, example: 'cfg.postgresql.conf@16' }
+                description: Software configs rendered for this role.
+        topologies:
+          type: array
+          description: Named starting points for the params form.
+          items:
+            type: object
+            required: [id, title, params]
+            properties:
+              id: { type: string, example: ha }
+              title: { type: string }
+              description: { type: string }
+              params: { $ref: '#/components/schemas/SchemaValue' }
+        params_schema: { type: string, example: 'db.postgres.params@1' }
+        protocols:
+          type: array
+          items: { $ref: '#/components/schemas/Protocol' }
+        deployable: { type: boolean, description: false for external/noop kinds. }
+    CatalogProvider:
+      type: object
+      required: [kind, title, locations, sizes, disk_types]
+      properties:
+        kind: { $ref: '#/components/schemas/ProviderKind' }
+        title: { type: string }
+        settings_schema: { type: string, example: 'provider.yandex.settings@1' }
+        credentials_schema: { type: string, example: 'provider.yandex.credentials@1' }
+        locations:
+          type: array
+          description: Zones (yandex) or regions (aws).
+          items:
+            type: object
+            required: [id]
+            properties:
+              id: { type: string }
+              title: { type: string }
+        platforms:
+          type: array
+          items:
+            type: object
+            required: [id]
+            properties:
+              id: { type: string }
+              title: { type: string }
+        disk_types:
+          type: array
+          items:
+            type: object
+            required: [id]
+            properties:
+              id: { type: string, example: network-ssd }
+              title: { type: string }
+              min_gb: { type: integer }
+              step_gb: { type: integer }
+        sizes:
+          type: object
+          description: Size table per role family.
+          additionalProperties:
+            type: array
+            items: { $ref: '#/components/schemas/SizeSpec' }
+        images:
+          type: array
+          items:
+            type: object
+            required: [id, os]
+            properties:
+              id: { type: string }
+              os: { type: string }
+    SizeSpec:
+      type: object
+      required: [size, cpu, memory_gb, instance_type]
+      properties:
+        size: { $ref: '#/components/schemas/Size' }
+        cpu: { type: integer }
+        memory_gb: { type: integer }
+        instance_type: { type: string, description: Provider platform/instance type. }
+        default_disk_gb: { type: integer }
+    StroppyCatalog:
+      type: object
+      required: [versions]
+      properties:
+        source: { type: string, enum: [static, release, probe] }
+        versions:
+          type: array
+          items:
+            type: object
+            required: [version, image, protocols, scripts]
+            properties:
+              version: { type: string }
+              image: { type: string }
+              default: { type: boolean }
+              deprecated: { type: boolean }
+              protocols:
+                type: array
+                items: { $ref: '#/components/schemas/Protocol' }
+              scripts:
+                type: array
+                items: { $ref: '#/components/schemas/StroppyScript' }
+    StroppyScript:
+      type: object
+      required: [id, title, steps]
+      properties:
+        id: { type: string, example: tpcc/tx }
+        title: { type: string }
+        description: { type: string }
+        protocols:
+          type: array
+          items: { $ref: '#/components/schemas/Protocol' }
+        steps:
+          type: array
+          items:
+            type: object
+            required: [id]
+            properties:
+              id: { type: string, example: load_data }
+              title: { type: string }
+              description: { type: string }
+              phase: { type: string, enum: [bootstrap, workload, teardown] }
+        params_schema: { type: string, description: schemapb id of script-specific params (env/args). }
+    Example:
+      type: object
+      required: [id, kind, title]
+      properties:
+        id: { type: string }
+        kind: { type: string, enum: [database, workload, test, suite] }
+        title: { type: string }
+        description: { type: string }
+        db_kind: { $ref: '#/components/schemas/DatabaseKind' }
+        tags: { type: object, additionalProperties: { type: string } }
+        document: { $ref: '#/components/schemas/ExportDocument' }
+    SchemaInfo:
+      type: object
+      required: [id, version, namespace, name]
+      properties:
+        id: { type: string, example: cfg.postgresql.conf }
+        version: { type: string, example: '16.0.0' }
+        namespace: { type: string }
+        name: { type: string }
+        title: { type: string }
+        description: { type: string }
+        templates: { type: array, items: { type: string } }
+    MetricDef:
+      type: object
+      required: [key, title, unit, higher_is_better, group, scope]
+      properties:
+        key: { type: string, example: tps }
+        title: { type: string }
+        description: { type: string }
+        unit: { type: string }
+        higher_is_better: { type: boolean }
+        group: { type: string, example: throughput }
+        scope: { type: string, enum: [result, db, host] }
+        db_kinds:
+          type: array
+          items: { $ref: '#/components/schemas/DatabaseKind' }
+        rating_eligible: { type: boolean }
