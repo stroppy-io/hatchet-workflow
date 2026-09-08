@@ -1,7 +1,0 @@
-github.com/bufbuild/protoc-gen-validate v1.3.3 h1:ZZ5JyUkmrj9OBHM+gOCzeL5L/pAKVbsUl051yhhJTjU=
-github.com/cludden/protoc-gen-go-temporal v1.23.1 h1:BOCxpx1eYApT0yDqzgZ1S0Gvav6AQCPh3vXi6yACsFk=
-github.com/gopherex/protoc-gen-go-graphql v1.0.5 h1:bCt0HpZdaBDevj070bxjG7JX3uC27hrxtXPbCAtggPw=
-github.com/gopherex/protoc-gen-go-ogen v1.1.5 h1:ziFTyZQdBVwz+uJmOadmVnNVp0L9QoJ38/QyHFK16mw=
-github.com/stroppy-io/schemapb v1.4.4 h1:RWHnLPu+paFYnV7X8g5RWTKo+wZ7GeSrDmLy6jUm3as=
-github.com/temporalio/api v1.62.12 h1:sP5PkjqBz+yKrMVWj4k93vMX/bnyerbjIJM/uwrx3RA=
-github.com/yaroher/protoc-gen-go-plain v0.7.17 h1:IZAW2/z/1ReU2a0BbbzqbpHjLLangyeOYOolayxlwe0=

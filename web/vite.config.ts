@@ -3,6 +3,7 @@ import react from "@vitejs/plugin-react";
 import tailwindcss from "@tailwindcss/vite";
 import path from "path";
 
+// Port 5173 is the origin registered for the IAM "cloud web (dev)" client.
 export default defineConfig({
   plugins: [react(), tailwindcss()],
   resolve: {
@@ -11,25 +12,14 @@ export default defineConfig({
     },
   },
   server: {
-    port: 3000,
+    port: 5173,
     proxy: {
-      // connect-rpc: the client posts to /cloud.v1.<pkg>.<Service>/<Method>
-      // (api + agent-log). Forward to the backend so dev stays same-origin and
-      // needs no CORS — the prod build is served by that same backend on one mux.
-      "/cloud.v1.": {
-        target: "http://localhost:8080",
-        changeOrigin: true,
-      },
-      // package blob serving — storage_uri download links resolve here.
-      "/packages": {
-        target: "http://localhost:8080",
-        changeOrigin: true,
-      },
-      // embedded Grafana — gateway reverse-proxies the dashboards same-origin.
-      "/grafana": {
-        target: "http://localhost:8080",
-        changeOrigin: true,
-      },
+      // stroppy-server API + WS; prod serves the SPA from the same origin.
+      "/api": { target: "http://localhost:8080", changeOrigin: true, ws: true },
+      // IAM, reverse-proxied by stroppy-server so auth stays same-origin.
+      "/v1": { target: "http://localhost:8080", changeOrigin: true },
+      // embedded Grafana relay.
+      "/grafana": { target: "http://localhost:8080", changeOrigin: true },
     },
   },
 });
