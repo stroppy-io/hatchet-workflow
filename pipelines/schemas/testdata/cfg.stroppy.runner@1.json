@@ -1,0 +1,642 @@
+{
+  "id":  {
+    "namespace":  "cfg",
+    "name":  "stroppy.runner",
+    "version":  "v1.0.0"
+  },
+  "description":  "Environment of the stroppy runner process: logging, OTLP export, pool and driver options.",
+  "fields":  [
+    {
+      "name":  "log_level",
+      "description":  "LOG_LEVEL. debug traces how every parameter was resolved; it also turns on k6 --verbose.",
+      "choice":  {
+        "options":  [
+          {
+            "value":  {
+              "stringValue":  "debug"
+            },
+            "label":  "debug"
+          },
+          {
+            "value":  {
+              "stringValue":  "info"
+            },
+            "label":  "info"
+          },
+          {
+            "value":  {
+              "stringValue":  "warn"
+            },
+            "label":  "warn"
+          },
+          {
+            "value":  {
+              "stringValue":  "error"
+            },
+            "label":  "error"
+          }
+        ],
+        "default":  {
+          "stringValue":  "info"
+        }
+      },
+      "group":  "Logging",
+      "title":  "Log level"
+    },
+    {
+      "name":  "log_format",
+      "description":  "K6_LOG_FORMAT of the embedded k6 process. json is what the agent ships to the log store.",
+      "choice":  {
+        "options":  [
+          {
+            "value":  {
+              "stringValue":  "json"
+            },
+            "label":  "json"
+          },
+          {
+            "value":  {
+              "stringValue":  "text"
+            },
+            "label":  "text"
+          }
+        ],
+        "default":  {
+          "stringValue":  "json"
+        }
+      },
+      "group":  "Logging",
+      "title":  "Log format"
+    },
+    {
+      "name":  "otlp_protocol",
+      "description":  "K6_OTEL_EXPORTER_PROTOCOL.",
+      "choice":  {
+        "options":  [
+          {
+            "value":  {
+              "stringValue":  "grpc"
+            },
+            "label":  "gRPC"
+          },
+          {
+            "value":  {
+              "stringValue":  "http/protobuf"
+            },
+            "label":  "HTTP/protobuf"
+          }
+        ],
+        "default":  {
+          "stringValue":  "grpc"
+        }
+      },
+      "group":  "Telemetry",
+      "title":  "OTLP protocol"
+    },
+    {
+      "name":  "otlp_endpoint",
+      "description":  "K6_OTEL_GRPC_EXPORTER_ENDPOINT / K6_OTEL_HTTP_EXPORTER_ENDPOINT. Filled by the server: the agent's OTLP receiver on this machine.",
+      "nullable":  true,
+      "string":  {
+        "maxLen":  "256"
+      },
+      "group":  "Cluster",
+      "title":  "OTLP endpoint",
+      "examples":  [
+        {
+          "stringValue":  "127.0.0.1:4317"
+        }
+      ]
+    },
+    {
+      "name":  "otlp_http_url_path",
+      "description":  "K6_OTEL_HTTP_EXPORTER_URL_PATH; only read for the http/protobuf protocol.",
+      "string":  {
+        "default":  "/v1/metrics",
+        "pattern":  "^/.*$"
+      },
+      "group":  "Telemetry",
+      "title":  "OTLP HTTP path",
+      "when":  "root.otlp_protocol == \"http/protobuf\""
+    },
+    {
+      "name":  "otlp_insecure",
+      "description":  "K6_OTEL_GRPC_EXPORTER_INSECURE / K6_OTEL_HTTP_EXPORTER_INSECURE. The endpoint is a local agent, so plaintext is the norm.",
+      "bool":  {
+        "default":  true
+      },
+      "group":  "Telemetry",
+      "title":  "OTLP insecure"
+    },
+    {
+      "name":  "otlp_service_name",
+      "description":  "K6_OTEL_SERVICE_NAME.",
+      "string":  {
+        "default":  "stroppy",
+        "minLen":  "1",
+        "maxLen":  "64"
+      },
+      "group":  "Telemetry",
+      "title":  "OTLP service name"
+    },
+    {
+      "name":  "otlp_metric_prefix",
+      "description":  "K6_OTEL_METRIC_PREFIX prepended to every k6 metric name.",
+      "string":  {
+        "default":  "k6_",
+        "pattern":  "^[a-z][a-z0-9_]*$"
+      },
+      "group":  "Telemetry",
+      "title":  "OTLP metric prefix"
+    },
+    {
+      "name":  "otlp_headers",
+      "description":  "K6_OTEL_HEADERS, comma-joined k=v. The server fills the run/tenant identity here (there is no separate label env var upstream).",
+      "rules":  [
+        {
+          "expr":  "this.all(k, k.matches(\"^[A-Za-z0-9_-]+$\"))",
+          "message":  "header names are [A-Za-z0-9_-]",
+          "id":  "header-name-shape"
+        }
+      ],
+      "map":  {
+        "maxEntries":  "16",
+        "valueField":  {
+          "name":  "value",
+          "string":  {
+            "maxLen":  "256"
+          }
+        }
+      },
+      "group":  "Cluster",
+      "title":  "OTLP headers"
+    },
+    {
+      "name":  "metrics_flush_interval",
+      "description":  "K6_OTEL_EXPORT_INTERVAL: how often k6 pushes metric batches to the collector.",
+      "duration":  {
+        "default":  "10s",
+        "gte":  "1s",
+        "lte":  "300s"
+      },
+      "group":  "Telemetry",
+      "title":  "Metrics flush interval"
+    },
+    {
+      "name":  "threads",
+      "description":  "GOMAXPROCS of the stroppy/k6 process; 0 leaves the Go default (one per CPU) and emits no variable.",
+      "int64":  {
+        "default":  "0",
+        "gte":  "0",
+        "lte":  "4096"
+      },
+      "group":  "Process",
+      "title":  "GOMAXPROCS"
+    },
+    {
+      "name":  "pool_max_conns",
+      "description":  "driver pool.maxConns. Keep it at or above the k6 VU count or VUs queue on the pool instead of the database.",
+      "int64":  {
+        "default":  "100",
+        "gte":  "1",
+        "lte":  "100000"
+      },
+      "group":  "Pool",
+      "title":  "Pool max connections"
+    },
+    {
+      "name":  "pool_min_conns",
+      "description":  "driver pool.minConns: connections kept warm; equal to max removes connect latency from the measurement.",
+      "int64":  {
+        "default":  "100",
+        "gte":  "0",
+        "lte":  "100000"
+      },
+      "group":  "Pool",
+      "title":  "Pool min connections"
+    },
+    {
+      "name":  "pool_conn_lifetime",
+      "description":  "driver pool.maxConnLifetime.",
+      "duration":  {
+        "default":  "3600s",
+        "gte":  "60s",
+        "lte":  "86400s"
+      },
+      "group":  "Pool",
+      "title":  "Connection lifetime"
+    },
+    {
+      "name":  "pool_conn_idle_time",
+      "description":  "driver pool.maxConnIdleTime.",
+      "duration":  {
+        "default":  "1800s",
+        "gte":  "1s",
+        "lte":  "86400s"
+      },
+      "group":  "Pool",
+      "title":  "Connection idle time"
+    },
+    {
+      "name":  "insert_progress_interval",
+      "description":  "driver insertProgress.interval: how often the load phase reports row progress (upstream default 10s).",
+      "duration":  {
+        "default":  "30s",
+        "gte":  "1s",
+        "lte":  "3600s"
+      },
+      "group":  "Timeouts",
+      "title":  "Insert progress interval"
+    },
+    {
+      "name":  "insert_progress_stall_after",
+      "description":  "driver insertProgress.stallAfter: warn when no rows moved for this long (upstream default 60s).",
+      "duration":  {
+        "default":  "120s",
+        "gte":  "1s",
+        "lte":  "3600s"
+      },
+      "group":  "Timeouts",
+      "title":  "Stall warning after"
+    },
+    {
+      "name":  "insert_progress_mode",
+      "description":  "driver insertProgress.mode.",
+      "choice":  {
+        "options":  [
+          {
+            "value":  {
+              "stringValue":  "both"
+            },
+            "label":  "log + metrics"
+          },
+          {
+            "value":  {
+              "stringValue":  "log"
+            },
+            "label":  "log"
+          },
+          {
+            "value":  {
+              "stringValue":  "metrics"
+            },
+            "label":  "metrics"
+          },
+          {
+            "value":  {
+              "stringValue":  "off"
+            },
+            "label":  "off"
+          }
+        ],
+        "default":  {
+          "stringValue":  "both"
+        }
+      },
+      "group":  "Timeouts",
+      "title":  "Insert progress mode"
+    },
+    {
+      "name":  "error_mode",
+      "description":  "driver errorMode: what a failing statement does to the run.",
+      "choice":  {
+        "options":  [
+          {
+            "value":  {
+              "stringValue":  "silent"
+            },
+            "label":  "silent"
+          },
+          {
+            "value":  {
+              "stringValue":  "log"
+            },
+            "label":  "log"
+          },
+          {
+            "value":  {
+              "stringValue":  "throw"
+            },
+            "label":  "throw"
+          },
+          {
+            "value":  {
+              "stringValue":  "fail"
+            },
+            "label":  "fail"
+          },
+          {
+            "value":  {
+              "stringValue":  "abort"
+            },
+            "label":  "abort"
+          }
+        ],
+        "default":  {
+          "stringValue":  "log"
+        }
+      },
+      "group":  "Driver",
+      "title":  "Error mode"
+    },
+    {
+      "name":  "bulk_size",
+      "description":  "driver bulkSize: rows per bulk INSERT during load_data (upstream default 2500).",
+      "int64":  {
+        "default":  "2500",
+        "gte":  "1",
+        "lte":  "1000000"
+      },
+      "group":  "Driver",
+      "title":  "Bulk size"
+    },
+    {
+      "name":  "default_insert_method",
+      "description":  "driver defaultInsertMethod; the fastest method differs per driver (native for pg/ydb, plain_bulk for mysql/picodata).",
+      "choice":  {
+        "options":  [
+          {
+            "value":  {
+              "stringValue":  "native"
+            },
+            "label":  "native"
+          },
+          {
+            "value":  {
+              "stringValue":  "plain_bulk"
+            },
+            "label":  "plain_bulk"
+          },
+          {
+            "value":  {
+              "stringValue":  "plain_query"
+            },
+            "label":  "plain_query"
+          }
+        ],
+        "default":  {
+          "stringValue":  "native"
+        }
+      },
+      "group":  "Driver",
+      "title":  "Insert method"
+    },
+    {
+      "name":  "driver_url",
+      "description":  "driver url. Filled by the server from topology (the proxy or primary endpoint of the deployed database).",
+      "nullable":  true,
+      "string":  {
+        "maxLen":  "1024"
+      },
+      "group":  "Cluster",
+      "title":  "Driver URL",
+      "examples":  [
+        {
+          "stringValue":  "postgres://stroppy:stroppy@10.0.0.10:5432/bench"
+        }
+      ]
+    },
+    {
+      "name":  "driver",
+      "description":  "Which stroppy driver the workload talks through; the protocol decides which TLS/auth options exist.",
+      "required":  true,
+      "oneOf":  {
+        "discriminator":  "driverType",
+        "variants":  {
+          "mysql":  {
+            "fields":  [
+              {
+                "name":  "tls",
+                "description":  "go-sql-driver/mysql tls parameter of the DSN.",
+                "choice":  {
+                  "options":  [
+                    {
+                      "value":  {
+                        "stringValue":  "false"
+                      },
+                      "label":  "false"
+                    },
+                    {
+                      "value":  {
+                        "stringValue":  "preferred"
+                      },
+                      "label":  "preferred"
+                    },
+                    {
+                      "value":  {
+                        "stringValue":  "skip-verify"
+                      },
+                      "label":  "skip-verify"
+                    },
+                    {
+                      "value":  {
+                        "stringValue":  "true"
+                      },
+                      "label":  "true"
+                    }
+                  ],
+                  "default":  {
+                    "stringValue":  "false"
+                  }
+                },
+                "group":  "Driver",
+                "title":  "tls"
+              }
+            ]
+          },
+          "noop":  {},
+          "picodata":  {
+            "fields":  [
+              {
+                "name":  "ssl_mode",
+                "description":  "Picodata speaks the PostgreSQL wire protocol on its pg port, so sslmode applies verbatim.",
+                "choice":  {
+                  "options":  [
+                    {
+                      "value":  {
+                        "stringValue":  "disable"
+                      },
+                      "label":  "disable"
+                    },
+                    {
+                      "value":  {
+                        "stringValue":  "require"
+                      },
+                      "label":  "require"
+                    }
+                  ],
+                  "default":  {
+                    "stringValue":  "disable"
+                  }
+                },
+                "group":  "Driver",
+                "title":  "sslmode"
+              }
+            ]
+          },
+          "postgres":  {
+            "fields":  [
+              {
+                "name":  "ssl_mode",
+                "description":  "sslmode of the libpq URL; the driver URL carries it as a query parameter.",
+                "choice":  {
+                  "options":  [
+                    {
+                      "value":  {
+                        "stringValue":  "disable"
+                      },
+                      "label":  "disable"
+                    },
+                    {
+                      "value":  {
+                        "stringValue":  "require"
+                      },
+                      "label":  "require"
+                    },
+                    {
+                      "value":  {
+                        "stringValue":  "verify-ca"
+                      },
+                      "label":  "verify-ca"
+                    },
+                    {
+                      "value":  {
+                        "stringValue":  "verify-full"
+                      },
+                      "label":  "verify-full"
+                    }
+                  ],
+                  "default":  {
+                    "stringValue":  "disable"
+                  }
+                },
+                "group":  "Driver",
+                "title":  "sslmode"
+              }
+            ]
+          },
+          "ydb":  {
+            "fields":  [
+              {
+                "name":  "grpcs",
+                "description":  "TLS is switched on by the URL scheme (grpcs://); this only records the intent for the URL the server builds.",
+                "bool":  {
+                  "default":  false
+                },
+                "group":  "Driver",
+                "title":  "Use grpcs"
+              },
+              {
+                "name":  "ca_cert_file",
+                "description":  "driver caCertFile: PEM path, needed only for a private CA.",
+                "string":  {
+                  "default":  "",
+                  "maxLen":  "256"
+                },
+                "group":  "Driver",
+                "title":  "CA certificate"
+              },
+              {
+                "name":  "auth_user",
+                "description":  "driver authUser for static credentials.",
+                "string":  {
+                  "default":  "",
+                  "maxLen":  "128"
+                },
+                "group":  "Driver",
+                "title":  "Auth user"
+              },
+              {
+                "name":  "auth_password",
+                "description":  "driver authPassword for static credentials.",
+                "string":  {
+                  "default":  "",
+                  "maxLen":  "256"
+                },
+                "group":  "Driver",
+                "title":  "Auth password",
+                "secret":  true
+              },
+              {
+                "name":  "auth_token",
+                "description":  "driver authToken (IAM token) for managed YDB.",
+                "string":  {
+                  "default":  "",
+                  "maxLen":  "4096"
+                },
+                "group":  "Driver",
+                "title":  "Auth token",
+                "secret":  true
+              },
+              {
+                "name":  "tls_insecure_skip_verify",
+                "description":  "driver tlsInsecureSkipVerify — testing only.",
+                "bool":  {
+                  "default":  false
+                },
+                "group":  "Driver",
+                "title":  "Skip TLS verify"
+              }
+            ]
+          }
+        }
+      },
+      "group":  "Driver",
+      "title":  "Driver"
+    },
+    {
+      "name":  "driver_json",
+      "description":  "Derived: the driver JSON stroppy reads from STROPPY_DRIVER_0.",
+      "computed":  {
+        "expr":  "'{\"driverType\":\"' + root.driver.driverType + '\"' +\n\t\t\t\t ((\"driver_url\" in root) ? ',\"url\":\"' + root.driver_url + '\"' : \"\") +\n\t\t\t\t ',\"defaultInsertMethod\":\"' + root.default_insert_method + '\"' +\n\t\t\t\t ',\"errorMode\":\"' + root.error_mode + '\"' +\n\t\t\t\t ',\"bulkSize\":' + string(root.bulk_size) +\n\t\t\t\t ',\"insertProgress\":{\"enabled\":' + (root.insert_progress_mode != \"off\" ? \"true\" : \"false\") +\n\t\t\t\t ',\"interval\":\"' + string(root.insert_progress_interval) +\n\t\t\t\t '\",\"stallAfter\":\"' + string(root.insert_progress_stall_after) +\n\t\t\t\t '\",\"mode\":\"' + root.insert_progress_mode + '\"}' +\n\t\t\t\t ',\"pool\":{\"maxConns\":' + string(root.pool_max_conns) +\n\t\t\t\t ',\"minConns\":' + string(root.pool_min_conns) +\n\t\t\t\t ',\"maxConnLifetime\":\"' + string(root.pool_conn_lifetime) +\n\t\t\t\t '\",\"maxConnIdleTime\":\"' + string(root.pool_conn_idle_time) + '\"}' +\n\t\t\t\t ((\"ca_cert_file\" in root.driver) && root.driver.ca_cert_file != \"\"\n\t\t\t\t\t? ',\"caCertFile\":\"' + root.driver.ca_cert_file + '\"' : \"\") +\n\t\t\t\t ((\"auth_user\" in root.driver) && root.driver.auth_user != \"\"\n\t\t\t\t\t? ',\"authUser\":\"' + root.driver.auth_user + '\"' : \"\") +\n\t\t\t\t ((\"auth_password\" in root.driver) && root.driver.auth_password != \"\"\n\t\t\t\t\t? ',\"authPassword\":\"' + root.driver.auth_password + '\"' : \"\") +\n\t\t\t\t ((\"auth_token\" in root.driver) && root.driver.auth_token != \"\"\n\t\t\t\t\t? ',\"authToken\":\"' + root.driver.auth_token + '\"' : \"\") +\n\t\t\t\t ((\"tls_insecure_skip_verify\" in root.driver) && root.driver.tls_insecure_skip_verify\n\t\t\t\t\t? ',\"tlsInsecureSkipVerify\":true' : \"\") +\n\t\t\t\t \"}\"",
+        "result":  "RESULT_TYPE_STRING"
+      },
+      "group":  "Driver",
+      "title":  "Rendered STROPPY_DRIVER_0"
+    },
+    {
+      "name":  "otlp_endpoint_lines",
+      "computed":  {
+        "expr":  "!(\"otlp_endpoint\" in root) ? \"\" :\n\t\t\t\t (root.otlp_protocol == \"grpc\"\n\t\t\t\t\t? \"K6_OTEL_GRPC_EXPORTER_ENDPOINT=\" + root.otlp_endpoint + \"\\n\" +\n\t\t\t\t\t  \"K6_OTEL_GRPC_EXPORTER_INSECURE=\" + (root.otlp_insecure ? \"true\" : \"false\")\n\t\t\t\t\t: \"K6_OTEL_HTTP_EXPORTER_ENDPOINT=\" + root.otlp_endpoint + \"\\n\" +\n\t\t\t\t\t  \"K6_OTEL_HTTP_EXPORTER_INSECURE=\" + (root.otlp_insecure ? \"true\" : \"false\") + \"\\n\" +\n\t\t\t\t\t  \"K6_OTEL_HTTP_EXPORTER_URL_PATH=\" + root.otlp_http_url_path)",
+        "result":  "RESULT_TYPE_STRING"
+      },
+      "group":  "Cluster",
+      "title":  "Rendered OTLP endpoint lines"
+    },
+    {
+      "name":  "otlp_headers_line",
+      "computed":  {
+        "expr":  "!(\"otlp_headers\" in root) || size(root.otlp_headers) == 0 ? \"\" :\n\t\t\t\t \"K6_OTEL_HEADERS=\" + root.otlp_headers.map(k, k + \"=\" + string(root.otlp_headers[k])).join(\",\")",
+        "result":  "RESULT_TYPE_STRING"
+      },
+      "group":  "Cluster",
+      "title":  "Rendered K6_OTEL_HEADERS"
+    },
+    {
+      "name":  "gomaxprocs_line",
+      "computed":  {
+        "expr":  "root.threads == 0 ? \"\" : \"GOMAXPROCS=\" + string(root.threads)",
+        "result":  "RESULT_TYPE_STRING"
+      },
+      "group":  "Process",
+      "title":  "Rendered GOMAXPROCS"
+    }
+  ],
+  "rules":  [
+    {
+      "expr":  "int(root.pool_min_conns) <= int(root.pool_max_conns)",
+      "message":  "pool.minConns must be <= pool.maxConns",
+      "id":  "pool-min-le-max"
+    },
+    {
+      "expr":  "root.insert_progress_interval <= root.insert_progress_stall_after",
+      "message":  "the stall warning must be no earlier than one progress report",
+      "id":  "progress-interval-le-stall"
+    }
+  ],
+  "strict":  true,
+  "coerce":  true,
+  "templates":  {
+    "conf":  "# managed by stroppy-cloud — cfg.stroppy.runner@1\nLOG_LEVEL={{{values.log_level}}}\nK6_LOG_FORMAT={{{values.log_format}}}\nK6_OTEL_SERVICE_NAME={{{values.otlp_service_name}}}\nK6_OTEL_METRIC_PREFIX={{{values.otlp_metric_prefix}}}\nK6_OTEL_EXPORTER_PROTOCOL={{{values.otlp_protocol}}}\nK6_OTEL_EXPORT_INTERVAL={{{values.metrics_flush_interval}}}\n{{#values.otlp_endpoint_lines}}{{{values.otlp_endpoint_lines}}}\n{{/values.otlp_endpoint_lines}}{{#values.otlp_headers_line}}{{{values.otlp_headers_line}}}\n{{/values.otlp_headers_line}}{{#values.gomaxprocs_line}}{{{values.gomaxprocs_line}}}\n{{/values.gomaxprocs_line}}STROPPY_DRIVER_0={{{values.driver_json}}}\n"
+  }
+}

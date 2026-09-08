@@ -1,0 +1,420 @@
+{
+  "id": {
+    "namespace": "workload",
+    "name": "segment",
+    "version": "v1.0.0"
+  },
+  "description": "One stroppy load segment: script, execution limits, generator parameters and files.",
+  "fields": [
+    {
+      "name": "name",
+      "description": "Segment id inside the workload; used as the phase label of the run and as a metric label.",
+      "required": true,
+      "string": {
+        "minLen": "1",
+        "maxLen": "64",
+        "pattern": "^[a-z][a-z0-9_-]*$"
+      },
+      "group": "Segment",
+      "title": "Name"
+    },
+    {
+      "name": "script",
+      "description": "Stroppy workload script id or path, e.g. tpcc/tx. Restricted to the catalog by the server.",
+      "required": true,
+      "string": {
+        "minLen": "1",
+        "maxLen": "256"
+      },
+      "group": "Segment",
+      "title": "Script",
+      "examples": [
+        {
+          "stringValue": "tpcc/tx"
+        },
+        {
+          "stringValue": "tpch/tx"
+        },
+        {
+          "stringValue": "simple"
+        }
+      ]
+    },
+    {
+      "name": "execution",
+      "description": "Load shape of the segment.",
+      "required": true,
+      "object": {
+        "schema": {
+          "fields": [
+            {
+              "name": "vus",
+              "description": "k6 virtual users driving the segment; sizes the runner machine.",
+              "int64": {
+                "default": "1",
+                "gte": "1",
+                "lte": "100000"
+              },
+              "group": "Execution",
+              "title": "Virtual users"
+            },
+            {
+              "name": "limit",
+              "description": "How the segment ends: after a wall-clock duration or after N iterations.",
+              "required": true,
+              "oneOf": {
+                "discriminator": "kind",
+                "variants": {
+                  "duration": {
+                    "fields": [
+                      {
+                        "name": "duration",
+                        "description": "Wall-clock length of the segment (k6 --duration).",
+                        "required": true,
+                        "duration": {
+                          "gt": "0s",
+                          "lte": "86400s"
+                        },
+                        "title": "Duration"
+                      }
+                    ]
+                  },
+                  "iterations": {
+                    "fields": [
+                      {
+                        "name": "count",
+                        "description": "Total iterations across all VUs (k6 --iterations).",
+                        "required": true,
+                        "int64": {
+                          "gte": "1"
+                        },
+                        "title": "Iterations"
+                      }
+                    ]
+                  }
+                }
+              },
+              "group": "Execution",
+              "title": "Limit"
+            },
+            {
+              "name": "quiet",
+              "description": "Suppress the k6 progress bar (k6 --quiet).",
+              "bool": {
+                "default": true
+              },
+              "group": "Execution",
+              "title": "Quiet"
+            },
+            {
+              "name": "no_thresholds",
+              "description": "Do not fail the segment on threshold breach (k6 --no-thresholds).",
+              "bool": {
+                "default": false
+              },
+              "group": "Execution",
+              "title": "Ignore thresholds"
+            },
+            {
+              "name": "extra_args",
+              "description": "Raw arguments appended after `--` to the embedded k6 process.",
+              "list": {
+                "items": [
+                  {
+                    "string": {
+                      "minLen": "1",
+                      "maxLen": "256"
+                    }
+                  }
+                ],
+                "maxItems": "64"
+              },
+              "group": "Execution",
+              "title": "Extra k6 args"
+            }
+          ],
+          "strict": true
+        }
+      },
+      "group": "Execution",
+      "title": "Execution"
+    },
+    {
+      "name": "params",
+      "description": "Data-generation and driver parameters passed to the script.",
+      "object": {
+        "schema": {
+          "fields": [
+            {
+              "name": "pool_size",
+              "description": "Driver connection pool size (POOL_SIZE / pool.maxConns).",
+              "int64": {
+                "gte": "1",
+                "lte": "65535"
+              },
+              "group": "Parameters",
+              "title": "Pool size"
+            },
+            {
+              "name": "scale_factor",
+              "description": "Dataset scale (warehouses for TPC-C, SF for TPC-H); drives the disk requirement.",
+              "int64": {
+                "default": "1",
+                "gte": "1",
+                "lte": "100000"
+              },
+              "group": "Parameters",
+              "title": "Scale factor"
+            },
+            {
+              "name": "steps",
+              "description": "Run only the listed stroppy steps (`--steps`); empty = all steps.",
+              "list": {
+                "items": [
+                  {
+                    "string": {
+                      "minLen": "1",
+                      "maxLen": "64",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    }
+                  }
+                ],
+                "maxItems": "32",
+                "unique": true
+              },
+              "group": "Parameters",
+              "title": "Only these steps"
+            },
+            {
+              "name": "no_steps",
+              "description": "Skip the listed stroppy steps (`--no-steps`); mutually exclusive with steps.",
+              "list": {
+                "items": [
+                  {
+                    "string": {
+                      "minLen": "1",
+                      "maxLen": "64",
+                      "pattern": "^[a-z][a-z0-9_]*$"
+                    }
+                  }
+                ],
+                "maxItems": "32",
+                "unique": true
+              },
+              "group": "Parameters",
+              "title": "Skip these steps"
+            },
+            {
+              "name": "insert_method",
+              "description": "Driver-level write protocol for generated rows (defaultInsertMethod).",
+              "choice": {
+                "options": [
+                  {
+                    "value": {
+                      "stringValue": "native"
+                    },
+                    "label": "Native (CopyFrom / BulkUpsert)"
+                  },
+                  {
+                    "value": {
+                      "stringValue": "plain_bulk"
+                    },
+                    "label": "Plain bulk INSERT"
+                  },
+                  {
+                    "value": {
+                      "stringValue": "plain_query"
+                    },
+                    "label": "Plain single-row INSERT"
+                  }
+                ]
+              },
+              "group": "Parameters",
+              "title": "Insert method"
+            },
+            {
+              "name": "bulk_size",
+              "description": "Rows per bulk INSERT statement; only used by plain_bulk.",
+              "int64": {
+                "default": "2500",
+                "gte": "1",
+                "lte": "1000000"
+              },
+              "group": "Parameters",
+              "unit": "rows",
+              "title": "Bulk size"
+            },
+            {
+              "name": "env",
+              "description": "Extra script environment (`-e KEY=VALUE`); keys must match ^[A-Z_][A-Z0-9_]*$.",
+              "rules": [
+                {
+                  "expr": "this.all(k, k.matches(\"^[A-Z_][A-Z0-9_]*$\"))",
+                  "message": "env keys must be upper-case identifiers",
+                  "id": "env-key-shape"
+                }
+              ],
+              "map": {
+                "maxEntries": "256",
+                "valueField": {
+                  "name": "value",
+                  "string": {
+                    "maxLen": "4096"
+                  }
+                }
+              },
+              "group": "Parameters",
+              "title": "Environment"
+            }
+          ],
+          "rules": [
+            {
+              "expr": "!(\"steps\" in this) || !(\"no_steps\" in this) || this.steps.all(s, !(s in this.no_steps))",
+              "message": "steps and no_steps must not overlap",
+              "id": "steps-disjoint"
+            },
+            {
+              "expr": "!(\"steps\" in this) || !(\"no_steps\" in this) || size(this.steps) == 0 || size(this.no_steps) == 0",
+              "message": "stroppy rejects --steps together with --no-steps",
+              "id": "steps-mutually-exclusive",
+              "severity": "SEVERITY_WARNING"
+            }
+          ],
+          "strict": true
+        }
+      },
+      "group": "Parameters",
+      "title": "Parameters"
+    },
+    {
+      "name": "files",
+      "description": "Extra files (SQL schema, configs, data) shipped with the segment.",
+      "list": {
+        "items": [
+          {
+            "object": {
+              "schema": {
+                "fields": [
+                  {
+                    "name": "name",
+                    "description": "Name the file gets next to the script on the runner.",
+                    "required": true,
+                    "string": {
+                      "minLen": "1",
+                      "maxLen": "128",
+                      "pattern": "^[A-Za-z0-9._/-]+$"
+                    },
+                    "title": "File name"
+                  },
+                  {
+                    "name": "kind",
+                    "description": "What the file is: a schema/DDL file, a config, or a data file.",
+                    "choice": {
+                      "options": [
+                        {
+                          "value": {
+                            "stringValue": "sql"
+                          },
+                          "label": "SQL / DDL"
+                        },
+                        {
+                          "value": {
+                            "stringValue": "conf"
+                          },
+                          "label": "Config"
+                        },
+                        {
+                          "value": {
+                            "stringValue": "data"
+                          },
+                          "label": "Data"
+                        }
+                      ],
+                      "default": {
+                        "stringValue": "sql"
+                      }
+                    },
+                    "title": "Kind"
+                  },
+                  {
+                    "name": "content",
+                    "description": "Inline file body, at most 1 MiB.",
+                    "string": {
+                      "maxLen": "1048576"
+                    },
+                    "title": "Content"
+                  },
+                  {
+                    "name": "ref",
+                    "description": "Artifact/object reference to fetch instead of inline content.",
+                    "string": {
+                      "minLen": "1",
+                      "maxLen": "512"
+                    },
+                    "title": "Reference"
+                  }
+                ],
+                "rules": [
+                  {
+                    "expr": "(\"content\" in this) != (\"ref\" in this)",
+                    "message": "a file needs exactly one of content or ref",
+                    "id": "file-content-xor-ref"
+                  }
+                ],
+                "strict": true
+              }
+            }
+          }
+        ],
+        "maxItems": "32"
+      },
+      "group": "Files",
+      "title": "Files"
+    },
+    {
+      "name": "thresholds",
+      "description": "Pass/fail thresholds handed to k6; ignored when no_thresholds is set.",
+      "object": {
+        "schema": {
+          "fields": [
+            {
+              "name": "p99_ms",
+              "description": "Fail the segment when the p99 request latency exceeds this.",
+              "double": {
+                "gt": 0
+              },
+              "unit": "ms",
+              "title": "p99 latency"
+            },
+            {
+              "name": "error_rate",
+              "description": "Fail the segment when the error ratio exceeds this (0..1).",
+              "double": {
+                "gte": 0,
+                "lte": 1
+              },
+              "unit": "ratio",
+              "title": "Error rate"
+            }
+          ],
+          "strict": true
+        }
+      },
+      "group": "Thresholds",
+      "title": "Thresholds"
+    },
+    {
+      "name": "warmup",
+      "description": "Idle wait before the segment starts, letting caches and replicas settle.",
+      "duration": {
+        "default": "0s",
+        "gte": "0s",
+        "lte": "3600s"
+      },
+      "group": "Execution",
+      "title": "Warm-up"
+    }
+  ],
+  "strict": true,
+  "coerce": true
+}

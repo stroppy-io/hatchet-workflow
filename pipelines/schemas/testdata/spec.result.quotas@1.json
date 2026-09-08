@@ -1,0 +1,85 @@
+{
+  "id":  {
+    "namespace":  "spec",
+    "name":  "result.quotas",
+    "version":  "v1.0.0"
+  },
+  "description":  "Provider quota snapshot: limits and current usage, as observed at a point in time.",
+  "fields":  [
+    {
+      "name":  "observed_at",
+      "description":  "When the provider was read; the server treats a snapshot older than a minute as stale.",
+      "required":  true,
+      "timestamp":  {},
+      "group":  "Result",
+      "title":  "Observed at"
+    },
+    {
+      "name":  "quotas",
+      "description":  "One entry per quota the provider reports for this profile.",
+      "required":  true,
+      "list":  {
+        "items":  [
+          {
+            "object":  {
+              "schema":  {
+                "fields":  [
+                  {
+                    "name":  "name",
+                    "description":  "Provider quota id, e.g. compute.instanceCores.count.",
+                    "required":  true,
+                    "string":  {
+                      "minLen":  "1",
+                      "maxLen":  "128"
+                    },
+                    "title":  "Quota"
+                  },
+                  {
+                    "name":  "limit",
+                    "description":  "Upper bound the provider enforces.",
+                    "required":  true,
+                    "double":  {
+                      "gte":  0
+                    },
+                    "title":  "Limit"
+                  },
+                  {
+                    "name":  "used",
+                    "description":  "Consumption at observed_at, across everything in the folder or account.",
+                    "required":  true,
+                    "double":  {
+                      "gte":  0
+                    },
+                    "title":  "Used"
+                  },
+                  {
+                    "name":  "unit",
+                    "description":  "Unit of limit and used: count, GB, GiB…",
+                    "string":  {
+                      "maxLen":  "32"
+                    },
+                    "title":  "Unit"
+                  },
+                  {
+                    "name":  "zone",
+                    "description":  "Set for a zone-scoped quota; empty when the quota is regional or global.",
+                    "string":  {
+                      "maxLen":  "64"
+                    },
+                    "title":  "Zone"
+                  }
+                ],
+                "strict":  true
+              }
+            }
+          }
+        ],
+        "maxItems":  "512"
+      },
+      "group":  "Result",
+      "title":  "Quotas"
+    }
+  ],
+  "strict":  true,
+  "coerce":  true
+}

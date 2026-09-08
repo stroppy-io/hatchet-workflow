@@ -1,0 +1,358 @@
+{
+  "id": {
+    "namespace": "system",
+    "name": "stroppy_catalog",
+    "version": "v1.0.0"
+  },
+  "description": "Platform catalog of stroppy versions, their images, protocols and workload scripts.",
+  "fields": [
+    {
+      "name": "source",
+      "description": "Where the catalog came from: hand-written, read from a stroppy release, or probed.",
+      "choice": {
+        "options": [
+          {
+            "value": {
+              "stringValue": "static"
+            },
+            "label": "Static (admin-edited)"
+          },
+          {
+            "value": {
+              "stringValue": "release"
+            },
+            "label": "Stroppy release"
+          },
+          {
+            "value": {
+              "stringValue": "probe"
+            },
+            "label": "Probed from a binary"
+          }
+        ],
+        "default": {
+          "stringValue": "static"
+        }
+      },
+      "group": "Catalog",
+      "title": "Source"
+    },
+    {
+      "name": "versions",
+      "description": "Every stroppy build the platform offers.",
+      "required": true,
+      "list": {
+        "items": [
+          {
+            "object": {
+              "schema": {
+                "fields": [
+                  {
+                    "name": "version",
+                    "description": "Stroppy release version.",
+                    "required": true,
+                    "string": {
+                      "maxLen": "64",
+                      "pattern": "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$"
+                    },
+                    "title": "Version"
+                  },
+                  {
+                    "name": "image",
+                    "description": "Docker image of that release, e.g. ghcr.io/stroppy-io/stroppy:5.1.2.",
+                    "required": true,
+                    "string": {
+                      "minLen": "1",
+                      "maxLen": "512"
+                    },
+                    "title": "Image"
+                  },
+                  {
+                    "name": "default",
+                    "description": "The version a new workload starts with; exactly one version carries it.",
+                    "bool": {
+                      "default": false
+                    },
+                    "title": "Default"
+                  },
+                  {
+                    "name": "deprecated",
+                    "description": "Still runnable, hidden from the picker for new workloads.",
+                    "bool": {
+                      "default": false
+                    },
+                    "title": "Deprecated"
+                  },
+                  {
+                    "name": "protocols",
+                    "description": "Database protocols this build has drivers for.",
+                    "required": true,
+                    "list": {
+                      "items": [
+                        {
+                          "choice": {
+                            "options": [
+                              {
+                                "value": {
+                                  "stringValue": "pg"
+                                },
+                                "label": "PostgreSQL"
+                              },
+                              {
+                                "value": {
+                                  "stringValue": "mysql"
+                                },
+                                "label": "MySQL / MariaDB"
+                              },
+                              {
+                                "value": {
+                                  "stringValue": "picodata"
+                                },
+                                "label": "Picodata (pgproto)"
+                              },
+                              {
+                                "value": {
+                                  "stringValue": "ydb_grpc"
+                                },
+                                "label": "YDB (grpc)"
+                              },
+                              {
+                                "value": {
+                                  "stringValue": "ydb_grpcs"
+                                },
+                                "label": "YDB (grpcs, TLS)"
+                              },
+                              {
+                                "value": {
+                                  "stringValue": "cockroach"
+                                },
+                                "label": "CockroachDB (pgproto)"
+                              },
+                              {
+                                "value": {
+                                  "stringValue": "noop"
+                                },
+                                "label": "Noop (generator ceiling)"
+                              }
+                            ]
+                          }
+                        }
+                      ],
+                      "minItems": "1",
+                      "maxItems": "16",
+                      "unique": true
+                    },
+                    "title": "Protocols"
+                  },
+                  {
+                    "name": "scripts",
+                    "description": "Workload scripts this build ships.",
+                    "required": true,
+                    "list": {
+                      "items": [
+                        {
+                          "object": {
+                            "schema": {
+                              "fields": [
+                                {
+                                  "name": "id",
+                                  "description": "Workload script id as passed to `stroppy run`.",
+                                  "required": true,
+                                  "string": {
+                                    "maxLen": "128",
+                                    "pattern": "^[a-z0-9_]+(/[a-z0-9_]+)*$"
+                                  },
+                                  "title": "Script id",
+                                  "examples": [
+                                    {
+                                      "stringValue": "tpcc/tx"
+                                    },
+                                    {
+                                      "stringValue": "tpch/tx"
+                                    }
+                                  ]
+                                },
+                                {
+                                  "name": "title",
+                                  "required": true,
+                                  "string": {
+                                    "minLen": "1",
+                                    "maxLen": "128"
+                                  },
+                                  "title": "Title"
+                                },
+                                {
+                                  "name": "description",
+                                  "string": {
+                                    "maxLen": "2048"
+                                  },
+                                  "title": "Description"
+                                },
+                                {
+                                  "name": "protocols",
+                                  "description": "Protocols this script runs on; procs variants are pg/mysql only.",
+                                  "list": {
+                                    "items": [
+                                      {
+                                        "choice": {
+                                          "options": [
+                                            {
+                                              "value": {
+                                                "stringValue": "pg"
+                                              },
+                                              "label": "PostgreSQL"
+                                            },
+                                            {
+                                              "value": {
+                                                "stringValue": "mysql"
+                                              },
+                                              "label": "MySQL / MariaDB"
+                                            },
+                                            {
+                                              "value": {
+                                                "stringValue": "picodata"
+                                              },
+                                              "label": "Picodata (pgproto)"
+                                            },
+                                            {
+                                              "value": {
+                                                "stringValue": "ydb_grpc"
+                                              },
+                                              "label": "YDB (grpc)"
+                                            },
+                                            {
+                                              "value": {
+                                                "stringValue": "ydb_grpcs"
+                                              },
+                                              "label": "YDB (grpcs, TLS)"
+                                            },
+                                            {
+                                              "value": {
+                                                "stringValue": "cockroach"
+                                              },
+                                              "label": "CockroachDB (pgproto)"
+                                            },
+                                            {
+                                              "value": {
+                                                "stringValue": "noop"
+                                              },
+                                              "label": "Noop (generator ceiling)"
+                                            }
+                                          ]
+                                        }
+                                      }
+                                    ],
+                                    "maxItems": "16",
+                                    "unique": true
+                                  },
+                                  "title": "Protocols"
+                                },
+                                {
+                                  "name": "steps",
+                                  "description": "Steps the script declares; the segment form filters on them.",
+                                  "required": true,
+                                  "list": {
+                                    "items": [
+                                      {
+                                        "object": {
+                                          "schema": {
+                                            "fields": [
+                                              {
+                                                "name": "id",
+                                                "required": true,
+                                                "string": {
+                                                  "maxLen": "64",
+                                                  "pattern": "^[a-z][a-z0-9_]*$"
+                                                },
+                                                "title": "Step id"
+                                              },
+                                              {
+                                                "name": "title",
+                                                "string": {
+                                                  "maxLen": "128"
+                                                },
+                                                "title": "Title"
+                                              },
+                                              {
+                                                "name": "phase",
+                                                "description": "Where the step sits in a run: preparing, measuring, cleaning up.",
+                                                "choice": {
+                                                  "options": [
+                                                    {
+                                                      "value": {
+                                                        "stringValue": "bootstrap"
+                                                      },
+                                                      "label": "Bootstrap"
+                                                    },
+                                                    {
+                                                      "value": {
+                                                        "stringValue": "workload"
+                                                      },
+                                                      "label": "Workload"
+                                                    },
+                                                    {
+                                                      "value": {
+                                                        "stringValue": "teardown"
+                                                      },
+                                                      "label": "Teardown"
+                                                    }
+                                                  ],
+                                                  "default": {
+                                                    "stringValue": "workload"
+                                                  }
+                                                },
+                                                "title": "Phase"
+                                              }
+                                            ],
+                                            "strict": true
+                                          }
+                                        }
+                                      }
+                                    ],
+                                    "maxItems": "64"
+                                  },
+                                  "title": "Steps"
+                                },
+                                {
+                                  "name": "params_schema",
+                                  "description": "schemapb id of script-specific params, when the script has its own form.",
+                                  "string": {
+                                    "maxLen": "128",
+                                    "pattern": "^[a-z][a-z0-9_.]*@\\d+$"
+                                  },
+                                  "title": "Params schema"
+                                }
+                              ],
+                              "strict": true
+                            }
+                          }
+                        }
+                      ],
+                      "minItems": "1",
+                      "maxItems": "128"
+                    },
+                    "title": "Scripts"
+                  }
+                ],
+                "strict": true
+              }
+            }
+          }
+        ],
+        "minItems": "1",
+        "maxItems": "64"
+      },
+      "group": "Catalog",
+      "title": "Versions"
+    }
+  ],
+  "rules": [
+    {
+      "expr": "!(\"versions\" in root) || size(root.versions.filter(v, v.default)) == 1",
+      "message": "exactly one version must be the default",
+      "id": "exactly-one-default"
+    }
+  ],
+  "strict": true,
+  "coerce": true
+}

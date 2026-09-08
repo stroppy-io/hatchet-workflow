@@ -1,0 +1,745 @@
+{
+  "id": {
+    "namespace": "workload",
+    "name": "stroppy",
+    "version": "v1.0.0"
+  },
+  "description": "A stroppy workload: version, protocol, load segments and driver options.",
+  "fields": [
+    {
+      "name": "stroppy_version",
+      "description": "Stroppy release to run; must exist in the platform stroppy catalog.",
+      "required": true,
+      "string": {
+        "maxLen": "64",
+        "pattern": "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$"
+      },
+      "group": "Workload",
+      "title": "Stroppy version",
+      "examples": [
+        {
+          "stringValue": "5.1.2"
+        }
+      ]
+    },
+    {
+      "name": "protocol",
+      "description": "Wire protocol stroppy talks to the database with.",
+      "required": true,
+      "choice": {
+        "options": [
+          {
+            "value": {
+              "stringValue": "pg"
+            },
+            "label": "PostgreSQL"
+          },
+          {
+            "value": {
+              "stringValue": "mysql"
+            },
+            "label": "MySQL / MariaDB"
+          },
+          {
+            "value": {
+              "stringValue": "picodata"
+            },
+            "label": "Picodata (pgproto)"
+          },
+          {
+            "value": {
+              "stringValue": "ydb_grpc"
+            },
+            "label": "YDB (grpc)"
+          },
+          {
+            "value": {
+              "stringValue": "ydb_grpcs"
+            },
+            "label": "YDB (grpcs, TLS)"
+          },
+          {
+            "value": {
+              "stringValue": "cockroach"
+            },
+            "label": "CockroachDB (pgproto)"
+          },
+          {
+            "value": {
+              "stringValue": "noop"
+            },
+            "label": "Noop (generator ceiling)"
+          }
+        ]
+      },
+      "group": "Workload",
+      "title": "Protocol"
+    },
+    {
+      "name": "segments",
+      "description": "Ordered stroppy invocations; each one is a phase of the run.",
+      "required": true,
+      "list": {
+        "items": [
+          {
+            "ref": {
+              "name": "segment"
+            }
+          }
+        ],
+        "minItems": "1",
+        "maxItems": "64"
+      },
+      "group": "Segments",
+      "title": "Segments"
+    },
+    {
+      "name": "driver_options",
+      "description": "Protocol-specific connection options; the kind must match the protocol.",
+      "oneOf": {
+        "discriminator": "kind",
+        "variants": {
+          "cockroach": {
+            "fields": [
+              {
+                "name": "sslmode",
+                "description": "TLS negotiation mode of the cockroach (pgwire) connection.",
+                "choice": {
+                  "options": [
+                    {
+                      "value": {
+                        "stringValue": "disable"
+                      },
+                      "label": "Disable"
+                    },
+                    {
+                      "value": {
+                        "stringValue": "require"
+                      },
+                      "label": "Require"
+                    },
+                    {
+                      "value": {
+                        "stringValue": "verify-full"
+                      },
+                      "label": "Verify full"
+                    }
+                  ],
+                  "default": {
+                    "stringValue": "disable"
+                  }
+                },
+                "title": "SSL mode"
+              }
+            ]
+          },
+          "mysql": {
+            "fields": [
+              {
+                "name": "tls",
+                "description": "go-sql-driver TLS mode of the MySQL connection.",
+                "choice": {
+                  "options": [
+                    {
+                      "value": {
+                        "stringValue": "false"
+                      },
+                      "label": "Off"
+                    },
+                    {
+                      "value": {
+                        "stringValue": "preferred"
+                      },
+                      "label": "Preferred"
+                    },
+                    {
+                      "value": {
+                        "stringValue": "skip-verify"
+                      },
+                      "label": "On, no verification"
+                    },
+                    {
+                      "value": {
+                        "stringValue": "true"
+                      },
+                      "label": "On, verified"
+                    }
+                  ],
+                  "default": {
+                    "stringValue": "false"
+                  }
+                },
+                "title": "TLS"
+              },
+              {
+                "name": "charset",
+                "description": "Connection character set.",
+                "string": {
+                  "default": "utf8mb4",
+                  "maxLen": "32",
+                  "pattern": "^[a-z0-9_]+$"
+                },
+                "title": "Charset"
+              }
+            ]
+          },
+          "noop": {},
+          "pg": {
+            "fields": [
+              {
+                "name": "sslmode",
+                "description": "TLS negotiation mode of the postgres connection.",
+                "choice": {
+                  "options": [
+                    {
+                      "value": {
+                        "stringValue": "disable"
+                      },
+                      "label": "Disable"
+                    },
+                    {
+                      "value": {
+                        "stringValue": "require"
+                      },
+                      "label": "Require"
+                    },
+                    {
+                      "value": {
+                        "stringValue": "verify-full"
+                      },
+                      "label": "Verify full"
+                    }
+                  ],
+                  "default": {
+                    "stringValue": "disable"
+                  }
+                },
+                "title": "SSL mode"
+              },
+              {
+                "name": "application_name",
+                "description": "application_name reported to postgres; shows up in pg_stat_activity.",
+                "string": {
+                  "default": "stroppy",
+                  "maxLen": "64"
+                },
+                "title": "Application name"
+              },
+              {
+                "name": "statement_cache",
+                "description": "pgx query execution mode: how prepared statements are cached.",
+                "choice": {
+                  "options": [
+                    {
+                      "value": {
+                        "stringValue": "cache_statement"
+                      },
+                      "label": "Cache prepared statements"
+                    },
+                    {
+                      "value": {
+                        "stringValue": "cache_describe"
+                      },
+                      "label": "Cache statement descriptions"
+                    },
+                    {
+                      "value": {
+                        "stringValue": "describe_exec"
+                      },
+                      "label": "Describe then exec"
+                    },
+                    {
+                      "value": {
+                        "stringValue": "exec"
+                      },
+                      "label": "Exec (no cache)"
+                    },
+                    {
+                      "value": {
+                        "stringValue": "simple_protocol"
+                      },
+                      "label": "Simple protocol"
+                    }
+                  ],
+                  "default": {
+                    "stringValue": "cache_statement"
+                  }
+                },
+                "title": "Statement cache"
+              }
+            ]
+          },
+          "picodata": {},
+          "ydb": {
+            "fields": [
+              {
+                "name": "grpcs",
+                "description": "Use the grpcs:// scheme; must agree with the protocol.",
+                "bool": {
+                  "default": false
+                },
+                "title": "TLS (grpcs)"
+              },
+              {
+                "name": "ca_cert",
+                "description": "PEM of a private CA, when the endpoint is not signed by a public one.",
+                "string": {
+                  "maxLen": "65536"
+                },
+                "title": "CA certificate",
+                "secret": true
+              },
+              {
+                "name": "token",
+                "description": "IAM token passed as authToken.",
+                "string": {
+                  "maxLen": "4096"
+                },
+                "title": "Auth token",
+                "secret": true
+              }
+            ]
+          }
+        }
+      },
+      "group": "Driver",
+      "title": "Driver options"
+    }
+  ],
+  "rules": [
+    {
+      "expr": "!(\"driver_options\" in root) || !(\"protocol\" in root) || root.driver_options.kind == (root.protocol.startsWith(\"ydb\") ? \"ydb\" : root.protocol)",
+      "message": "driver_options.kind must match the protocol",
+      "id": "driver-options-match-protocol"
+    },
+    {
+      "expr": "size(root.segments.map(s, s.name)) == size(root.segments.map(s, s.name).filter(n, root.segments.filter(x, x.name == n).size() == 1))",
+      "message": "segment names must be unique",
+      "id": "segment-names-unique"
+    }
+  ],
+  "strict": true,
+  "coerce": true,
+  "defs": {
+    "segment": {
+      "id": {
+        "namespace": "workload",
+        "name": "segment",
+        "version": "v1.0.0"
+      },
+      "description": "One stroppy load segment: script, execution limits, generator parameters and files.",
+      "fields": [
+        {
+          "name": "name",
+          "description": "Segment id inside the workload; used as the phase label of the run and as a metric label.",
+          "required": true,
+          "string": {
+            "minLen": "1",
+            "maxLen": "64",
+            "pattern": "^[a-z][a-z0-9_-]*$"
+          },
+          "group": "Segment",
+          "title": "Name"
+        },
+        {
+          "name": "script",
+          "description": "Stroppy workload script id or path, e.g. tpcc/tx. Restricted to the catalog by the server.",
+          "required": true,
+          "string": {
+            "minLen": "1",
+            "maxLen": "256"
+          },
+          "group": "Segment",
+          "title": "Script",
+          "examples": [
+            {
+              "stringValue": "tpcc/tx"
+            },
+            {
+              "stringValue": "tpch/tx"
+            },
+            {
+              "stringValue": "simple"
+            }
+          ]
+        },
+        {
+          "name": "execution",
+          "description": "Load shape of the segment.",
+          "required": true,
+          "object": {
+            "schema": {
+              "fields": [
+                {
+                  "name": "vus",
+                  "description": "k6 virtual users driving the segment; sizes the runner machine.",
+                  "int64": {
+                    "default": "1",
+                    "gte": "1",
+                    "lte": "100000"
+                  },
+                  "group": "Execution",
+                  "title": "Virtual users"
+                },
+                {
+                  "name": "limit",
+                  "description": "How the segment ends: after a wall-clock duration or after N iterations.",
+                  "required": true,
+                  "oneOf": {
+                    "discriminator": "kind",
+                    "variants": {
+                      "duration": {
+                        "fields": [
+                          {
+                            "name": "duration",
+                            "description": "Wall-clock length of the segment (k6 --duration).",
+                            "required": true,
+                            "duration": {
+                              "gt": "0s",
+                              "lte": "86400s"
+                            },
+                            "title": "Duration"
+                          }
+                        ]
+                      },
+                      "iterations": {
+                        "fields": [
+                          {
+                            "name": "count",
+                            "description": "Total iterations across all VUs (k6 --iterations).",
+                            "required": true,
+                            "int64": {
+                              "gte": "1"
+                            },
+                            "title": "Iterations"
+                          }
+                        ]
+                      }
+                    }
+                  },
+                  "group": "Execution",
+                  "title": "Limit"
+                },
+                {
+                  "name": "quiet",
+                  "description": "Suppress the k6 progress bar (k6 --quiet).",
+                  "bool": {
+                    "default": true
+                  },
+                  "group": "Execution",
+                  "title": "Quiet"
+                },
+                {
+                  "name": "no_thresholds",
+                  "description": "Do not fail the segment on threshold breach (k6 --no-thresholds).",
+                  "bool": {
+                    "default": false
+                  },
+                  "group": "Execution",
+                  "title": "Ignore thresholds"
+                },
+                {
+                  "name": "extra_args",
+                  "description": "Raw arguments appended after `--` to the embedded k6 process.",
+                  "list": {
+                    "items": [
+                      {
+                        "string": {
+                          "minLen": "1",
+                          "maxLen": "256"
+                        }
+                      }
+                    ],
+                    "maxItems": "64"
+                  },
+                  "group": "Execution",
+                  "title": "Extra k6 args"
+                }
+              ],
+              "strict": true
+            }
+          },
+          "group": "Execution",
+          "title": "Execution"
+        },
+        {
+          "name": "params",
+          "description": "Data-generation and driver parameters passed to the script.",
+          "object": {
+            "schema": {
+              "fields": [
+                {
+                  "name": "pool_size",
+                  "description": "Driver connection pool size (POOL_SIZE / pool.maxConns).",
+                  "int64": {
+                    "gte": "1",
+                    "lte": "65535"
+                  },
+                  "group": "Parameters",
+                  "title": "Pool size"
+                },
+                {
+                  "name": "scale_factor",
+                  "description": "Dataset scale (warehouses for TPC-C, SF for TPC-H); drives the disk requirement.",
+                  "int64": {
+                    "default": "1",
+                    "gte": "1",
+                    "lte": "100000"
+                  },
+                  "group": "Parameters",
+                  "title": "Scale factor"
+                },
+                {
+                  "name": "steps",
+                  "description": "Run only the listed stroppy steps (`--steps`); empty = all steps.",
+                  "list": {
+                    "items": [
+                      {
+                        "string": {
+                          "minLen": "1",
+                          "maxLen": "64",
+                          "pattern": "^[a-z][a-z0-9_]*$"
+                        }
+                      }
+                    ],
+                    "maxItems": "32",
+                    "unique": true
+                  },
+                  "group": "Parameters",
+                  "title": "Only these steps"
+                },
+                {
+                  "name": "no_steps",
+                  "description": "Skip the listed stroppy steps (`--no-steps`); mutually exclusive with steps.",
+                  "list": {
+                    "items": [
+                      {
+                        "string": {
+                          "minLen": "1",
+                          "maxLen": "64",
+                          "pattern": "^[a-z][a-z0-9_]*$"
+                        }
+                      }
+                    ],
+                    "maxItems": "32",
+                    "unique": true
+                  },
+                  "group": "Parameters",
+                  "title": "Skip these steps"
+                },
+                {
+                  "name": "insert_method",
+                  "description": "Driver-level write protocol for generated rows (defaultInsertMethod).",
+                  "choice": {
+                    "options": [
+                      {
+                        "value": {
+                          "stringValue": "native"
+                        },
+                        "label": "Native (CopyFrom / BulkUpsert)"
+                      },
+                      {
+                        "value": {
+                          "stringValue": "plain_bulk"
+                        },
+                        "label": "Plain bulk INSERT"
+                      },
+                      {
+                        "value": {
+                          "stringValue": "plain_query"
+                        },
+                        "label": "Plain single-row INSERT"
+                      }
+                    ]
+                  },
+                  "group": "Parameters",
+                  "title": "Insert method"
+                },
+                {
+                  "name": "bulk_size",
+                  "description": "Rows per bulk INSERT statement; only used by plain_bulk.",
+                  "int64": {
+                    "default": "2500",
+                    "gte": "1",
+                    "lte": "1000000"
+                  },
+                  "group": "Parameters",
+                  "unit": "rows",
+                  "title": "Bulk size"
+                },
+                {
+                  "name": "env",
+                  "description": "Extra script environment (`-e KEY=VALUE`); keys must match ^[A-Z_][A-Z0-9_]*$.",
+                  "rules": [
+                    {
+                      "expr": "this.all(k, k.matches(\"^[A-Z_][A-Z0-9_]*$\"))",
+                      "message": "env keys must be upper-case identifiers",
+                      "id": "env-key-shape"
+                    }
+                  ],
+                  "map": {
+                    "maxEntries": "256",
+                    "valueField": {
+                      "name": "value",
+                      "string": {
+                        "maxLen": "4096"
+                      }
+                    }
+                  },
+                  "group": "Parameters",
+                  "title": "Environment"
+                }
+              ],
+              "rules": [
+                {
+                  "expr": "!(\"steps\" in this) || !(\"no_steps\" in this) || this.steps.all(s, !(s in this.no_steps))",
+                  "message": "steps and no_steps must not overlap",
+                  "id": "steps-disjoint"
+                },
+                {
+                  "expr": "!(\"steps\" in this) || !(\"no_steps\" in this) || size(this.steps) == 0 || size(this.no_steps) == 0",
+                  "message": "stroppy rejects --steps together with --no-steps",
+                  "id": "steps-mutually-exclusive",
+                  "severity": "SEVERITY_WARNING"
+                }
+              ],
+              "strict": true
+            }
+          },
+          "group": "Parameters",
+          "title": "Parameters"
+        },
+        {
+          "name": "files",
+          "description": "Extra files (SQL schema, configs, data) shipped with the segment.",
+          "list": {
+            "items": [
+              {
+                "object": {
+                  "schema": {
+                    "fields": [
+                      {
+                        "name": "name",
+                        "description": "Name the file gets next to the script on the runner.",
+                        "required": true,
+                        "string": {
+                          "minLen": "1",
+                          "maxLen": "128",
+                          "pattern": "^[A-Za-z0-9._/-]+$"
+                        },
+                        "title": "File name"
+                      },
+                      {
+                        "name": "kind",
+                        "description": "What the file is: a schema/DDL file, a config, or a data file.",
+                        "choice": {
+                          "options": [
+                            {
+                              "value": {
+                                "stringValue": "sql"
+                              },
+                              "label": "SQL / DDL"
+                            },
+                            {
+                              "value": {
+                                "stringValue": "conf"
+                              },
+                              "label": "Config"
+                            },
+                            {
+                              "value": {
+                                "stringValue": "data"
+                              },
+                              "label": "Data"
+                            }
+                          ],
+                          "default": {
+                            "stringValue": "sql"
+                          }
+                        },
+                        "title": "Kind"
+                      },
+                      {
+                        "name": "content",
+                        "description": "Inline file body, at most 1 MiB.",
+                        "string": {
+                          "maxLen": "1048576"
+                        },
+                        "title": "Content"
+                      },
+                      {
+                        "name": "ref",
+                        "description": "Artifact/object reference to fetch instead of inline content.",
+                        "string": {
+                          "minLen": "1",
+                          "maxLen": "512"
+                        },
+                        "title": "Reference"
+                      }
+                    ],
+                    "rules": [
+                      {
+                        "expr": "(\"content\" in this) != (\"ref\" in this)",
+                        "message": "a file needs exactly one of content or ref",
+                        "id": "file-content-xor-ref"
+                      }
+                    ],
+                    "strict": true
+                  }
+                }
+              }
+            ],
+            "maxItems": "32"
+          },
+          "group": "Files",
+          "title": "Files"
+        },
+        {
+          "name": "thresholds",
+          "description": "Pass/fail thresholds handed to k6; ignored when no_thresholds is set.",
+          "object": {
+            "schema": {
+              "fields": [
+                {
+                  "name": "p99_ms",
+                  "description": "Fail the segment when the p99 request latency exceeds this.",
+                  "double": {
+                    "gt": 0
+                  },
+                  "unit": "ms",
+                  "title": "p99 latency"
+                },
+                {
+                  "name": "error_rate",
+                  "description": "Fail the segment when the error ratio exceeds this (0..1).",
+                  "double": {
+                    "gte": 0,
+                    "lte": 1
+                  },
+                  "unit": "ratio",
+                  "title": "Error rate"
+                }
+              ],
+              "strict": true
+            }
+          },
+          "group": "Thresholds",
+          "title": "Thresholds"
+        },
+        {
+          "name": "warmup",
+          "description": "Idle wait before the segment starts, letting caches and replicas settle.",
+          "duration": {
+            "default": "0s",
+            "gte": "0s",
+            "lte": "3600s"
+          },
+          "group": "Execution",
+          "title": "Warm-up"
+        }
+      ],
+      "strict": true,
+      "coerce": true
+    }
+  }
+}

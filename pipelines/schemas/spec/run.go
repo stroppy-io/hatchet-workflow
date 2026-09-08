@@ -1,0 +1,327 @@
+// Package spec holds the schemas of what the pipelines receive and return.
+// The server compiles a library Test into these; a pipeline never resolves
+// anything itself. Secrets appear only as NAMES of Graphene secrets — a value
+// never enters a spec, a Temporal history or a share snapshot.
+package spec
+
+import (
+	"time"
+
+	schemapb "github.com/gopherex/schemapb/go/schemapb"
+
+	"github.com/stroppy-io/stroppy-cloud/pipelines/schemas/ids"
+)
+
+// namePattern is a DNS-ish identifier used for machines, containers and roles.
+const namePattern = `^[a-z][a-z0-9-]{0,62}$`
+
+// rolePattern is a topology role (db, db-replica, proxy, runner, coordinator).
+const rolePattern = `^[a-z][a-z0-9_-]{0,31}$`
+
+// secretNamePattern is a Graphene secret name.
+// doc: STROPPY.MD §4 — pipeline.Secret(ctx, "yc-sa-key").
+const secretNamePattern = `^[a-z0-9][a-z0-9._-]{0,62}$` //nolint:gosec // a NAME pattern, not a credential
+
+// Run is spec.run@1 — the RunSpec: a fully resolved, self-contained
+// description of one benchmark run, handed to the stroppy-run pipeline.
+//
+// doc: STROPPY.MD §6.1 (RunSpec sketch), §16.6; OpenAPI `Run.run_spec`
+// (openapi/parts/61-components-runs.yaml, x-schema: spec.run).
+//
+//nolint:funlen // one flat spec: every field of the RunSpec in one place
+func Run() *schemapb.Schema {
+	return schemapb.NewSchema(ids.Spec("run", 1)).
+		Descr("RunSpec: the resolved description of one benchmark run handed to stroppy-run.").
+		Strict().Coerce().
+		Fields(
+			schemapb.Str("run_id").Title("Run id").Group("Identity").
+				Desc("Run id minted by the server; also the Graphene run id.").
+				Format(schemapb.FormatUUID).Required(),
+			schemapb.Str("tenant").Title("Tenant").Group("Identity").
+				Desc("Tenant slug; the Graphene namespace is t-<tenant>.").
+				Pattern(namePattern).Required(),
+
+			schemapb.Object("provider",
+				schemapb.Choice("kind").Title("Provider").
+					Desc("Cloud the run is created in.").
+					Opt(schemapb.StrV("yandex"), "Yandex Cloud").
+					Opt(schemapb.StrV("aws"), "AWS").
+					Required(),
+				schemapb.JSON("settings").Title("Settings").
+					Desc("Baked provider.<kind>.settings value; non-secret placement settings.").
+					Required(),
+				schemapb.Str("credentials_secret").Title("Credentials secret").
+					Desc("Name of the Graphene secret holding the provider credentials — never the value.").
+					Pattern(secretNamePattern).Required(),
+				schemapb.Str("provider_config_name").Title("ProviderConfig").
+					Desc("Crossplane ProviderConfig the managed resources reference (t-<tenant>).").
+					Pattern(namePattern).Required(),
+				schemapb.Str("registry_secret").Title("Registry secret").
+					Desc("Name of the Graphene secret with a private docker registry login, when images need one.").
+					Pattern(secretNamePattern),
+			).Title("Provider").Group("Provider").
+				Desc("Where the run is created and with which credentials.").Strict().Required(),
+
+			schemapb.Object("network",
+				schemapb.Str("cidr").Title("CIDR").
+					Desc("IPv4 range of the run network.").
+					Pattern(`^(\d{1,3}\.){3}\d{1,3}/\d{1,2}$`).Default("10.130.0.0/24"),
+				schemapb.Bool("allow_public_ips").Title("Public IPs").
+					Desc("Machines get a public address (needed when the agent has no private route out).").
+					Default(true),
+				schemapb.List("ingress",
+					schemapb.Object("",
+						schemapb.Int64("port").Title("Port").Gte(1).Lte(65535).Required(),
+						schemapb.Choice("proto").Title("Protocol").
+							Opt(schemapb.StrV("tcp"), "TCP").
+							Opt(schemapb.StrV("udp"), "UDP").
+							Default(schemapb.StrV("tcp")),
+						schemapb.Str("cidr").Title("Source CIDR").
+							Desc("Who may reach the port.").
+							Pattern(`^(\d{1,3}\.){3}\d{1,3}/\d{1,2}$`).Required(),
+					).Strict(),
+				).Title("Ingress").Desc("Security group openings beyond the intra-network traffic.").
+					MaxItems(64),
+			).Title("Network").Group("Network").
+				Desc("The network every machine of the run joins.").Strict().Required(),
+
+			schemapb.List("machines",
+				schemapb.Object("",
+					schemapb.Str("name").Title("Name").Pattern(namePattern).Required(),
+					schemapb.Str("role").Title("Role").
+						Desc("Topology role; scrapes, containers and flows select on it.").
+						Pattern(rolePattern).Required(),
+					schemapb.Int64("cpu").Title("vCPU").Gte(1).Lte(288).Required(),
+					schemapb.Int64("memory_gb").Title("Memory").Unit("GB").Gte(1).Lte(4096).Required(),
+					schemapb.List("disks",
+						schemapb.Object("",
+							schemapb.Str("name").Title("Device name").Pattern(namePattern).Required(),
+							schemapb.Int64("gb").Title("Size").Unit("GB").Gte(1).Lte(262144).Required(),
+							schemapb.Str("type").Title("Disk type").
+								Desc("Provider disk type id, e.g. network-ssd (yandex) or gp3 (aws).").
+								Pattern(`^[a-z0-9][a-z0-9-]{0,31}$`).Required(),
+							schemapb.Str("mount").Title("Mount point").
+								Desc("Absolute path host_prep mounts the disk at; empty leaves it raw.").
+								Pattern(`^/[A-Za-z0-9._/-]*$`),
+						).Strict(),
+					).Title("Extra disks").Desc("Secondary disks beyond the boot disk.").MaxItems(16),
+					schemapb.Str("image").Title("Image").
+						Desc("Resolved boot image (family id, image id or AMI id).").
+						MinLen(1).MaxLen(256).Required(),
+					schemapb.Str("location").Title("Location").
+						Desc("Zone (yandex) or availability zone (aws) the machine is created in.").
+						MinLen(1).MaxLen(64).Required(),
+					schemapb.Str("instance_type").Title("Instance type").
+						Desc("Platform id (yandex) or EC2 instance type (aws) from the size table.").
+						MinLen(1).MaxLen(64).Required(),
+					schemapb.MapOf("labels", schemapb.Str("value").MaxLen(255)).
+						Title("Labels").Desc("Provider labels; the run and role labels are added by the pipeline.").
+						MaxEntries(32),
+				).Strict(),
+			).Title("Machines").Group("Machines").
+				Desc("Every VM of the run; the pipeline creates one agent per machine.").
+				MinItems(1).MaxItems(64).Required(),
+
+			schemapb.List("containers",
+				schemapb.Object("",
+					schemapb.Str("name").Title("Name").Pattern(namePattern).Required(),
+					schemapb.Str("role").Title("Role").
+						Desc("Role the container belongs to; used for logs, metrics and flows.").
+						Pattern(rolePattern).Required(),
+					schemapb.Str("machine").Title("Machine").
+						Desc("Name of the machine the container runs on.").
+						Pattern(namePattern).Required(),
+					schemapb.Str("image").Title("Image").
+						Desc("Fully qualified docker image; every database is a container, no host packages.").
+						MinLen(1).MaxLen(512).Required(),
+					schemapb.List("cmd", schemapb.Str("").MaxLen(1024)).
+						Title("Command").Desc("Argv replacing the image command.").MaxItems(64),
+					schemapb.MapOf("env", schemapb.Str("value").MaxLen(4096)).
+						Title("Environment").MaxEntries(128),
+					schemapb.List("ports",
+						schemapb.Object("",
+							schemapb.Int64("container").Title("Container port").Gte(1).Lte(65535).Required(),
+							schemapb.Int64("host").Title("Host port").Gte(1).Lte(65535).Required(),
+						).Strict(),
+					).Title("Ports").MaxItems(32),
+					schemapb.List("mounts",
+						schemapb.Object("",
+							schemapb.Str("source").Title("Host path").
+								Pattern(`^/[A-Za-z0-9._/-]*$`).Required(),
+							schemapb.Str("target").Title("Container path").
+								Pattern(`^/[A-Za-z0-9._/-]*$`).Required(),
+							schemapb.Bool("ro").Title("Read-only").Default(false),
+						).Strict(),
+					).Title("Mounts").MaxItems(32),
+					schemapb.List("files",
+						schemapb.Object("",
+							schemapb.Str("path").Title("Path").
+								Desc("Absolute path inside the container.").
+								Pattern(`^/[A-Za-z0-9._/-]*$`).Required(),
+							schemapb.Str("content").Title("Content").
+								Desc("Rendered config text (cfg.* schema Render output).").
+								MaxLen(1<<20).Required(),
+							schemapb.Str("mode").Title("Mode").
+								Desc("Octal file mode.").
+								Pattern(`^0[0-7]{3}$`).Default("0644"),
+						).Strict(),
+					).Title("Files").Desc("Configs rendered by the server and injected at start.").
+						MaxItems(32),
+					schemapb.Str("scrape").Title("Scrape path").
+						Desc("Prometheus metrics path on the container, e.g. /metrics; empty = not scraped.").
+						Pattern(`^/[A-Za-z0-9._/-]*$`),
+					schemapb.List("depends_on", schemapb.Str("").Pattern(namePattern)).
+						Title("Depends on").Desc("Container names started before this one.").
+						MaxItems(16).Unique(),
+					schemapb.Object("healthcheck",
+						schemapb.List("cmd", schemapb.Str("").MaxLen(1024)).
+							Title("Command").MinItems(1).MaxItems(16).Required(),
+						schemapb.Duration("interval").Title("Interval").
+							Gte(time.Second).Lte(time.Hour).Default(5*time.Second),
+						schemapb.Int64("retries").Title("Retries").Gte(1).Lte(100).Default(30),
+					).Title("Health check").Strict(),
+					schemapb.Choice("restart").Title("Restart policy").
+						Opt(schemapb.StrV("no"), "Never").
+						Opt(schemapb.StrV("on-failure"), "On failure").
+						Opt(schemapb.StrV("unless-stopped"), "Unless stopped").
+						Opt(schemapb.StrV("always"), "Always").
+						Default(schemapb.StrV("unless-stopped")),
+					schemapb.MapOf("ulimits", schemapb.Int64("value").Gte(-1)).
+						Title("Ulimits").Desc("Soft limits, e.g. nofile; -1 = unlimited.").
+						MaxEntries(16),
+				).Strict(),
+			).Title("Containers").Group("Containers").
+				Desc("Everything that runs on the machines: databases, proxies, exporters.").
+				MaxItems(256),
+
+			schemapb.List("host_prep",
+				schemapb.Object("",
+					schemapb.Str("role").Title("Role").Pattern(rolePattern).Required(),
+					schemapb.Choice("kind").Title("Kind").
+						Desc("What the step does before any container starts.").
+						Opt(schemapb.StrV("sysctl"), "Kernel parameters").
+						Opt(schemapb.StrV("disks"), "Format and mount extra disks").
+						Opt(schemapb.StrV("script"), "Shell script").
+						Required(),
+					schemapb.Str("content").Title("Content").
+						Desc("sysctl lines, mount spec or shell script, per kind.").
+						MinLen(1).MaxLen(1<<16).Required(),
+				).Strict(),
+			).Title("Host preparation").Group("Machines").
+				Desc("Rare pre-deploy steps run on the machine itself (machine.Command).").
+				MaxItems(32),
+
+			schemapb.List("scrapes",
+				schemapb.Object("",
+					schemapb.Str("role").Title("Role").Pattern(rolePattern).Required(),
+					schemapb.Str("url").Title("URL").
+						Desc("Metrics endpoint on the machine, e.g. http://127.0.0.1:9187/metrics.").
+						MinLen(1).MaxLen(512).Required(),
+					schemapb.Str("job").Title("Job").
+						Desc("Prometheus job label the samples land under.").
+						Pattern(rolePattern).Required(),
+				).Strict(),
+			).Title("Scrapes").Group("Observability").
+				Desc("Agent-side Prometheus scrapes of exporters.").MaxItems(64),
+
+			schemapb.List("flows",
+				schemapb.Object("",
+					schemapb.Str("from_role").Title("From role").Pattern(rolePattern).Required(),
+					schemapb.Str("to_role").Title("To role").
+						Desc("Target role; set this or external, not both.").
+						Pattern(rolePattern),
+					schemapb.Str("external").Title("External target").
+						Desc("Host outside the run (registry, OTLP collector); set this or to_role.").
+						MinLen(1).MaxLen(255),
+					schemapb.Choice("protocol").Title("Protocol").
+						Opt(schemapb.StrV("tcp"), "TCP").
+						Opt(schemapb.StrV("http"), "HTTP").
+						Opt(schemapb.StrV("grpc"), "gRPC").
+						Opt(schemapb.StrV("prometheus_pull"), "Prometheus pull").
+						Opt(schemapb.StrV("otlp"), "OTLP").
+						Required(),
+					schemapb.Int64("port").Title("Port").Gte(1).Lte(65535).Required(),
+					schemapb.Str("label").Title("Label").
+						Desc("Human label drawn on the topology view.").MaxLen(64),
+				).Strict().Rule(schemapb.Rule(
+					`("to_role" in this) != ("external" in this)`,
+					"a flow targets exactly one of to_role or external",
+				).ID("flow-target-xor")),
+			).Title("Flows").Group("Network").
+				Desc("Allowed traffic between roles; drives security groups and the topology view.").
+				MaxItems(128),
+
+			schemapb.Object("workload",
+				schemapb.Str("runner_role").Title("Runner role").
+					Desc("Role of the machine stroppy runs on.").
+					Pattern(rolePattern).Default("runner").Required(),
+				schemapb.Str("stroppy_image").Title("Stroppy image").
+					Desc("Resolved stroppy image from the catalog for the chosen version.").
+					MinLen(1).MaxLen(512).Required(),
+				schemapb.List("segments", schemapb.JSON("")).
+					Title("Segments").
+					Desc("Baked workload.segment@1 values in order; opaque to the pipeline.").
+					MinItems(1).MaxItems(64).Required(),
+				schemapb.MapOf("env", schemapb.Str("value").MaxLen(4096)).
+					Title("Environment").
+					Desc("Environment shared by every segment (connection URL, driver options).").
+					MaxEntries(128),
+			).Title("Workload").Group("Workload").
+				Desc("What stroppy runs and where.").Strict().Required(),
+
+			schemapb.Object("observability",
+				schemapb.Str("otlp_endpoint").Title("OTLP endpoint").
+					Desc("Where agents forward stroppy metrics and logs.").
+					MinLen(1).MaxLen(512),
+				schemapb.MapOf("labels", schemapb.Str("value").MaxLen(255)).
+					Title("Labels").Desc("Labels stamped on every metric and log line of the run.").
+					MaxEntries(32),
+			).Title("Observability").Group("Observability").Strict(),
+
+			schemapb.Duration("keep").Title("Keep the stand").Group("Lifecycle").
+				Desc("Keep machines alive after the run for this long; 0 tears everything down at once.").
+				Gte(0).Lte(30*24*time.Hour).Default(0),
+
+			schemapb.List("result_expectations", schemapb.Str("").Pattern(`^[a-z][a-z0-9_]*$`).MaxLen(64)).
+				Title("Expected metrics").Group("Lifecycle").
+				Desc("Metric keys the run must report; a missing key degrades the result.").
+				MaxItems(64).Unique(),
+		).
+		Rules(
+			schemapb.Rule(
+				`!("machines" in root) || root.machines.all(m, root.machines.filter(x, x.name == m.name).size() == 1)`,
+				"machine names must be unique",
+			).ID("machine-names-unique"),
+			schemapb.Rule(
+				`!("containers" in root) || root.containers.all(c, `+
+					`root.containers.filter(x, x.name == c.name).size() == 1)`,
+				"container names must be unique",
+			).ID("container-names-unique"),
+			schemapb.Rule(
+				`!("machines" in root) || !("containers" in root) || root.containers.all(c, c.machine in root.machines.map(m, m.name))`,
+				"every container must land on a declared machine",
+			).ID("container-machine-exists"),
+			schemapb.Rule(
+				`!("machines" in root) || !("flows" in root) || root.flows.all(f, f.from_role in root.machines.map(m, m.role))`,
+				"flow from_role must be a role of a declared machine",
+			).ID("flow-from-role-exists"),
+			schemapb.Rule(
+				`!("machines" in root) || !("flows" in root) || root.flows.all(f, `+
+					`!("to_role" in f) || f.to_role in root.machines.map(m, m.role))`,
+				"flow to_role must be a role of a declared machine",
+			).ID("flow-to-role-exists"),
+			schemapb.Rule(
+				`!("machines" in root) || !("scrapes" in root) || root.scrapes.all(s, s.role in root.machines.map(m, m.role))`,
+				"scrape role must be a role of a declared machine",
+			).ID("scrape-role-exists"),
+			schemapb.Rule(
+				`!("machines" in root) || !("host_prep" in root) || root.host_prep.all(h, h.role in root.machines.map(m, m.role))`,
+				"host_prep role must be a role of a declared machine",
+			).ID("host-prep-role-exists"),
+			schemapb.Rule(
+				`!("machines" in root) || !("workload" in root) || root.workload.runner_role in root.machines.map(m, m.role)`,
+				"the workload runner role must be a role of a declared machine",
+			).ID("runner-role-exists"),
+		).
+		MustBuild()
+}

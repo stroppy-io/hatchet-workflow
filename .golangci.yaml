@@ -73,6 +73,8 @@ linters:
 
     misspell:
       locale: US
+      ignore-rules:
+        - nto # ydb state_storage.nto_select
 
     nolintlint:
       require-explanation: true
