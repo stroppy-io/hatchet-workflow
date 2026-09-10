@@ -14,10 +14,11 @@ require (
 	github.com/crossplane/crossplane-runtime/v2 v2.2.0
 	github.com/docker/docker v28.5.2+incompatible
 	github.com/docker/go-units v0.5.0
-	github.com/gopherex/schemapb/go v0.0.0-20260908144312-74d533e01e8d
-	github.com/graphene-ci/library/docker v0.1.1-0.20260907131106-e4f9f7d1b4cc
-	github.com/graphene-ci/library/k8s v0.1.0
-	github.com/graphene-ci/pipeline v0.1.1
+	github.com/gopherex/schemapb/go v0.0.0-20260910140503-8839ac99233d
+	github.com/graphene-ci/library/docker v0.2.0
+	github.com/graphene-ci/library/k8s v0.2.0
+	github.com/graphene-ci/pipeline v0.2.1
+	github.com/stretchr/testify v1.12.1
 	github.com/upbound/provider-aws/v2 v2.6.0
 	github.com/yandex-cloud/crossplane-provider-yc v0.14.0
 	github.com/yandex-cloud/go-genproto v0.118.0
@@ -159,7 +160,6 @@ require (
 	github.com/spf13/cobra v1.10.2 // indirect
 	github.com/spf13/pflag v1.0.10 // indirect
 	github.com/stretchr/objx v0.5.3 // indirect
-	github.com/stretchr/testify v1.12.1 // indirect
 	github.com/tidwall/gjson v1.18.0 // indirect
 	github.com/tidwall/match v1.1.1 // indirect
 	github.com/tidwall/pretty v1.2.1 // indirect
@@ -229,3 +229,7 @@ require (
 	sigs.k8s.io/structured-merge-diff/v6 v6.4.2 // indirect
 	sigs.k8s.io/yaml v1.6.0 // indirect
 )
+
+// upbound/provider-aws requires terraform-provider-aws at a bogus 0.0.0 version and
+// fixes it with a replace, which consumers do not inherit; mirror it so gopls/go list -m all resolve.
+replace github.com/hashicorp/terraform-provider-aws => github.com/upbound/terraform-provider-aws v0.0.0-20260305123303-f7691456b787

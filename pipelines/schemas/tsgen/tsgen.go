@@ -209,9 +209,16 @@ func (g *gen) typeOf(parent string, f *schemapb.Schema_Field) string {
 		parts := make([]string, 0, len(keys))
 		for _, k := range keys {
 			name := g.unique(childName(parent, f) + pascal(k))
-			fields := append([]*schemapb.Schema_Field{
+			// The discriminator becomes a literal type; a variant that
+			// declares it itself (strict variants do) is not repeated.
+			fields := []*schemapb.Schema_Field{
 				{Name: o.GetDiscriminator(), Required: true, Kind: &schemapb.Schema_Field_String_{String_: &schemapb.Schema_Field_String{In: []string{k}}}},
-			}, o.GetVariants()[k].GetFields()...)
+			}
+			for _, vf := range o.GetVariants()[k].GetFields() {
+				if vf.GetName() != o.GetDiscriminator() {
+					fields = append(fields, vf)
+				}
+			}
 			g.iface(name, fields, "variant "+k+" of "+f.GetName())
 			parts = append(parts, name)
 		}
@@ -298,7 +305,7 @@ func prop(name string) string {
 }
 
 func pascal(s string) string {
-	parts := strings.FieldsFunc(s, func(r rune) bool { return r == '_' || r == '-' || r == '.' || r == ' ' })
+	parts := strings.FieldsFunc(s, func(r rune) bool { return r == '_' || r == '-' || r == '.' || r == ' ' || r == '/' })
 	var sb strings.Builder
 	for _, p := range parts {
 		if p == "" {

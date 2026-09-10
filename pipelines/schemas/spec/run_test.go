@@ -35,8 +35,12 @@ func baseRun() map[string]any {
 		"machines": []any{machine("db-1", "db"), machine("runner-1", "runner")},
 		"workload": map[string]any{
 			"runner_role":   "runner",
-			"stroppy_image": "ghcr.io/stroppy-io/stroppy:5.1.2",
-			"segments":      []any{map[string]any{"name": "load"}},
+			"stroppy_image": "ghcr.io/stroppy-io/stroppy:v6.0.0.62",
+			"driver_type":   "postgres",
+			"url":           "postgres://u:p@${ip:role:db}:5432/db",
+			"driver":        map[string]any{"bulkSize": int64(5000)},
+			"segments":      []any{map[string]any{"name": "load", "workload": map[string]any{"script": "simple"}}},
+			"baseline":      map[string]any{"enabled": true, "tiers": []any{"noop"}},
 		},
 	}
 }
@@ -126,7 +130,9 @@ func TestRun(t *testing.T) {
 	badRunner := baseRun()
 	badRunner["workload"] = map[string]any{
 		"runner_role":   "ghost",
-		"stroppy_image": "ghcr.io/stroppy-io/stroppy:5.1.2",
+		"stroppy_image": "ghcr.io/stroppy-io/stroppy:v6.0.0.62",
+		"driver_type":   "postgres",
+		"url":           "postgres://u:p@10.0.0.1:5432/db",
 		"segments":      []any{map[string]any{"name": "load"}},
 	}
 

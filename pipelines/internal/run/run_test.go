@@ -31,8 +31,8 @@ func TestExpand(t *testing.T) {
 	infra, infos := sampleInfra()
 	a := NewAddresses(infra, infos)
 	for in, want := range map[string]string{
-		"postgres://u@${ip:db-1}:5432/db":                                    "postgres://u@10.0.0.11:5432/db",
-		"hosts=${ips:role:db}":                                               "hosts=10.0.0.11,10.0.0.12",
+		"postgres://u@${ip:db-1}:5432/db": "postgres://u@10.0.0.11:5432/db",
+		"hosts=${ips:role:db}":            "hosts=10.0.0.11,10.0.0.12",
 		"primary=${ip:role:db} pub=${public_ip:db-1} none=${public_ip:db-2}": "primary=10.0.0.11 pub=1.1.1.1 none=",
 		"plain": "plain",
 	} {
@@ -72,9 +72,12 @@ func sampleRun() spec.Run {
 				Ports: []spec.Port{{Container: 9187, Host: 9187}}, Scrape: "/metrics",
 			},
 		},
-		Scrapes:  []spec.Scrape{{Role: "db", URL: "http://127.0.0.1:9187/metrics", Job: "postgres"}},
-		Flows:    []spec.Flow{{FromRole: "runner", ToRole: "db", Protocol: "tcp", Port: 5432}, {FromRole: "db", External: "otel.stroppy.io", Protocol: "otlp", Port: 4318}},
-		Workload: spec.Workload{RunnerRole: "runner", StroppyImage: "stroppy:5", Segments: []json.RawMessage{json.RawMessage(`{"name":"load"}`)}},
+		Scrapes: []spec.Scrape{{Role: "db", URL: "http://127.0.0.1:9187/metrics", Job: "postgres"}},
+		Flows:   []spec.Flow{{FromRole: "runner", ToRole: "db", Protocol: "tcp", Port: 5432}, {FromRole: "db", External: "otel.stroppy.io", Protocol: "otlp", Port: 4318}},
+		Workload: spec.Workload{
+			RunnerRole: "runner", StroppyImage: "stroppy:6", DriverType: "postgres", URL: "postgres://u:p@${ip:role:db}:5432/db",
+			Segments: []json.RawMessage{json.RawMessage(`{"name":"load","workload":{"script":"tpcc/tx"},"run":{"executor":"constant-vus","duration":"30s"}}`)},
+		},
 	}
 }
 
@@ -133,9 +136,18 @@ func TestValidateAndExpectations(t *testing.T) {
 		t.Errorf("no segments: %v", err)
 	}
 	run.Workload.Segments = []json.RawMessage{json.RawMessage(`{"name":"load"}`)}
+	if err := validate(run); err == nil {
+		t.Error("segment without a script accepted")
+	}
+	run.Workload.Segments = []json.RawMessage{json.RawMessage(`{"name":"load","workload":{"script":"simple"}}`)}
 	if err := validate(run); err != nil {
 		t.Errorf("valid run rejected: %v", err)
 	}
+	run.Workload.URL = ""
+	if err := validate(run); err == nil {
+		t.Error("missing url accepted")
+	}
+	run.Workload.URL = "noop://localhost"
 	run.Workload.RunnerRole = "nope"
 	if err := validate(run); err == nil {
 		t.Error("missing runner role accepted")
@@ -148,12 +160,12 @@ func TestValidateAndExpectations(t *testing.T) {
 }
 
 func TestSegmentBound(t *testing.T) {
-	seg := spec.Segment{Execution: spec.Execution{Limit: spec.Limit{Kind: "duration", Duration: spec.Duration(time.Hour)}}, Warmup: spec.Duration(10 * time.Minute)}
+	seg := spec.Segment{Run: spec.RunParams{Executor: spec.ExecutorConstantVUs, Duration: spec.Duration(time.Hour)}, Warmup: spec.Duration(10 * time.Minute)}
 	if got := segmentBound(seg); got != time.Hour+30*time.Minute+10*time.Minute+segmentMargin {
 		t.Errorf("bound = %s", got)
 	}
-	seg.Execution.Limit = spec.Limit{Kind: "iterations", Iterations: 10}
-	if segmentBound(seg) != segmentIterationsBound {
+	seg.Run = spec.RunParams{Executor: spec.ExecutorSharedIterations, Iterations: 10}
+	if segmentBound(seg) != segmentIterationsBound+10*time.Minute {
 		t.Error("iterations bound")
 	}
 }

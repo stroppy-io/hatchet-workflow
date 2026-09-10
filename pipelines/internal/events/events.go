@@ -21,17 +21,20 @@ import (
 
 // Names of the milestones a stroppy run emits.
 const (
-	PhaseStarted      = "phase.started"
-	PhaseFinished     = "phase.finished"
-	PhaseFailed       = "phase.failed"
-	MachineReady      = "machine.ready"
-	ContainerReady    = "container.ready"
-	SegmentStarted    = "segment.started"
-	SegmentFinished   = "segment.finished"
-	SegmentFailed     = "segment.failed"
-	StandKept         = "stand.kept"
-	ResultPublished   = "result.published"
-	activityName      = "stroppy.events.emit"
+	PhaseStarted     = "phase.started"
+	PhaseFinished    = "phase.finished"
+	PhaseFailed      = "phase.failed"
+	MachineReady     = "machine.ready"
+	ContainerReady   = "container.ready"
+	SegmentStarted   = "segment.started"
+	SegmentFinished  = "segment.finished"
+	SegmentFailed    = "segment.failed"
+	BaselineStarted  = "baseline.started"
+	BaselineFinished = "baseline.finished"
+	StandKept        = "stand.kept"
+	ResultPublished  = "result.published"
+	// ActivityName is the wire name of the emit activity (run queue).
+	ActivityName      = "stroppy.events.emit"
 	activityTimeout   = 30 * time.Second
 	activityMaxTries  = 3
 	activityHeartbeat = 0
@@ -50,7 +53,7 @@ type request struct {
 // Register makes the emit activity discoverable in the recording pass.
 // Call it from the pipeline's recording walk.
 func Register(ctx pipeline.Context) {
-	ctx.RecordActivity(activityName, emit)
+	ctx.RecordActivity(ActivityName, emit)
 }
 
 // Emit puts a milestone into the run's history. Never blocks the caller
@@ -65,7 +68,7 @@ func Emit(ctx pipeline.Context, name string, payload Payload) {
 		StartToCloseTimeout: activityTimeout,
 		RetryPolicy:         &temporal.RetryPolicy{InitialInterval: time.Second, BackoffCoefficient: 2, MaximumAttempts: activityMaxTries},
 	})
-	if err := workflow.ExecuteActivity(actx, activityName, req).Get(ctx, nil); err != nil {
+	if err := workflow.ExecuteActivity(actx, ActivityName, req).Get(ctx, nil); err != nil {
 		ctx.Logger().Warn("milestone lost", "event", name, "error", err)
 	}
 }

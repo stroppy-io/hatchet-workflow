@@ -2,6 +2,7 @@ package spec
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 
@@ -74,11 +75,13 @@ func sampleRun() Run {
 		Scrapes:  []Scrape{{Role: "db", URL: "http://127.0.0.1:9187/metrics", Job: "postgres"}},
 		Flows:    []Flow{{FromRole: "runner", ToRole: "db", Protocol: "tcp", Port: 5432, Label: "postgres"}},
 		Workload: Workload{
-			RunnerRole: "runner", StroppyImage: "ghcr.io/stroppy-io/stroppy:5.1.2",
-			Segments: []json.RawMessage{json.RawMessage(`{"name":"load","script":"tpcc/tx","execution":{"vus":1,"limit":{"kind":"duration","duration":"30s"}}}`)},
-			Env:      map[string]string{"STROPPY_URL": "postgres://postgres:x@10.130.0.10:5432/postgres"},
+			RunnerRole: "runner", StroppyImage: "ghcr.io/stroppy-io/stroppy:v6.0.0.62",
+			DriverType: "postgres", URL: "postgres://postgres:x@${ip:role:db}:5432/postgres?sslmode=disable",
+			Driver:   map[string]any{"bulkSize": 5000, "pool": map[string]any{"maxConns": 64}},
+			Segments: []json.RawMessage{json.RawMessage(`{"name":"load","workload":{"script":"tpcc/tx","scale_factor":10},"run":{"executor":"constant-vus","vus":8,"duration":"30s"}}`)},
+			Baseline: &Baseline{Enabled: true, Tiers: []string{"noop", "wire"}, Quick: true},
 		},
-		Observability:      Observability{OTLPEndpoint: "http://otel.stroppy.io", Labels: map[string]string{"stroppy_run_id": "x"}},
+		Observability:      Observability{OTLPEndpoint: "http://otel.stroppy.io", OTLPHeaders: "Authorization=Bearer x", Labels: map[string]string{"stroppy_run_id": "x"}},
 		Keep:               Duration(time.Hour),
 		ResultExpectations: []string{"tps"},
 	}
@@ -91,10 +94,17 @@ func TestResultFitsSchema(t *testing.T) {
 		Metrics: map[string]MetricValue{"tps": {Value: 1234.5, Unit: "tx/s", Min: 1000, Max: 1300, Avg: 1200}},
 		Segments: []SegmentResult{{
 			Name: "load", Status: SegmentCompleted, StartedAt: time.Now().UTC(), FinishedAt: time.Now().UTC(),
-			Metrics: map[string]MetricValue{"tps": {Value: 1234.5}},
+			Metrics:    map[string]MetricValue{"iterations_total": {Value: 1234}, "iteration_duration_p99": {Value: 12.3, Unit: "ms"}},
+			Errors:     &ErrorCounts{TerminalErrors: 1, FailedIterations: 1},
+			ExitCode:   0,
+			Compliance: json.RawMessage(`{"workload":"tpcc/tx","tpm_c":600}`),
 		}},
 		Artifacts: []string{"artifact/stroppy-raw"},
-		Summary:   Summary{TPS: 1234.5, LatencyP99Ms: 12.3, Errors: 0, Duration: Duration(30 * time.Second)},
+		Baseline: &BaselineResult{
+			OK: true, Verdicts: []BaselineVerdict{{Check: "noop errors", Status: "ok", Detail: "no failed iterations"}},
+			Report: json.RawMessage(`{"schema":1,"tiers":[]}`),
+		},
+		Summary: Summary{TPS: 1234.5, LatencyP99Ms: 12.3, Errors: 0, Duration: Duration(30 * time.Second)},
 	})
 }
 
@@ -118,7 +128,20 @@ func TestDecodeSegments(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if segs[0].Execution.Limit.Kind != "duration" || segs[0].Execution.Limit.Duration.Std() != 30*time.Second {
-		t.Fatalf("limit decoded wrong: %+v", segs[0].Execution.Limit)
+	if segs[0].Run.Executor != ExecutorConstantVUs || segs[0].Run.Duration.Std() != 30*time.Second || segs[0].Run.VUs != 8 {
+		t.Fatalf("run decoded wrong: %+v", segs[0].Run)
+	}
+	if segs[0].Workload.Script != "tpcc/tx" || segs[0].Workload.Params["scale_factor"] != float64(10) {
+		t.Fatalf("workload decoded wrong: %+v", segs[0].Workload)
+	}
+	if _, ok := segs[0].Workload.Params["script"]; ok {
+		t.Fatal("discriminator leaked into params")
+	}
+	back, err := json.Marshal(segs[0].Workload)
+	if err != nil || !strings.Contains(string(back), `"script":"tpcc/tx"`) {
+		t.Fatalf("round trip: %s %v", back, err)
+	}
+	if _, err := DecodeSegments([]json.RawMessage{json.RawMessage(`{"name":"x","workload":{}}`)}); err == nil {
+		t.Fatal("segment without script accepted")
 	}
 }

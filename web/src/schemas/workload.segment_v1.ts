@@ -1,55 +1,153 @@
 // GENERATED from schemapb schema workload.segment@1 — do not edit.
-// One stroppy load segment: script, execution limits, generator parameters and files.
+// One stroppy load segment: workload, typed parameters, scenario, steps and files.
 
-/** variant duration of limit */
-export interface WorkloadSegment1ExecutionLimitDuration {
-  kind: "duration";
-  /** Duration. Wall-clock length of the segment (k6 --duration). */
-  duration: string;
+/** variant execute_sql of workload */
+export interface WorkloadSegment1WorkloadExecuteSql {
+  script: "execute_sql";
+  /** Inline SQL. SQL text to execute (sqlBody); may start with a `--= name` marker to name the query. */
+  sql_body?: string | null;
+  /** SQL file. SQL file to execute (sqlFile): a file shipped in files. */
+  sql_file?: string | null;
 }
 
-/** variant iterations of limit */
-export interface WorkloadSegment1ExecutionLimitIterations {
-  kind: "iterations";
-  /** Iterations. Total iterations across all VUs (k6 --iterations). */
-  count: number | string;
+/** variant simple of workload */
+export interface WorkloadSegment1WorkloadSimple {
+  script: "simple";
 }
 
-/** object execution */
-export interface WorkloadSegment1Execution {
-  /** Virtual users. k6 virtual users driving the segment; sizes the runner machine. */
-  vus?: number | string;
-  /** Limit. How the segment ends: after a wall-clock duration or after N iterations. */
-  limit: WorkloadSegment1ExecutionLimitDuration | WorkloadSegment1ExecutionLimitIterations;
-  /** Quiet. Suppress the k6 progress bar (k6 --quiet). */
-  quiet?: boolean;
-  /** Ignore thresholds. Do not fail the segment on threshold breach (k6 --no-thresholds). */
-  no_thresholds?: boolean;
-  /** Extra k6 args. Raw arguments appended after `--` to the embedded k6 process. */
-  extra_args?: Array<string>;
-}
-
-/** object params */
-export interface WorkloadSegment1Params {
-  /** Pool size. Driver connection pool size (POOL_SIZE / pool.maxConns). */
-  pool_size?: number | string;
-  /** Scale factor. Dataset scale (warehouses for TPC-C, SF for TPC-H); drives the disk requirement. */
+/** variant tpcb/procs of workload */
+export interface WorkloadSegment1WorkloadTpcbProcs {
+  script: "tpcb/procs";
+  /** Scale factor. TPC-B scale factor = branches (scaleFactor); 100k accounts per branch. */
   scale_factor?: number | string;
-  /** Only these steps. Run only the listed stroppy steps (`--steps`); empty = all steps. */
-  steps?: Array<string>;
-  /** Skip these steps. Skip the listed stroppy steps (`--no-steps`); mutually exclusive with steps. */
-  no_steps?: Array<string>;
-  /** Insert method. Driver-level write protocol for generated rows (defaultInsertMethod). */
-  insert_method?: "native" | "plain_bulk" | "plain_query";
-  /** Bulk size. Rows per bulk INSERT statement; only used by plain_bulk. [rows] */
-  bulk_size?: number | string;
-  /** Environment. Extra script environment (`-e KEY=VALUE`); keys must match ^[A-Z_][A-Z0-9_]*$. */
-  env?: Record<string, string>;
+  /** Load workers. Workers used to load each table (loadWorkers). */
+  load_workers?: number | string;
+  /** Retry attempts. Maximum attempts of one transaction before the iteration fails (retryAttempts). */
+  retry_attempts?: number | string;
+  /** Transaction isolation. Isolation override (txIsolation); unset keeps the driver default. Picodata only supports none. */
+  tx_isolation?: "read_uncommitted" | "read_committed" | "repeatable_read" | "serializable" | "db_default" | "conn" | "none" | null;
+  /** SQL file. Dialect file override (sqlFile): a preset id like tpcb/pico or a file shipped in files. */
+  sql_file?: string | null;
+}
+
+/** variant tpcb/tx of workload */
+export interface WorkloadSegment1WorkloadTpcbTx {
+  script: "tpcb/tx";
+  /** Scale factor. TPC-B scale factor = branches (scaleFactor); 100k accounts per branch. */
+  scale_factor?: number | string;
+  /** Load workers. Workers used to load each table (loadWorkers). */
+  load_workers?: number | string;
+  /** Retry attempts. Maximum attempts of one transaction before the iteration fails (retryAttempts). */
+  retry_attempts?: number | string;
+  /** Transaction isolation. Isolation override (txIsolation); unset keeps the driver default. Picodata only supports none. */
+  tx_isolation?: "read_uncommitted" | "read_committed" | "repeatable_read" | "serializable" | "db_default" | "conn" | "none" | null;
+  /** SQL file. Dialect file override (sqlFile): a preset id like tpcb/pico or a file shipped in files. */
+  sql_file?: string | null;
+}
+
+/** variant tpcc/procs of workload */
+export interface WorkloadSegment1WorkloadTpccProcs {
+  script: "tpcc/procs";
+  /** Warehouses. Number of warehouses (scaleFactor); ~100 MB per warehouse drives the disk requirement. */
+  scale_factor?: number | string;
+  /** First warehouse. First warehouse id (warehouseStart); lets several runners share one database. */
+  warehouse_start?: number | string;
+  /** Load items. Load the shared item table (loadItems); unset = only when warehouse_start is 1. */
+  load_items?: boolean | null;
+  /** Load workers. Workers used to load each table (loadWorkers). */
+  load_workers?: number | string;
+  /** Unlogged tables while loading. Use unlogged PostgreSQL tables during the load, then set them logged (pgUnlogged). PostgreSQL only. */
+  pg_unlogged?: boolean;
+  /** Pacing. Apply TPC-C keying and think times (pacing); needed for a compliance verdict. */
+  pacing?: boolean;
+  /** Retry attempts. Maximum attempts of one transaction before the iteration fails (retryAttempts). */
+  retry_attempts?: number | string;
+  /** Transaction isolation. Isolation override (txIsolation); unset keeps the driver default. Picodata only supports none. */
+  tx_isolation?: "read_uncommitted" | "read_committed" | "repeatable_read" | "serializable" | "db_default" | "conn" | "none" | null;
+  /** SQL file. Dialect file override (sqlFile): a preset id like tpcc/ydb_no_indexes or a file shipped in files. */
+  sql_file?: string | null;
+}
+
+/** variant tpcc/tx of workload */
+export interface WorkloadSegment1WorkloadTpccTx {
+  script: "tpcc/tx";
+  /** Warehouses. Number of warehouses (scaleFactor); ~100 MB per warehouse drives the disk requirement. */
+  scale_factor?: number | string;
+  /** First warehouse. First warehouse id (warehouseStart); lets several runners share one database. */
+  warehouse_start?: number | string;
+  /** Load items. Load the shared item table (loadItems); unset = only when warehouse_start is 1. */
+  load_items?: boolean | null;
+  /** Load workers. Workers used to load each table (loadWorkers). */
+  load_workers?: number | string;
+  /** Unlogged tables while loading. Use unlogged PostgreSQL tables during the load, then set them logged (pgUnlogged). PostgreSQL only. */
+  pg_unlogged?: boolean;
+  /** Pacing. Apply TPC-C keying and think times (pacing); needed for a compliance verdict. */
+  pacing?: boolean;
+  /** Retry attempts. Maximum attempts of one transaction before the iteration fails (retryAttempts). */
+  retry_attempts?: number | string;
+  /** Transaction isolation. Isolation override (txIsolation); unset keeps the driver default. Picodata only supports none. */
+  tx_isolation?: "read_uncommitted" | "read_committed" | "repeatable_read" | "serializable" | "db_default" | "conn" | "none" | null;
+  /** SQL file. Dialect file override (sqlFile): a preset id like tpcc/ydb_no_indexes or a file shipped in files. */
+  sql_file?: string | null;
+}
+
+/** variant tpcds of workload */
+export interface WorkloadSegment1WorkloadTpcds {
+  script: "tpcds";
+  /** Scale factor. TPC-DS scale factor (scaleFactor); fractional allowed. Static dimensions (~1.9M customer_demographics rows) do not shrink. */
+  scale_factor?: number;
+  /** Load workers. Workers used to load each table (loadWorkers); 0 = automatic. */
+  load_workers?: number | string;
+  /** Unlogged tables while loading. Use unlogged PostgreSQL tables during the load, then set them logged (pgUnlogged). PostgreSQL only. */
+  pg_unlogged?: boolean;
+  /** Query streams. Number of query streams (streams). */
+  streams?: number | string;
+  /** Query stream. Which query stream to generate (queryStream). */
+  query_stream?: number | string;
+  /** Query seed. Query generator seed (querySeed). */
+  query_seed?: number | string;
+  /** Validate outside SF=1. Compare answers even when the scale factor is not 1 (validateForce). */
+  validate_force?: boolean;
+  /** YDB store mode. YDB table store mode (ydbStoreMode); ignored by other drivers. */
+  ydb_store_mode?: "column" | "row";
+  /** Schema file. Schema SQL override (schemaFile): a preset id like tpcds/schema.pico or a file shipped in files. */
+  schema_file?: string | null;
+  /** SQL file. Query SQL override (sqlFile): a preset id like tpcds/pico or a file shipped in files. */
+  sql_file?: string | null;
+}
+
+/** variant tpch/tx of workload */
+export interface WorkloadSegment1WorkloadTpchTx {
+  script: "tpch/tx";
+  /** Scale factor. TPC-H scale factor (scaleFactor); fractional allowed, 1 ≈ 1 GB of data. */
+  scale_factor?: number;
+  /** Load workers. Workers used to load each table (loadWorkers); 0 = automatic. */
+  load_workers?: number | string;
+  /** Unlogged tables while loading. Use unlogged PostgreSQL tables during the load, then set them logged (pgUnlogged). PostgreSQL only. */
+  pg_unlogged?: boolean;
+  /** YDB store mode. YDB table store mode (ydbStoreMode); ignored by other drivers. */
+  ydb_store_mode?: "column" | "row";
+  /** SQL file. Dialect file override (sqlFile): a preset id like tpch/pico or a file shipped in files. */
+  sql_file?: string | null;
+}
+
+/** object run */
+export interface WorkloadSegment1Run {
+  /** Executor. Scenario executor: constant-vus runs for a duration, shared-iterations shares N iterations between VUs. */
+  executor?: "constant-vus" | "shared-iterations";
+  /** Virtual users. Concurrent virtual users (vus); sizes the runner machine and the pool. */
+  vus?: number | string;
+  /** Duration. Wall-clock length of a constant-vus scenario (duration). */
+  duration?: string | null;
+  /** Iterations. Total iterations of a shared-iterations scenario (iterations). */
+  iterations?: number | string | null;
+  /** Query timeout. Per-statement deadline (queryTimeout); 0 disables it. */
+  query_timeout?: string;
 }
 
 /** object  */
 export interface WorkloadSegment1Item {
-  /** File name. Name the file gets next to the script on the runner. */
+  /** File name. Name the file gets in the segment workspace; reference it from sql_file/schema_file. */
   name: string;
   /** Kind. What the file is: a schema/DDL file, a config, or a data file. */
   kind?: "sql" | "conf" | "data";
@@ -61,9 +159,9 @@ export interface WorkloadSegment1Item {
 
 /** object thresholds */
 export interface WorkloadSegment1Thresholds {
-  /** p99 latency. Fail the segment when the p99 request latency exceeds this. [ms] */
+  /** p99 latency. Fail the segment when iteration_duration p99 exceeds this. [ms] */
   p99_ms?: number;
-  /** Error rate. Fail the segment when the error ratio exceeds this (0..1). [ratio] */
+  /** Error rate. Fail the segment when failed_iterations / iterations exceeds this (0..1). [ratio] */
   error_rate?: number;
 }
 
@@ -71,17 +169,23 @@ export interface WorkloadSegment1Thresholds {
 export interface WorkloadSegment1 {
   /** Name. Segment id inside the workload; used as the phase label of the run and as a metric label. */
   name: string;
-  /** Script. Stroppy workload script id or path, e.g. tpcc/tx. Restricted to the catalog by the server. */
-  script: string;
-  /** Execution. Load shape of the segment. */
-  execution: WorkloadSegment1Execution;
-  /** Parameters. Data-generation and driver parameters passed to the script. */
-  params?: WorkloadSegment1Params;
-  /** Files. Extra files (SQL schema, configs, data) shipped with the segment. */
+  /** Workload. Built-in stroppy workload and its typed parameters; `script` is the id passed to `stroppy run`. */
+  workload: WorkloadSegment1WorkloadExecuteSql | WorkloadSegment1WorkloadSimple | WorkloadSegment1WorkloadTpcbProcs | WorkloadSegment1WorkloadTpcbTx | WorkloadSegment1WorkloadTpccProcs | WorkloadSegment1WorkloadTpccTx | WorkloadSegment1WorkloadTpcds | WorkloadSegment1WorkloadTpchTx;
+  /** Scenario. Load shape of the segment. */
+  run: WorkloadSegment1Run;
+  /** Only these steps. Run only the listed stroppy steps (--steps); empty = all steps. */
+  steps?: Array<string>;
+  /** Skip these steps. Skip the listed stroppy steps (--no-steps); stroppy rejects it together with steps. */
+  no_steps?: Array<string>;
+  /** Extra parameters. Typed stroppy flags this form does not model, by flag name without dashes (load-workers); values are parsed by stroppy. */
+  extra_params?: Record<string, string>;
+  /** Files. Extra files (SQL dialects, schemas, data) shipped with the segment. */
   files?: Array<WorkloadSegment1Item>;
-  /** Thresholds. Pass/fail thresholds handed to k6; ignored when no_thresholds is set. */
+  /** Thresholds. Pass/fail bounds the pipeline applies to the segment summary. */
   thresholds?: WorkloadSegment1Thresholds;
   /** Warm-up. Idle wait before the segment starts, letting caches and replicas settle. */
   warmup?: string;
+  /** Log level. Minimum stroppy log level (--log-level); debug traces parameter resolution. */
+  log_level?: "debug" | "info" | "warn" | "error";
 }
 

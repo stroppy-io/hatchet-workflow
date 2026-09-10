@@ -4783,9 +4783,12 @@ components:
         kind:
           type: string
           enum:
+          - database
+          - workload
           - test
           - suite
           - schedule
+          - run
         id:
           type: string
           format: uuid
@@ -5979,12 +5982,19 @@ components:
             properties:
               version:
                 type: string
+                description: Stroppy build (6.0.0 or nightly-<sha>); 6.0.0 is the minimum, the Go-native
+                  engine.
+                example: 6.0.0
               image:
                 type: string
+                example: ghcr.io/stroppy-io/stroppy:v6.0.0.62
               default:
                 type: boolean
               deprecated:
                 type: boolean
+              baseline:
+                type: boolean
+                description: The build ships `stroppy baseline` (runner self-check).
               protocols:
                 type: array
                 items:
@@ -6031,9 +6041,51 @@ components:
                 - bootstrap
                 - workload
                 - teardown
-        params_schema:
+        params:
+          type: array
+          description: Typed parameters the script declares, as probed from the build (`stroppy probe
+            -o json`).
+          items:
+            $ref: '#/components/schemas/StroppyParam'
+    StroppyParam:
+      type: object
+      required:
+      - name
+      - config
+      - type
+      properties:
+        name:
           type: string
-          description: schemapb id of script-specific params (env/args).
+          description: Flag name without dashes.
+          example: load-workers
+        config:
+          type: string
+          description: Key of the stroppy-config.json params object.
+          example: loadWorkers
+        scope:
+          type: string
+          enum:
+          - run
+          - workload
+        type:
+          type: string
+          enum:
+          - string
+          - bool
+          - int
+          - int64
+          - float64
+          - duration
+        description:
+          type: string
+        default:
+          description: Declared default; null when contextual.
+          nullable: true
+        default_description:
+          type: string
+        env:
+          type: string
+          example: LOAD_WORKERS
     Example:
       type: object
       required:
@@ -6320,6 +6372,11 @@ components:
           items:
             $ref: '#/components/schemas/SchemaValue'
             x-schema: workload.segment
+        options:
+          $ref: '#/components/schemas/SchemaValue'
+          x-schema: workload.stroppy
+          description: The rest of `workload.stroppy` — `driver`, `connection`, `baseline`; defaults apply
+            when absent.
         schema:
           $ref: '#/components/schemas/SchemaRef'
     WorkloadWrite:
@@ -6352,6 +6409,8 @@ components:
             type: array
             items:
               $ref: '#/components/schemas/SchemaValue'
+          options:
+            $ref: '#/components/schemas/SchemaValue'
     WorkloadPreview:
       type: object
       required:

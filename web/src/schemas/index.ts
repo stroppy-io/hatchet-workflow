@@ -61,8 +61,6 @@ import cfgPostgresqlConf18Schema from './cfg.postgresql.conf_v18.json';
 import type { CfgPostgresqlConf18 } from './cfg.postgresql.conf_v18';
 import cfgProxysqlCnf2Schema from './cfg.proxysql.cnf_v2.json';
 import type { CfgProxysqlCnf2 } from './cfg.proxysql.cnf_v2';
-import cfgStroppyRunner1Schema from './cfg.stroppy.runner_v1.json';
-import type { CfgStroppyRunner1 } from './cfg.stroppy.runner_v1';
 import cfgYdbConfigYaml25Schema from './cfg.ydb.config.yaml_v25.json';
 import type { CfgYdbConfigYaml25 } from './cfg.ydb.config.yaml_v25';
 import cfgYdbConfigYaml26Schema from './cfg.ydb.config.yaml_v26.json';
@@ -159,7 +157,6 @@ export const schemaIds = [
   "cfg.postgresql.conf@17",
   "cfg.postgresql.conf@18",
   "cfg.proxysql.cnf@2",
-  "cfg.stroppy.runner@1",
   "cfg.ydb.config.yaml@25",
   "cfg.ydb.config.yaml@26",
   "db.cockroach.params@1",
@@ -227,7 +224,6 @@ export type SchemaValue<Id extends SchemaId> =
   Id extends "cfg.postgresql.conf@17" ? CfgPostgresqlConf17 :
   Id extends "cfg.postgresql.conf@18" ? CfgPostgresqlConf18 :
   Id extends "cfg.proxysql.cnf@2" ? CfgProxysqlCnf2 :
-  Id extends "cfg.stroppy.runner@1" ? CfgStroppyRunner1 :
   Id extends "cfg.ydb.config.yaml@25" ? CfgYdbConfigYaml25 :
   Id extends "cfg.ydb.config.yaml@26" ? CfgYdbConfigYaml26 :
   Id extends "db.cockroach.params@1" ? DbCockroachParams1 :
@@ -293,7 +289,6 @@ export const schemas: Record<SchemaId, unknown> = {
   "cfg.postgresql.conf@17": cfgPostgresqlConf17Schema,
   "cfg.postgresql.conf@18": cfgPostgresqlConf18Schema,
   "cfg.proxysql.cnf@2": cfgProxysqlCnf2Schema,
-  "cfg.stroppy.runner@1": cfgStroppyRunner1Schema,
   "cfg.ydb.config.yaml@25": cfgYdbConfigYaml25Schema,
   "cfg.ydb.config.yaml@26": cfgYdbConfigYaml26Schema,
   "db.cockroach.params@1": dbCockroachParams1Schema,
@@ -359,7 +354,6 @@ export type {
   CfgPostgresqlConf17,
   CfgPostgresqlConf18,
   CfgProxysqlCnf2,
-  CfgStroppyRunner1,
   CfgYdbConfigYaml25,
   CfgYdbConfigYaml26,
   DbCockroachParams1,

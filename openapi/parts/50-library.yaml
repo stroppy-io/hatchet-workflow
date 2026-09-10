@@ -726,6 +726,10 @@ components:
           items:
             $ref: '#/components/schemas/SchemaValue'
             x-schema: workload.segment
+        options:
+          $ref: '#/components/schemas/SchemaValue'
+          x-schema: workload.stroppy
+          description: The rest of `workload.stroppy` — `driver`, `connection`, `baseline`; defaults apply when absent.
         schema: { $ref: '#/components/schemas/SchemaRef' }
     WorkloadWrite:
       allOf:
@@ -746,6 +750,7 @@ components:
             segments:
               type: array
               items: { $ref: '#/components/schemas/SchemaValue' }
+            options: { $ref: '#/components/schemas/SchemaValue' }
     WorkloadPreview:
       type: object
       required: [validation]

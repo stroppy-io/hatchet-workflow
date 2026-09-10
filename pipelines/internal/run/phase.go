@@ -1,6 +1,7 @@
 package run
 
 import (
+	"errors"
 	"fmt"
 	"time"
 
@@ -57,10 +58,12 @@ func parallel(ctx pipeline.Context, names []string, fns []func(gctx pipeline.Con
 		panic("parallel: names and fns differ in length")
 	}
 	errs := make([]error, len(fns))
-	wg := workflow.NewWaitGroup(ctx)
+	// Temporal walks parent contexts by concrete type: hand it the embedded
+	// workflow.Context, not the pipeline wrapper.
+	wg := workflow.NewWaitGroup(ctx.Context)
 	for i := range fns {
 		wg.Add(1)
-		workflow.Go(ctx, func(gctx workflow.Context) {
+		workflow.Go(ctx.Context, func(gctx workflow.Context) {
 			defer wg.Done()
 			defer func() {
 				if p := recover(); p != nil {
@@ -74,7 +77,7 @@ func parallel(ctx pipeline.Context, names []string, fns []func(gctx pipeline.Con
 			errs[i] = fns[i](pipeline.Context{Context: gctx})
 		})
 	}
-	wg.Wait(ctx)
+	wg.Wait(ctx.Context)
 	var joined []error
 	for i, err := range errs {
 		if err != nil {
@@ -84,6 +87,9 @@ func parallel(ctx pipeline.Context, names []string, fns []func(gctx pipeline.Con
 	return joinErrors(joined)
 }
 
+// joinErrors keeps every failure visible and the error chain intact:
+// errors.Join preserves Is/As, so a cancellation among the failures still
+// reads as a cancellation to the SDK's cleanup outcome.
 func joinErrors(errs []error) error {
 	switch len(errs) {
 	case 0:
@@ -91,20 +97,5 @@ func joinErrors(errs []error) error {
 	case 1:
 		return errs[0]
 	}
-	msg := make([]string, 0, len(errs))
-	for _, e := range errs {
-		msg = append(msg, e.Error())
-	}
-	return fmt.Errorf("%d failures: %s", len(errs), joinStrings(msg))
-}
-
-func joinStrings(ss []string) string {
-	out := ""
-	for i, s := range ss {
-		if i > 0 {
-			out += "; "
-		}
-		out += s
-	}
-	return out
+	return fmt.Errorf("%d failures: %w", len(errs), errors.Join(errs...))
 }

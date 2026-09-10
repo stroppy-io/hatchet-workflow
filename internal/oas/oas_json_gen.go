@@ -21424,6 +21424,39 @@ func (s *OptStroppyCatalogSource) UnmarshalJSON(data []byte) error {
 	return s.Decode(d)
 }
 
+// Encode encodes StroppyParamScope as json.
+func (o OptStroppyParamScope) Encode(e *jx.Encoder) {
+	if !o.Set {
+		return
+	}
+	e.Str(string(o.Value))
+}
+
+// Decode decodes StroppyParamScope from json.
+func (o *OptStroppyParamScope) Decode(d *jx.Decoder) error {
+	if o == nil {
+		return errors.New("invalid: unable to decode OptStroppyParamScope to nil")
+	}
+	o.Set = true
+	if err := o.Value.Decode(d); err != nil {
+		return err
+	}
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s OptStroppyParamScope) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *OptStroppyParamScope) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
 // Encode encodes StroppyScriptStepsItemPhase as json.
 func (o OptStroppyScriptStepsItemPhase) Encode(e *jx.Encoder) {
 	if !o.Set {
@@ -38218,6 +38251,12 @@ func (s *StroppyCatalogVersionsItem) encodeFields(e *jx.Encoder) {
 		}
 	}
 	{
+		if s.Baseline.Set {
+			e.FieldStart("baseline")
+			s.Baseline.Encode(e)
+		}
+	}
+	{
 		e.FieldStart("protocols")
 		e.ArrStart()
 		for _, elem := range s.Protocols {
@@ -38235,13 +38274,14 @@ func (s *StroppyCatalogVersionsItem) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfStroppyCatalogVersionsItem = [6]string{
+var jsonFieldsNameOfStroppyCatalogVersionsItem = [7]string{
 	0: "version",
 	1: "image",
 	2: "default",
 	3: "deprecated",
-	4: "protocols",
-	5: "scripts",
+	4: "baseline",
+	5: "protocols",
+	6: "scripts",
 }
 
 // Decode decodes StroppyCatalogVersionsItem from json.
@@ -38297,8 +38337,18 @@ func (s *StroppyCatalogVersionsItem) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"deprecated\"")
 			}
+		case "baseline":
+			if err := func() error {
+				s.Baseline.Reset()
+				if err := s.Baseline.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"baseline\"")
+			}
 		case "protocols":
-			requiredBitSet[0] |= 1 << 4
+			requiredBitSet[0] |= 1 << 5
 			if err := func() error {
 				s.Protocols = make([]Protocol, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -38316,7 +38366,7 @@ func (s *StroppyCatalogVersionsItem) Decode(d *jx.Decoder) error {
 				return errors.Wrap(err, "decode field \"protocols\"")
 			}
 		case "scripts":
-			requiredBitSet[0] |= 1 << 5
+			requiredBitSet[0] |= 1 << 6
 			if err := func() error {
 				s.Scripts = make([]StroppyScript, 0)
 				if err := d.Arr(func(d *jx.Decoder) error {
@@ -38343,7 +38393,7 @@ func (s *StroppyCatalogVersionsItem) Decode(d *jx.Decoder) error {
 	// Validate required fields.
 	var failures []validate.FieldError
 	for i, mask := range [1]uint8{
-		0b00110011,
+		0b01100011,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -38390,6 +38440,308 @@ func (s *StroppyCatalogVersionsItem) UnmarshalJSON(data []byte) error {
 }
 
 // Encode implements json.Marshaler.
+func (s *StroppyParam) Encode(e *jx.Encoder) {
+	e.ObjStart()
+	s.encodeFields(e)
+	e.ObjEnd()
+}
+
+// encodeFields encodes fields.
+func (s *StroppyParam) encodeFields(e *jx.Encoder) {
+	{
+		e.FieldStart("name")
+		e.Str(s.Name)
+	}
+	{
+		e.FieldStart("config")
+		e.Str(s.Config)
+	}
+	{
+		if s.Scope.Set {
+			e.FieldStart("scope")
+			s.Scope.Encode(e)
+		}
+	}
+	{
+		e.FieldStart("type")
+		s.Type.Encode(e)
+	}
+	{
+		if s.Description.Set {
+			e.FieldStart("description")
+			s.Description.Encode(e)
+		}
+	}
+	{
+		if len(s.Default) != 0 {
+			e.FieldStart("default")
+			e.Raw(s.Default)
+		}
+	}
+	{
+		if s.DefaultDescription.Set {
+			e.FieldStart("default_description")
+			s.DefaultDescription.Encode(e)
+		}
+	}
+	{
+		if s.Env.Set {
+			e.FieldStart("env")
+			s.Env.Encode(e)
+		}
+	}
+}
+
+var jsonFieldsNameOfStroppyParam = [8]string{
+	0: "name",
+	1: "config",
+	2: "scope",
+	3: "type",
+	4: "description",
+	5: "default",
+	6: "default_description",
+	7: "env",
+}
+
+// Decode decodes StroppyParam from json.
+func (s *StroppyParam) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode StroppyParam to nil")
+	}
+	var requiredBitSet [1]uint8
+
+	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
+		switch string(k) {
+		case "name":
+			requiredBitSet[0] |= 1 << 0
+			if err := func() error {
+				v, err := d.Str()
+				s.Name = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"name\"")
+			}
+		case "config":
+			requiredBitSet[0] |= 1 << 1
+			if err := func() error {
+				v, err := d.Str()
+				s.Config = string(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"config\"")
+			}
+		case "scope":
+			if err := func() error {
+				s.Scope.Reset()
+				if err := s.Scope.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"scope\"")
+			}
+		case "type":
+			requiredBitSet[0] |= 1 << 3
+			if err := func() error {
+				if err := s.Type.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"type\"")
+			}
+		case "description":
+			if err := func() error {
+				s.Description.Reset()
+				if err := s.Description.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"description\"")
+			}
+		case "default":
+			if err := func() error {
+				v, err := d.RawAppend(nil)
+				s.Default = jx.Raw(v)
+				if err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"default\"")
+			}
+		case "default_description":
+			if err := func() error {
+				s.DefaultDescription.Reset()
+				if err := s.DefaultDescription.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"default_description\"")
+			}
+		case "env":
+			if err := func() error {
+				s.Env.Reset()
+				if err := s.Env.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"env\"")
+			}
+		default:
+			return d.Skip()
+		}
+		return nil
+	}); err != nil {
+		return errors.Wrap(err, "decode StroppyParam")
+	}
+	// Validate required fields.
+	var failures []validate.FieldError
+	for i, mask := range [1]uint8{
+		0b00001011,
+	} {
+		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
+			// Mask only required fields and check equality to mask using XOR.
+			//
+			// If XOR result is not zero, result is not equal to expected, so some fields are missed.
+			// Bits of fields which would be set are actually bits of missed fields.
+			missed := bits.OnesCount8(result)
+			for bitN := 0; bitN < missed; bitN++ {
+				bitIdx := bits.TrailingZeros8(result)
+				fieldIdx := i*8 + bitIdx
+				var name string
+				if fieldIdx < len(jsonFieldsNameOfStroppyParam) {
+					name = jsonFieldsNameOfStroppyParam[fieldIdx]
+				} else {
+					name = strconv.Itoa(fieldIdx)
+				}
+				failures = append(failures, validate.FieldError{
+					Name:  name,
+					Error: validate.ErrFieldRequired,
+				})
+				// Reset bit.
+				result &^= 1 << bitIdx
+			}
+		}
+	}
+	if len(failures) > 0 {
+		return &validate.Error{Fields: failures}
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s *StroppyParam) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *StroppyParam) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes StroppyParamScope as json.
+func (s StroppyParamScope) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes StroppyParamScope from json.
+func (s *StroppyParamScope) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode StroppyParamScope to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch StroppyParamScope(v) {
+	case StroppyParamScopeRun:
+		*s = StroppyParamScopeRun
+	case StroppyParamScopeWorkload:
+		*s = StroppyParamScopeWorkload
+	default:
+		*s = StroppyParamScope(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s StroppyParamScope) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *StroppyParamScope) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode encodes StroppyParamType as json.
+func (s StroppyParamType) Encode(e *jx.Encoder) {
+	e.Str(string(s))
+}
+
+// Decode decodes StroppyParamType from json.
+func (s *StroppyParamType) Decode(d *jx.Decoder) error {
+	if s == nil {
+		return errors.New("invalid: unable to decode StroppyParamType to nil")
+	}
+	v, err := d.StrBytes()
+	if err != nil {
+		return err
+	}
+	// Try to use constant string.
+	switch StroppyParamType(v) {
+	case StroppyParamTypeString:
+		*s = StroppyParamTypeString
+	case StroppyParamTypeBool:
+		*s = StroppyParamTypeBool
+	case StroppyParamTypeInt:
+		*s = StroppyParamTypeInt
+	case StroppyParamTypeInt64:
+		*s = StroppyParamTypeInt64
+	case StroppyParamTypeFloat64:
+		*s = StroppyParamTypeFloat64
+	case StroppyParamTypeDuration:
+		*s = StroppyParamTypeDuration
+	default:
+		*s = StroppyParamType(v)
+	}
+
+	return nil
+}
+
+// MarshalJSON implements stdjson.Marshaler.
+func (s StroppyParamType) MarshalJSON() ([]byte, error) {
+	e := jx.Encoder{}
+	s.Encode(&e)
+	return e.Bytes(), nil
+}
+
+// UnmarshalJSON implements stdjson.Unmarshaler.
+func (s *StroppyParamType) UnmarshalJSON(data []byte) error {
+	d := jx.DecodeBytes(data)
+	return s.Decode(d)
+}
+
+// Encode implements json.Marshaler.
 func (s *StroppyScript) Encode(e *jx.Encoder) {
 	e.ObjStart()
 	s.encodeFields(e)
@@ -38431,9 +38783,13 @@ func (s *StroppyScript) encodeFields(e *jx.Encoder) {
 		e.ArrEnd()
 	}
 	{
-		if s.ParamsSchema.Set {
-			e.FieldStart("params_schema")
-			s.ParamsSchema.Encode(e)
+		if s.Params != nil {
+			e.FieldStart("params")
+			e.ArrStart()
+			for _, elem := range s.Params {
+				elem.Encode(e)
+			}
+			e.ArrEnd()
 		}
 	}
 }
@@ -38444,7 +38800,7 @@ var jsonFieldsNameOfStroppyScript = [6]string{
 	2: "description",
 	3: "protocols",
 	4: "steps",
-	5: "params_schema",
+	5: "params",
 }
 
 // Decode decodes StroppyScript from json.
@@ -38525,15 +38881,22 @@ func (s *StroppyScript) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"steps\"")
 			}
-		case "params_schema":
+		case "params":
 			if err := func() error {
-				s.ParamsSchema.Reset()
-				if err := s.ParamsSchema.Decode(d); err != nil {
+				s.Params = make([]StroppyParam, 0)
+				if err := d.Arr(func(d *jx.Decoder) error {
+					var elem StroppyParam
+					if err := elem.Decode(d); err != nil {
+						return err
+					}
+					s.Params = append(s.Params, elem)
+					return nil
+				}); err != nil {
 					return err
 				}
 				return nil
 			}(); err != nil {
-				return errors.Wrap(err, "decode field \"params_schema\"")
+				return errors.Wrap(err, "decode field \"params\"")
 			}
 		default:
 			return d.Skip()
@@ -50729,12 +51092,18 @@ func (s *UsageKind) Decode(d *jx.Decoder) error {
 	}
 	// Try to use constant string.
 	switch UsageKind(v) {
+	case UsageKindDatabase:
+		*s = UsageKindDatabase
+	case UsageKindWorkload:
+		*s = UsageKindWorkload
 	case UsageKindTest:
 		*s = UsageKindTest
 	case UsageKindSuite:
 		*s = UsageKindSuite
 	case UsageKindSchedule:
 		*s = UsageKindSchedule
+	case UsageKindRun:
+		*s = UsageKindRun
 	default:
 		*s = UsageKind(v)
 	}
@@ -52832,6 +53201,12 @@ func (s *Workload) encodeFields(e *jx.Encoder) {
 		e.ArrEnd()
 	}
 	{
+		if s.Options.Set {
+			e.FieldStart("options")
+			s.Options.Encode(e)
+		}
+	}
+	{
 		if s.Schema.Set {
 			e.FieldStart("schema")
 			s.Schema.Encode(e)
@@ -52861,7 +53236,7 @@ func (s *Workload) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfWorkload = [16]string{
+var jsonFieldsNameOfWorkload = [17]string{
 	0:  "id",
 	1:  "name",
 	2:  "description",
@@ -52874,10 +53249,11 @@ var jsonFieldsNameOfWorkload = [16]string{
 	9:  "stroppy_version",
 	10: "protocol",
 	11: "segments",
-	12: "schema",
-	13: "requirements",
-	14: "validation",
-	15: "usages",
+	12: "options",
+	13: "schema",
+	14: "requirements",
+	15: "validation",
+	16: "usages",
 }
 
 // Decode decodes Workload from json.
@@ -52885,7 +53261,7 @@ func (s *Workload) Decode(d *jx.Decoder) error {
 	if s == nil {
 		return errors.New("invalid: unable to decode Workload to nil")
 	}
-	var requiredBitSet [2]uint8
+	var requiredBitSet [3]uint8
 
 	if err := d.ObjBytes(func(d *jx.Decoder, k []byte) error {
 		switch string(k) {
@@ -53027,6 +53403,16 @@ func (s *Workload) Decode(d *jx.Decoder) error {
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"segments\"")
 			}
+		case "options":
+			if err := func() error {
+				s.Options.Reset()
+				if err := s.Options.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"options\"")
+			}
 		case "schema":
 			if err := func() error {
 				s.Schema.Reset()
@@ -53083,9 +53469,10 @@ func (s *Workload) Decode(d *jx.Decoder) error {
 	}
 	// Validate required fields.
 	var failures []validate.FieldError
-	for i, mask := range [2]uint8{
+	for i, mask := range [3]uint8{
 		0b01110011,
 		0b00001110,
+		0b00000000,
 	} {
 		if result := (requiredBitSet[i] & mask) ^ mask; result != 0 {
 			// Mask only required fields and check equality to mask using XOR.
@@ -53180,15 +53567,22 @@ func (s *WorkloadPatch) encodeFields(e *jx.Encoder) {
 			e.ArrEnd()
 		}
 	}
+	{
+		if s.Options.Set {
+			e.FieldStart("options")
+			s.Options.Encode(e)
+		}
+	}
 }
 
-var jsonFieldsNameOfWorkloadPatch = [6]string{
+var jsonFieldsNameOfWorkloadPatch = [7]string{
 	0: "name",
 	1: "description",
 	2: "tags",
 	3: "stroppy_version",
 	4: "protocol",
 	5: "segments",
+	6: "options",
 }
 
 // Decode decodes WorkloadPatch from json.
@@ -53265,6 +53659,16 @@ func (s *WorkloadPatch) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"segments\"")
+			}
+		case "options":
+			if err := func() error {
+				s.Options.Reset()
+				if err := s.Options.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"options\"")
 			}
 		default:
 			return d.Skip()
@@ -53655,6 +54059,12 @@ func (s *WorkloadSpec) encodeFields(e *jx.Encoder) {
 		e.ArrEnd()
 	}
 	{
+		if s.Options.Set {
+			e.FieldStart("options")
+			s.Options.Encode(e)
+		}
+	}
+	{
 		if s.Schema.Set {
 			e.FieldStart("schema")
 			s.Schema.Encode(e)
@@ -53662,11 +54072,12 @@ func (s *WorkloadSpec) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfWorkloadSpec = [4]string{
+var jsonFieldsNameOfWorkloadSpec = [5]string{
 	0: "stroppy_version",
 	1: "protocol",
 	2: "segments",
-	3: "schema",
+	3: "options",
+	4: "schema",
 }
 
 // Decode decodes WorkloadSpec from json.
@@ -53717,6 +54128,16 @@ func (s *WorkloadSpec) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"segments\"")
+			}
+		case "options":
+			if err := func() error {
+				s.Options.Reset()
+				if err := s.Options.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"options\"")
 			}
 		case "schema":
 			if err := func() error {
@@ -53893,6 +54314,12 @@ func (s *WorkloadWrite) encodeFields(e *jx.Encoder) {
 		e.ArrEnd()
 	}
 	{
+		if s.Options.Set {
+			e.FieldStart("options")
+			s.Options.Encode(e)
+		}
+	}
+	{
 		if s.Schema.Set {
 			e.FieldStart("schema")
 			s.Schema.Encode(e)
@@ -53900,14 +54327,15 @@ func (s *WorkloadWrite) encodeFields(e *jx.Encoder) {
 	}
 }
 
-var jsonFieldsNameOfWorkloadWrite = [7]string{
+var jsonFieldsNameOfWorkloadWrite = [8]string{
 	0: "name",
 	1: "description",
 	2: "tags",
 	3: "stroppy_version",
 	4: "protocol",
 	5: "segments",
-	6: "schema",
+	6: "options",
+	7: "schema",
 }
 
 // Decode decodes WorkloadWrite from json.
@@ -53990,6 +54418,16 @@ func (s *WorkloadWrite) Decode(d *jx.Decoder) error {
 				return nil
 			}(); err != nil {
 				return errors.Wrap(err, "decode field \"segments\"")
+			}
+		case "options":
+			if err := func() error {
+				s.Options.Reset()
+				if err := s.Options.Decode(d); err != nil {
+					return err
+				}
+				return nil
+			}(); err != nil {
+				return errors.Wrap(err, "decode field \"options\"")
 			}
 		case "schema":
 			if err := func() error {

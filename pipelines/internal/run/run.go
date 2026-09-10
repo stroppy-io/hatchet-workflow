@@ -15,6 +15,7 @@ import (
 	"github.com/stroppy-io/stroppy-cloud/pipelines/internal/events"
 	"github.com/stroppy-io/stroppy-cloud/pipelines/internal/provision"
 	"github.com/stroppy-io/stroppy-cloud/pipelines/spec"
+	"github.com/stroppy-io/stroppy-cloud/pipelines/stroppycfg"
 )
 
 // PipelineID is the Graphene pipeline id of stroppy-run.
@@ -92,9 +93,10 @@ func Run(ctx pipeline.Context, run spec.Run) (spec.Result, error) {
 	// and logs are the evidence the operator needs.
 	result, collectErr := phase(ctx, PhaseCollecting, func() (spec.Result, error) {
 		res := spec.Result{
-			Metrics:  activities.MergeMetrics(wl.Segments),
+			Metrics:  stroppycfg.MergeMetrics(wl.Segments),
 			Segments: wl.Segments,
-			Summary:  activities.Headline(wl.Segments),
+			Baseline: wl.Baseline,
+			Summary:  stroppycfg.Headline(wl.Segments),
 		}
 		if wl.Runner != nil {
 			res.Artifacts = publishArtifacts(ctx, run, wl)
@@ -149,6 +151,12 @@ func validate(run spec.Run) error {
 	}
 	if len(run.Workload.Segments) == 0 {
 		return fmt.Errorf("a run needs at least one workload segment")
+	}
+	if run.Workload.DriverType == "" || run.Workload.URL == "" {
+		return fmt.Errorf("the workload needs driver_type and url")
+	}
+	if _, err := spec.DecodeSegments(run.Workload.Segments); err != nil {
+		return err
 	}
 	return nil
 }
@@ -230,7 +238,9 @@ func waitMachines(ctx pipeline.Context, infra provision.Infra) (map[string]provi
 // never connects (broken user-data, no route out) fails here with a clear
 // reason instead of hanging on the machine's first activity.
 func waitAgent(ctx pipeline.Context, agent pipeline.AgentHandle) (pipeline.AgentState, error) {
-	tctx, cancel := workflow.WithCancel(ctx)
+	// Temporal derives contexts by concrete type: the embedded
+	// workflow.Context is handed over, never the pipeline wrapper.
+	tctx, cancel := workflow.WithCancel(ctx.Context)
 	defer cancel()
 	var state pipeline.AgentState
 	var err error
@@ -239,7 +249,7 @@ func waitAgent(ctx pipeline.Context, agent pipeline.AgentHandle) (pipeline.Agent
 		state, err = agent.TryReady(pipeline.Context{Context: gctx})
 		done = true
 	})
-	if _, err := workflow.AwaitWithTimeout(ctx, agentConnectTimeout, func() bool { return done }); err != nil {
+	if _, err := workflow.AwaitWithTimeout(ctx.Context, agentConnectTimeout, func() bool { return done }); err != nil {
 		return state, err
 	}
 	if !done {

@@ -1,0 +1,53 @@
+{
+  "schema": 1,
+  "stroppy_version": "nightly-24898a8",
+  "time": "2026-09-09T13:34:34.25252959Z",
+  "host": {
+    "os": "linux",
+    "arch": "amd64",
+    "go_version": "go1.26.7-X:nodwarf5",
+    "cpus": 20,
+    "gomaxprocs": 20
+  },
+  "tiers": [
+    {
+      "name": "noop",
+      "load": {
+        "rows": 100000,
+        "rows_per_second": 17992915.469463054,
+        "duration_ms": 5.557743
+      },
+      "tx_single_vu": {
+        "iterations": 347164,
+        "failed_iterations": 0,
+        "tx_per_second": 347164,
+        "avg_ms": 0.0026835667695961816,
+        "p50_ms": 0.005,
+        "p90_ms": 0.005,
+        "p99_ms": 0.01
+      },
+      "tx_parallel": {
+        "iterations": 1726172,
+        "failed_iterations": 0,
+        "tx_per_second": 1726172,
+        "avg_ms": 0.011100986756824388,
+        "p50_ms": 0.01,
+        "p90_ms": 0.01,
+        "p99_ms": 0.25
+      },
+      "parallel_vus": 20
+    }
+  ],
+  "verdicts": [
+    {
+      "check": "noop errors",
+      "status": "ok",
+      "detail": "no failed iterations"
+    },
+    {
+      "check": "noop vu scaling",
+      "status": "warn",
+      "detail": "scaling 25% below 60% — stroppy metric-pipeline contention or machine limits"
+    }
+  ]
+}

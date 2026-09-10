@@ -1,0 +1,26 @@
+{"level":"info","ts":1788960872.173742,"logger":"workload","caller":"bench/step.go:94","msg":"Start of 'load_data' step","workload":"simple"}
+{"level":"info","ts":1788960872.1738265,"logger":"workload.insert-progress","caller":"insertprogress/tracker.go:437","msg":"insert progress","workload":"simple","event":"completed","table":"stroppy_demo","method":"plain_bulk","row_kind":"confirmed","stage":"noop_drain","workers":1,"rows":100,"total_rows":100,"generated_rows":100,"confirmed_rows":100,"inflight_rows":0,"delta_rows":100,"batches":1,"elapsed":0.000067185,"sample_interval":0.000067185,"avg_batch_duration":0.000015988,"current_rows_per_second":1488427.4763712138,"avg_rows_per_second":1488427.4763712138,"percent":100}
+{"level":"info","ts":1788960872.1738448,"logger":"workload","caller":"bench/step.go:100","msg":"End of 'load_data' step (took 0ms)","workload":"simple"}
+{"level":"warn","ts":1788960872.17402,"caller":"bench/error_reporter.go:149","msg":"nonfatal error; continuing","operation":"iteration","error_class":"unknown","error":"row count mismatch: expected 100, got 1"}
+
+=== bench summary ===
+  run_query_operations_total               1860966.000
+  insert_rows_total                        100.000
+  insert_progress_rows_total               100.000
+  insert_progress_rows_per_second          1488427.476
+  run_query_duration                       count=1860966 avg=0.000 p(50)~=0.005 p(90)~=0.005 p(95)~=0.005 p(99)~=0.005
+  insert_operations_total                  1.000
+  insert_duration                          count=1 avg=0.054 p(50)~=0.100 p(90)~=0.100 p(95)~=0.100 p(99)~=0.100
+  iteration_duration                       count=1860963 avg=0.001 p(50)~=0.005 p(90)~=0.005 p(95)~=0.005 p(99)~=0.010
+  iterations_total                         1860963.000
+  terminal_errors_total                    1860963.000
+  failed_iterations_total                  1860963.000
+
+=== bench completed with errors ===
+  terminal_errors_total                    1860963
+  failed_iterations_total                  1860963
+  failed_queries_total                     0
+  retry_attempts_total                     0
+  representative error groups:
+    operation=iteration            class=unknown        count=1860963
+{"compliance":{"workload":"tpcc/tx","paced":false,"compliance_applicable":false,"elapsed_seconds":60.5,"tpm_c":1234.5,"mix_compliant":null,"response_compliant":null,"mix_tolerance_pct":0,"transactions":[{"name":"new_order","count":1245,"mix_percent":45.1,"throughput_per_sec":20.6,"p50_ms":3.1,"p90_ms":5.2,"p95_ms":6.0,"p99_ms":9.8,"ceiling_ms":null,"mix_min_percent":null,"mix_pass":null,"response_pass":null}],"statistical":{"total_measurements":2760,"new_orders":1245,"sufficient":false,"reason":"unpaced"},"steadiness":{"status":"not_assessed","cv":0}}}

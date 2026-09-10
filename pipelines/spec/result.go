@@ -10,7 +10,33 @@ type Result struct {
 	Metrics   map[string]MetricValue `json:"metrics,omitempty"`
 	Segments  []SegmentResult        `json:"segments,omitempty"`
 	Artifacts []string               `json:"artifacts,omitempty"`
+	Baseline  *BaselineResult        `json:"baseline,omitempty"`
 	Summary   Summary                `json:"summary,omitzero"`
+}
+
+// BaselineResult is the outcome of `stroppy baseline` on the runner.
+type BaselineResult struct {
+	OK       bool              `json:"ok"`
+	Verdicts []BaselineVerdict `json:"verdicts,omitempty"`
+	Report   json.RawMessage   `json:"report,omitempty"`
+	Error    string            `json:"error,omitempty"`
+}
+
+// BaselineVerdict is one invariant stroppy checked.
+type BaselineVerdict struct {
+	Check  string `json:"check"`
+	Status string `json:"status"`
+	Detail string `json:"detail,omitempty"`
+}
+
+// ErrorCounts is stroppy's own nonfatal error accounting of a segment.
+//
+// doc: stroppy `help drivers` ERROR AND EXIT BEHAVIOR.
+type ErrorCounts struct {
+	TerminalErrors   int64 `json:"terminal_errors"`
+	FailedIterations int64 `json:"failed_iterations"`
+	FailedQueries    int64 `json:"failed_queries"`
+	RetryAttempts    int64 `json:"retry_attempts"`
 }
 
 // MetricValue is one aggregated metric.
@@ -40,7 +66,11 @@ type SegmentResult struct {
 	StartedAt  time.Time              `json:"started_at,omitzero"`
 	FinishedAt time.Time              `json:"finished_at,omitzero"`
 	Metrics    map[string]MetricValue `json:"metrics,omitempty"`
-	Error      string                 `json:"error,omitempty"`
+	Errors     *ErrorCounts           `json:"errors,omitempty"`
+	ExitCode   int                    `json:"exit_code"`
+	// Compliance is the TPC-C report stroppy prints as {"compliance": …}.
+	Compliance json.RawMessage `json:"compliance,omitempty"`
+	Error      string          `json:"error,omitempty"`
 }
 
 // Summary is the headline of a run.

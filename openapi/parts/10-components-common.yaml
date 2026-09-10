@@ -170,7 +170,7 @@ components:
       type: object
       required: [kind, id, name]
       properties:
-        kind: { type: string, enum: [test, suite, schedule] }
+        kind: { type: string, enum: [database, workload, test, suite, schedule, run] }
         id: { type: string, format: uuid }
         name: { type: string }
     Requirements:

@@ -1,7 +1,8 @@
 # pipelines — Graphene-пайплайны stroppy
 
-Отдельный Go-модуль `github.com/stroppy-io/stroppy-cloud/pipelines` (go.work в
-корне). Четыре бинарника, каждый — один `pipeline.Main`:
+Отдельный Go-модуль `github.com/stroppy-io/stroppy-cloud/pipelines`. Без
+go.work: сервер подключает `schemas`/`spec` как обычную зависимость по версии
+(тег `pipelines/vX.Y.Z`). Четыре бинарника, каждый — один `pipeline.Main`:
 
 | Бинарник | id | Что делает |
 |---|---|---|
@@ -65,8 +66,9 @@ internal/topo         toposort/GroupBy/Slug — чистые, тестируем
 - `${ip:<machine>}`, `${ip:role:<role>}`, `${ips:role:<role>}`,
   `${public_ip:<machine>}` — в env/cmd/files контейнеров и env workload.
   Неизвестное имя/роль — ошибка до деплоя.
-- Workload env, задаваемый пайплайном: `STROPPY_URL`, `STROPPY_DRIVER_TYPE`,
-  `STROPPY_INSERT_METHOD`, `STROPPY_OTLP_HEADERS`.
+- Подключение к БД: `workload.url` RunSpec (с плейсхолдерами) + `driver_type`
+  + `driver` (lowerCamel-ключи `drivers.0` stroppy-config.json) — пайплайн
+  только пишет их в конфиг. Никакого env-моста: stroppy 6 типизирован.
 - Имена облачных ресурсов: `stroppy-<tenant>-<run8>-...`; агенты
   `<run8>-<machine>`.
 
@@ -78,12 +80,66 @@ internal/topo         toposort/GroupBy/Slug — чистые, тестируем
   `apis/common/v1`), k8s 0.36.3, controller-runtime 0.24.0, docker
   v28.5.2+incompatible (v29 переехал в moby/moby/api).
 
+## Симуляция прогона (pipelinetest)
+
+`internal/run/sim_test.go` гоняет ВЕСЬ workflow `stroppy-run` на
+`pipeline/pkg/pipelinetest` (Temporal testsuite + модель ресурсов/агентов/
+cleanup/stand) с адаптерами `library/k8s/k8stest` (Crossplane-объекты
+становятся Ready фикстурами в виртуальном времени) и
+`library/docker/dockertest`. Activities машин — моки `OnAgentActivity` по
+агенту; run-queue контракты (`ensure-config`, события) — `Handle1`. Ни
+облака, ни docker, ни сервера: `go test ./internal/run -run TestSimulated`.
+Покрыто (`sim_test.go`, `sim_more_test.go`, 16 сценариев): happy path
+postgres/yandex и noop/aws; неизвестный провайдер и отказ `ensure-config`
+(ничего не создано); отказ VM (квота) и агент без коннекта (таймаут) —
+чистый каскад; healthcheck-fail останавливает deploy; слои `depends_on` на
+двух машинах, `${ip:<m>}`/`${ips:role}`; baseline-fail и артефакт-fail
+нефатальны; два сегмента, `result_expectations` → degraded; потеря
+activity сегмента (AtMostOnce, без повтора); cancel в provisioning и в
+workload; `keep` → stand + TTL и `keep` игнорируется после провала.
+`internal/suite/sim_test.go` — fan-out через серверный контракт
+start/await-child; `internal/probe/sim_test.go` — verify/quotas. Правило:
+любой новый шаг workflow — сначала сюда, потом на кластер.
+
+Ловушка Temporal: контексты выводятся по конкретному типу — в
+`workflow.WithCancel/Go/NewWaitGroup/AwaitWithTimeout` отдавать
+`ctx.Context` (встроенный `workflow.Context`), не `pipeline.Context`,
+иначе `panic: cancelCtx not found` на первом же параллельном ожидании.
+
 ## Проверка
 
 ```
 cd pipelines
-go test ./... -count=1               # 83 теста, golden: -update
+go test ./... -count=1               # 113 тестов, golden: -update
 golangci-lint run --config ../.golangci.yaml ./...
 make -C .. build-pipelines           # bin/stroppy-*
-GRAPHENE_MANIFEST=1 ../bin/stroppy-run | jq '.activities|length'   # 17
+GRAPHENE_MANIFEST=1 ../bin/stroppy-run | jq '.activities|length'   # 18
 ```
+
+## stroppy 6 (без фолбеков на v5)
+
+Пакет `stroppycfg/` — чистая половина запуска stroppy: рендер
+`stroppy-config.json` и командной строки, разбор вывода. Источник правды —
+чекаут `~/devel/github/stroppy-io/stroppy` (`stroppy probe -o json`,
+`stroppy run <workload> --help`, `stroppy help config-file|drivers|steps`).
+
+- Образ: `ghcr.io/stroppy-io/stroppy:v6.0.0.62` (тег = релиз + номер сборки),
+  entrypoint `stroppy`, WORKDIR `/workspace`; контейнер на host-сети,
+  директория сегмента примонтирована как `/workspace`.
+- Команда: `run -f /workspace/stroppy-config.json --log-mode production
+  --log-level <lvl> [--<extra>=<v>…]`. Конфиг: `script`, `global{runId,
+  metadata, logger, exporter.otlpExport}`, `drivers.0`, `run{executor, vus,
+  duration|iterations, queryTimeout}`, `params{<lowerCamel>}`, `steps/noSteps`.
+  Snake_case ключи схемы → lowerCamel (`scale_factor` → `scaleFactor`);
+  `sql_file`/`schema_file` с именем файла из `files` → `/workspace/<name>`.
+- Итоги: JSON-отчёта у `stroppy run` НЕТ. Пайплайн парсит stderr-блоки
+  `=== bench summary ===` (counters + histograms `count/avg/p50/p90/p95/p99`,
+  мс) и `=== bench completed with errors ===`, плюс stdout-строку
+  `{"compliance": …}` (TPC-C). Nonfatal-ошибки = exit 0 (учтены в `errors`),
+  130/143 — cancel, 1 — ошибка. Пороги (`thresholds`) применяет пайплайн.
+- Baseline: `stroppy baseline --json --no-save --download always [...]` до
+  сегментов на runner-машине; отчёт schema 1 → `result.baseline`; fail
+  вердикта не валит прогон.
+- Сборки с коммита: версия `nightly-<sha>` (так печатает `stroppy version`),
+  образ задаёт каталог. Параметры новых сборок, не описанные схемой, идут через
+  `extra_params` как типизированные флаги.

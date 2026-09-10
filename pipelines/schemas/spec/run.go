@@ -251,21 +251,40 @@ func Run() *schemapb.Schema {
 				Desc("Allowed traffic between roles; drives security groups and the topology view.").
 				MaxItems(128),
 
+			// The compiled form of workload.stroppy@1: the server resolves the
+			// version to an image, renders the connection URL (with address
+			// placeholders) and the stroppy driver options; the pipeline only
+			// writes them into stroppy-config.json.
 			schemapb.Object("workload",
 				schemapb.Str("runner_role").Title("Runner role").
 					Desc("Role of the machine stroppy runs on.").
 					Pattern(rolePattern).Default("runner").Required(),
 				schemapb.Str("stroppy_image").Title("Stroppy image").
-					Desc("Resolved stroppy image from the catalog for the chosen version.").
+					Desc("Resolved stroppy image from the catalog for the chosen version (6.0.0+).").
 					MinLen(1).MaxLen(512).Required(),
+				// doc: stroppy `help drivers` — driverType.
+				schemapb.Choice("driver_type").Title("Driver type").
+					Desc("stroppy driverType of drivers.0.").
+					Opt(schemapb.StrV("postgres"), "postgres").
+					Opt(schemapb.StrV("mysql"), "mysql").
+					Opt(schemapb.StrV("picodata"), "picodata").
+					Opt(schemapb.StrV("ydb"), "ydb").
+					Opt(schemapb.StrV("noop"), "noop").
+					Required(),
+				schemapb.Str("url").Title("Connection URL").
+					Desc("drivers.0.url; may carry ${ip:...} placeholders the pipeline expands after provisioning.").
+					MinLen(1).MaxLen(2048).Required(),
+				schemapb.JSON("driver").Title("Driver options").
+					Desc("Remaining drivers.0 keys of stroppy-config.json (bulkSize, pool, insertProgress, caCertFile, authToken…), already in stroppy's lowerCamel form."),
 				schemapb.List("segments", schemapb.JSON("")).
 					Title("Segments").
-					Desc("Baked workload.segment@1 values in order; opaque to the pipeline.").
+					Desc("Baked workload.segment@1 values in order; opaque to the pipeline beyond the fields it interprets.").
 					MinItems(1).MaxItems(64).Required(),
-				schemapb.MapOf("env", schemapb.Str("value").MaxLen(4096)).
-					Title("Environment").
-					Desc("Environment shared by every segment (connection URL, driver options).").
-					MaxEntries(128),
+				schemapb.JSON("baseline").Title("Baseline").
+					Desc("Baked workload.stroppy@1 baseline object; absent or disabled = no machine self-check."),
+				schemapb.Str("ca_cert").Title("CA certificate").
+					Desc("PEM the pipeline writes next to the config and points caCertFile at.").
+					MaxLen(1<<16).Secret(),
 			).Title("Workload").Group("Workload").
 				Desc("What stroppy runs and where.").Strict().Required(),
 
@@ -273,6 +292,9 @@ func Run() *schemapb.Schema {
 				schemapb.Str("otlp_endpoint").Title("OTLP endpoint").
 					Desc("Where agents forward stroppy metrics and logs.").
 					MinLen(1).MaxLen(512),
+				schemapb.Str("otlp_headers").Title("OTLP headers").
+					Desc("Comma-separated key=value headers stroppy sends with every export (otlpHeaders).").
+					MaxLen(4096).Secret(),
 				schemapb.MapOf("labels", schemapb.Str("value").MaxLen(255)).
 					Title("Labels").Desc("Labels stamped on every metric and log line of the run.").
 					MaxEntries(32),

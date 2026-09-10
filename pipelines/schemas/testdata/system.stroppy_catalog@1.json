@@ -49,23 +49,38 @@
                 "fields":  [
                   {
                     "name":  "version",
-                    "description":  "Stroppy release version.",
+                    "description":  "Stroppy build: a release (6.0.0) or a nightly of one commit (nightly-<sha>). 6.0.0 is the minimum.",
                     "required":  true,
+                    "rules":  [
+                      {
+                        "expr":  "!this.matches(\"^[0-5]\\\\.\")",
+                        "message":  "stroppy releases before 6.0.0 are not supported",
+                        "id":  "min-v6"
+                      }
+                    ],
                     "string":  {
                       "maxLen":  "64",
-                      "pattern":  "^\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?$"
+                      "pattern":  "^(\\d+\\.\\d+\\.\\d+(-[0-9A-Za-z.-]+)?|nightly-[0-9a-f]{7,40})$"
                     },
                     "title":  "Version"
                   },
                   {
                     "name":  "image",
-                    "description":  "Docker image of that release, e.g. ghcr.io/stroppy-io/stroppy:5.1.2.",
+                    "description":  "Docker image of that build, e.g. ghcr.io/stroppy-io/stroppy:v6.0.0.62.",
                     "required":  true,
                     "string":  {
                       "minLen":  "1",
                       "maxLen":  "512"
                     },
                     "title":  "Image"
+                  },
+                  {
+                    "name":  "baseline",
+                    "description":  "The build ships `stroppy baseline` (6.0.0+); lets the workload form offer the runner self-check.",
+                    "bool":  {
+                      "default":  true
+                    },
+                    "title":  "Has baseline"
                   },
                   {
                     "name":  "default",
@@ -132,7 +147,7 @@
                                 "value":  {
                                   "stringValue":  "noop"
                                 },
-                                "label":  "Noop (generator ceiling)"
+                                "label":  "Noop (framework ceiling)"
                               }
                             ]
                           }
@@ -236,7 +251,7 @@
                                               "value":  {
                                                 "stringValue":  "noop"
                                               },
-                                              "label":  "Noop (generator ceiling)"
+                                              "label":  "Noop (framework ceiling)"
                                             }
                                           ]
                                         }
@@ -314,13 +329,141 @@
                                   "title":  "Steps"
                                 },
                                 {
-                                  "name":  "params_schema",
-                                  "description":  "schemapb id of script-specific params, when the script has its own form.",
-                                  "string":  {
-                                    "maxLen":  "128",
-                                    "pattern":  "^[a-z][a-z0-9_.]*@\\d+$"
+                                  "name":  "params",
+                                  "description":  "Typed parameters the script declares, as probed from the build; the segment form is generated from the known ones and passes the rest through extra_params.",
+                                  "list":  {
+                                    "items":  [
+                                      {
+                                        "object":  {
+                                          "schema":  {
+                                            "fields":  [
+                                              {
+                                                "name":  "name",
+                                                "description":  "Typed parameter flag without dashes (load-workers).",
+                                                "required":  true,
+                                                "string":  {
+                                                  "maxLen":  "64",
+                                                  "pattern":  "^[a-z][a-z0-9-]*$"
+                                                },
+                                                "title":  "Flag name"
+                                              },
+                                              {
+                                                "name":  "config",
+                                                "description":  "Key of the stroppy-config.json params object (loadWorkers).",
+                                                "required":  true,
+                                                "string":  {
+                                                  "maxLen":  "64",
+                                                  "pattern":  "^[a-z][A-Za-z0-9]*$"
+                                                },
+                                                "title":  "Config key"
+                                              },
+                                              {
+                                                "name":  "scope",
+                                                "choice":  {
+                                                  "options":  [
+                                                    {
+                                                      "value":  {
+                                                        "stringValue":  "run"
+                                                      },
+                                                      "label":  "Scenario (run)"
+                                                    },
+                                                    {
+                                                      "value":  {
+                                                        "stringValue":  "workload"
+                                                      },
+                                                      "label":  "Workload"
+                                                    }
+                                                  ],
+                                                  "default":  {
+                                                    "stringValue":  "workload"
+                                                  }
+                                                },
+                                                "title":  "Scope"
+                                              },
+                                              {
+                                                "name":  "type",
+                                                "required":  true,
+                                                "choice":  {
+                                                  "options":  [
+                                                    {
+                                                      "value":  {
+                                                        "stringValue":  "string"
+                                                      },
+                                                      "label":  "string"
+                                                    },
+                                                    {
+                                                      "value":  {
+                                                        "stringValue":  "bool"
+                                                      },
+                                                      "label":  "bool"
+                                                    },
+                                                    {
+                                                      "value":  {
+                                                        "stringValue":  "int"
+                                                      },
+                                                      "label":  "int"
+                                                    },
+                                                    {
+                                                      "value":  {
+                                                        "stringValue":  "int64"
+                                                      },
+                                                      "label":  "int64"
+                                                    },
+                                                    {
+                                                      "value":  {
+                                                        "stringValue":  "float64"
+                                                      },
+                                                      "label":  "float64"
+                                                    },
+                                                    {
+                                                      "value":  {
+                                                        "stringValue":  "duration"
+                                                      },
+                                                      "label":  "duration"
+                                                    }
+                                                  ]
+                                                },
+                                                "title":  "Type"
+                                              },
+                                              {
+                                                "name":  "description",
+                                                "string":  {
+                                                  "maxLen":  "1024"
+                                                },
+                                                "title":  "Description"
+                                              },
+                                              {
+                                                "name":  "default",
+                                                "description":  "Declared default as stroppy reports it; null when contextual.",
+                                                "nullable":  true,
+                                                "json":  {},
+                                                "title":  "Default"
+                                              },
+                                              {
+                                                "name":  "default_description",
+                                                "string":  {
+                                                  "maxLen":  "256"
+                                                },
+                                                "title":  "Default rule"
+                                              },
+                                              {
+                                                "name":  "env",
+                                                "description":  "Legacy environment variable of the parameter.",
+                                                "string":  {
+                                                  "maxLen":  "64",
+                                                  "pattern":  "^[A-Z][A-Z0-9_]*$"
+                                                },
+                                                "title":  "Env name"
+                                              }
+                                            ],
+                                            "strict":  true
+                                          }
+                                        }
+                                      }
+                                    ],
+                                    "maxItems":  "64"
                                   },
-                                  "title":  "Params schema"
+                                  "title":  "Parameters"
                                 }
                               ],
                               "strict":  true

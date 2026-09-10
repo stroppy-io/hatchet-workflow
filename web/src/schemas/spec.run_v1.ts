@@ -179,18 +179,28 @@ export interface SpecRun1Item5 {
 export interface SpecRun1Workload {
   /** Runner role. Role of the machine stroppy runs on. */
   runner_role: string;
-  /** Stroppy image. Resolved stroppy image from the catalog for the chosen version. */
+  /** Stroppy image. Resolved stroppy image from the catalog for the chosen version (6.0.0+). */
   stroppy_image: string;
-  /** Segments. Baked workload.segment@1 values in order; opaque to the pipeline. */
+  /** Driver type. stroppy driverType of drivers.0. */
+  driver_type: "postgres" | "mysql" | "picodata" | "ydb" | "noop";
+  /** Connection URL. drivers.0.url; may carry ${ip:...} placeholders the pipeline expands after provisioning. */
+  url: string;
+  /** Driver options. Remaining drivers.0 keys of stroppy-config.json (bulkSize, pool, insertProgress, caCertFile, authToken…), already in stroppy's lowerCamel form. */
+  driver?: unknown;
+  /** Segments. Baked workload.segment@1 values in order; opaque to the pipeline beyond the fields it interprets. */
   segments: Array<unknown>;
-  /** Environment. Environment shared by every segment (connection URL, driver options). */
-  env?: Record<string, string>;
+  /** Baseline. Baked workload.stroppy@1 baseline object; absent or disabled = no machine self-check. */
+  baseline?: unknown;
+  /** CA certificate. PEM the pipeline writes next to the config and points caCertFile at. */
+  ca_cert?: string;
 }
 
 /** object observability */
 export interface SpecRun1Observability {
   /** OTLP endpoint. Where agents forward stroppy metrics and logs. */
   otlp_endpoint?: string;
+  /** OTLP headers. Comma-separated key=value headers stroppy sends with every export (otlpHeaders). */
+  otlp_headers?: string;
   /** Labels. Labels stamped on every metric and log line of the run. */
   labels?: Record<string, string>;
 }

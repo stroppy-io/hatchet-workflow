@@ -39,7 +39,6 @@ func All() []*schemapb.Schema {
 		PostgresqlConf17(),
 		PostgresqlConf18(),
 		Proxysql2(),
-		StroppyRunner(),
 		Ydb25(),
 		Ydb26(),
 	}

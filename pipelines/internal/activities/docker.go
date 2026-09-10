@@ -216,7 +216,7 @@ type WriteFilesResult struct {
 	Paths []string `json:"paths"`
 }
 
-func tail(s string, n int) string {
+func tail(s string, n int) string { //nolint:unparam // one tail size today; the knob stays
 	if len(s) <= n {
 		return s
 	}

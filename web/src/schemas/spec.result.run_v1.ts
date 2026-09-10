@@ -29,6 +29,18 @@ export interface SpecResultRun1ItemMetricsValue {
   avg?: number;
 }
 
+/** object errors */
+export interface SpecResultRun1ItemErrors {
+  /** Terminal errors. */
+  terminal_errors?: number | string;
+  /** Failed iterations. */
+  failed_iterations?: number | string;
+  /** Failed queries. */
+  failed_queries?: number | string;
+  /** Retry attempts. */
+  retry_attempts?: number | string;
+}
+
 /** object  */
 export interface SpecResultRun1Item {
   /** Segment. Name of the workload segment. */
@@ -39,9 +51,37 @@ export interface SpecResultRun1Item {
   started_at?: string;
   /** Finished. */
   finished_at?: string;
-  /** Metrics. Metrics measured over this segment's window only. */
+  /** Metrics. Metrics measured over this segment's window only (bench summary counters and histogram statistics). */
   metrics?: Record<string, SpecResultRun1ItemMetricsValue>;
+  /** Nonfatal errors. Stroppy's own error accounting; nonfatal errors keep the exit status 0. */
+  errors?: SpecResultRun1ItemErrors;
+  /** Exit code. Exit status of the stroppy process (0 ok, 130/143 canceled, 1 error). */
+  exit_code?: number | string;
+  /** TPC-C compliance report. Machine-readable TPC-C report (tpm_c, per-transaction mix and response times, verdicts) when the workload emits one. */
+  compliance?: unknown;
   /** Error. Failure text; set when the status is failed. */
+  error?: string;
+}
+
+/** object  */
+export interface SpecResultRun1BaselineItem {
+  /** Check. */
+  check: string;
+  /** Status. */
+  status: "ok" | "warn" | "fail";
+  /** Detail. */
+  detail?: string;
+}
+
+/** object baseline */
+export interface SpecResultRun1Baseline {
+  /** OK. No verdict failed; warnings do not clear it. */
+  ok: boolean;
+  /** Verdicts. Hardware-independent invariants stroppy checked. */
+  verdicts?: Array<SpecResultRun1BaselineItem>;
+  /** Report. The full baseline JSON report (host, tiers, verdicts). */
+  report?: unknown;
+  /** Error. Why the baseline did not run to completion. */
   error?: string;
 }
 
@@ -69,6 +109,8 @@ export interface SpecResultRun1 {
   segments?: Array<SpecResultRun1Item>;
   /** Artifacts. Graphene artifact references (artifact/<id>): raw stroppy output, the report. */
   artifacts?: Array<string>;
+  /** Baseline. Runner machine self-check from `stroppy baseline`, when the workload asked for one. */
+  baseline?: SpecResultRun1Baseline;
   /** Summary. The headline numbers the run list, rating and compare sort on. */
   summary?: SpecResultRun1Summary;
 }

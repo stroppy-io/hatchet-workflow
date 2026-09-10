@@ -52,7 +52,22 @@ func ResultRun() *schemapb.Schema {
 					schemapb.Timestamp("started_at").Title("Started"),
 					schemapb.Timestamp("finished_at").Title("Finished"),
 					metricValue("metrics").Title("Metrics").
-						Desc("Metrics measured over this segment's window only."),
+						Desc("Metrics measured over this segment's window only (bench summary counters and histogram statistics)."),
+					// doc: stroppy `help drivers` ERROR AND EXIT BEHAVIOR — the
+					// "completed with errors" block of the summary.
+					schemapb.Object("errors",
+						schemapb.Int64("terminal_errors").Title("Terminal errors").Gte(0),
+						schemapb.Int64("failed_iterations").Title("Failed iterations").Gte(0),
+						schemapb.Int64("failed_queries").Title("Failed queries").Gte(0),
+						schemapb.Int64("retry_attempts").Title("Retry attempts").Gte(0),
+					).Title("Nonfatal errors").
+						Desc("Stroppy's own error accounting; nonfatal errors keep the exit status 0.").Strict(),
+					schemapb.Int64("exit_code").Title("Exit code").
+						Desc("Exit status of the stroppy process (0 ok, 130/143 canceled, 1 error).").Gte(-1).Lte(255),
+					// doc: stroppy workloads/tpcc/report.go — one JSON line
+					// {"compliance": Report} on stdout.
+					schemapb.JSON("compliance").Title("TPC-C compliance report").
+						Desc("Machine-readable TPC-C report (tpm_c, per-transaction mix and response times, verdicts) when the workload emits one."),
 					schemapb.Str("error").Title("Error").
 						Desc("Failure text; set when the status is failed.").MaxLen(4096),
 				).Strict().Rule(schemapb.Rule(
@@ -67,6 +82,28 @@ func ResultRun() *schemapb.Schema {
 				Title("Artifacts").Group("Result").
 				Desc("Graphene artifact references (artifact/<id>): raw stroppy output, the report.").
 				MaxItems(64).Unique(),
+
+			// doc: `stroppy baseline --json` — schema 1 report.
+			schemapb.Object("baseline",
+				schemapb.Bool("ok").Title("OK").
+					Desc("No verdict failed; warnings do not clear it.").Required(),
+				schemapb.List("verdicts",
+					schemapb.Object("",
+						schemapb.Str("check").Title("Check").MaxLen(128).Required(),
+						schemapb.Choice("status").Title("Status").
+							Opt(schemapb.StrV("ok"), "OK").
+							Opt(schemapb.StrV("warn"), "Warning").
+							Opt(schemapb.StrV("fail"), "Failed").
+							Required(),
+						schemapb.Str("detail").Title("Detail").MaxLen(1024),
+					).Strict(),
+				).Title("Verdicts").Desc("Hardware-independent invariants stroppy checked.").MaxItems(64),
+				schemapb.JSON("report").Title("Report").
+					Desc("The full baseline JSON report (host, tiers, verdicts)."),
+				schemapb.Str("error").Title("Error").
+					Desc("Why the baseline did not run to completion.").MaxLen(4096),
+			).Title("Baseline").Group("Result").
+				Desc("Runner machine self-check from `stroppy baseline`, when the workload asked for one.").Strict(),
 
 			schemapb.Object("summary",
 				schemapb.Double("tps").Title("Throughput").Unit("tps").

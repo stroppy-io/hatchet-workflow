@@ -14,7 +14,7 @@ schemas/
   ids.go                 namespaces + helper ID()
   dbparams/<kind>.go     db.<kind>.params@1
   cfg/<software>_<major>.go   cfg.<software>@<major>
-  workload/*.go          workload.*
+  workload/*.go          workload.* (stroppy 6: segment = script+typed params, run, steps)
   provider/*.go          provider.*
   spec/*.go              spec.* (RunSpec, SuiteSpec, служебные)
   system/*.go            system.*, test.*, tenant.*

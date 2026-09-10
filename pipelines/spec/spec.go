@@ -180,21 +180,47 @@ type Flow struct {
 	Label    string `json:"label,omitempty"`
 }
 
-// Workload is what stroppy runs and where.
+// Workload is what stroppy runs and where — the compiled form of
+// workload.stroppy@1. The server resolves the version to an image and
+// renders the connection URL and the stroppy driver options; the pipeline
+// writes them into stroppy-config.json.
 type Workload struct {
 	RunnerRole   string `json:"runner_role"`
 	StroppyImage string `json:"stroppy_image"`
-	// Segments are baked workload.segment@1 values in order; opaque to the
-	// pipeline beyond the fields Segment decodes.
+	// DriverType is stroppy's driverType (postgres, mysql, picodata, ydb, noop).
+	DriverType string `json:"driver_type"`
+	// URL is drivers.0.url; may carry ${ip:...} placeholders.
+	URL string `json:"url"`
+	// Driver holds the remaining drivers.0 keys in stroppy's lowerCamel form
+	// (bulkSize, pool, insertProgress, authToken, …).
+	Driver map[string]any `json:"driver,omitempty"`
+	// Segments are baked workload.segment@1 values in order.
 	Segments []json.RawMessage `json:"segments"`
-	// Env is shared by every segment (connection URL, driver options).
-	Env map[string]string `json:"env,omitempty"`
+	// Baseline is the baked workload.stroppy@1 baseline object.
+	Baseline *Baseline `json:"baseline,omitempty"`
+	// CACert is a PEM the pipeline writes next to the config (caCertFile).
+	CACert string `json:"ca_cert,omitempty"`
+}
+
+// Baseline asks for `stroppy baseline` on the runner before the segments.
+//
+// doc: `stroppy baseline --help`.
+type Baseline struct {
+	Enabled  bool     `json:"enabled"`
+	Tiers    []string `json:"tiers,omitempty"`
+	Quick    bool     `json:"quick,omitempty"`
+	VUs      int64    `json:"vus,omitempty"`
+	Rows     int64    `json:"rows,omitempty"`
+	Duration Duration `json:"duration,omitempty"`
 }
 
 // Observability is where run telemetry goes.
 type Observability struct {
-	OTLPEndpoint string            `json:"otlp_endpoint,omitempty"`
-	Labels       map[string]string `json:"labels,omitempty"`
+	OTLPEndpoint string `json:"otlp_endpoint,omitempty"`
+	// OTLPHeaders is the comma-separated key=value list stroppy sends with
+	// every export (tenant auth of the collector).
+	OTLPHeaders string            `json:"otlp_headers,omitempty"`
+	Labels      map[string]string `json:"labels,omitempty"`
 }
 
 // Duration is time.Duration with the schemapb wire form ("5m") in JSON.

@@ -12382,6 +12382,52 @@ func (o OptStroppyCatalogSource) Or(d StroppyCatalogSource) StroppyCatalogSource
 	return d
 }
 
+// NewOptStroppyParamScope returns new OptStroppyParamScope with value set to v.
+func NewOptStroppyParamScope(v StroppyParamScope) OptStroppyParamScope {
+	return OptStroppyParamScope{
+		Value: v,
+		Set:   true,
+	}
+}
+
+// OptStroppyParamScope is optional StroppyParamScope.
+type OptStroppyParamScope struct {
+	Value StroppyParamScope
+	Set   bool
+}
+
+// IsSet returns true if OptStroppyParamScope was set.
+func (o OptStroppyParamScope) IsSet() bool { return o.Set }
+
+// Reset unsets value.
+func (o *OptStroppyParamScope) Reset() {
+	var v StroppyParamScope
+	o.Value = v
+	o.Set = false
+}
+
+// SetTo sets value to v.
+func (o *OptStroppyParamScope) SetTo(v StroppyParamScope) {
+	o.Set = true
+	o.Value = v
+}
+
+// Get returns value and boolean that denotes whether value was set.
+func (o OptStroppyParamScope) Get() (v StroppyParamScope, ok bool) {
+	if !o.Set {
+		return v, false
+	}
+	return o.Value, true
+}
+
+// Or returns value if set, or given parameter if does not.
+func (o OptStroppyParamScope) Or(d StroppyParamScope) StroppyParamScope {
+	if v, ok := o.Get(); ok {
+		return v
+	}
+	return d
+}
+
 // NewOptStroppyScriptStepsItemPhase returns new OptStroppyScriptStepsItemPhase with value set to v.
 func NewOptStroppyScriptStepsItemPhase(v StroppyScriptStepsItemPhase) OptStroppyScriptStepsItemPhase {
 	return OptStroppyScriptStepsItemPhase{
@@ -21719,12 +21765,15 @@ func (s *StroppyCatalogSource) UnmarshalText(data []byte) error {
 }
 
 type StroppyCatalogVersionsItem struct {
-	Version    string          `json:"version"`
-	Image      string          `json:"image"`
-	Default    OptBool         `json:"default"`
-	Deprecated OptBool         `json:"deprecated"`
-	Protocols  []Protocol      `json:"protocols"`
-	Scripts    []StroppyScript `json:"scripts"`
+	// Stroppy build (6.0.0 or nightly-<sha>); 6.0.0 is the minimum, the Go-native engine.
+	Version    string  `json:"version"`
+	Image      string  `json:"image"`
+	Default    OptBool `json:"default"`
+	Deprecated OptBool `json:"deprecated"`
+	// The build ships `stroppy baseline` (runner self-check).
+	Baseline  OptBool         `json:"baseline"`
+	Protocols []Protocol      `json:"protocols"`
+	Scripts   []StroppyScript `json:"scripts"`
 }
 
 // GetVersion returns the value of Version.
@@ -21745,6 +21794,11 @@ func (s *StroppyCatalogVersionsItem) GetDefault() OptBool {
 // GetDeprecated returns the value of Deprecated.
 func (s *StroppyCatalogVersionsItem) GetDeprecated() OptBool {
 	return s.Deprecated
+}
+
+// GetBaseline returns the value of Baseline.
+func (s *StroppyCatalogVersionsItem) GetBaseline() OptBool {
+	return s.Baseline
 }
 
 // GetProtocols returns the value of Protocols.
@@ -21777,6 +21831,11 @@ func (s *StroppyCatalogVersionsItem) SetDeprecated(val OptBool) {
 	s.Deprecated = val
 }
 
+// SetBaseline sets the value of Baseline.
+func (s *StroppyCatalogVersionsItem) SetBaseline(val OptBool) {
+	s.Baseline = val
+}
+
 // SetProtocols sets the value of Protocols.
 func (s *StroppyCatalogVersionsItem) SetProtocols(val []Protocol) {
 	s.Protocols = val
@@ -21787,6 +21846,211 @@ func (s *StroppyCatalogVersionsItem) SetScripts(val []StroppyScript) {
 	s.Scripts = val
 }
 
+// Ref: #/components/schemas/StroppyParam
+type StroppyParam struct {
+	// Flag name without dashes.
+	Name string `json:"name"`
+	// Key of the stroppy-config.json params object.
+	Config      string               `json:"config"`
+	Scope       OptStroppyParamScope `json:"scope"`
+	Type        StroppyParamType     `json:"type"`
+	Description OptString            `json:"description"`
+	// Declared default; null when contextual.
+	Default            jx.Raw    `json:"default"`
+	DefaultDescription OptString `json:"default_description"`
+	Env                OptString `json:"env"`
+}
+
+// GetName returns the value of Name.
+func (s *StroppyParam) GetName() string {
+	return s.Name
+}
+
+// GetConfig returns the value of Config.
+func (s *StroppyParam) GetConfig() string {
+	return s.Config
+}
+
+// GetScope returns the value of Scope.
+func (s *StroppyParam) GetScope() OptStroppyParamScope {
+	return s.Scope
+}
+
+// GetType returns the value of Type.
+func (s *StroppyParam) GetType() StroppyParamType {
+	return s.Type
+}
+
+// GetDescription returns the value of Description.
+func (s *StroppyParam) GetDescription() OptString {
+	return s.Description
+}
+
+// GetDefault returns the value of Default.
+func (s *StroppyParam) GetDefault() jx.Raw {
+	return s.Default
+}
+
+// GetDefaultDescription returns the value of DefaultDescription.
+func (s *StroppyParam) GetDefaultDescription() OptString {
+	return s.DefaultDescription
+}
+
+// GetEnv returns the value of Env.
+func (s *StroppyParam) GetEnv() OptString {
+	return s.Env
+}
+
+// SetName sets the value of Name.
+func (s *StroppyParam) SetName(val string) {
+	s.Name = val
+}
+
+// SetConfig sets the value of Config.
+func (s *StroppyParam) SetConfig(val string) {
+	s.Config = val
+}
+
+// SetScope sets the value of Scope.
+func (s *StroppyParam) SetScope(val OptStroppyParamScope) {
+	s.Scope = val
+}
+
+// SetType sets the value of Type.
+func (s *StroppyParam) SetType(val StroppyParamType) {
+	s.Type = val
+}
+
+// SetDescription sets the value of Description.
+func (s *StroppyParam) SetDescription(val OptString) {
+	s.Description = val
+}
+
+// SetDefault sets the value of Default.
+func (s *StroppyParam) SetDefault(val jx.Raw) {
+	s.Default = val
+}
+
+// SetDefaultDescription sets the value of DefaultDescription.
+func (s *StroppyParam) SetDefaultDescription(val OptString) {
+	s.DefaultDescription = val
+}
+
+// SetEnv sets the value of Env.
+func (s *StroppyParam) SetEnv(val OptString) {
+	s.Env = val
+}
+
+type StroppyParamScope string
+
+const (
+	StroppyParamScopeRun      StroppyParamScope = "run"
+	StroppyParamScopeWorkload StroppyParamScope = "workload"
+)
+
+// AllValues returns all StroppyParamScope values.
+func (StroppyParamScope) AllValues() []StroppyParamScope {
+	return []StroppyParamScope{
+		StroppyParamScopeRun,
+		StroppyParamScopeWorkload,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s StroppyParamScope) MarshalText() ([]byte, error) {
+	switch s {
+	case StroppyParamScopeRun:
+		return []byte(s), nil
+	case StroppyParamScopeWorkload:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *StroppyParamScope) UnmarshalText(data []byte) error {
+	switch StroppyParamScope(data) {
+	case StroppyParamScopeRun:
+		*s = StroppyParamScopeRun
+		return nil
+	case StroppyParamScopeWorkload:
+		*s = StroppyParamScopeWorkload
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
+type StroppyParamType string
+
+const (
+	StroppyParamTypeString   StroppyParamType = "string"
+	StroppyParamTypeBool     StroppyParamType = "bool"
+	StroppyParamTypeInt      StroppyParamType = "int"
+	StroppyParamTypeInt64    StroppyParamType = "int64"
+	StroppyParamTypeFloat64  StroppyParamType = "float64"
+	StroppyParamTypeDuration StroppyParamType = "duration"
+)
+
+// AllValues returns all StroppyParamType values.
+func (StroppyParamType) AllValues() []StroppyParamType {
+	return []StroppyParamType{
+		StroppyParamTypeString,
+		StroppyParamTypeBool,
+		StroppyParamTypeInt,
+		StroppyParamTypeInt64,
+		StroppyParamTypeFloat64,
+		StroppyParamTypeDuration,
+	}
+}
+
+// MarshalText implements encoding.TextMarshaler.
+func (s StroppyParamType) MarshalText() ([]byte, error) {
+	switch s {
+	case StroppyParamTypeString:
+		return []byte(s), nil
+	case StroppyParamTypeBool:
+		return []byte(s), nil
+	case StroppyParamTypeInt:
+		return []byte(s), nil
+	case StroppyParamTypeInt64:
+		return []byte(s), nil
+	case StroppyParamTypeFloat64:
+		return []byte(s), nil
+	case StroppyParamTypeDuration:
+		return []byte(s), nil
+	default:
+		return nil, errors.Errorf("invalid value: %q", s)
+	}
+}
+
+// UnmarshalText implements encoding.TextUnmarshaler.
+func (s *StroppyParamType) UnmarshalText(data []byte) error {
+	switch StroppyParamType(data) {
+	case StroppyParamTypeString:
+		*s = StroppyParamTypeString
+		return nil
+	case StroppyParamTypeBool:
+		*s = StroppyParamTypeBool
+		return nil
+	case StroppyParamTypeInt:
+		*s = StroppyParamTypeInt
+		return nil
+	case StroppyParamTypeInt64:
+		*s = StroppyParamTypeInt64
+		return nil
+	case StroppyParamTypeFloat64:
+		*s = StroppyParamTypeFloat64
+		return nil
+	case StroppyParamTypeDuration:
+		*s = StroppyParamTypeDuration
+		return nil
+	default:
+		return errors.Errorf("invalid value: %q", data)
+	}
+}
+
 // Ref: #/components/schemas/StroppyScript
 type StroppyScript struct {
 	ID          string                   `json:"id"`
@@ -21794,8 +22058,8 @@ type StroppyScript struct {
 	Description OptString                `json:"description"`
 	Protocols   []Protocol               `json:"protocols"`
 	Steps       []StroppyScriptStepsItem `json:"steps"`
-	// Schemapb id of script-specific params (env/args).
-	ParamsSchema OptString `json:"params_schema"`
+	// Typed parameters the script declares, as probed from the build (`stroppy probe -o json`).
+	Params []StroppyParam `json:"params"`
 }
 
 // GetID returns the value of ID.
@@ -21823,9 +22087,9 @@ func (s *StroppyScript) GetSteps() []StroppyScriptStepsItem {
 	return s.Steps
 }
 
-// GetParamsSchema returns the value of ParamsSchema.
-func (s *StroppyScript) GetParamsSchema() OptString {
-	return s.ParamsSchema
+// GetParams returns the value of Params.
+func (s *StroppyScript) GetParams() []StroppyParam {
+	return s.Params
 }
 
 // SetID sets the value of ID.
@@ -21853,9 +22117,9 @@ func (s *StroppyScript) SetSteps(val []StroppyScriptStepsItem) {
 	s.Steps = val
 }
 
-// SetParamsSchema sets the value of ParamsSchema.
-func (s *StroppyScript) SetParamsSchema(val OptString) {
-	s.ParamsSchema = val
+// SetParams sets the value of Params.
+func (s *StroppyScript) SetParams(val []StroppyParam) {
+	s.Params = val
 }
 
 type StroppyScriptStepsItem struct {
@@ -26633,28 +26897,40 @@ func (s *Usage) SetName(val string) {
 type UsageKind string
 
 const (
+	UsageKindDatabase UsageKind = "database"
+	UsageKindWorkload UsageKind = "workload"
 	UsageKindTest     UsageKind = "test"
 	UsageKindSuite    UsageKind = "suite"
 	UsageKindSchedule UsageKind = "schedule"
+	UsageKindRun      UsageKind = "run"
 )
 
 // AllValues returns all UsageKind values.
 func (UsageKind) AllValues() []UsageKind {
 	return []UsageKind{
+		UsageKindDatabase,
+		UsageKindWorkload,
 		UsageKindTest,
 		UsageKindSuite,
 		UsageKindSchedule,
+		UsageKindRun,
 	}
 }
 
 // MarshalText implements encoding.TextMarshaler.
 func (s UsageKind) MarshalText() ([]byte, error) {
 	switch s {
+	case UsageKindDatabase:
+		return []byte(s), nil
+	case UsageKindWorkload:
+		return []byte(s), nil
 	case UsageKindTest:
 		return []byte(s), nil
 	case UsageKindSuite:
 		return []byte(s), nil
 	case UsageKindSchedule:
+		return []byte(s), nil
+	case UsageKindRun:
 		return []byte(s), nil
 	default:
 		return nil, errors.Errorf("invalid value: %q", s)
@@ -26664,6 +26940,12 @@ func (s UsageKind) MarshalText() ([]byte, error) {
 // UnmarshalText implements encoding.TextUnmarshaler.
 func (s *UsageKind) UnmarshalText(data []byte) error {
 	switch UsageKind(data) {
+	case UsageKindDatabase:
+		*s = UsageKindDatabase
+		return nil
+	case UsageKindWorkload:
+		*s = UsageKindWorkload
+		return nil
 	case UsageKindTest:
 		*s = UsageKindTest
 		return nil
@@ -26672,6 +26954,9 @@ func (s *UsageKind) UnmarshalText(data []byte) error {
 		return nil
 	case UsageKindSchedule:
 		*s = UsageKindSchedule
+		return nil
+	case UsageKindRun:
+		*s = UsageKindRun
 		return nil
 	default:
 		return errors.Errorf("invalid value: %q", data)
@@ -27570,22 +27855,24 @@ func (s *WebhookPatch) SetDescription(val OptString) {
 // Merged schema.
 // Ref: #/components/schemas/Workload
 type Workload struct {
-	ID             uuid.UUID           `json:"id"`
-	Name           string              `json:"name"`
-	Description    OptString           `json:"description"`
-	Tags           OptWorkloadTags     `json:"tags"`
-	Author         UserRef             `json:"author"`
-	CreatedAt      time.Time           `json:"created_at"`
-	UpdatedAt      time.Time           `json:"updated_at"`
-	DeletedAt      OptNilDateTime      `json:"deleted_at"`
-	IsFavorite     OptBool             `json:"is_favorite"`
-	StroppyVersion string              `json:"stroppy_version"`
-	Protocol       Protocol            `json:"protocol"`
-	Segments       []SchemaValue       `json:"segments"`
-	Schema         OptSchemaRef        `json:"schema"`
-	Requirements   OptRequirements     `json:"requirements"`
-	Validation     OptValidationResult `json:"validation"`
-	Usages         []Usage             `json:"usages"`
+	ID             uuid.UUID       `json:"id"`
+	Name           string          `json:"name"`
+	Description    OptString       `json:"description"`
+	Tags           OptWorkloadTags `json:"tags"`
+	Author         UserRef         `json:"author"`
+	CreatedAt      time.Time       `json:"created_at"`
+	UpdatedAt      time.Time       `json:"updated_at"`
+	DeletedAt      OptNilDateTime  `json:"deleted_at"`
+	IsFavorite     OptBool         `json:"is_favorite"`
+	StroppyVersion string          `json:"stroppy_version"`
+	Protocol       Protocol        `json:"protocol"`
+	Segments       []SchemaValue   `json:"segments"`
+	// The rest of `workload.stroppy` — `driver`, `connection`, `baseline`; defaults apply when absent.
+	Options      OptSchemaValue      `json:"options"`
+	Schema       OptSchemaRef        `json:"schema"`
+	Requirements OptRequirements     `json:"requirements"`
+	Validation   OptValidationResult `json:"validation"`
+	Usages       []Usage             `json:"usages"`
 }
 
 // GetID returns the value of ID.
@@ -27646,6 +27933,11 @@ func (s *Workload) GetProtocol() Protocol {
 // GetSegments returns the value of Segments.
 func (s *Workload) GetSegments() []SchemaValue {
 	return s.Segments
+}
+
+// GetOptions returns the value of Options.
+func (s *Workload) GetOptions() OptSchemaValue {
+	return s.Options
 }
 
 // GetSchema returns the value of Schema.
@@ -27728,6 +28020,11 @@ func (s *Workload) SetSegments(val []SchemaValue) {
 	s.Segments = val
 }
 
+// SetOptions sets the value of Options.
+func (s *Workload) SetOptions(val OptSchemaValue) {
+	s.Options = val
+}
+
 // SetSchema sets the value of Schema.
 func (s *Workload) SetSchema(val OptSchemaRef) {
 	s.Schema = val
@@ -27757,6 +28054,7 @@ type WorkloadPatch struct {
 	StroppyVersion OptString            `json:"stroppy_version"`
 	Protocol       OptProtocol          `json:"protocol"`
 	Segments       []SchemaValue        `json:"segments"`
+	Options        OptSchemaValue       `json:"options"`
 }
 
 // GetName returns the value of Name.
@@ -27789,6 +28087,11 @@ func (s *WorkloadPatch) GetSegments() []SchemaValue {
 	return s.Segments
 }
 
+// GetOptions returns the value of Options.
+func (s *WorkloadPatch) GetOptions() OptSchemaValue {
+	return s.Options
+}
+
 // SetName sets the value of Name.
 func (s *WorkloadPatch) SetName(val OptString) {
 	s.Name = val
@@ -27817,6 +28120,11 @@ func (s *WorkloadPatch) SetProtocol(val OptProtocol) {
 // SetSegments sets the value of Segments.
 func (s *WorkloadPatch) SetSegments(val []SchemaValue) {
 	s.Segments = val
+}
+
+// SetOptions sets the value of Options.
+func (s *WorkloadPatch) SetOptions(val OptSchemaValue) {
+	s.Options = val
 }
 
 type WorkloadPatchTags map[string]string
@@ -27930,7 +28238,9 @@ type WorkloadSpec struct {
 	StroppyVersion string        `json:"stroppy_version"`
 	Protocol       Protocol      `json:"protocol"`
 	Segments       []SchemaValue `json:"segments"`
-	Schema         OptSchemaRef  `json:"schema"`
+	// The rest of `workload.stroppy` — `driver`, `connection`, `baseline`; defaults apply when absent.
+	Options OptSchemaValue `json:"options"`
+	Schema  OptSchemaRef   `json:"schema"`
 }
 
 // GetStroppyVersion returns the value of StroppyVersion.
@@ -27946,6 +28256,11 @@ func (s *WorkloadSpec) GetProtocol() Protocol {
 // GetSegments returns the value of Segments.
 func (s *WorkloadSpec) GetSegments() []SchemaValue {
 	return s.Segments
+}
+
+// GetOptions returns the value of Options.
+func (s *WorkloadSpec) GetOptions() OptSchemaValue {
+	return s.Options
 }
 
 // GetSchema returns the value of Schema.
@@ -27966,6 +28281,11 @@ func (s *WorkloadSpec) SetProtocol(val Protocol) {
 // SetSegments sets the value of Segments.
 func (s *WorkloadSpec) SetSegments(val []SchemaValue) {
 	s.Segments = val
+}
+
+// SetOptions sets the value of Options.
+func (s *WorkloadSpec) SetOptions(val OptSchemaValue) {
+	s.Options = val
 }
 
 // SetSchema sets the value of Schema.
@@ -27993,7 +28313,9 @@ type WorkloadWrite struct {
 	StroppyVersion string               `json:"stroppy_version"`
 	Protocol       Protocol             `json:"protocol"`
 	Segments       []SchemaValue        `json:"segments"`
-	Schema         OptSchemaRef         `json:"schema"`
+	// The rest of `workload.stroppy` — `driver`, `connection`, `baseline`; defaults apply when absent.
+	Options OptSchemaValue `json:"options"`
+	Schema  OptSchemaRef   `json:"schema"`
 }
 
 // GetName returns the value of Name.
@@ -28024,6 +28346,11 @@ func (s *WorkloadWrite) GetProtocol() Protocol {
 // GetSegments returns the value of Segments.
 func (s *WorkloadWrite) GetSegments() []SchemaValue {
 	return s.Segments
+}
+
+// GetOptions returns the value of Options.
+func (s *WorkloadWrite) GetOptions() OptSchemaValue {
+	return s.Options
 }
 
 // GetSchema returns the value of Schema.
@@ -28059,6 +28386,11 @@ func (s *WorkloadWrite) SetProtocol(val Protocol) {
 // SetSegments sets the value of Segments.
 func (s *WorkloadWrite) SetSegments(val []SchemaValue) {
 	s.Segments = val
+}
+
+// SetOptions sets the value of Options.
+func (s *WorkloadWrite) SetOptions(val OptSchemaValue) {
+	s.Options = val
 }
 
 // SetSchema sets the value of Schema.

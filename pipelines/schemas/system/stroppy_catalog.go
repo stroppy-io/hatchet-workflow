@@ -7,6 +7,7 @@ import (
 	schemapb "github.com/gopherex/schemapb/go/schemapb"
 
 	"github.com/stroppy-io/stroppy-cloud/pipelines/schemas/ids"
+	"github.com/stroppy-io/stroppy-cloud/pipelines/schemas/workload"
 )
 
 // protocolChoice is the wire protocol enum, identical to OpenAPI `Protocol`
@@ -19,7 +20,7 @@ func protocolChoice(name schemapb.FieldName) *schemapb.ChoiceB {
 		Opt(schemapb.StrV("ydb_grpc"), "YDB (grpc)").
 		Opt(schemapb.StrV("ydb_grpcs"), "YDB (grpcs, TLS)").
 		Opt(schemapb.StrV("cockroach"), "CockroachDB (pgproto)").
-		Opt(schemapb.StrV("noop"), "Noop (generator ceiling)")
+		Opt(schemapb.StrV("noop"), "Noop (framework ceiling)")
 }
 
 // StroppyCatalog is system.stroppy_catalog@1 — which stroppy builds the
@@ -30,8 +31,10 @@ func protocolChoice(name schemapb.FieldName) *schemapb.ChoiceB {
 // The JSON shape matches OpenAPI StroppyCatalog / StroppyScript
 // (openapi/parts/40-catalog.yaml, x-schema: system.stroppy_catalog).
 //
-// doc: STROPPY.MD §16.4; scripts and step ids verified against the stroppy
-// checkout (README "Presets Tree", `stroppy help steps`).
+// doc: STROPPY.MD §16.4; scripts, parameters and step ids come from stroppy 6
+// itself (`stroppy probe -o json` → workloads[].params, `stroppy help steps`).
+// Builds before 6.0.0 are not listed: the platform runs the Go-native engine
+// only.
 func StroppyCatalog() *schemapb.Schema {
 	return schemapb.NewSchema(ids.System("stroppy_catalog", 1)).
 		Descr("Platform catalog of stroppy versions, their images, protocols and workload scripts.").
@@ -46,13 +49,20 @@ func StroppyCatalog() *schemapb.Schema {
 
 			schemapb.List("versions",
 				schemapb.Object("",
-					// doc: semver.org
+					// doc: stroppy CHANGELOG 6.0.0 (#144) — `stroppy version` prints
+					// the release tag or nightly-<short-sha>.
 					schemapb.Str("version").Title("Version").
-						Desc("Stroppy release version.").
-						Pattern(`^\d+\.\d+\.\d+(-[0-9A-Za-z.-]+)?$`).MaxLen(64).Required(),
+						Desc("Stroppy build: a release (6.0.0) or a nightly of one commit (nightly-<sha>). 6.0.0 is the minimum.").
+						Pattern(workload.VersionPattern).MaxLen(64).Required().
+						Rules(schemapb.Rule(`!this.matches("^[0-5]\\.")`, "stroppy releases before 6.0.0 are not supported").ID("min-v6")),
+					// doc: ghcr.io/stroppy-io/stroppy tags look like v6.0.0.62
+					// (release + build number); nightlies are built by the platform.
 					schemapb.Str("image").Title("Image").
-						Desc("Docker image of that release, e.g. ghcr.io/stroppy-io/stroppy:5.1.2.").
+						Desc("Docker image of that build, e.g. ghcr.io/stroppy-io/stroppy:v6.0.0.62.").
 						MinLen(1).MaxLen(512).Required(),
+					schemapb.Bool("baseline").Title("Has baseline").
+						Desc("The build ships `stroppy baseline` (6.0.0+); lets the workload form offer the runner self-check.").
+						Default(true),
 					schemapb.Bool("default").Title("Default").
 						Desc("The version a new workload starts with; exactly one version carries it.").
 						Default(false),
@@ -95,9 +105,39 @@ func StroppyCatalog() *schemapb.Schema {
 							).Title("Steps").
 								Desc("Steps the script declares; the segment form filters on them.").
 								MaxItems(64).Required(),
-							schemapb.Str("params_schema").Title("Params schema").
-								Desc("schemapb id of script-specific params, when the script has its own form.").
-								Pattern(`^[a-z][a-z0-9_.]*@\d+$`).MaxLen(128),
+							// doc: `stroppy probe -o json` → workloads[].params[]
+							// {name, flag, scope, type, description, default, env, config}.
+							schemapb.List("params",
+								schemapb.Object("",
+									schemapb.Str("name").Title("Flag name").
+										Desc("Typed parameter flag without dashes (load-workers).").
+										Pattern(`^[a-z][a-z0-9-]*$`).MaxLen(64).Required(),
+									schemapb.Str("config").Title("Config key").
+										Desc("Key of the stroppy-config.json params object (loadWorkers).").
+										Pattern(`^[a-z][A-Za-z0-9]*$`).MaxLen(64).Required(),
+									schemapb.Choice("scope").Title("Scope").
+										Opt(schemapb.StrV("run"), "Scenario (run)").
+										Opt(schemapb.StrV("workload"), "Workload").
+										Default(schemapb.StrV("workload")),
+									schemapb.Choice("type").Title("Type").
+										Opt(schemapb.StrV("string"), "string").
+										Opt(schemapb.StrV("bool"), "bool").
+										Opt(schemapb.StrV("int"), "int").
+										Opt(schemapb.StrV("int64"), "int64").
+										Opt(schemapb.StrV("float64"), "float64").
+										Opt(schemapb.StrV("duration"), "duration").
+										Required(),
+									schemapb.Str("description").Title("Description").MaxLen(1024),
+									schemapb.JSON("default").Title("Default").
+										Desc("Declared default as stroppy reports it; null when contextual.").Nullable(),
+									schemapb.Str("default_description").Title("Default rule").MaxLen(256),
+									schemapb.Str("env").Title("Env name").
+										Desc("Legacy environment variable of the parameter.").
+										Pattern(`^[A-Z][A-Z0-9_]*$`).MaxLen(64),
+								).Strict(),
+							).Title("Parameters").
+								Desc("Typed parameters the script declares, as probed from the build; the segment form is generated from the known ones and passes the rest through extra_params.").
+								MaxItems(64),
 						).Strict(),
 					).Title("Scripts").
 						Desc("Workload scripts this build ships.").
