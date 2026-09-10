@@ -75,6 +75,8 @@ linters:
       locale: US
       ignore-rules:
         - nto # ydb state_storage.nto_select
+        - cancelled # API vocabulary (RunStatus) is British: cancelled / cancelling
+        - cancelling
 
     nolintlint:
       require-explanation: true

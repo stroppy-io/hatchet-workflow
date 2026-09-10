@@ -40,7 +40,7 @@ configure: ## Check that all required tools are installed
 # ============================================================
 build: web-build ## Build the stroppy-server binary (with embedded SPA)
 	@mkdir -p bin
-	CGO_ENABLED=0 go build $(GOFLAGS) -o bin/$(BINARY) ./cmd/stroppy-server/
+	CGO_ENABLED=0 go build $(GOFLAGS) -o bin/$(BINARY) ./cmd/stroppy-cloud/
 
 build-pipelines: ## Build the graphene pipeline binaries (linux/amd64, shipped in the server image)
 	@mkdir -p bin
@@ -76,12 +76,12 @@ schemas-test: ## Run schema tests (add ARGS=-update to refresh goldens)
 # ============================================================
 # Postgres store codegen (sqld toolchain)
 # ============================================================
-SQLD_CFG := internal/postgres/sqld.yaml
+SQLD_CFG := internal/infrastructure/postgres/sqld.yaml
 
 tools: ## Install the sqld code generators into ./bin
-	GOFLAGS=-mod=mod GOBIN=$$(pwd)/bin go install github.com/gopherex/sqld/cmd/sqld@v1.0.0
-	GOFLAGS=-mod=mod GOBIN=$$(pwd)/bin go install github.com/gopherex/sqld/cmd/sqld-gen-go@v1.0.0
-	GOFLAGS=-mod=mod GOBIN=$$(pwd)/bin go install github.com/gopherex/sqld/cmd/sqld-gen-bob@v1.0.0
+	GOFLAGS=-mod=mod GOBIN=$$(pwd)/bin go install github.com/gopherex/sqld/cmd/sqld@v1.1.1
+	GOFLAGS=-mod=mod GOBIN=$$(pwd)/bin go install github.com/gopherex/sqld/cmd/sqld-gen-go@v1.1.1
+	GOFLAGS=-mod=mod GOBIN=$$(pwd)/bin go install github.com/gopherex/sqld/cmd/sqld-gen-bob@v1.1.1
 
 db-gen: tools ## Generate gen/db + gen/bob from schema.sql + queries/*.sql
 	./bin/sqld generate -c $(SQLD_CFG)
@@ -91,9 +91,9 @@ migrate-generate: tools ## Generate a migration by schema diff (usage: make migr
 	./bin/sqld migrate generate $(name) -c $(SQLD_CFG)
 
 migrate-clear: tools ## Regenerate the single bootstrap migration from schema.sql, then regenerate code
-	rm -f internal/postgres/migrations/*.sql
+	rm -f internal/infrastructure/postgres/migrations/*.sql
 	./bin/sqld migrate generate bootstrap -c $(SQLD_CFG)
-	@for f in internal/postgres/migrations/*.sql; do \
+	@for f in internal/infrastructure/postgres/migrations/*.sql; do \
 		awk 'index(tolower($$0), "-- sqld:" "up") == 1 { next } index(tolower($$0), "-- sqld:" "down") == 1 { exit } { print }' "$$f" > "$$f.tmp"; \
 		mv "$$f.tmp" "$$f"; \
 	done
@@ -102,6 +102,9 @@ migrate-clear: tools ## Regenerate the single bootstrap migration from schema.sq
 # ============================================================
 # Test / lint
 # ============================================================
+test-db: tools ## Run integration tests (testcontainers Postgres + fake Graphene; needs Docker)
+	go test -tags=integration ./cmd/... -count=1 -p 1
+
 test: ## Run unit tests
 	go test ./... -count=1 -race
 

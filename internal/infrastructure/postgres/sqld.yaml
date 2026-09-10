@@ -1,0 +1,19 @@
+version: "1"
+engine: postgresql
+options:
+  defaultSchema: public
+schema:
+  - file: internal/infrastructure/postgres/schema.sql
+queries:
+  - dir: internal/infrastructure/postgres/queries
+migrations:
+  - dir: internal/infrastructure/postgres/migrations
+plugins:
+  - name: go
+    binary: ./bin/sqld-gen-go
+    out: internal/infrastructure/postgres/gen/db
+    options:
+      package: db
+      nullMode: pointer
+      overrides:
+        uuid: github.com/google/uuid.UUID
